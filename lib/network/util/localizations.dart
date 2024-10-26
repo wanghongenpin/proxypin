@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 /// @author wanghongen
 class Localizations {

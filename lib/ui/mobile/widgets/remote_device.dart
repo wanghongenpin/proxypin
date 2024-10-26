@@ -20,18 +20,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/native/vpn.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/qrcode/qr_scan_view.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/ip.dart';
+import 'package:proxypin/native/vpn.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/qrcode/qr_scan_view.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/ip.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -344,7 +344,7 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
                       Navigator.pop(context);
                     }
                   },
-                  child: Text(localizations.connected)),
+                  child: Text(localizations.connectRemote)),
             ],
           );
         });
@@ -380,7 +380,12 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
   }
 
   ///
+  bool doConnecting = false;
+
+  ///连接远程设备
   Future<bool> doConnect(String host, int port, {bool? ipProxy}) async {
+    if (doConnecting) return false;
+    doConnecting = true;
     try {
       var response = await HttpClients.get("http://$host:$port/ping", timeout: const Duration(milliseconds: 3000));
       if (response.bodyAsString == "pong") {
@@ -422,6 +427,8 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
             });
       }
       return false;
+    } finally {
+      doConnecting = false;
     }
   }
 
@@ -566,7 +573,7 @@ class ConfigSyncState extends State<ConfigSyncWidget> {
               widget.configuration.flushConfig();
 
               if (syncRewrite) {
-                var requestRewrites = await RequestRewrites.instance;
+                var requestRewrites = await RequestRewriteManager.instance;
                 await requestRewrites.syncConfig(widget.config['requestRewrites']);
               }
 

@@ -18,9 +18,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/ui/component/widgets.dart';
 
 /// @author wanghongen
 /// 2023/10/8

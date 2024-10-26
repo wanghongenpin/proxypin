@@ -17,8 +17,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/http/h2/huffman.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
+import 'package:proxypin/network/http/h2/huffman.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
 
 class HPACKDecoder {
   // static const int _maxHeaderTableSize = 12288;

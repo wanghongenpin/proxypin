@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/configuration.dart';
 
 ///缓存时间菜单
 /// @author wanghongen

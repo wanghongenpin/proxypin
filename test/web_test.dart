@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:network_proxy/network/http/codec.dart';
-import 'package:network_proxy/network/http/http.dart';
+import 'package:proxypin/network/http/codec.dart';
+import 'package:proxypin/network/http/http.dart';
 
 main() async {
   await socketTest();

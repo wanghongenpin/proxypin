@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
-import 'package:network_proxy/network/util/cert/basic_constraints.dart';
-import 'package:network_proxy/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:proxypin/network/util/cert/x509.dart';
 import 'package:pointycastle/pointycastle.dart';
 
 void main() async {

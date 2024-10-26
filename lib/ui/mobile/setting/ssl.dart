@@ -20,11 +20,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/util/crts.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/util/crts.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MobileSslWidget extends StatefulWidget {
@@ -80,11 +80,6 @@ class _MobileSslState extends State<MobileSslWidget> {
           ListTile(
               title: Text(localizations.exportCA),
               onTap: () async {
-                if (Platform.isIOS) {
-                  _downloadCert();
-                  return;
-                }
-
                 var caFile = await CertificateManager.certificateFile();
                 _exportFile("ProxyPinCA.crt", file: caFile);
               }),
@@ -98,16 +93,15 @@ class _MobileSslState extends State<MobileSslWidget> {
           const Divider(indent: 0.2, height: 1),
           ListTile(title: Text(localizations.importCaP12), onTap: importPk12),
           const Divider(indent: 0.2, height: 1),
-          if (Platform.isAndroid)
-            ListTile(
-                title: Text(localizations.generateCA),
-                onTap: () async {
-                  showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,
-                      onConfirm: () async {
-                    await CertificateManager.generateNewRootCA();
-                    if (context.mounted) FlutterToastr.show(localizations.success, context);
-                  });
-                }),
+          ListTile(
+              title: Text(localizations.generateCA),
+              onTap: () async {
+                showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,
+                    onConfirm: () async {
+                  await CertificateManager.generateNewRootCA();
+                  if (context.mounted) FlutterToastr.show(localizations.success, context);
+                });
+              }),
           const Divider(indent: 0.2, height: 1),
           ListTile(
               title: Text(localizations.resetDefaultCA),
@@ -224,6 +218,7 @@ class _MobileSslState extends State<MobileSslWidget> {
 
   void _downloadCert() async {
     CertificateManager.cleanCache();
+    await widget.proxyServer.retryBind();
     launchUrl(Uri.parse("http://127.0.0.1:${widget.proxyServer.port}/ssl"), mode: LaunchMode.externalApplication);
   }
 
@@ -335,8 +330,8 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
       TextButton(
           onPressed: () {
             launchUrl(Uri.parse(isCN
-                ? "https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E5%AE%89%E5%8D%93%E6%97%A0ROOT%E4%BD%BF%E7%94%A8Xposed%E6%A8%A1%E5%9D%97%E6%8A%93%E5%8C%85"
-                : "https://github.com/wanghongenpin/network_proxy_flutter/wiki/Android-without-ROOT-uses-Xposed-module-to-capture-packets"));
+                ? "https://gitee.com/wanghongenpin/proxypin/wikis/%E5%AE%89%E5%8D%93%E6%97%A0ROOT%E4%BD%BF%E7%94%A8Xposed%E6%A8%A1%E5%9D%97%E6%8A%93%E5%8C%85"
+                : "https://github.com/wanghongenpin/proxypin/wiki/Android-without-ROOT-uses-Xposed-module-to-capture-packets"));
           },
           child: Text(localizations.androidUserXposed)),
       ClipRRect(

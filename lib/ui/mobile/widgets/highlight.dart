@@ -15,8 +15,8 @@
  */
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/ui/component/state_component.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
+import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/component/widgets.dart';
 
 class KeywordHighlight extends StatefulWidget {
   static Map<Color, String> keywords = {};

@@ -25,8 +25,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
-import 'package:network_proxy/ui/component/qrcode/qr_scan_view.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/ui/component/qrcode/qr_scan_view.dart';
+import 'package:proxypin/ui/component/text_field.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 ///二维码
@@ -90,18 +91,6 @@ class _QrCodePageState extends State<QrCodePage> with SingleTickerProviderStateM
           children: [_QrEncode(windowId: widget.windowId), _QrDecode(windowId: widget.windowId)],
         ));
   }
-}
-
-InputDecoration _decoration(BuildContext context, String label, {String? hintText}) {
-  Color color = Theme.of(context).colorScheme.primary;
-  return InputDecoration(
-      floatingLabelBehavior: FloatingLabelBehavior.always,
-      labelText: label,
-      hintText: hintText,
-      hintStyle: TextStyle(color: Colors.grey.shade500),
-      border: OutlineInputBorder(borderSide: BorderSide(width: 0.8, color: color)),
-      enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.3, color: color)),
-      focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2, color: color)));
 }
 
 class _QrDecode extends StatefulWidget {
@@ -188,7 +177,7 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
               maxLines: 7,
               minLines: 7,
               readOnly: true,
-              decoration: _decoration(context, localizations.encodeResult),
+              decoration: decoration(context, label: localizations.encodeResult),
             ),
             SizedBox(height: 8),
             TextButton.icon(
@@ -261,7 +250,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
               controller: inputData,
               maxLines: 8,
               onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
-              decoration: _decoration(context, localizations.inputContent))),
+              decoration: decoration(context, label: localizations.inputContent))),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

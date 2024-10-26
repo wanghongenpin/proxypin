@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hongen Wang
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,20 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/mobile/setting/rewrite/rewrite_update.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/setting/rewrite/rewrite_update.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'rewrite/rewrite_replace.dart';
 
 class MobileRequestRewrite extends StatefulWidget {
-  final RequestRewrites requestRewrites;
+  final RequestRewriteManager requestRewrites;
 
   const MobileRequestRewrite({super.key, required this.requestRewrites});
 
@@ -133,7 +135,7 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
 ///请求重写规则列表
 class RequestRuleList extends StatefulWidget {
-  final RequestRewrites requestRewrites;
+  final RequestRewriteManager requestRewrites;
 
   RequestRuleList(this.requestRewrites) : super(key: GlobalKey<_RequestRuleListState>());
 
@@ -337,7 +339,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   widget.requestRewrites.flushRequestRewriteConfig();
                   if (mounted) FlutterToastr.show(localizations.deleteSuccess, context);
                 }),
-            Container(color: Theme.of(context).hoverColor, height: 8),
+            Container(color: Theme.of(ctx).hoverColor, height: 8),
             TextButton(
                 child: Container(
                     height: 45,
@@ -345,7 +347,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(localizations.cancel, textAlign: TextAlign.center)),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(ctx).pop();
                 }),
           ]);
         }).then((value) {
@@ -400,8 +402,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
 class RewriteRule extends StatefulWidget {
   final RequestRewriteRule? rule;
   final List<RewriteItem>? items;
+  final HttpRequest? request;
 
-  const RewriteRule({super.key, this.rule, this.items});
+  const RewriteRule({super.key, this.rule, this.items, this.request});
 
   @override
   State<StatefulWidget> createState() {
@@ -410,7 +413,9 @@ class RewriteRule extends StatefulWidget {
 }
 
 class _RewriteRuleState extends State<RewriteRule> {
-  late ValueNotifier<bool> enableNotifier;
+  final rewriteReplaceKey = GlobalKey<RewriteReplaceState>();
+  final rewriteUpdateKey = GlobalKey<RewriteUpdateState>();
+
   late RequestRewriteRule rule;
   List<RewriteItem>? items;
   late RuleType ruleType;
@@ -419,23 +424,28 @@ class _RewriteRuleState extends State<RewriteRule> {
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
+  final ScrollController scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     rule = widget.rule ?? RequestRewriteRule(url: '', type: RuleType.responseReplace);
-    enableNotifier = ValueNotifier(rule.enabled == true);
     items = widget.items;
     ruleType = rule.type;
 
     nameInput = TextEditingController(text: rule.name);
     urlInput = TextEditingController(text: rule.url);
+
+    if (items == null && widget.request != null) {
+      items = fromRequestItems(widget.request!, ruleType);
+    }
   }
 
   @override
   void dispose() {
-    enableNotifier.dispose();
     urlInput.dispose();
     nameInput.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
@@ -445,134 +455,141 @@ class _RewriteRuleState extends State<RewriteRule> {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(children: [
-          Text(localizations.requestRewrite, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-          const SizedBox(width: 15),
-          Text.rich(TextSpan(
-              text: localizations.useGuide,
-              style: const TextStyle(color: Colors.blue, fontSize: 14),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => launchUrl(Uri.parse(isCN
-                    ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
-                    : 'https://github.com/wanghongenpin/network_proxy_flutter/wiki/Request-Rewrite')))),
-        ]),
-        actions: [
-          TextButton(
-              child: Text(localizations.save),
-              onPressed: () async {
-                if (!(formKey.currentState as FormState).validate()) {
-                  FlutterToastr.show(localizations.cannotBeEmpty, context, position: FlutterToastr.center);
-                  return;
-                }
+        appBar: AppBar(
+          title: Row(children: [
+            Text(localizations.requestRewrite, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            const SizedBox(width: 15),
+            Text.rich(TextSpan(
+                text: localizations.useGuide,
+                style: const TextStyle(color: Colors.blue, fontSize: 14),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => launchUrl(
+                      mode: LaunchMode.externalApplication,
+                      Uri.parse(isCN
+                          ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                          : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite')))),
+          ]),
+          actions: [
+            TextButton(
+                child: Text(localizations.save),
+                onPressed: () async {
+                  if (!(formKey.currentState as FormState).validate()) {
+                    FlutterToastr.show(localizations.cannotBeEmpty, context, position: FlutterToastr.center);
+                    return;
+                  }
 
-                (formKey.currentState as FormState).save();
-                rule.enabled = enableNotifier.value;
-                rule.name = nameInput.text;
-                rule.url = urlInput.text;
+                  (formKey.currentState as FormState).save();
+                  rule.name = nameInput.text;
+                  rule.url = urlInput.text;
+                  items = rewriteReplaceKey.currentState?.getItems() ?? rewriteUpdateKey.currentState?.getItems();
 
-                var requestRewrites = await RequestRewrites.instance;
-                var index = requestRewrites.rules.indexOf(rule);
+                  var requestRewrites = await RequestRewriteManager.instance;
+                  var index = requestRewrites.rules.indexOf(rule);
 
-                if (index >= 0) {
-                  await requestRewrites.updateRule(index, rule, items);
-                } else {
-                  await requestRewrites.addRule(rule, items!);
-                }
-                requestRewrites.flushRequestRewriteConfig();
-                if (mounted) {
-                  FlutterToastr.show(localizations.saveSuccess, this.context);
-                  Navigator.of(this.context).pop(rule);
-                }
-              })
-        ],
-      ),
-      body: Padding(
+                  if (index >= 0) {
+                    await requestRewrites.updateRule(index, rule, items);
+                  } else {
+                    await requestRewrites.addRule(rule, items!);
+                  }
+                  requestRewrites.flushRequestRewriteConfig();
+                  if (mounted) {
+                    FlutterToastr.show(localizations.saveSuccess, this.context);
+                    Navigator.of(this.context).pop(rule);
+                  }
+                })
+          ],
+        ),
+        body: Padding(
           padding: const EdgeInsets.all(15),
-          child: Form(
-              key: formKey,
-              child: ListView(children: <Widget>[
-                ValueListenableBuilder(
-                    valueListenable: enableNotifier,
-                    builder: (_, bool enable, __) {
-                      return SwitchListTile(
-                          contentPadding: const EdgeInsets.only(left: 0),
-                          title: Text(localizations.enable, textAlign: TextAlign.start),
-                          value: enable,
-                          onChanged: (value) => enableNotifier.value = value);
-                    }),
-                textField('${localizations.name}:', nameInput, localizations.pleaseEnter),
-                textField('URL:', urlInput, 'http://www.example.com/api/*',
-                    required: true, keyboardType: TextInputType.url),
-                Row(children: [
-                  SizedBox(
-                      width: 58,
-                      child: Text('${localizations.action}:',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
-                  SizedBox(
-                      width: 165,
-                      height: 50,
-                      child: DropdownButtonFormField<RuleType>(
-                        onSaved: (val) => rule.type = val!,
-                        validator: (val) => items == null || items!.isEmpty ? "" : null,
-                        value: ruleType,
-                        decoration: const InputDecoration(
-                          errorStyle: TextStyle(height: 0, fontSize: 0),
-                          contentPadding: EdgeInsets.only(),
-                        ),
-                        items: RuleType.values
-                            .map((e) => DropdownMenuItem(value: e, child: Text(isCN ? e.label : e.name)))
-                            .toList(),
-                        onChanged: (val) {
-                          ruleType = val!;
-                          items = ruleType == widget.rule?.type ? widget.items : [];
-                        },
-                      )),
-                  const SizedBox(width: 10),
-                  TextButton(
-                      onPressed: () => showEdit(rule),
-                      child: Text(localizations.clickEdit, style: const TextStyle(fontSize: 16))),
-                ]),
-                const SizedBox(height: 10),
-                Padding(padding: const EdgeInsets.only(left: 60), child: getDescribe()),
-              ]))),
-    );
+          child: NestedScrollView(
+              controller: scrollController,
+              headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+                return <Widget>[
+                  SliverToBoxAdapter(
+                      child: Form(
+                    key: formKey,
+                    child: Column(children: <Widget>[
+                      Row(children: [
+                        SizedBox(
+                            width: 60,
+                            child: Text('${localizations.enable}:',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+                        SwitchWidget(value: rule.enabled, onChanged: (val) => rule.enabled = val, scale: 0.8)
+                      ]),
+                      textField('${localizations.name}:', nameInput, localizations.pleaseEnter),
+                      textField('URL:', urlInput, 'https://www.example.com/api/*',
+                          required: true, keyboardType: TextInputType.url),
+                      Row(children: [
+                        SizedBox(
+                            width: 60,
+                            child: Text('${localizations.action}:',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+                        SizedBox(
+                            width: 165,
+                            height: 50,
+                            child: DropdownButtonFormField<RuleType>(
+                              onSaved: (val) => rule.type = val!,
+                              value: ruleType,
+                              decoration: const InputDecoration(
+                                  errorStyle: TextStyle(height: 0, fontSize: 0), contentPadding: EdgeInsets.only()),
+                              items: RuleType.values
+                                  .map((e) => DropdownMenuItem(value: e, child: Text(isCN ? e.label : e.name)))
+                                  .toList(),
+                              onChanged: onChangeType,
+                            )),
+                        const SizedBox(width: 10),
+                      ]),
+                      const SizedBox(height: 10),
+                    ]),
+                  ))
+                ];
+              },
+              body: rewriteRule()),
+        ));
   }
 
-  Widget getDescribe() {
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-    if (items?.isNotEmpty == true && (ruleType == RuleType.requestReplace || ruleType == RuleType.responseReplace)) {
-      return Text(
-          "${localizations.replace}: ${items?.where((it) => it.enabled).map((e) => e.type.getDescribe(isCN)).join(" ")}",
-          style: const TextStyle(color: Colors.grey));
+  void onChangeType(RuleType? val) async {
+    if (ruleType == val) return;
+
+    ruleType = val!;
+    items = [];
+
+    if (ruleType == widget.rule?.type) {
+      items = widget.items;
+    } else if (widget.request != null) {
+      items?.addAll(fromRequestItems(widget.request!, ruleType));
     }
 
-    if (ruleType == RuleType.requestUpdate || ruleType == RuleType.responseUpdate) {
-      return Text(localizations.itemUpdate(items?.length ?? 0), style: const TextStyle(color: Colors.grey));
-    }
-    return const SizedBox();
-  }
-
-  void showEdit(RequestRewriteRule rule) async {
-    if (!mounted) return;
-    Navigator.of(context)
-        .push(MaterialPageRoute(
-            builder: (context) => ruleType == RuleType.requestUpdate || ruleType == RuleType.responseUpdate
-                ? RewriteUpdateWidget(subtitle: urlInput.text, items: items, ruleType: ruleType)
-                : RewriteReplaceWidget(subtitle: urlInput.text, items: items, ruleType: ruleType)))
-        .then((value) {
-      if (value is List<RewriteItem>) {
-        setState(() {
-          items = value;
-        });
-      }
+    setState(() {
+      rewriteReplaceKey.currentState?.initItems(ruleType, items);
+      rewriteUpdateKey.currentState?.initItems(ruleType, items);
     });
+  }
+
+  static List<RewriteItem> fromRequestItems(HttpRequest request, RuleType ruleType) {
+    if (ruleType == RuleType.requestReplace) {
+      //请求替换
+      return RewriteItem.fromRequest(request);
+    } else if (ruleType == RuleType.responseReplace && request.response != null) {
+      //响应替换
+      return RewriteItem.fromResponse(request.response!);
+    }
+    return [];
+  }
+
+  Widget rewriteRule() {
+    if (ruleType == RuleType.requestUpdate || ruleType == RuleType.responseUpdate) {
+      return MobileRewriteUpdate(key: rewriteUpdateKey, items: items, ruleType: ruleType, request: widget.request);
+    }
+
+    return MobileRewriteReplace(
+        scrollController: scrollController, key: rewriteReplaceKey, items: items, ruleType: ruleType);
   }
 
   Widget textField(String label, TextEditingController controller, String hint,
       {bool required = false, TextInputType? keyboardType, FormFieldSetter<String>? onSaved}) {
     return Row(children: [
-      SizedBox(width: 58, child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+      SizedBox(width: 60, child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
       Expanded(
           child: TextFormField(
         controller: controller,
@@ -582,7 +599,7 @@ class _RewriteRuleState extends State<RewriteRule> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade500),
-          contentPadding: const EdgeInsets.all(10),
+          contentPadding: const EdgeInsets.only(),
           errorStyle: const TextStyle(height: 0, fontSize: 0),
         ),
       ))

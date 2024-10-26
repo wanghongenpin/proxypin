@@ -17,12 +17,12 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/http/codec.dart';
-import 'package:network_proxy/network/http/h2/hpack.dart';
-import 'package:network_proxy/network/http/h2/setting.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/http/codec.dart';
+import 'package:proxypin/network/http/h2/hpack.dart';
+import 'package:proxypin/network/http/h2/setting.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
 
 import 'frame.dart';
 

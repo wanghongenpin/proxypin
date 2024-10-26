@@ -72,8 +72,8 @@
   "type": "Type",
   "enable": "Enable",
   "example": "Example: ",
-  "responseHeader": "Response Header",
-  "requestHeader": "Request Header",
+  "responseHeader": "Headers",
+  "requestHeader": "Headers",
   "requestLine": "Request Line",
   "requestMethod": "Request Method",
   "param": "Param",
@@ -93,7 +93,6 @@
   "pleaseEnter": "Please Enter",
   "click": "Click",
   "replace": "Replace",
-  "itemUpdate": "{size} item(s) updated",
   "clickEdit": "Click Edit",
   "refresh": "Refresh",
   "selectFile": "Select file",
@@ -105,6 +104,9 @@
   "enableSelect": "Enable Select",
   "disableSelect": "Disable Select",
   "deleteSelect": "Delete Select",
+  "testData": "Test Data",
+  "noChangesDetected": "No changes detected",
+  "enterMatchData": "Enter the data to be matched",
 
   "modifyRequestHeader": "Modify Header",
   "headerName": "Header Name",
@@ -125,6 +127,7 @@
   "deleteWhitelist": "Delete Proxy Whitelist",
   "domainListSubtitle": "Last Request Time: {time},  Count: {count}",
 
+  "selectAction": "Select action",
   "copy": "Copy",
   "copyHost": "Copy Host",
   "copyUrl": "Copy URL",
@@ -248,12 +251,16 @@
 
   "windowMode": "Window Mode",
   "windowModeSubTitle": "Enabled Packet Capture, Enter the background, Display a small window",
-  "windowIcon": "Window shortcut icon",
-  "windowIconDescribe": "Show quick access to small window Icon",
+  "pipIcon": "Window shortcut icon",
+  "pipIconDescribe": "Show quick access to small window Icon",
   "headerExpanded": "Headers Expanded",
   "headerExpandedSubtitle": "Details page Headers is expanded by default",
   "bottomNavigation": "Bottom Navigation",
   "bottomNavigationSubtitle": "Bottom navigation bar is displayed, effective after restart",
+  "memoryCleanup": "Memory Cleanup",
+  "memoryCleanupSubtitle": "Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning",
+  "unlimited": "Unlimited",
+  "custom": "Custom",
 
   "externalProxyAuth": "Proxy Auth (Optional)",
   "externalProxyServer": "Proxy Server",
@@ -275,6 +282,7 @@
 
   "iosVpnBackgroundAudio": "After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?",
 
+  "markRead": "Mark as read",
   "highlight": "Highlight",
   "blue" : "Blue",
   "green" : "Green",
@@ -288,6 +296,7 @@
 
   "other": "Other",
   "certHashName": "CA Hash Name",
+  "regExp": "RegExp",
   "systemCertName": "System Certificate Name",
   "qrCode": "QR Code",
   "scanQrCode": "Scan QR Code",

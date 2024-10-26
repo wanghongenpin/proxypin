@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hongen Wang
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/http/content_type.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/ui/desktop/request/search_condition.dart';
+import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/ui/desktop/request/search_condition.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -66,9 +66,12 @@ class _SearchState extends State<Search> {
         },
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.all(0),
-          border: InputBorder.none,
+          enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade400, width: 0.5), borderRadius: BorderRadius.circular(15)),
+          border: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey.shade400, width: 0.5), borderRadius: BorderRadius.circular(15)),
           prefixIcon: InkWell(
-              child: Icon(Icons.search, color: searched ? Colors.green : Colors.blue),
+              child: Icon(Icons.search, color: searched ? Colors.green : Theme.of(context).colorScheme.primary),
               onTapDown: (details) {
                 searchDialog(details);
               }),

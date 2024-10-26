@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/ui/desktop/request/search_condition.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/ui/desktop/request/search_condition.dart';
 
 class MobileSearch extends StatefulWidget {
   final Function(SearchModel searchModel)? onSearch;
@@ -77,7 +77,8 @@ class MobileSearchState extends State<MobileSearch> {
             decoration: InputDecoration(
                 border: InputBorder.none,
                 prefixIcon: InkWell(
-                    onTap: showSearch, child: Icon(Icons.search, color: _searched ? Colors.green : Colors.blue)),
+                    onTap: showSearch,
+                    child: Icon(Icons.search, color: _searched ? Colors.green : Theme.of(context).colorScheme.primary)),
                 hintText: 'Search')));
   }
 

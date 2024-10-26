@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/util/logger.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 ///编码类型
 enum EncoderType {
@@ -155,7 +155,7 @@ class _EncoderState extends State<EncoderWidget> with SingleTickerProviderStateM
         case EncoderType.base64:
           result = base64.encode(utf8.encode(inputText));
         case EncoderType.md5:
-          result = md5.convert(inputText.codeUnits).toString();
+          result = md5.convert(utf8.encode(inputText)).toString();
         case EncoderType.unicode:
           result = encodeToUnicode(inputText);
       }

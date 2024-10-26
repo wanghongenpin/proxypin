@@ -25,21 +25,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/storage/favorites.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/content/panel.dart';
-import 'package:network_proxy/ui/desktop/request/repeat.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/script.dart';
-import 'package:network_proxy/utils/curl.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/python.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/content/panel.dart';
+import 'package:proxypin/ui/desktop/request/repeat.dart';
+import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
+
+import '../common.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -172,7 +172,6 @@ class _FavoriteItemState extends State<_FavoriteItem> {
               .then((value) => FlutterToastr.show(localizations.copied, context));
         }),
         const PopupMenuDivider(height: 0.3),
-        popupItem(localizations.rename, onTap: () => rename(widget.favorite)),
         popupItem(localizations.repeat, onTap: () => onRepeat(request)),
         popupItem(localizations.customRepeat, onTap: () => showCustomRepeat(request)),
         popupItem(localizations.editRequest, onTap: () {
@@ -180,17 +179,9 @@ class _FavoriteItemState extends State<_FavoriteItem> {
             requestEdit(request);
           });
         }),
-        popupItem(localizations.script, onTap: () async {
-          var scriptManager = await ScriptManager.instance;
-          var url = '${request.remoteDomain()}${request.path()}';
-          var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.url == url);
-
-          String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
-          if (!mounted) return;
-          showDialog(
-              context: context, builder: (context) => ScriptEdit(scriptItem: scriptItem, script: script, url: url));
-        }),
+        popupItem(localizations.requestRewrite, onTap: () => showRequestRewriteDialog(context, request)),
         const PopupMenuDivider(height: 0.3),
+        popupItem(localizations.rename, onTap: () => rename(widget.favorite)),
         popupItem(localizations.deleteFavorite, onTap: () {
           widget.onRemove?.call(widget.favorite);
         })

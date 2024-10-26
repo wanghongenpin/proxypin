@@ -16,9 +16,9 @@
 
 import 'dart:io';
 
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/utils/ip.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/utils/ip.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:proxy_manager/proxy_manager.dart';
 
 /// @author wanghongen

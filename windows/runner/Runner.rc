@@ -93,7 +93,7 @@ BEGIN
             VALUE "FileDescription", "ProxyPin" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "ProxyPin" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.proxy.pin. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 Hongen Wang. All rights reserved." "\0"
             VALUE "OriginalFilename", "ProxyPin.exe" "\0"
             VALUE "ProductName", "ProxyPin" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

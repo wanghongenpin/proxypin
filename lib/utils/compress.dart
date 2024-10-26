@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:brotli/brotli.dart';
-import 'package:network_proxy/network/util/logger.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 ///GZIP 解压缩
 List<int> gzipDecode(List<int> byteBuffer) {

@@ -15,7 +15,7 @@
  */
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 class MobileThemeSetting extends StatelessWidget {
   final AppConfiguration appConfiguration;

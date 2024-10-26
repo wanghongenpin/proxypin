@@ -19,12 +19,14 @@ import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/flutter_js.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/util/lists.dart';
-import 'package:network_proxy/network/util/random.dart';
-import 'package:network_proxy/ui/component/device.dart';
-import 'package:network_proxy/network/util/logger.dart';
+import 'package:proxypin/network/components/js/file.dart';
+import 'package:proxypin/network/components/js/md5.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/lists.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/ui/component/device.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// @author wanghongen
@@ -33,20 +35,20 @@ import 'package:path_provider/path_provider.dart';
 class ScriptManager {
   static String template = """
 // 在请求到达服务器之前,调用此函数,您可以在此处修改请求数据
-// 例如Add/Update/Remove：Queries、Headers、Body
+// e.g. Add/Update/Remove：Queries、Headers、Body
 async function onRequest(context, request) {
   console.log(request.url);
-  //URL参数
+  //URL queries
   //request.queries["name"] = "value";
   //Update or add Header
   //request.headers["X-New-Headers"] = "My-Value";
   
-  // Update Body 使用fetch API请求接口，具体文档可网上搜索fetch API
+  // Update Body use fetch API request，具体文档可网上搜索fetch API
   //request.body = await fetch('https://www.baidu.com/').then(response => response.text());
   return request;
 }
 
-// 在将响应数据发送到客户端之前,调用此函数,您可以在此处修改响应数据
+//You can modify the Response Data here before it goes to the client
 async function onResponse(context, request, response) {
    //Update or add Header
   // response.headers["Name"] = "Value";
@@ -84,6 +86,8 @@ async function onResponse(context, request, response) {
       final channelCallbacks = JavascriptRuntime.channelFunctionsRegistered[flutterJs.getEngineInstanceId()];
       channelCallbacks!["ConsoleLog"] = _instance!.consoleLog;
       deviceId = await DeviceUtils.deviceId();
+      Md5Bridge.registerMd5(flutterJs);
+      FileBridge.registerFile(flutterJs);
       logger.d('init script manager $deviceId');
     }
     return _instance!;
@@ -232,7 +236,7 @@ async function onResponse(context, request, response) {
     if (!enabled) {
       return request;
     }
-    var url = '${request.remoteDomain()}${request.path()}';
+    var url = request.domainPath;
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(scriptContext(item));
@@ -261,7 +265,7 @@ async function onResponse(context, request, response) {
     }
 
     var request = response.request!;
-    var url = '${request.remoteDomain()}${request.path()}';
+    var url = request.domainPath;
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(request.attributes['scriptContext'] ?? scriptContext(item));
@@ -285,9 +289,18 @@ async function onResponse(context, request, response) {
 
   /// js结果转换
   static Future<dynamic> jsResultResolve(JsEvalResult jsResult) async {
-    if (jsResult.isPromise || jsResult.rawResult is Future) {
-      jsResult = await flutterJs.handlePromise(jsResult);
+    try {
+      if (jsResult.isPromise || jsResult.rawResult is Future) {
+        jsResult = await flutterJs.handlePromise(jsResult);
+      }
+
+      if (jsResult.isPromise || jsResult.rawResult is Future) {
+        jsResult = await flutterJs.handlePromise(jsResult);
+      }
+    } catch (e) {
+      throw SignalException(jsResult.stringResult);
     }
+
     var result = jsResult.rawResult;
     if (Platform.isMacOS || Platform.isIOS) {
       result = flutterJs.convertValue(jsResult);
@@ -296,6 +309,7 @@ async function onResponse(context, request, response) {
       result = jsonDecode(result);
     }
     if (jsResult.isError) {
+      logger.e('jsResultResolve error: ${jsResult.stringResult}');
       throw SignalException(jsResult.stringResult);
     }
     return result;
@@ -356,14 +370,14 @@ async function onResponse(context, request, response) {
     });
 
     //判断是否是二进制
-    if (getListElementType(map['body']) == int) {
-      request.body = convertList<int>(map['body']);
+    if (Lists.getElementType(map['body']) == int) {
+      request.body = Lists.convertList<int>(map['body']);
       return request;
     }
 
     request.body = map['body']?.toString().codeUnits;
 
-    if (request.body != null && request.charset == 'utf-8') {
+    if (request.body != null && (request.charset == 'utf-8' || request.charset == 'utf8')) {
       request.body = utf8.encode(map['body'].toString());
     }
     return request;
@@ -385,13 +399,13 @@ async function onResponse(context, request, response) {
     response.headers.remove(HttpHeaders.CONTENT_ENCODING);
 
     //判断是否是二进制
-    if (getListElementType(map['body']) == int) {
-      response.body = convertList<int>(map['body']);
+    if (Lists.getElementType(map['body']) == int) {
+      response.body = Lists.convertList<int>(map['body']);
       return response;
     }
 
     response.body = map['body']?.toString().codeUnits;
-    if (response.body != null && response.charset == 'utf-8') {
+    if (response.body != null && (response.charset == 'utf-8' || response.charset == 'utf8')) {
       response.body = utf8.encode(map['body'].toString());
     }
 

@@ -19,17 +19,17 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/codec.dart';
-import 'package:network_proxy/network/http/h2/setting.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/network/util/attribute_keys.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/process_info.dart';
-import 'package:network_proxy/network/util/socket_address.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/codec.dart';
+import 'package:proxypin/network/http/h2/setting.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/util/attribute_keys.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/network/util/socket_address.dart';
+import 'package:proxypin/utils/lang.dart';
 
 import 'handler.dart';
 

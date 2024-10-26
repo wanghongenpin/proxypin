@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/http/constants.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
+import 'package:proxypin/network/http/constants.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
 
 /// http解析器
 class HttpParse {
@@ -57,10 +57,12 @@ class HttpParse {
       return false;
     }
 
-    if (data.length > defaultMaxLength) {
-      throw Exception("header too long");
-    }
+    int startIndex = data.readerIndex;
     for (int i = data.readerIndex; i < data.length; i++) {
+      if ((i - startIndex) > defaultMaxLength) {
+        throw Exception("header too long");
+      }
+
       if (_isLineEnd(data, i)) {
         Uint8List line = data.readBytes(i - data.readerIndex);
         data.skipBytes(2);

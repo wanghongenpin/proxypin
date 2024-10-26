@@ -17,8 +17,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/http/constants.dart';
-import 'package:network_proxy/network/http/http.dart';
+import 'package:proxypin/network/http/constants.dart';
+import 'package:proxypin/network/http/http.dart';
 
 import '../../utils/num.dart';
 import 'codec.dart';

@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:basic_utils/basic_utils.dart';
-import 'package:network_proxy/network/util/cert/basic_constraints.dart';
-import 'package:network_proxy/network/util/cert/key_usage.dart' as x509;
-import 'package:network_proxy/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:proxypin/network/util/cert/key_usage.dart' as x509;
+import 'package:proxypin/network/util/cert/x509.dart';
 
 void main() async {
   var caPem = await File('assets/certs/ca.crt').readAsString();
@@ -12,7 +12,7 @@ void main() async {
   var caRoot = X509Utils.x509CertificateFromPem(caPem);
   var generateRSAKeyPair = CryptoUtils.generateRSAKeyPair();
   var serverPubKey = generateRSAKeyPair.publicKey as RSAPublicKey;
-  var serverPriKey = generateRSAKeyPair.privateKey as RSAPrivateKey;
+  // var serverPriKey = generateRSAKeyPair.privateKey as RSAPrivateKey;
 
   print(CryptoUtils.encodeRSAPublicKeyToPem(serverPubKey));
   //保存私钥

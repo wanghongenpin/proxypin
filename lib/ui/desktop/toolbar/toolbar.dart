@@ -17,12 +17,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/ui/desktop/toolbar/phone_connect.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/setting.dart';
-import 'package:network_proxy/ui/desktop/toolbar/ssl/ssl.dart';
-import 'package:network_proxy/ui/launch/launch.dart';
-import 'package:network_proxy/utils/ip.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/desktop/toolbar/phone_connect.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/setting.dart';
+import 'package:proxypin/ui/desktop/toolbar/ssl/ssl.dart';
+import 'package:proxypin/ui/launch/launch.dart';
+import 'package:proxypin/utils/ip.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

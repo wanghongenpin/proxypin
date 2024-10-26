@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileRead {

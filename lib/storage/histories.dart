@@ -21,13 +21,13 @@ import 'dart:io';
 
 import 'package:date_format/date_format.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/storage/path.dart';
-import 'package:network_proxy/utils/files.dart';
-import 'package:network_proxy/utils/har.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/storage/path.dart';
+import 'package:proxypin/utils/files.dart';
+import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 import 'package:path_provider/path_provider.dart';
 
 ///历史存储
@@ -243,6 +243,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
 
   resetList() async {
     locked = true;
+    await open?.lock().timeout(Duration(seconds: 3), onTimeout: () => open!.unlock());
     open = await open?.truncate(0);
     await open?.setPosition(0);
     history?.requestLength = 0;
@@ -250,6 +251,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
     writeList.clear();
     writeList.addAll(sourceList.source);
     locked = false;
+    open?.unlock();
   }
 
   cancelTask() {

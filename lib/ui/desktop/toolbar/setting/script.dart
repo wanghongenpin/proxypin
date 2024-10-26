@@ -27,12 +27,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/multi_window.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/lang.dart';
 
 bool _refresh = false;
 
@@ -214,7 +214,6 @@ class _ScriptConsoleState extends State<ScriptConsoleWidget> {
     super.initState();
     DesktopMultiWindow.invokeMethod(0, "registerConsoleLog", widget.windowId);
     DesktopMultiWindow.setMethodHandler((call, fromWindowId) async {
-      // print("consoleLog  $scrollEnd $fromWindowId ${call.arguments}");
       if (call.method == 'consoleLog') {
         setState(() {
           var logInfo = LogInfo(call.arguments['level'], call.arguments['output']);
@@ -236,7 +235,6 @@ class _ScriptConsoleState extends State<ScriptConsoleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // print("script build");
     return Scaffold(
         backgroundColor: Theme.of(context).dialogBackgroundColor,
         appBar: AppBar(
@@ -353,8 +351,8 @@ class _ScriptEditState extends State<ScriptEdit> {
                     0,
                     "launchUrl",
                     isCN
-                        ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%84%9A%E6%9C%AC'
-                        : 'https://github.com/wanghongenpin/network_proxy_flutter/wiki/Script'))),
+                        ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%84%9A%E6%9C%AC'
+                        : 'https://github.com/wanghongenpin/proxypin/wiki/Script'))),
           const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
         ]),
         actionsPadding: const EdgeInsets.only(right: 10, bottom: 10),
@@ -398,7 +396,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                 const SizedBox(height: 5),
                 SizedBox(
                     width: 850,
-                    height: 360,
+                    height: 380,
                     child: CodeTheme(
                         data: CodeThemeData(styles: monokaiSublimeTheme),
                         child: SingleChildScrollView(

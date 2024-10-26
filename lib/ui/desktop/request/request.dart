@@ -23,23 +23,25 @@ import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/storage/favorites.dart';
-import 'package:network_proxy/ui/component/state_component.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/content/panel.dart';
-import 'package:network_proxy/ui/desktop/request/repeat.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/script.dart';
-import 'package:network_proxy/utils/curl.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/python.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/content/panel.dart';
+import 'package:proxypin/ui/desktop/request/repeat.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
+import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
+
+import '../common.dart';
 
 /// 请求 URI
 /// @author wanghongen
@@ -82,7 +84,7 @@ class _RequestWidgetState extends State<RequestWidget> {
   Widget build(BuildContext context) {
     var request = widget.request;
     var response = widget.response.get() ?? request.response;
-    String path = widget.displayDomain ? '${request.remoteDomain()}${request.path()}' : request.path();
+    String path = widget.displayDomain ? request.domainPath : request.path;
     String title = '${request.method.name} $path';
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
@@ -178,11 +180,13 @@ class _RequestWidgetState extends State<RequestWidget> {
               requestEdit();
             });
           }),
+      MenuItem.separator(),
+      MenuItem(label: localizations.requestRewrite, onClick: (_) => showRequestRewriteDialog(context, widget.request)),
       MenuItem(
           label: localizations.script,
           onClick: (_) async {
             var scriptManager = await ScriptManager.instance;
-            var url = '${widget.request.remoteDomain()}${widget.request.path()}';
+            var url = widget.request.domainPath;
             var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.url == url);
 
             String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);

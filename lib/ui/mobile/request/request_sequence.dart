@@ -1,12 +1,12 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/ui/mobile/request/request.dart';
-import 'package:network_proxy/ui/mobile/widgets/highlight.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/ui/mobile/request/request.dart';
+import 'package:proxypin/ui/mobile/widgets/highlight.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 ///请求序列 列表
 ///@author wanghongen
@@ -26,8 +26,8 @@ class RequestSequence extends StatefulWidget {
 }
 
 class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliveClientMixin {
-  ///请求和对应的row的映射
-  Map<HttpRequest, GlobalKey<RequestRowState>> indexes = HashMap();
+  ///请求id和对应的row的映射
+  Map<String, GlobalKey<RequestRowState>> indexes = HashMap();
 
   ///显示的请求列表 最新的在前面
   Queue<HttpRequest> view = Queue();
@@ -71,7 +71,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   ///添加响应
   addResponse(HttpResponse response) {
-    var state = indexes.remove(response.request);
+    var state = indexes.remove(response.request?.requestId);
     state?.currentState?.change(response);
 
     if (searchModel == null || searchModel!.isEmpty || response.request == null) {
@@ -91,6 +91,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     setState(() {
       view.clear();
       indexes.clear();
+
+      view.addAll(widget.container.source.reversed);
     });
   }
 
@@ -119,7 +121,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     //防止频繁刷新
     if (!changing) {
       changing = true;
-      Future.delayed(const Duration(milliseconds: 300), () {
+      Future.delayed(const Duration(milliseconds: 350), () {
         setState(() {
           changing = false;
         });
@@ -143,11 +145,9 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                 Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
             itemCount: view.length,
             itemBuilder: (context, index) {
-              GlobalKey<RequestRowState> key = GlobalKey();
-              indexes[view.elementAt(index)] = key;
               return RequestRow(
                   index: view.length - index,
-                  key: key,
+                  key: indexes[view.elementAt(index).requestId] ??= GlobalKey(),
                   request: view.elementAt(index),
                   proxyServer: widget.proxyServer,
                   displayDomain: widget.displayDomain,

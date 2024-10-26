@@ -17,12 +17,12 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/content_type.dart';
-import 'package:network_proxy/network/http/websocket.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/process_info.dart';
-import 'package:network_proxy/utils/compress.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/utils/compress.dart';
 
 import 'http_headers.dart';
 
@@ -56,7 +56,7 @@ abstract class HttpMessage {
   String? remoteHost;
   int? remotePort;
 
-  String requestId = (DateTime.now().millisecondsSinceEpoch + Random().nextInt(99999)).toRadixString(36);
+  String requestId = (DateTime.now().millisecondsSinceEpoch + Random().nextInt(999999)).toRadixString(36);
   int? streamId; // http2 streamId
   HttpMessage(this.protocolVersion);
 
@@ -99,7 +99,7 @@ abstract class HttpMessage {
       if (headers.contentEncoding == 'br') {
         rawBody = brDecode(body!);
       }
-      if (charset == 'utf-8') {
+      if (charset == 'utf-8' || charset == 'utf8') {
         return utf8.decode(rawBody);
       }
 
@@ -151,7 +151,11 @@ class HttpRequest extends HttpMessage {
     }
   }
 
-  String path() {
+  ///域名+路径
+  String get domainPath => '${remoteDomain()}$path';
+
+  /// 请求的path
+  String get path {
     try {
       var requestPath = Uri.parse(requestUrl).path;
       return requestPath.isEmpty ? "" : requestPath;

@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:network_proxy/native/vpn.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/launch/launch.dart';
-import 'package:network_proxy/ui/mobile/mobile.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/native/vpn.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/launch/launch.dart';
+import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/utils/lang.dart';
 
 ///画中画
 class PictureInPicture {

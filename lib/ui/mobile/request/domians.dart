@@ -21,14 +21,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/ui/mobile/request/request_sequence.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/request/request_sequence.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 ///域名列表
 ///@author wanghongen
@@ -65,13 +66,18 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   //搜索关键字
   String? searchText;
 
+  bool changing = false;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
+    initFromContainer();
+  }
 
+  initFromContainer() {
     for (var request in widget.list) {
       var hostAndPort = request.hostAndPort!;
       domainList.add(hostAndPort);
@@ -98,7 +104,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
 
     view = [...domainList.where(filter)].reversed.toList();
-    setState(() {});
+    changeState();
   }
 
   addResponse(HttpResponse response) {
@@ -117,6 +123,8 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
       view.clear();
       domainList.clear();
       containerMap.clear();
+
+      initFromContainer();
     });
   }
 
@@ -143,16 +151,16 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
 
     text = text.toLowerCase();
-    setState(() {
-      var contains = text!.contains(searchText ?? "");
-      searchText = text.toLowerCase();
-      if (contains) {
-        //包含从上次结果过滤
-        view.retainWhere(filter);
-      } else {
-        view = List.of(domainList.where(filter).toList().reversed);
-      }
-    });
+
+    var contains = text.contains(searchText ?? "");
+    searchText = text.toLowerCase();
+    if (contains) {
+      //包含从上次结果过滤
+      view.retainWhere(filter);
+    } else {
+      view = List.of(domainList.where(filter).toList().reversed);
+    }
+    changeState();
   }
 
   bool filter(HostAndPort hostAndPort) {
@@ -160,6 +168,18 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
       return hostAndPort.domain.toLowerCase().contains(searchText!);
     }
     return true;
+  }
+
+  changeState() {
+    //防止频繁刷新
+    if (!changing) {
+      changing = true;
+      Future.delayed(const Duration(milliseconds: 350), () {
+        setState(() {
+          changing = false;
+        });
+      });
+    }
   }
 
   @override
@@ -221,6 +241,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   ///菜单
   menu(int index) {
     var hostAndPort = view.elementAt(index);
+
     showModalBottomSheet(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(10))),
         context: context,
@@ -229,57 +250,45 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
           return Wrap(
             alignment: WrapAlignment.center,
             children: [
-              TextButton(
-                  child: SizedBox(
-                      width: double.infinity, child: Text(localizations.copyHost, textAlign: TextAlign.center)),
+              BottomSheetItem(
+                  text: localizations.copyHost,
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: hostAndPort.host));
                     FlutterToastr.show(localizations.copied, context);
-                    Navigator.of(context).pop();
                   }),
-              const Divider(thickness: 0.5),
-              TextButton(
-                  child: SizedBox(
-                      width: double.infinity, child: Text(localizations.addBlacklist, textAlign: TextAlign.center)),
+              const Divider(thickness: 0.5, height: 5),
+              BottomSheetItem(
+                  text: localizations.addBlacklist,
                   onPressed: () {
                     HostFilter.blacklist.add(hostAndPort.host);
                     configuration.flushConfig();
                     FlutterToastr.show(localizations.addSuccess, context);
-                    Navigator.of(context).pop();
                   }),
-              const Divider(thickness: 0.5),
-              TextButton(
-                  child: SizedBox(
-                      width: double.infinity, child: Text(localizations.addWhitelist, textAlign: TextAlign.center)),
+              const Divider(thickness: 0.5, height: 5),
+              BottomSheetItem(
+                  text: localizations.addWhitelist,
                   onPressed: () {
                     HostFilter.whitelist.add(hostAndPort.host);
                     configuration.flushConfig();
                     FlutterToastr.show(localizations.addSuccess, context);
-                    Navigator.of(context).pop();
                   }),
-              const Divider(thickness: 0.5),
-              TextButton(
-                  child: SizedBox(
-                      width: double.infinity, child: Text(localizations.deleteWhitelist, textAlign: TextAlign.center)),
+              const Divider(thickness: 0.5, height: 5),
+              BottomSheetItem(
+                  text: localizations.deleteWhitelist,
                   onPressed: () {
                     HostFilter.whitelist.remove(hostAndPort.host);
                     configuration.flushConfig();
                     FlutterToastr.show(localizations.deleteSuccess, context);
-                    Navigator.of(context).pop();
                   }),
-              const Divider(thickness: 0.5),
-              TextButton(
-                  child: SizedBox(
-                      width: double.infinity,
-                      child: Text(localizations.repeatDomainRequests, textAlign: TextAlign.center)),
+              const Divider(thickness: 0.5, height: 5),
+              BottomSheetItem(
+                  text: localizations.repeatDomainRequests,
                   onPressed: () {
-                    Navigator.of(context).pop();
                     repeatDomainRequests(hostAndPort);
                   }),
-              const Divider(thickness: 0.5),
-              TextButton(
-                  child:
-                      SizedBox(width: double.infinity, child: Text(localizations.delete, textAlign: TextAlign.center)),
+              const Divider(thickness: 0.5, height: 5),
+              BottomSheetItem(
+                  text: localizations.delete,
                   onPressed: () {
                     setState(() {
                       var requests = containerMap.remove(hostAndPort);
@@ -289,7 +298,6 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
                         widget.onRemove?.call(requests);
                       }
                       FlutterToastr.show(localizations.deleteSuccess, context);
-                      Navigator.of(context).pop();
                     });
                   }),
               Container(
@@ -298,12 +306,12 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
               ),
               TextButton(
                 child: Container(
-                    height: 50,
+                    height: 45,
                     width: double.infinity,
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(localizations.cancel, textAlign: TextAlign.center)),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(ctx).pop();
                 },
               ),
             ],

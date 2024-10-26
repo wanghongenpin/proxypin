@@ -99,6 +99,8 @@ class PictureInPictureManager: NSObject,AVPictureInPictureControllerDelegate {
     
         // 隐藏播放按钮、快进快退按钮
         pipController.setValue(1, forKey: "controlsStyle")
+        //点击回到app
+        //pipController.setValue(2, forKey: "controlsStyle")
     }
     
     

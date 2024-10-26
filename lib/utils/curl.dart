@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/utils/lang.dart';
 
 ///复制cURL请求
 String curlRequest(HttpRequest request) {

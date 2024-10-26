@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:network_proxy/network/util/cert/pkcs12.dart';
+import 'package:proxypin/network/util/cert/pkcs12.dart';
 
 void main() {
   File file = File('C:\\Users\\wanghongen\\Downloads\\new_key.p12');

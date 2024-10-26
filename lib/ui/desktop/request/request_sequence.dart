@@ -17,13 +17,13 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/ui/desktop/request/request.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/ui/desktop/request/request.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 ///请求序列 列表
 /// @author wanghongen
@@ -179,6 +179,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   clean() {
     setState(() {
       view.clear();
+      view.addAll(widget.container.source.reversed);
     });
   }
 }

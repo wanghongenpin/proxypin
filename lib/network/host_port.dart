@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
 
 /// 获取主机和端口
 HostAndPort getHostAndPort(HttpRequest request, {bool? ssl}) {

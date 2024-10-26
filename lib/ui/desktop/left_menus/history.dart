@@ -22,17 +22,17 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/storage/histories.dart';
-import 'package:network_proxy/ui/component/history_cache_time.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/har.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/component/history_cache_time.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../content/panel.dart';
 import '../request/list.dart';
@@ -168,6 +168,7 @@ class _HistoryListWidget extends StatefulWidget {
 class _HistoryListState extends State<_HistoryListWidget> {
   ///是否保存会话
   static bool _sessionSaved = false;
+  int selectIndex = -1;
 
   // 存储
   late HistoryStorage storage;
@@ -278,40 +279,43 @@ class _HistoryListState extends State<_HistoryListWidget> {
   //构建历史记录
   Widget buildItem(BuildContext rootContext, int index, HistoryItem item) {
     return GestureDetector(
-        onSecondaryTapDown: (details) => {
-              showContextMenu(rootContext, details.globalPosition, items: [
-                CustomPopupMenuItem(
-                    height: 35,
-                    child: Text(localizations.rename, style: const TextStyle(fontSize: 13)),
-                    onTap: () => renameHistory(storage, item)),
-                CustomPopupMenuItem(
-                    height: 35,
-                    child: Text(localizations.export, style: const TextStyle(fontSize: 13)),
-                    onTap: () => export(item)),
-                const PopupMenuDivider(height: 3),
-                CustomPopupMenuItem(
-                    height: 35,
-                    child: Text(localizations.repeatAllRequests, style: const TextStyle(fontSize: 13)),
-                    onTap: () async {
-                      var requests = (await storage.getRequests(item)).reversed;
-                      //重发所有请求
-                      _repeatAllRequests(requests.toList(), proxyServer,
-                          context: rootContext.mounted ? rootContext : null);
-                    }),
-                const PopupMenuDivider(height: 3),
-                CustomPopupMenuItem(
-                    height: 35,
-                    child: Text(localizations.delete, style: const TextStyle(fontSize: 13)),
-                    onTap: () {
-                      if (item == widget.historyTask.history) {
-                        widget.historyTask.cancelTask();
-                      }
-                      storage.removeHistory(index);
-                      FlutterToastr.show(localizations.deleteSuccess, context);
-                    }),
-              ])
-            },
+        onSecondaryTapDown: (details) {
+          setState(() {
+            selectIndex = index;
+          });
+          showContextMenu(rootContext, details.globalPosition, items: [
+            CustomPopupMenuItem(
+                height: 35,
+                child: Text(localizations.rename, style: const TextStyle(fontSize: 13)),
+                onTap: () => renameHistory(storage, item)),
+            CustomPopupMenuItem(
+                height: 35,
+                child: Text(localizations.export, style: const TextStyle(fontSize: 13)),
+                onTap: () => export(item)),
+            const PopupMenuDivider(height: 3),
+            CustomPopupMenuItem(
+                height: 35,
+                child: Text(localizations.repeatAllRequests, style: const TextStyle(fontSize: 13)),
+                onTap: () async {
+                  var requests = (await storage.getRequests(item)).reversed;
+                  //重发所有请求
+                  _repeatAllRequests(requests.toList(), proxyServer, context: rootContext.mounted ? rootContext : null);
+                }),
+            const PopupMenuDivider(height: 3),
+            CustomPopupMenuItem(
+                height: 35,
+                child: Text(localizations.delete, style: const TextStyle(fontSize: 13)),
+                onTap: () {
+                  if (item == widget.historyTask.history) {
+                    widget.historyTask.cancelTask();
+                  }
+                  storage.removeHistory(index);
+                  FlutterToastr.show(localizations.deleteSuccess, context);
+                }),
+          ]).whenComplete(() => setState(() => selectIndex = -1));
+        },
         child: ListTile(
+            selected: selectIndex == index,
             dense: true,
             title: Text(item.name),
             subtitle: Text(localizations.historySubtitle(item.requestLength, item.size)),

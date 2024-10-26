@@ -18,12 +18,12 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/http/body_reader.dart';
-import 'package:network_proxy/network/http/constants.dart';
-import 'package:network_proxy/network/http/h2/codec.dart';
-import 'package:network_proxy/network/http/http_parser.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/http/body_reader.dart';
+import 'package:proxypin/network/http/constants.dart';
+import 'package:proxypin/network/http/h2/codec.dart';
+import 'package:proxypin/network/http/http_parser.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
 
 import '../../utils/compress.dart';
 import 'http.dart';
@@ -156,8 +156,8 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T> {
     initialLine(builder, message);
 
     List<int>? body = message.body;
-    if (message.headers.isGzip) {
-      body = gzipEncode(body!);
+    if (message.headers.isGzip && body != null) {
+      body = gzipEncode(body);
     }
 
     //请求头

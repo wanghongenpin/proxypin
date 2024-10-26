@@ -6,13 +6,13 @@ cd ../build/linux/x64/release
 rm -rf package
 mkdir -p package/DEBIAN
 echo "Package: ProxyPin" >> package/DEBIAN/control
-echo "Version: 1.1.4" >> package/DEBIAN/control
+echo "Version: 1.1.5" >> package/DEBIAN/control
 echo "Priority: optional" >> package/DEBIAN/control
 echo "Architecture: amd64" >> package/DEBIAN/control
 echo "Depends: ca-certificates" >> package/DEBIAN/control
 echo "Section: utils" >> package/DEBIAN/control
 echo "Maintainer: wanghongenpin@gmail.com" >> package/DEBIAN/control
-echo "Homepage: https://github.com/wanghongenpin/network_proxy_flutter" >> package/DEBIAN/control
+echo "Homepage: https://github.com/wanghongenpin/proxypin" >> package/DEBIAN/control
 echo "Description: http/https Capture packets" >> package/DEBIAN/control
 echo "" >> package/DEBIAN/control
 mkdir -p package/usr/share/applications

@@ -14,23 +14,53 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 /// @author wanghongen
 /// 2024/1/2
-class Preference extends StatelessWidget {
+class Preference extends StatefulWidget {
   final Configuration configuration;
   final AppConfiguration appConfiguration;
 
   const Preference(this.appConfiguration, this.configuration, {super.key});
 
   @override
+  State<StatefulWidget> createState() => _PreferenceState();
+}
+
+class _PreferenceState extends State<Preference> {
+  late Configuration configuration;
+  late AppConfiguration appConfiguration;
+
+  final memoryCleanupController = TextEditingController();
+  final memoryCleanupList = [null, 512, 1024, 2048, 4096];
+
+  @override
+  void initState() {
+    super.initState();
+    configuration = widget.configuration;
+    appConfiguration = widget.appConfiguration;
+    if (!memoryCleanupList.contains(appConfiguration.memoryCleanupThreshold)) {
+      memoryCleanupController.text = appConfiguration.memoryCleanupThreshold.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    memoryCleanupController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
-    var titleMedium = Theme.of(context).textTheme.titleMedium;
+    var titleStyle = Theme.of(context).textTheme.titleSmall;
+    var subtitleStyle = TextStyle(fontSize: 12, color: Colors.grey);
 
     return AlertDialog(
         scrollable: true,
@@ -41,10 +71,10 @@ class Preference extends StatelessWidget {
           const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
         ]),
         content: SizedBox(
-            width: 300,
+            width: 400,
             child: Column(children: [
               Row(children: [
-                SizedBox(width: 100, child: Text("${localizations.language}: ", style: titleMedium)),
+                SizedBox(width: 100, child: Text("${localizations.language}: ", style: titleStyle)),
                 DropdownButton<Locale>(
                     value: appConfiguration.language,
                     onChanged: (Locale? value) => appConfiguration.language = value,
@@ -57,7 +87,7 @@ class Preference extends StatelessWidget {
               ]),
               //主题
               Row(children: [
-                SizedBox(width: 100, child: Text("${localizations.theme}: ", style: titleMedium)),
+                SizedBox(width: 100, child: Text("${localizations.theme}: ", style: titleStyle)),
                 DropdownButton<ThemeMode>(
                     value: appConfiguration.themeMode,
                     onChanged: (ThemeMode? value) => appConfiguration.themeMode = value!,
@@ -68,48 +98,33 @@ class Preference extends StatelessWidget {
                       DropdownMenuItem(value: ThemeMode.dark, child: Text(localizations.themeDark)),
                     ]),
               ]),
-
               Tooltip(
                   message: localizations.material3,
                   child: Row(
                     children: [
-                      Text("Material3: ", style: titleMedium),
-                      Expanded(
-                          child: Transform.scale(
-                              scale: 0.8,
-                              child: Switch(
-                                value: appConfiguration.useMaterial3,
-                                onChanged: (bool value) => appConfiguration.useMaterial3 = value,
-                              )))
+                      SizedBox(width: 100, child: Text("Material3: ", style: titleStyle)),
+                      Transform.scale(
+                          scale: 0.75,
+                          child: Switch(
+                            value: appConfiguration.useMaterial3,
+                            onChanged: (bool value) => appConfiguration.useMaterial3 = value,
+                          ))
                     ],
                   )),
               //主题颜色
               Row(children: [
                 SizedBox(
                     width: 120,
-                    child: Text("${localizations.themeColor}: ", style: titleMedium, textAlign: TextAlign.start)),
+                    child: Text("${localizations.themeColor}: ", style: titleStyle, textAlign: TextAlign.start)),
               ]),
               themeColor(context),
               const Divider(),
               ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(localizations.autoStartup),
-                  //默认是否启动
-                  subtitle: Text(localizations.autoStartupDescribe, style: const TextStyle(fontSize: 12)),
-                  trailing: SwitchWidget(
-                      scale: 0.8,
-                      value: configuration.startup,
-                      onChanged: (value) {
-                        configuration.startup = value;
-                        configuration.flushConfig();
-                      })),
-              const Divider(),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
                   title: Text(localizations.autoStartup), //默认是否启动
-                  subtitle: Text(localizations.autoStartupDescribe, style: const TextStyle(fontSize: 12)),
+                  subtitle: Text(localizations.autoStartupDescribe, style: subtitleStyle),
                   trailing: SwitchWidget(
-                      scale: 0.8,
+                      scale: 0.75,
                       value: configuration.startup,
                       onChanged: (value) {
                         configuration.startup = value;
@@ -118,17 +133,26 @@ class Preference extends StatelessWidget {
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(localizations.headerExpanded),
-                  subtitle: Text(localizations.headerExpandedSubtitle, style: const TextStyle(fontSize: 12)),
+                  subtitle: Text(localizations.headerExpandedSubtitle, style: subtitleStyle),
                   trailing: SwitchWidget(
-                      scale: 0.8,
+                      scale: 0.75,
                       value: appConfiguration.headerExpanded,
                       onChanged: (value) {
                         appConfiguration.headerExpanded = value;
                         appConfiguration.flushConfig();
-                      }))
+                      })),
+              SizedBox(height: 5),
+              ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(localizations.memoryCleanup),
+                  subtitle: Text(localizations.memoryCleanupSubtitle, style: subtitleStyle),
+                  trailing: memoryCleanup(context, localizations)),
+
+              SizedBox(height: 5),
             ])));
   }
 
+  ///主题颜色
   Widget themeColor(BuildContext context) {
     return Wrap(
       children: ThemeModel.colors.entries.map((pair) {
@@ -151,4 +175,67 @@ class Preference extends StatelessWidget {
       }).toList(),
     );
   }
+
+  bool memoryCleanupOpened = false;
+
+  ///内存清理
+  Widget memoryCleanup(BuildContext context, AppLocalizations localizations) {
+    try {
+      return DropdownButton<int>(
+          value: appConfiguration.memoryCleanupThreshold,
+          onTap: () {
+            memoryCleanupOpened = true;
+          },
+          onChanged: (val) {
+            memoryCleanupOpened = false;
+            setState(() {
+              appConfiguration.memoryCleanupThreshold = val;
+            });
+            appConfiguration.flushConfig();
+          },
+          underline: Container(),
+          items: [
+            DropdownMenuItem(value: null, child: Text(localizations.unlimited)),
+            const DropdownMenuItem(value: 512, child: Text("512M")),
+            const DropdownMenuItem(value: 1024, child: Text("1024M")),
+            const DropdownMenuItem(value: 2048, child: Text("2048M")),
+            const DropdownMenuItem(value: 4096, child: Text("4096M")),
+            DropdownMenuInputItem(
+                controller: memoryCleanupController,
+                child: Container(
+                    constraints: BoxConstraints(maxWidth: 65, minWidth: 35),
+                    child: TextField(
+                        controller: memoryCleanupController,
+                        onSubmitted: (value) {
+                          setState(() {});
+                          appConfiguration.memoryCleanupThreshold = int.tryParse(value);
+                          appConfiguration.flushConfig();
+
+                          if (memoryCleanupOpened) {
+                            memoryCleanupOpened = false;
+                            Navigator.pop(context);
+                            return;
+                          }
+                        },
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(5),
+                          FilteringTextInputFormatter.allow(RegExp("[0-9]"))
+                        ],
+                        decoration: InputDecoration(hintText: localizations.custom, suffixText: "M")))),
+          ]);
+    } catch (e) {
+      appConfiguration.memoryCleanupThreshold = null;
+      logger.e('memory button build error', error: e, stackTrace: StackTrace.current);
+      return const SizedBox();
+    }
+  }
+}
+
+class DropdownMenuInputItem extends DropdownMenuItem<int> {
+  final TextEditingController controller;
+
+  @override
+  int? get value => int.tryParse(controller.text) ?? 0;
+
+  const DropdownMenuInputItem({super.key, required this.controller, required super.child});
 }

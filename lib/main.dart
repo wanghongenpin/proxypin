@@ -19,15 +19,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/ui/component/chinese_font.dart';
-import 'package:network_proxy/ui/component/multi_window.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/ui/desktop/desktop.dart';
-import 'package:network_proxy/ui/desktop/window_listener.dart';
-import 'package:network_proxy/ui/mobile/mobile.dart';
-import 'package:network_proxy/utils/navigator.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/ui/component/chinese_font.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/desktop/desktop.dart';
+import 'package:proxypin/ui/desktop/window_listener.dart';
+import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/utils/navigator.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 ///主入口
@@ -64,6 +64,11 @@ void main(List<String> args) async {
       titleBarStyle: Platform.isMacOS ? TitleBarStyle.hidden : TitleBarStyle.normal);
 
   Offset? windowPosition = appConfiguration.windowPosition;
+
+  if (appConfiguration.themeMode != ThemeMode.system) {
+    windowManager.setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
+  }
+
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     if (windowPosition != null) {
       await windowManager.setPosition(windowPosition);

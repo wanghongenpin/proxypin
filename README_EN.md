@@ -14,7 +14,7 @@ and easy to use.
 * Others: Favorites, history, toolbox, etc.
 
 **Mac will prompt untrusted developers when first opened, you need to go to System Preferences-Security & Privacy-Allow any source.**
-Download： https://github.com/wanghongenpin/network_proxy_flutter/releases
+Download： https://github.com/wanghongenpin/proxypin/releases
 
 iOS App Store：https://apps.apple.com/app/proxypin/id6450932949
 
@@ -22,6 +22,5 @@ TG: https://t.me/proxypin_en
 
 **We will continue to improve the features and experience, as well as optimize the UI.**
 
-<img alt="image"  width="500px" height="400px" src="https://github.com/wanghongenpin/network-proxy-flutter/assets/24794200/67a2feb1-f1c3-4c0c-8737-5abe62c34794">.    <img alt="image"   height="500px" src="https://github.com/wanghongenpin/network_proxy_flutter/assets/24794200/1bb4b1ec-ec5c-44a7-add7-f0f94c8765b9">
-
+<img alt="image"  width="580px" height="420px"  src="https://github.com/user-attachments/assets/6c1345ab-c95c-415d-ac59-470c764b59a2">.<img alt="image"  height="500px" src="https://github.com/user-attachments/assets/3c5572b0-a9e5-497c-8b42-f935e836c164">
 

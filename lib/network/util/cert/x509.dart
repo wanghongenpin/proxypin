@@ -5,8 +5,8 @@ import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
 import 'package:crypto/crypto.dart';
-import 'package:network_proxy/network/util/cert/extension.dart';
-import 'package:network_proxy/network/util/cert/key_usage.dart' as x509;
+import 'package:proxypin/network/util/cert/extension.dart';
+import 'package:proxypin/network/util/cert/key_usage.dart' as x509;
 import 'package:pointycastle/asn1/unsupported_object_identifier_exception.dart';
 import 'package:pointycastle/pointycastle.dart';
 

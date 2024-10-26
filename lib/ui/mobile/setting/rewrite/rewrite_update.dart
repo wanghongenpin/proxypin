@@ -1,22 +1,41 @@
+/*
+ * Copyright 2023 Hongen Wang All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/text_field.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/lang.dart';
 
-class RewriteUpdateWidget extends StatefulWidget {
-  final String subtitle;
+class MobileRewriteUpdate extends StatefulWidget {
   final RuleType ruleType;
   final List<RewriteItem>? items;
+  final HttpRequest? request;
 
-  const RewriteUpdateWidget({super.key, required this.subtitle, required this.ruleType, this.items});
+  const MobileRewriteUpdate({super.key, required this.ruleType, this.items, required this.request});
 
   @override
-  State<RewriteUpdateWidget> createState() => _RewriteUpdateState();
+  State<MobileRewriteUpdate> createState() => RewriteUpdateState();
 }
 
-class _RewriteUpdateState extends State<RewriteUpdateWidget> {
+class RewriteUpdateState extends State<MobileRewriteUpdate> {
+  late RuleType ruleType;
   List<RewriteItem> items = [];
 
   AppLocalizations get i18n => AppLocalizations.of(context)!;
@@ -24,56 +43,52 @@ class _RewriteUpdateState extends State<RewriteUpdateWidget> {
   @override
   void initState() {
     super.initState();
-    if (widget.items?.isNotEmpty == true) {
-      items.addAll(widget.items!);
-      return;
+    initItems(widget.ruleType, widget.items);
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   add();
+    // });
+  }
+
+  ///初始化重写项
+  initItems(RuleType ruleType, List<RewriteItem>? items) {
+    this.ruleType = ruleType;
+    this.items.clear();
+    if (items != null) {
+      this.items.addAll(items);
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      add();
-    });
+  }
+
+  List<RewriteItem> getItems() {
+    return items;
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isCN = Localizations.localeOf(context).languageCode == "zh";
-    return Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(isCN ? widget.ruleType.label : widget.ruleType.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(items);
-                },
-                child: Text(i18n.done)),
-            const SizedBox(width: 10)
+    return ListView(
+      physics: ClampingScrollPhysics(),
+      children: [
+        Row(
+          children: [
+            SizedBox(
+                width: 260,
+                child: Text(i18n.requestRewriteRule,
+                    maxLines: 1, style: const TextStyle(fontSize: 13, color: Colors.grey))),
+            Expanded(
+                child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [IconButton(onPressed: add, icon: const Icon(Icons.add)), const SizedBox(width: 10)],
+            ))
           ],
         ),
-        body: Padding(
-            padding: const EdgeInsets.all(8),
-            child: ListView(
-              children: [
-                Row(
-                  children: [
-                    SizedBox(
-                        width: 260,
-                        child: Text(widget.subtitle,
-                            maxLines: 1, style: const TextStyle(fontSize: 13, color: Colors.grey))),
-                    Expanded(
-                        child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [IconButton(onPressed: add, icon: const Icon(Icons.add)), const SizedBox(width: 10)],
-                    ))
-                  ],
-                ),
-                UpdateList(items: items, ruleType: widget.ruleType),
-              ],
-            )));
+        UpdateList(items: items, ruleType: ruleType, request: widget.request),
+      ],
+    );
   }
 
   add() {
-    showDialog(context: context, builder: (context) => RewriteUpdateAddDialog(ruleType: widget.ruleType)).then((value) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (context) => RewriteUpdateEdit(ruleType: ruleType, request: widget.request)))
+        .then((value) {
       if (value != null) {
         setState(() {
           items.add(value);
@@ -83,20 +98,25 @@ class _RewriteUpdateState extends State<RewriteUpdateWidget> {
   }
 }
 
-class RewriteUpdateAddDialog extends StatefulWidget {
+class RewriteUpdateEdit extends StatefulWidget {
   final RewriteItem? item;
   final RuleType ruleType;
+  final HttpRequest? request;
 
-  const RewriteUpdateAddDialog({super.key, this.item, required this.ruleType});
+  const RewriteUpdateEdit({super.key, this.item, required this.ruleType, this.request});
 
   @override
-  State<RewriteUpdateAddDialog> createState() => _RewriteUpdateAddState();
+  State<RewriteUpdateEdit> createState() => _RewriteUpdateAddState();
 }
 
-class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
+class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   late RewriteType rewriteType;
   GlobalKey formKey = GlobalKey<FormState>();
   late RewriteItem rewriteItem;
+
+  var keyController = TextEditingController();
+  var valueController = TextEditingController();
+  var dataController = HighlightTextEditingController();
 
   AppLocalizations get i18n => AppLocalizations.of(context)!;
 
@@ -105,6 +125,21 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     super.initState();
     rewriteType = widget.item?.type ?? RewriteType.updateBody;
     rewriteItem = widget.item ?? RewriteItem(rewriteType, true);
+
+    keyController.text = rewriteItem.key ?? '';
+    valueController.text = rewriteItem.value ?? '';
+
+    initTestData();
+    keyController.addListener(onInputChangeMatch);
+    dataController.addListener(onInputChangeMatch);
+  }
+
+  @override
+  void dispose() {
+    keyController.dispose();
+    valueController.dispose();
+    dataController.dispose();
+    super.dispose();
   }
 
   @override
@@ -125,82 +160,163 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
 
     var typeList = widget.ruleType == RuleType.requestUpdate ? RewriteType.updateRequest : RewriteType.updateResponse;
     bool isCN = Localizations.localeOf(context).languageCode == "zh";
-    return AlertDialog(
-        title: Text(i18n.add,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500), textAlign: TextAlign.center),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(i18n.cancel)),
-          TextButton(
-              onPressed: () {
-                if (!(formKey.currentState as FormState).validate()) {
-                  FlutterToastr.show(i18n.cannotBeEmpty, context, position: FlutterToastr.center);
-                  return;
-                }
-                (formKey.currentState as FormState).save();
-                rewriteItem.type = rewriteType;
-                Navigator.of(context).pop(rewriteItem);
-              },
-              child: Text(i18n.confirm)),
-        ],
-        content: SizedBox(
-            width: 320,
-            height: 180,
-            child: Form(
-                key: formKey,
-                child: ListView(children: [
-                  Row(
-                    children: [
-                      Text(i18n.type),
-                      const SizedBox(width: 15),
-                      SizedBox(
-                          width: 140,
-                          child: DropdownButtonFormField<RewriteType>(
-                              value: rewriteType,
-                              focusColor: Colors.transparent,
-                              itemHeight: 48,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(10), isDense: true, border: InputBorder.none),
-                              items: typeList
-                                  .map((e) => DropdownMenuItem(
-                                      value: e,
-                                      child: Text(e.getDescribe(isCN),
-                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))))
-                                  .toList(),
-                              onChanged: (val) {
-                                setState(() {
-                                  rewriteType = val!;
-                                });
-                              })),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  textField(isUpdate ? i18n.match : i18n.name, rewriteItem.key, keyTips,
-                      required: !isDelete, onSaved: (val) => rewriteItem.key = val),
-                  const SizedBox(height: 15),
-                  textField(isUpdate ? i18n.replace : i18n.value, rewriteItem.value, valueTips,
-                      onSaved: (val) => rewriteItem.value = val),
-                ]))));
+    return Scaffold(
+        appBar: AppBar(
+            centerTitle: true,
+            title: Text(i18n.requestRewriteRule, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    if (!(formKey.currentState as FormState).validate()) {
+                      FlutterToastr.show(i18n.cannotBeEmpty, context, position: FlutterToastr.center);
+                      return;
+                    }
+                    (formKey.currentState as FormState).save();
+                    rewriteItem.key = keyController.text;
+                    rewriteItem.value = valueController.text;
+                    rewriteItem.type = rewriteType;
+                    Navigator.of(context).pop(rewriteItem);
+                  },
+                  child: Text(i18n.confirm)),
+              SizedBox(width: 5)
+            ]),
+        body: Form(
+            key: formKey,
+            child: ListView(padding: const EdgeInsets.all(10), children: [
+              Row(
+                children: [
+                  Text(i18n.type),
+                  const SizedBox(width: 15),
+                  SizedBox(
+                      width: 140,
+                      child: DropdownButtonFormField<RewriteType>(
+                          value: rewriteType,
+                          focusColor: Colors.transparent,
+                          itemHeight: 48,
+                          decoration: const InputDecoration(
+                              contentPadding: EdgeInsets.all(10), isDense: true, border: InputBorder.none),
+                          items: typeList
+                              .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e.getDescribe(isCN),
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))))
+                              .toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              rewriteType = val!;
+                              initTestData();
+                            });
+                          })),
+                ],
+              ),
+              const SizedBox(height: 15),
+              textField(isUpdate ? i18n.match : i18n.name, keyTips, controller: keyController, required: !isDelete),
+              const SizedBox(height: 15),
+              textField(isUpdate ? i18n.replace : i18n.value, valueTips, controller: valueController),
+              const SizedBox(height: 10),
+              Row(children: [
+                Align(alignment: Alignment.centerLeft, child: Text(i18n.testData, style: const TextStyle(fontSize: 14))),
+                const SizedBox(width: 10),
+                if (!isMatch) Text(i18n.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14))
+              ]),
+              const SizedBox(height: 5),
+              formField(i18n.enterMatchData, lines: 15, required: false, controller: dataController),
+            ])));
   }
 
-  Widget textField(String label, String? val, String hint, {bool required = false, FormFieldSetter<String>? onSaved}) {
+  initTestData() {
+    dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
+    bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
+
+    valueController.removeListener(onInputChangeMatch);
+    if (isRemove) {
+      valueController.addListener(onInputChangeMatch);
+    }
+
+    if (widget.request == null) return;
+
+    if (rewriteType == RewriteType.updateBody) {
+      dataController.text = (widget.ruleType == RuleType.requestUpdate
+              ? widget.request?.bodyAsString
+              : widget.request?.response?.bodyAsString) ??
+          '';
+      return;
+    }
+
+    if (rewriteType == RewriteType.updateQueryParam || rewriteType == RewriteType.removeQueryParam) {
+      dataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
+      return;
+    }
+
+    if (rewriteType == RewriteType.updateHeader || rewriteType == RewriteType.removeHeader) {
+      dataController.text = widget.request?.headers.toRawHeaders() ?? '';
+      return;
+    }
+
+    dataController.clear();
+  }
+
+  bool onMatch = false; //是否正在匹配
+  bool isMatch = true;
+
+  onInputChangeMatch() {
+    if (onMatch || dataController.highlightEnabled == false) {
+      return;
+    }
+    onMatch = true;
+
+    //高亮显示
+    Future.delayed(const Duration(milliseconds: 500), () {
+      onMatch = false;
+      if (dataController.text.isEmpty) {
+        if (isMatch) return;
+        setState(() {
+          isMatch = true;
+        });
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
+        String key = keyController.text;
+        if (isRemove && key.isNotEmpty) {
+          if (rewriteType == RewriteType.removeHeader) {
+            key = '$key: ${valueController.text}';
+          } else {
+            key = '$key=${valueController.text}';
+          }
+        }
+
+        var match = dataController.highlight(key, caseSensitive: rewriteType != RewriteType.updateHeader);
+        isMatch = match;
+      });
+    });
+  }
+
+  Widget textField(String label, String hint, {bool required = false, int? lines, TextEditingController? controller}) {
     return Row(children: [
       SizedBox(width: 55, child: Text(label)),
-      Expanded(
-          child: TextFormField(
-        initialValue: val,
-        style: const TextStyle(fontSize: 14),
-        validator: (val) => val?.isNotEmpty == true || !required ? null : "",
-        onSaved: onSaved,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            contentPadding: const EdgeInsets.all(10),
-            errorStyle: const TextStyle(height: 0, fontSize: 0),
-            focusedBorder: focusedBorder(),
-            isDense: true,
-            border: const OutlineInputBorder()),
-      ))
+      Expanded(child: formField(hint, required: required, lines: lines, controller: controller))
     ]);
+  }
+
+  Widget formField(String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(fontSize: 14),
+      minLines: lines ?? 1,
+      maxLines: lines ?? 3,
+      validator: (val) => val?.isNotEmpty == true || !required ? null : "",
+      decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          contentPadding: const EdgeInsets.all(10),
+          errorStyle: const TextStyle(height: 0, fontSize: 0),
+          focusedBorder: focusedBorder(),
+          isDense: true,
+          border: const OutlineInputBorder()),
+    );
   }
 
   InputBorder focusedBorder() {
@@ -211,8 +327,9 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
 class UpdateList extends StatefulWidget {
   final List<RewriteItem> items;
   final RuleType ruleType;
+  final HttpRequest? request;
 
-  const UpdateList({super.key, required this.items, required this.ruleType});
+  const UpdateList({super.key, required this.items, required this.ruleType, this.request});
 
   @override
   State<UpdateList> createState() => _UpdateListState();
@@ -230,11 +347,8 @@ class _UpdateListState extends State<UpdateList> {
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.only(top: 10),
-        height: 320,
-        width: 550,
         decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
-        child: SingleChildScrollView(
-            child: Column(children: [
+        child: Column(children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
@@ -246,7 +360,7 @@ class _UpdateListState extends State<UpdateList> {
           ),
           const Divider(thickness: 0.5),
           Column(children: rows(widget.items))
-        ])));
+        ]));
   }
 
   int selected = -1;
@@ -259,9 +373,11 @@ class _UpdateListState extends State<UpdateList> {
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
           hoverColor: primaryColor.withOpacity(0.3),
-          onTap: () => showDialog(
-                      context: context,
-                      builder: (context) => RewriteUpdateAddDialog(item: list[index], ruleType: widget.ruleType))
+          onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              RewriteUpdateEdit(item: list[index], ruleType: widget.ruleType, request: widget.request)))
                   .then((value) {
                 if (value != null) setState(() {});
               }),
@@ -318,12 +434,14 @@ class _UpdateListState extends State<UpdateList> {
           return Wrap(alignment: WrapAlignment.center, children: [
             BottomSheetItem(
                 text: i18n.modify,
-                onPressed: () async {
-                  showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (BuildContext context) =>
-                          RewriteUpdateAddDialog(item: widget.items[index], ruleType: widget.ruleType)).then((value) {
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => RewriteUpdateEdit(
+                              item: widget.items[index],
+                              ruleType: widget.ruleType,
+                              request: widget.request))).then((value) {
                     if (value != null) {
                       setState(() {});
                     }

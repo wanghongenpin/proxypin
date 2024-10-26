@@ -8,10 +8,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:network_proxy/main.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/ui/desktop/desktop.dart';
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/main.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/ui/desktop/desktop.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {

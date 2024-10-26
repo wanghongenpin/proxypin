@@ -15,6 +15,7 @@
  */
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:date_format/date_format.dart';
 import 'package:file_selector/file_selector.dart';
@@ -22,19 +23,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/storage/histories.dart';
-import 'package:network_proxy/ui/component/history_cache_time.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/mobile/request/list.dart';
-import 'package:network_proxy/ui/mobile/request/search.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/component/history_cache_time.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/request/list.dart';
+import 'package:proxypin/ui/mobile/request/search.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../utils/har.dart';
@@ -76,6 +77,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   ///是否保存会话
   static bool _sessionSaved = false;
   late Configuration configuration;
+  var storageInstance = HistoryStorage.instance;
 
   @override
   void initState() {
@@ -87,7 +89,7 @@ class _MobileHistoryState extends State<MobileHistory> {
 
   @override
   Widget build(BuildContext context) {
-    return futureWidget(HistoryStorage.instance, (storage) {
+    return futureWidget(storageInstance, (storage) {
       List<Widget> children = [];
 
       if (widget.container.isNotEmpty == true && !_sessionSaved && widget.historyTask.history == null) {
@@ -179,9 +181,12 @@ class _MobileHistoryState extends State<MobileHistory> {
 
   //构建历史记录
   Widget buildItem(HistoryStorage storage, int index, HistoryItem item) {
-    return InkWell(
-        onTapDown: (detail) async {
-          HapticFeedback.heavyImpact();
+    return GestureDetector(
+        onLongPressStart: (detail) async {
+          if (Platform.isAndroid) HapticFeedback.mediumImpact();
+          setState(() {
+            selectIndex = index;
+          });
           showContextMenu(context, detail.globalPosition.translate(-50, index == 0 ? -100 : 100), items: [
             PopupMenuItem(child: Text(localizations.rename), onTap: () => renameHistory(storage, item)),
             PopupMenuItem(child: Text(localizations.share), onTap: () => export(storage, item)),
@@ -195,7 +200,11 @@ class _MobileHistoryState extends State<MobileHistory> {
                 }),
             const PopupMenuDivider(height: 0.3),
             PopupMenuItem(child: Text(localizations.delete), onTap: () => deleteHistory(storage, index))
-          ]);
+          ]).whenComplete(() {
+            setState(() {
+              selectIndex = -1;
+            });
+          });
         },
         child: ListTile(
           dense: true,

@@ -17,13 +17,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/native/pip.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/utils/ip.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/native/pip.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/utils/ip.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 /// Picture in Picture Window
 class PictureInPictureWindow extends StatefulWidget {
@@ -100,11 +100,6 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
   @override
   void initState() {
     super.initState();
-    if (Platform.isIOS) {
-      AppConfiguration.current?.pipEnabled.addListener(() {
-        setState(() {});
-      });
-    }
 
     AppConfiguration.current?.pipIcon.addListener(() {
       setState(() {});
@@ -113,8 +108,7 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isIOS && AppConfiguration.current?.pipEnabled.value == false) return const SizedBox();
-    if (Platform.isAndroid && AppConfiguration.current?.pipIcon.value != true) return const SizedBox();
+    if (AppConfiguration.current?.pipIcon.value != true) return const SizedBox();
 
     size ??= MediaQuery.sizeOf(context);
     if (size == null || size!.isEmpty) {

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'package:network_proxy/network/http/content_type.dart';
-import 'package:network_proxy/network/http/http.dart';
+import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/network/http/http.dart';
 
 /// @author wanghongen
 /// 2023/8/4

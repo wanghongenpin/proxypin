@@ -18,7 +18,7 @@
 
 **Mac首次打开会提示不受信任开发者，需要到系统偏好设置-安全性与隐私-允许任何来源。**
 
-国内下载地址： https://gitee.com/wanghongenpin/network-proxy-flutter/releases
+国内下载地址： https://gitee.com/wanghongenpin/proxypin/releases
 
 iOS AppStore下载地址： https://apps.apple.com/app/proxypin/id6450932949      
 
@@ -26,6 +26,5 @@ TG: https://t.me/proxypin_tg
 
 **接下来会持续完善功能和体验，UI优化。**
 
-<img alt="image"  width="500px" height="400px" src="https://github.com/wanghongenpin/network-proxy-flutter/assets/24794200/67a2feb1-f1c3-4c0c-8737-5abe62c34794">.    <img alt="image"   height="500px" src="https://github.com/wanghongenpin/network_proxy_flutter/assets/24794200/1bb4b1ec-ec5c-44a7-add7-f0f94c8765b9">
-
+<img alt="image"  width="580px" height="420px"  src="https://github.com/user-attachments/assets/80f30d64-f2b5-473c-98f5-bae50b309278">.<img alt="image"  height="500px" src="https://github.com/user-attachments/assets/3c5572b0-a9e5-497c-8b42-f935e836c164">
 

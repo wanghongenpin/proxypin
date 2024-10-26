@@ -17,9 +17,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:network_proxy/native/installed_apps.dart';
-import 'package:network_proxy/native/process_info.dart';
-import 'package:network_proxy/network/util/socket_address.dart';
+import 'package:proxypin/native/installed_apps.dart';
+import 'package:proxypin/native/process_info.dart';
+import 'package:proxypin/network/util/socket_address.dart';
 import 'package:win32audio/win32audio.dart';
 
 import 'cache.dart';

@@ -17,11 +17,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/network.dart';
-import 'package:network_proxy/network/util/system_proxy.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/network.dart';
+import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxy_manager/proxy_manager.dart';
 
 import 'channel.dart';

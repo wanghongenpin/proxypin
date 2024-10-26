@@ -1,4 +1,20 @@
-﻿import 'dart:convert';
+﻿/*
+ * Copyright 2023 Hongen Wang
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -6,23 +22,25 @@ import 'package:file_picker/file_picker.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/util/lists.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/cert_hash.dart';
-import 'package:network_proxy/ui/component/device.dart';
-import 'package:network_proxy/ui/component/encoder.dart';
-import 'package:network_proxy/ui/component/js_run.dart';
-import 'package:network_proxy/ui/component/qr_code_page.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/content/body.dart';
-import 'package:network_proxy/ui/desktop/request/request_editor.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/request_rewrite.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/script.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/lists.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/cert_hash.dart';
+import 'package:proxypin/ui/component/device.dart';
+import 'package:proxypin/ui/component/encoder.dart';
+import 'package:proxypin/ui/component/js_run.dart';
+import 'package:proxypin/ui/component/qr_code_page.dart';
+import 'package:proxypin/ui/component/regexp.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/content/body.dart';
+import 'package:proxypin/ui/desktop/request/request_editor.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/request_rewrite.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
@@ -60,7 +78,7 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   //请求重写
   if (argument['name'] == 'RequestRewriteWidget') {
     return futureWidget(
-        RequestRewrites.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
+        RequestRewriteManager.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
   }
 
   if (argument['name'] == 'QrCodePage') {
@@ -71,15 +89,17 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
     return CertHashPage();
   }
 
-  //脚本日志
-  if (argument['name'] == 'ScriptConsoleWidget') {
-    return ScriptConsoleWidget(windowId: windowId);
-  }
-
   if (argument['name'] == 'JavaScript') {
     return const JavaScript();
   }
 
+  if (argument['name'] == 'RegExpPage') {
+    return const RegExpPage();
+  }
+  //脚本日志
+  if (argument['name'] == 'ScriptConsoleWidget') {
+    return ScriptConsoleWidget(windowId: windowId);
+  }
   return const SizedBox();
 }
 
@@ -108,7 +128,8 @@ class MultiWindow {
     });
   }
 
-  static Future<WindowController> openWindow(String title, String widgetName) async {
+  static Future<WindowController> openWindow(String title, String widgetName,
+      {Size size = const Size(800, 680)}) async {
     var ratio = 1.0;
     if (Platform.isWindows) {
       ratio = WindowManager.instance.getDevicePixelRatio();
@@ -119,7 +140,7 @@ class MultiWindow {
     ));
     window.setTitle(title);
     window
-      ..setFrame(const Offset(50, -10) & Size(800 * ratio, 680 * ratio))
+      ..setFrame(const Offset(50, -10) & Size(size.width * ratio, size.height * ratio))
       ..center();
     window.show();
 
@@ -129,7 +150,7 @@ class MultiWindow {
   static bool _refreshRewrite = false;
 
   static Future<void> _handleRefreshRewrite(Operation operation, Map<dynamic, dynamic> arguments) async {
-    RequestRewrites requestRewrites = await RequestRewrites.instance;
+    RequestRewriteManager requestRewrites = await RequestRewriteManager.instance;
 
     switch (operation) {
       case Operation.add:
@@ -208,10 +229,10 @@ void registerMethodHandler() {
 
     if (call.method == 'openFile') {
       List<String> extensions =
-      call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
+          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
 
       XTypeGroup typeGroup =
-      XTypeGroup(extensions: extensions, uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
+          XTypeGroup(extensions: extensions, uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
       final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
       if (Platform.isWindows) windowManager.blur();
       return file?.path;
@@ -219,7 +240,7 @@ void registerMethodHandler() {
 
     if (call.method == 'pickFile') {
       List<String> extensions =
-      call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
+          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
 
       var file =
           (await FilePicker.platform.pickFiles(allowedExtensions: extensions, type: FileType.custom))?.files.single;
@@ -264,43 +285,6 @@ encodeWindow(EncoderType type, BuildContext context, [String? text]) async {
     ..setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio))
     ..center()
     ..show();
-}
-
-///打开脚本窗口
-openScriptWindow() async {
-  var ratio = 1.0;
-  if (Platform.isWindows) {
-    ratio = WindowManager.instance.getDevicePixelRatio();
-  }
-  registerMethodHandler();
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'ScriptWidget'},
-  ));
-
-  // window.setTitle('script');
-  window.setTitle('Script');
-  window
-    ..setFrame(const Offset(30, 0) & Size(800 * ratio, 690 * ratio))
-    ..center()
-    ..show();
-}
-
-///打开请求重写窗口
-openRequestRewriteWindow() async {
-  var ratio = 1.0;
-  if (Platform.isWindows) {
-    ratio = WindowManager.instance.getDevicePixelRatio();
-  }
-  registerMethodHandler();
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'RequestRewriteWidget'},
-  ));
-  // window.setTitle('请求重写');
-  window.setTitle('Request Rewrite');
-  window
-    ..setFrame(const Offset(50, 0) & Size(800 * ratio, 650 * ratio))
-    ..center();
-  window.show();
 }
 
 openScriptConsoleWindow() async {

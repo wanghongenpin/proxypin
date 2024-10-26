@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/components/request_block_manager.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/request_block_manager.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/lang.dart';
 
 class MobileRequestBlock extends StatefulWidget {
   final RequestBlockManager requestBlockManager;

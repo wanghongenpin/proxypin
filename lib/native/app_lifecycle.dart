@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:network_proxy/network/util/logger.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 abstract interface class LifecycleListener {
   void onUserLeaveHint() {}

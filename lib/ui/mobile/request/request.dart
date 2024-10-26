@@ -20,20 +20,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/network/util/cache.dart';
-import 'package:network_proxy/storage/favorites.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/content/panel.dart';
-import 'package:network_proxy/ui/mobile/request/repeat.dart';
-import 'package:network_proxy/ui/mobile/request/request_editor.dart';
-import 'package:network_proxy/ui/mobile/widgets/highlight.dart';
-import 'package:network_proxy/utils/curl.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/navigator.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/util/cache.dart';
+import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/content/panel.dart';
+import 'package:proxypin/ui/mobile/request/repeat.dart';
+import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
+import 'package:proxypin/ui/mobile/setting/script.dart';
+import 'package:proxypin/ui/mobile/widgets/highlight.dart';
+import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/navigator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 ///请求行
@@ -64,6 +70,7 @@ class RequestRowState extends State<RequestRow> {
   late HttpRequest request;
   HttpResponse? response;
   bool selected = false;
+  Color? highlightColor; //高亮颜色
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -80,9 +87,21 @@ class RequestRowState extends State<RequestRow> {
     super.initState();
   }
 
+  Color? color(String url) {
+    if (highlightColor != null) {
+      return highlightColor;
+    }
+
+    return KeywordHighlight.getHighlightColor(url);
+  }
+
+  BuildContext getContext() => mounted ? super.context : NavigatorHelper().context;
+
+  BuildContext get availableContext => getContext();
+
   @override
   Widget build(BuildContext context) {
-    String url = widget.displayDomain ? request.requestUrl : request.path();
+    String url = widget.displayDomain ? request.requestUrl : request.path;
 
     var title = Strings.autoLineString('${request.method.name} $url');
 
@@ -92,35 +111,37 @@ class RequestRowState extends State<RequestRow> {
 
     var subTitle = '$time - [${response?.status.code ?? ''}] $contentType $packagesSize ${response?.costTime() ?? ''}';
 
-    var highlightColor = KeywordHighlight.getHighlightColor(url);
+    var highlightColor = color(url);
 
-    return ListTile(
-        visualDensity: const VisualDensity(vertical: -4),
-        minLeadingWidth: 5,
-        selected: selected,
-        textColor: highlightColor,
-        selectedColor: highlightColor,
-        leading: appIcon(),
-        title: Text(title, overflow: TextOverflow.ellipsis, maxLines: 2, style: const TextStyle(fontSize: 14)),
-        subtitle: Text.rich(
-            maxLines: 1,
-            TextSpan(children: [
-              TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
-              TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            ])),
-        trailing: getIcon(response),
-        contentPadding:
-            Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
-        onLongPress: menu,
-        onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-            return NetworkTabController(
-                proxyServer: widget.proxyServer,
-                httpRequest: request,
-                httpResponse: response,
-                title: Text(localizations.captureDetail, style: const TextStyle(fontSize: 16)));
-          }));
-        });
+    return GestureDetector(
+        onLongPressStart: menu,
+        child: ListTile(
+          visualDensity: const VisualDensity(vertical: -4),
+          minLeadingWidth: 5,
+          selected: selected,
+          textColor: highlightColor,
+          selectedColor: highlightColor,
+          leading: appIcon(),
+          title: Text(title, overflow: TextOverflow.ellipsis, maxLines: 2, style: const TextStyle(fontSize: 14)),
+          subtitle: Text.rich(
+              maxLines: 1,
+              TextSpan(children: [
+                TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
+                TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              ])),
+          trailing: getIcon(response),
+          contentPadding:
+              Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
+          onTap: () {
+            Navigator.of(getContext()).push(MaterialPageRoute(builder: (context) {
+              return NetworkTabController(
+                  proxyServer: widget.proxyServer,
+                  httpRequest: request,
+                  httpResponse: response,
+                  title: Text(localizations.captureDetail, style: const TextStyle(fontSize: 16)));
+            }));
+          },
+        ));
   }
 
   Widget? appIcon() {
@@ -149,94 +170,170 @@ class RequestRowState extends State<RequestRow> {
   }
 
   ///菜单
-  menu() {
+  menu(details) {
     setState(() {
       selected = true;
     });
 
-    showModalBottomSheet(
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(10))),
-      context: context,
-      isScrollControlled: true,
-      enableDrag: true,
-      builder: (ctx) {
-        return Wrap(alignment: WrapAlignment.center, children: [
-          menuCopyItem(localizations.copyUrl, () => widget.request.requestUrl),
-          const Divider(thickness: 0.5, height: 5),
-          menuCopyItem(localizations.copyCurl, () => curlRequest(widget.request)),
-          const Divider(thickness: 0.5, height: 5),
-          TextButton(
-              child: SizedBox(width: double.infinity, child: Text(localizations.repeat, textAlign: TextAlign.center)),
-              onPressed: () {
-                onRepeat(widget.request);
-                Navigator.maybePop(context);
-              }),
-          const Divider(thickness: 0.5, height: 5),
-          TextButton(
-              child: SizedBox(
-                  width: double.infinity, child: Text(localizations.customRepeat, textAlign: TextAlign.center)),
-              onPressed: () => showCustomRepeat(widget.request)),
-          const Divider(thickness: 0.5, height: 5),
-          TextButton(
-              child:
-                  SizedBox(width: double.infinity, child: Text(localizations.editRequest, textAlign: TextAlign.center)),
-              onPressed: () {
-                Navigator.maybePop(context);
-                var pageRoute = MaterialPageRoute(
-                    builder: (context) =>
-                        MobileRequestEditor(request: widget.request, proxyServer: widget.proxyServer));
-                if (mounted) {
-                  Navigator.push(context, pageRoute);
-                } else {
-                  NavigatorHelper.push(pageRoute);
-                }
-              }),
-          const Divider(thickness: 0.5, height: 5),
-          TextButton(
-              child: SizedBox(width: double.infinity, child: Text(localizations.favorite, textAlign: TextAlign.center)),
-              onPressed: () {
-                FavoriteStorage.addFavorite(widget.request);
-                FlutterToastr.show(localizations.addSuccess, context);
-                Navigator.maybePop(context);
-              }),
-          const Divider(thickness: 0.5, height: 5),
-          TextButton(
-              child: SizedBox(width: double.infinity, child: Text(localizations.delete, textAlign: TextAlign.center)),
-              onPressed: () {
-                widget.onRemove?.call(request);
-                FlutterToastr.show(localizations.deleteSuccess, context);
-                Navigator.maybePop(context);
-              }),
-          Container(color: Theme.of(context).hoverColor, height: 8),
-          TextButton(
-            child: Container(
-                height: 45,
-                width: double.infinity,
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(localizations.cancel, textAlign: TextAlign.center)),
-            onPressed: () {
-              Navigator.maybePop(context);
-            },
-          ),
-        ]);
-      },
-    ).then((value) {
+    var globalPosition = details.globalPosition;
+    MediaQueryData mediaQuery = MediaQuery.of(context);
+    var position = RelativeRect.fromLTRB(globalPosition.dx, globalPosition.dy, globalPosition.dx, globalPosition.dy);
+    // Trigger haptic feedback
+    if (Platform.isAndroid) HapticFeedback.mediumImpact();
+
+    showMenu(
+        context: context,
+        constraints: BoxConstraints(maxWidth: mediaQuery.size.width * 0.88),
+        position: position,
+        items: [
+          //复制url
+          PopupMenuContainer(
+              child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                    padding: EdgeInsets.only(left: 20, top: 5),
+                    child: Text(localizations.selectAction, style: Theme.of(context).textTheme.bodyLarge)),
+              ),
+              //copy
+              menuItem(
+                left: itemButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: request.requestUrl)).then((value) {
+                        FlutterToastr.show(localizations.copied, getContext());
+                        Navigator.maybePop(getContext());
+                      });
+                    },
+                    label: localizations.copyUrl,
+                    icon: Icons.link,
+                    iconSize: 22),
+                right: itemButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: curlRequest(request))).then((value) {
+                        FlutterToastr.show(localizations.copied, getContext());
+                        Navigator.maybePop(getContext());
+                      });
+                    },
+                    label: localizations.copyCurl,
+                    icon: Icons.code),
+              ),
+              //repeat
+              menuItem(
+                left: itemButton(
+                    onPressed: () {
+                      onRepeat(request);
+                      Navigator.maybePop(getContext());
+                    },
+                    label: localizations.repeat,
+                    icon: Icons.repeat_one),
+                right: itemButton(
+                    onPressed: () => showCustomRepeat(request), label: localizations.customRepeat, icon: Icons.repeat),
+              ),
+              //favorite and edit
+              menuItem(
+                left: itemButton(
+                    onPressed: () {
+                      FavoriteStorage.addFavorite(widget.request);
+                      FlutterToastr.show(localizations.addSuccess, availableContext);
+                      Navigator.maybePop(availableContext);
+                    },
+                    label: localizations.favorite,
+                    icon: Icons.favorite_outline),
+                right: itemButton(
+                    onPressed: () async {
+                      await Navigator.maybePop(availableContext);
+
+                      var pageRoute = MaterialPageRoute(
+                          builder: (context) =>
+                              MobileRequestEditor(request: widget.request, proxyServer: widget.proxyServer));
+                      Navigator.push(getContext(), pageRoute);
+                    },
+                    label: localizations.editRequest,
+                    icon: Icons.replay_outlined),
+              ),
+              //script and rewrite
+              menuItem(
+                left: itemButton(
+                    onPressed: () async {
+                      Navigator.maybePop(availableContext);
+
+                      var scriptManager = await ScriptManager.instance;
+                      var url = request.domainPath;
+                      var scriptItem = scriptManager.list.firstWhereOrNull((it) => it.url == url);
+                      String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
+
+                      var pageRoute = MaterialPageRoute(
+                          builder: (context) =>
+                              ScriptEdit(scriptItem: scriptItem, script: script, url: scriptItem?.url ?? url));
+
+                      Navigator.push(getContext(), pageRoute);
+                    },
+                    label: localizations.script,
+                    icon: Icons.javascript_outlined),
+                right: itemButton(
+                    onPressed: () async {
+                      Navigator.maybePop(availableContext);
+                      bool isRequest = response == null;
+                      var requestRewrites = await RequestRewriteManager.instance;
+
+                      var ruleType = isRequest ? RuleType.requestReplace : RuleType.responseReplace;
+                      var rule = requestRewrites.getRequestRewriteRule(request, ruleType);
+
+                      var rewriteItems = await requestRewrites.getRewriteItems(rule);
+
+                      var pageRoute = MaterialPageRoute(
+                          builder: (_) => RewriteRule(rule: rule, items: rewriteItems, request: request));
+                      var context = availableContext;
+                      if (context.mounted) Navigator.push(context, pageRoute);
+                    },
+                    label: localizations.requestRewrite,
+                    icon: Icons.edit_outlined),
+              ),
+              menuItem(
+                left: itemButton(
+                    onPressed: () {
+                      highlightColor = Theme.of(availableContext).colorScheme.primary;
+                      Navigator.maybePop(availableContext);
+                    },
+                    label: localizations.highlight,
+                    icon: Icons.highlight_outlined),
+                right: itemButton(
+                    onPressed: () {
+                      highlightColor = Colors.grey;
+                      Navigator.maybePop(availableContext);
+                    },
+                    label: localizations.markRead,
+                    icon: Icons.mark_chat_read_outlined),
+              ),
+              SizedBox(height: 2),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                itemButton(
+                    onPressed: () {
+                      widget.onRemove?.call(request);
+                      FlutterToastr.show(localizations.deleteSuccess, availableContext);
+                      Navigator.maybePop(availableContext);
+                    },
+                    label: localizations.delete,
+                    icon: Icons.delete_outline),
+                SizedBox(width: 15),
+              ]),
+            ],
+          )),
+        ]).then((value) {
       selected = false;
       if (mounted) setState(() {});
     });
   }
 
   //显示高级重发
-  showCustomRepeat(HttpRequest request) {
-    Navigator.maybePop(context);
+  showCustomRepeat(HttpRequest request) async {
+    await Navigator.maybePop(availableContext);
     var pageRoute = MaterialPageRoute(
         builder: (context) => futureWidget(SharedPreferences.getInstance(),
             (prefs) => MobileCustomRepeat(onRepeat: () => onRepeat(request), prefs: prefs)));
-    if (mounted) {
-      Navigator.push(context, pageRoute);
-    } else {
-      NavigatorHelper.push(pageRoute);
-    }
+
+    Navigator.push(getContext(), pageRoute);
   }
 
   onRepeat(HttpRequest request) {
@@ -244,21 +341,25 @@ class RequestRowState extends State<RequestRow> {
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
 
-    if (mounted) {
-      FlutterToastr.show(localizations.reSendRequest, context);
-    }
+    FlutterToastr.show(localizations.reSendRequest, availableContext);
   }
 
-  Widget menuCopyItem(String title, String Function() callback) {
-    return TextButton(
-        child: SizedBox(width: double.infinity, child: Text(title, textAlign: TextAlign.center)),
-        onPressed: () {
-          Clipboard.setData(ClipboardData(text: callback.call())).then((value) {
-            if (mounted) {
-              FlutterToastr.show(localizations.copied, context);
-              Navigator.maybePop(context);
-            }
-          });
-        });
+  Widget itemButton(
+      {required String label, required IconData icon, required Function() onPressed, double iconSize = 20}) {
+    var theme = Theme.of(context);
+    var style = theme.textTheme.bodyMedium;
+    return TextButton.icon(
+        onPressed: onPressed,
+        label: Text(label, style: style),
+        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withOpacity(0.65)));
+  }
+
+  Widget menuItem({required Widget left, required Widget right}) {
+    return Row(
+      children: [
+        SizedBox(width: 130, child: Align(alignment: Alignment.centerLeft, child: left)),
+        Expanded(child: Align(alignment: Alignment.centerLeft, child: right))
+      ],
+    );
   }
 }

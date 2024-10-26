@@ -52,7 +52,7 @@ class QeCodeScanView extends StatefulWidget {
 }
 
 class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateMixin {
-  final int animationTime = 1500;
+  final int animationTime = 2000;
   QrReaderViewController? _controller;
   AnimationController? _animationController;
 
@@ -96,22 +96,21 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
       ..addStatusListener((state) {
         if (!mounted) {
           stop();
-
           return;
         }
 
         if (state == AnimationStatus.completed) {
           Future.delayed(Duration(seconds: 1), () {
-            _animationController?.reverse(from: 1.5);
+            _animationController?.reverse();
           });
         } else if (state == AnimationStatus.dismissed) {
           Future.delayed(Duration(seconds: 1), () {
-            _animationController?.forward(from: 1.5);
+            _animationController?.forward();
           });
         }
       });
 
-    _animationController?.forward(from: 0.0);
+    _animationController?.forward();
   }
 
   void stop() {
@@ -132,10 +131,12 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     setState(() {});
   }
 
-  Future<bool> setFlashlight() async {
-    openFlashlight = await _controller?.setFlashlight() ?? false;
-    setState(() {});
-    return openFlashlight;
+  setFlashlight() async {
+    if (!isScan) return false;
+    _controller?.setFlashlight();
+    setState(() {
+      openFlashlight = !openFlashlight;
+    });
   }
 
   scanImage(String path) {

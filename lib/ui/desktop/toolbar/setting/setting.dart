@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hongen Wang
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/request_block_manager.dart';
-import 'package:network_proxy/network/util/system_proxy.dart';
-import 'package:network_proxy/ui/component/multi_window.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/external_proxy.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/request_block.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/request_block_manager.dart';
+import 'package:proxypin/network/util/system_proxy.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/external_proxy.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/request_block.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'filter.dart';
@@ -71,9 +71,10 @@ class _SettingState extends State<Setting> {
         item(localizations.domainFilter, onPressed: hostFilter),
         item(localizations.requestRewrite, onPressed: requestRewrite),
         item(localizations.requestBlock, onPressed: showRequestBlock),
-        item(localizations.script, onPressed: () => openScriptWindow()),
+        item(localizations.script,
+            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 700))),
         item(localizations.externalProxy, onPressed: setExternalProxy),
-        item("Github", onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/network_proxy_flutter"))),
+        item("Github", onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin"))),
       ],
     );
   }
@@ -100,7 +101,7 @@ class _SettingState extends State<Setting> {
   ///请求重写Dialog
   void requestRewrite() async {
     if (!mounted) return;
-    openRequestRewriteWindow();
+    MultiWindow.openWindow(localizations.requestRewrite, 'RequestRewriteWidget', size: const Size(800, 750));
   }
 
   ///show域名过滤Dialog
@@ -296,6 +297,8 @@ class _PortState extends State<PortWidget> {
             focusNode: portFocus,
             controller: textController,
             textAlign: TextAlign.center,
+            onTapOutside: (event) => portFocus.unfocus(),
+            keyboardType: TextInputType.datetime,
             inputFormatters: <TextInputFormatter>[
               LengthLimitingTextInputFormatter(5),
               FilteringTextInputFormatter.allow(RegExp("[0-9]"))

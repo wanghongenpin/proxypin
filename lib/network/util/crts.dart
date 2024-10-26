@@ -21,12 +21,14 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/cert/basic_constraints.dart';
-import 'package:network_proxy/network/util/cert/pkcs12.dart';
-import 'package:network_proxy/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:proxypin/network/util/cert/pkcs12.dart';
+import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:network_proxy/network/util/cert/key_usage.dart' as x509;
+import 'package:proxypin/network/util/cert/key_usage.dart' as x509;
 
 import 'file_read.dart';
 
@@ -135,7 +137,7 @@ class CertificateManager {
       'O': 'Proxy',
       'OU': 'ProxyPin',
     };
-    x509Subject['CN'] = 'ProxyPin CA (${Platform.localHostname})';
+    x509Subject['CN'] = 'ProxyPin CA (${DateTime.now().dateFormat()},${RandomUtil.randomString(6).toUpperCase()})';
 
     var csrPem = X509Generate.generateSelfSignedCertificate(
       _caCert,
@@ -143,10 +145,11 @@ class CertificateManager {
       serverPriKey,
       825,
       sans: [x509Subject['CN']!],
-      serialNumber: Random().nextInt(1000000).toString(),
+      serialNumber: DateTime.now().millisecondsSinceEpoch.toString(),
+      issuer: x509Subject,
       subject: x509Subject,
-      keyUsage: x509.KeyUsage(x509.KeyUsage.keyCertSign | x509.KeyUsage.cRLSign),
-      extKeyUsage: [ExtendedKeyUsage.SERVER_AUTH, ExtendedKeyUsage.CLIENT_AUTH],
+      keyUsage: x509.KeyUsage(x509.KeyUsage.keyCertSign),
+      extKeyUsage: [ExtendedKeyUsage.SERVER_AUTH],
       basicConstraints: BasicConstraints(isCA: true),
     );
 

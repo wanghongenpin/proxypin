@@ -81,6 +81,17 @@ class ListenableList<T> extends Iterable<T> {
   @override
   T elementAt(int index) => source[index];
 
+  List<T> sublist(int start, [int? end]) {
+    return source.sublist(start, end);
+  }
+
+  void removeRange(start, end) {
+    source.removeRange(start, end > source.length ? source.length : end);
+    for (var element in _listeners) {
+      element.clear();
+    }
+  }
+
   update(int index, T item) {
     source[index] = item;
     for (var element in _listeners) {

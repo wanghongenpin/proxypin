@@ -1,21 +1,51 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/ui/desktop/toolbar/setting/setting.dart';
-import 'package:network_proxy/ui/mobile/setting/proxy.dart';
-import 'package:network_proxy/ui/mobile/setting/theme.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/setting.dart';
+import 'package:proxypin/ui/mobile/setting/proxy.dart';
+import 'package:proxypin/ui/mobile/setting/theme.dart';
 
 ///设置
 ///@author wanghongen
-class SettingMenu extends StatelessWidget {
+class Preference extends StatefulWidget {
   final ProxyServer proxyServer;
   final AppConfiguration appConfiguration;
 
-  const SettingMenu({super.key, required this.proxyServer, required this.appConfiguration});
+  const Preference({super.key, required this.proxyServer, required this.appConfiguration});
+
+  @override
+  State<StatefulWidget> createState() => _PreferenceState();
+}
+
+class _PreferenceState extends State<Preference> {
+  late ProxyServer proxyServer;
+  late AppConfiguration appConfiguration;
+
+  final memoryCleanupController = TextEditingController();
+  final memoryCleanupList = [null, 512, 1024, 2048, 4096];
+
+  @override
+  void initState() {
+    super.initState();
+    proxyServer = widget.proxyServer;
+    appConfiguration = widget.appConfiguration;
+
+    if (!memoryCleanupList.contains(appConfiguration.memoryCleanupThreshold)) {
+      memoryCleanupController.text = appConfiguration.memoryCleanupThreshold.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    memoryCleanupController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,27 +87,27 @@ class SettingMenu extends StatelessWidget {
                         proxyServer.configuration.startup = value;
                         proxyServer.configuration.flushConfig();
                       })),
-              ListTile(
-                  title: Text(localizations.windowMode),
-                  subtitle: Text(localizations.windowModeSubTitle, style: const TextStyle(fontSize: 12)),
-                  trailing: SwitchWidget(
-                      value: appConfiguration.pipEnabled.value,
-                      scale: 0.8,
-                      onChanged: (value) {
-                        appConfiguration.pipEnabled.value = value;
-                        appConfiguration.flushConfig();
-                      })),
               if (Platform.isAndroid)
                 ListTile(
-                    title: Text(localizations.windowIcon),
-                    subtitle: Text(localizations.windowIconDescribe, style: const TextStyle(fontSize: 12)),
+                    title: Text(localizations.windowMode),
+                    subtitle: Text(localizations.windowModeSubTitle, style: const TextStyle(fontSize: 12)),
                     trailing: SwitchWidget(
-                        value: appConfiguration.pipIcon.value,
+                        value: appConfiguration.pipEnabled.value,
                         scale: 0.8,
                         onChanged: (value) {
-                          appConfiguration.pipIcon.value = value;
+                          appConfiguration.pipEnabled.value = value;
                           appConfiguration.flushConfig();
                         })),
+              ListTile(
+                  title: Text(localizations.pipIcon),
+                  subtitle: Text(localizations.pipIconDescribe, style: const TextStyle(fontSize: 12)),
+                  trailing: SwitchWidget(
+                      value: appConfiguration.pipIcon.value,
+                      scale: 0.8,
+                      onChanged: (value) {
+                        appConfiguration.pipIcon.value = value;
+                        appConfiguration.flushConfig();
+                      })),
               ListTile(
                   title: Text(localizations.headerExpanded),
                   subtitle: Text(localizations.headerExpandedSubtitle, style: const TextStyle(fontSize: 12)),
@@ -97,7 +127,12 @@ class SettingMenu extends StatelessWidget {
                       onChanged: (value) {
                         appConfiguration.bottomNavigation = value;
                         appConfiguration.flushConfig();
-                      }))
+                      })),
+              ListTile(
+                  title: Text(localizations.memoryCleanup),
+                  subtitle: Text(localizations.memoryCleanupSubtitle, style: const TextStyle(fontSize: 12)),
+                  trailing: memoryCleanup(context, localizations)),
+              SizedBox(height: 15)
             ])));
   }
 
@@ -169,4 +204,66 @@ class SettingMenu extends StatelessWidget {
           );
         });
   }
+
+  bool memoryCleanupOpened = false;
+
+  ///内存清理
+  Widget memoryCleanup(BuildContext context, AppLocalizations localizations) {
+    try {
+      return DropdownButton<int>(
+          value: appConfiguration.memoryCleanupThreshold,
+          onTap: () => memoryCleanupOpened = true,
+          onChanged: (val) {
+            memoryCleanupOpened = false;
+            setState(() {
+              appConfiguration.memoryCleanupThreshold = val;
+            });
+            appConfiguration.flushConfig();
+          },
+          underline: Container(),
+          items: [
+            DropdownMenuItem(value: null, child: Text(localizations.unlimited)),
+            const DropdownMenuItem(value: 512, child: Text("512M")),
+            const DropdownMenuItem(value: 1024, child: Text("1024M")),
+            const DropdownMenuItem(value: 2048, child: Text("2048M")),
+            const DropdownMenuItem(value: 4096, child: Text("4096M")),
+            DropdownMenuInputItem(
+                controller: memoryCleanupController,
+                child: Container(
+                    constraints: BoxConstraints(maxWidth: 65, minWidth: 35),
+                    child: TextField(
+                        controller: memoryCleanupController,
+                        keyboardType: TextInputType.datetime,
+                        onSubmitted: (value) {
+                          setState(() {});
+                          appConfiguration.memoryCleanupThreshold = int.tryParse(value);
+                          appConfiguration.flushConfig();
+
+                          if (memoryCleanupOpened) {
+                            memoryCleanupOpened = false;
+                            Navigator.pop(context);
+                            return;
+                          }
+                        },
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(5),
+                          FilteringTextInputFormatter.allow(RegExp("[0-9]"))
+                        ],
+                        decoration: InputDecoration(hintText: localizations.custom, suffixText: "M")))),
+          ]);
+    } catch (e) {
+      appConfiguration.memoryCleanupThreshold = null;
+      logger.e('memory button build error', error: e, stackTrace: StackTrace.current);
+      return const SizedBox();
+    }
+  }
+}
+
+class DropdownMenuInputItem extends DropdownMenuItem<int> {
+  final TextEditingController controller;
+
+  @override
+  int? get value => int.tryParse(controller.text) ?? 0;
+
+  const DropdownMenuInputItem({super.key, required this.controller, required super.child});
 }

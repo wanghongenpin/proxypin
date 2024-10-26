@@ -19,8 +19,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// @author wanghongen
@@ -60,19 +60,22 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV14 = true;
+  bool upgradeNoticeV15 = true;
 
   /// 是否启用画中画
-  ValueNotifier<bool> pipEnabled = ValueNotifier(true);
+  ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
 
   /// 显示画中画图标
-  ValueNotifier<bool> pipIcon = ValueNotifier(true);
+  ValueNotifier<bool> pipIcon = ValueNotifier(Platform.isAndroid);
 
   /// header默认展示
   bool headerExpanded = true;
 
   /// 底部导航栏
   bool bottomNavigation = true;
+
+  /// 内存清理
+  int? memoryCleanupThreshold;
 
   //桌面window大小
   Size? windowSize;
@@ -174,12 +177,13 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV14 = config['upgradeNoticeV14'] ?? true;
+      upgradeNoticeV15 = config['upgradeNoticeV15'] ?? true;
       _language = config['language'] == null ? null : Locale.fromSubtags(languageCode: config['language']);
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerExpanded = config['headerExpanded'] ?? true;
       bottomNavigation = config['bottomNavigation'] ?? true;
+      memoryCleanupThreshold = config['memoryCleanupThreshold'];
 
       windowSize =
           config['windowSize'] == null ? null : Size(config['windowSize']['width'], config['windowSize']['height']);
@@ -218,9 +222,11 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV14': upgradeNoticeV14,
+      'upgradeNoticeV15': upgradeNoticeV15,
       "language": _language?.languageCode,
       "headerExpanded": headerExpanded,
+
+      if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
 
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,

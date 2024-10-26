@@ -18,12 +18,12 @@ import 'dart:io';
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/ui/mobile/mobile.dart';
-import 'package:network_proxy/ui/mobile/setting/app_filter.dart';
-import 'package:network_proxy/ui/mobile/setting/ssl.dart';
-import 'package:network_proxy/ui/mobile/widgets/highlight.dart';
-import 'package:network_proxy/ui/mobile/widgets/remote_device.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/ui/mobile/setting/app_filter.dart';
+import 'package:proxypin/ui/mobile/setting/ssl.dart';
+import 'package:proxypin/ui/mobile/widgets/highlight.dart';
+import 'package:proxypin/ui/mobile/widgets/remote_device.dart';
 
 /// +号菜单
 class MoreMenu extends StatelessWidget {
@@ -90,7 +90,7 @@ class MoreMenu extends StatelessWidget {
               child: ListTile(
                 dense: true,
                 leading: const Icon(Icons.highlight_outlined),
-                title: Text(localizations.highlight),
+                title: Text(localizations.keyword + localizations.highlight),
                 onTap: () {
                   navigator(context, const KeywordHighlight());
                 },

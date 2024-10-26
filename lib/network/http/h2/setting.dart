@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/http/h2/frame.dart';
-import 'package:network_proxy/network/util/byte_buf.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/http/h2/frame.dart';
+import 'package:proxypin/network/util/byte_buf.dart';
 
 class StreamSetting {
   /// 允许发送方通知远程端点用于解码头块的头压缩表的最大大小（以八位字节为单位）。

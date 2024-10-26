@@ -17,26 +17,26 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/components/request_block_manager.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/storage/histories.dart';
-import 'package:network_proxy/ui/component/toolbox.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/ui/mobile/menu/preference.dart';
-import 'package:network_proxy/ui/mobile/request/favorite.dart';
-import 'package:network_proxy/ui/mobile/request/history.dart';
-import 'package:network_proxy/ui/mobile/setting/app_filter.dart';
-import 'package:network_proxy/ui/mobile/setting/filter.dart';
-import 'package:network_proxy/ui/mobile/setting/request_block.dart';
-import 'package:network_proxy/ui/mobile/setting/request_rewrite.dart';
-import 'package:network_proxy/ui/mobile/setting/script.dart';
-import 'package:network_proxy/ui/mobile/setting/ssl.dart';
-import 'package:network_proxy/ui/mobile/widgets/about.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/request_block_manager.dart';
+import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/component/toolbox.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/mobile/setting/preference.dart';
+import 'package:proxypin/ui/mobile/request/favorite.dart';
+import 'package:proxypin/ui/mobile/request/history.dart';
+import 'package:proxypin/ui/mobile/setting/app_filter.dart';
+import 'package:proxypin/ui/mobile/setting/filter.dart';
+import 'package:proxypin/ui/mobile/setting/request_block.dart';
+import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
+import 'package:proxypin/ui/mobile/setting/script.dart';
+import 'package:proxypin/ui/mobile/setting/ssl.dart';
+import 'package:proxypin/ui/mobile/widgets/about.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 ///左侧抽屉
 class DrawerWidget extends StatelessWidget {
@@ -92,9 +92,9 @@ class DrawerWidget extends StatelessWidget {
                 onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
             ListTile(
                 title: Text(localizations.requestRewrite),
-                leading: const Icon(Icons.replay_outlined),
+                leading: const Icon(Icons.edit_outlined),
                 onTap: () async {
-                  var requestRewrites = await RequestRewrites.instance;
+                  var requestRewrites = await RequestRewriteManager.instance;
                   if (context.mounted) {
                     navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
                   }
@@ -120,7 +120,7 @@ class DrawerWidget extends StatelessWidget {
                     futureWidget(
                         AppConfiguration.instance,
                         (appConfiguration) =>
-                            SettingMenu(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
+                            Preference(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
             ListTile(
                 title: Text(localizations.about),
                 leading: const Icon(Icons.info_outline),

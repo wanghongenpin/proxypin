@@ -22,6 +22,10 @@ extension DateTimeFormat on DateTime {
     return formatDate(this, [yyyy, '-', mm, '-', dd, ' ', HH, ':', nn, ':', ss, '.', SSS]);
   }
 
+  String dateFormat() {
+    return formatDate(this, [yyyy, '-', mm, '-', dd]);
+  }
+
   String timeFormat() {
     return formatDate(this, [HH, ':', nn, ':', ss]);
   }

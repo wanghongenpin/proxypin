@@ -1,4 +1,4 @@
-import 'package:network_proxy/network/http/http.dart';
+import 'package:proxypin/network/http/http.dart';
 
 // 复制为 Python Requests 请求
 String copyAsPythonRequests(HttpRequest request) {

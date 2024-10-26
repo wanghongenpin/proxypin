@@ -16,9 +16,9 @@
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/storage/path.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/storage/path.dart';
 
 /// 收藏存储
 /// @author WangHongEn

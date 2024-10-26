@@ -193,6 +193,18 @@ class HttpHeaders {
     return headers;
   }
 
+  ///原始header文本
+  String toRawHeaders() {
+    StringBuffer sb = StringBuffer();
+    forEach((name, values) {
+      for (var value in values) {
+        sb.writeln("$name: $value");
+      }
+    });
+
+    return sb.toString();
+  }
+
   @override
   String toString() {
     return 'HttpHeaders{$_headers}';

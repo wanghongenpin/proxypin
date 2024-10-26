@@ -20,8 +20,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/ui/component/json/theme.dart';
-import 'package:network_proxy/ui/component/json/toast.dart';
+import 'package:proxypin/ui/component/json/theme.dart';
+import 'package:proxypin/ui/component/json/toast.dart';
 
 class JsonViewer extends StatelessWidget {
   final dynamic jsonObj;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import 'package:network_proxy/network/util/cache.dart';
+import 'package:proxypin/network/util/cache.dart';
 
 ///content type
 ///@author WangHongEn

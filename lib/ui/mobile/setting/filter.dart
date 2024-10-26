@@ -17,14 +17,14 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../network/components/host_filter.dart';
@@ -312,10 +312,12 @@ class _DomainListState extends State<DomainList> {
 
     return List.generate(list.length, (index) {
       return InkWell(
+          enableFeedback: false,
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
           hoverColor: primaryColor.withOpacity(0.3),
-          onLongPress: () => showMenus(index), // menus
+          onLongPress: () => showMenus(index),
+          // menus
           onDoubleTap: () => showEdit(index),
           onTap: () {
             if (multiple) {
@@ -366,45 +368,51 @@ class _DomainListState extends State<DomainList> {
     setState(() {
       selected.add(index);
     });
+    HapticFeedback.mediumImpact();
 
-    showModalBottomSheet(
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(10))),
+    showCupertinoModalPopup(
         context: context,
-        enableDrag: true,
-        builder: (ctx) {
-          return Wrap(alignment: WrapAlignment.center, children: [
-            BottomSheetItem(
-                text: localizations.multiple,
-                onPressed: () {
-                  setState(() => multiple = true);
-                }),
-            const Divider(thickness: 0.5, height: 5),
-            BottomSheetItem(text: localizations.copy, onPressed: () {
-              Clipboard.setData(ClipboardData(text: widget.hostList.list[index].pattern.replaceAll(".*", "*")));
-              FlutterToastr.show(localizations.copied, context);
-            }),
-            const Divider(thickness: 0.5, height: 5),
-            BottomSheetItem(text: localizations.edit, onPressed: () => showEdit(index)),
-            const Divider(thickness: 0.5, height: 5),
-            BottomSheetItem(onPressed: () => export([index]), text: localizations.share),
-            const Divider(thickness: 0.5, height: 5),
-            BottomSheetItem(
-                text: localizations.delete,
-                onPressed: () {
-                  widget.hostList.removeIndex([index]);
-                  onChanged();
-                }),
-            Container(color: Theme.of(context).hoverColor, height: 8),
-            TextButton(
-                child: Container(
-                    height: 45,
-                    width: double.infinity,
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(localizations.cancel, textAlign: TextAlign.center)),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                }),
-          ]);
+        builder: (BuildContext context) {
+          return CupertinoActionSheet(
+              actions: [
+                CupertinoActionSheetAction(
+                    child: Text(localizations.multiple),
+                    onPressed: () {
+                      setState(() => multiple = true);
+                      Navigator.of(context).pop();
+                    }),
+                CupertinoActionSheetAction(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: widget.hostList.list[index].pattern.replaceAll(".*", "*")));
+                      FlutterToastr.show(localizations.copied, context);
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(localizations.copy)),
+                CupertinoActionSheetAction(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      showEdit(index);
+                    },
+                    child: Text(localizations.edit)),
+                CupertinoActionSheetAction(
+                    onPressed: () {
+                      export([index]);
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(localizations.share)),
+                CupertinoActionSheetAction(
+                    onPressed: () {
+                      widget.hostList.removeIndex([index]);
+                      onChanged();
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(localizations.delete)),
+              ],
+              cancelButton: CupertinoActionSheetAction(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(localizations.cancel)));
         }).then((value) {
       if (multiple) {
         return;

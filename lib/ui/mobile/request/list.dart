@@ -18,14 +18,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/ui/mobile/request/domians.dart';
-import 'package:network_proxy/ui/mobile/request/request_sequence.dart';
-import 'package:network_proxy/utils/har.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/ui/mobile/request/domians.dart';
+import 'package:proxypin/ui/mobile/request/request_sequence.dart';
+import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// 请求列表
@@ -126,10 +126,23 @@ class RequestListState extends State<RequestListWidget> {
   ///清理
   clean() {
     setState(() {
+      container.clear();
       domainListKey.currentState?.clean();
       requestSequenceKey.currentState?.clean();
-      container.clear();
     });
+  }
+
+  ///清理早期数据
+  cleanupEarlyData(int retain) {
+    var list = container.source;
+    if (list.length <= retain) {
+      return;
+    }
+
+    container.removeRange(0, list.length - retain);
+
+    domainListKey.currentState?.clean();
+    requestSequenceKey.currentState?.clean();
   }
 
   //导出har

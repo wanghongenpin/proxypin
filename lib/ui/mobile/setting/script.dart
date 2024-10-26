@@ -23,12 +23,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/ui/mobile/widgets/floating_window.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/widgets/floating_window.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -421,9 +421,11 @@ class _ScriptEditState extends State<ScriptEdit> {
                   text: localizations.useGuide,
                   style: const TextStyle(color: Colors.blue, fontSize: 14),
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () => launchUrl(Uri.parse(isCN
-                        ? 'https://gitee.com/wanghongenpin/network-proxy-flutter/wikis/%E8%84%9A%E6%9C%AC'
-                        : 'https://github.com/wanghongenpin/network_proxy_flutter/wiki/Script')))),
+                    ..onTap = () => launchUrl(
+                        mode: LaunchMode.externalApplication,
+                        Uri.parse(isCN
+                            ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%84%9A%E6%9C%AC'
+                            : 'https://github.com/wanghongenpin/proxypin/wiki/Script')))),
             ]),
             actions: [
               TextButton(
@@ -679,6 +681,9 @@ class _ScriptListState extends State<ScriptList> {
             ],
           );
         }).then((value) {
+      if (multiple) {
+        return;
+      }
       setState(() {
         selected.remove(index);
       });

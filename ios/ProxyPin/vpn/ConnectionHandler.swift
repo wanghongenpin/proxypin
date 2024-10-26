@@ -273,9 +273,9 @@ class ConnectionHandler {
             connection.recSequence = ackNumber
             let ackData = TCPPacketFactory.createResponseAckData(ipHeader: ipHeader, tcpHeader: tcpHeader, ackToClient: ackNumber)
             self.write(data: ackData)
-        }
 
-//        os_log("Sent ACK packet ack# %{public}u", log: OSLog.default, type: .default, ackNumber)
+//           os_log("Sent ACK packet to client %{public}@:%{public}d ack# %{public}d", log: OSLog.default, type: .debug, PacketUtil.intToIPAddress(ipHeader.destinationIP), tcpHeader.destinationPort, ackNumber)
+        }
     }
 
     private func sendLastAck(ip: IP4Header, tcp: TCPHeader) {

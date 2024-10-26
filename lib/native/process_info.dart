@@ -1,5 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:network_proxy/network/util/process_info.dart';
+import 'package:proxypin/network/util/process_info.dart';
 
 class ProcessInfoPlugin {
   static const MethodChannel _methodChannel = MethodChannel('com.proxy/processInfo');

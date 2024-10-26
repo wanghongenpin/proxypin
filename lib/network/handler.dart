@@ -18,18 +18,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/network/components/script_manager.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/http_headers.dart';
-import 'package:network_proxy/network/http/websocket.dart';
-import 'package:network_proxy/network/proxy_helper.dart';
-import 'package:network_proxy/network/util/attribute_keys.dart';
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/network/util/uri.dart';
-import 'package:network_proxy/utils/ip.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/request_rewrite_component.dart';
+import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/proxy_helper.dart';
+import 'package:proxypin/network/util/attribute_keys.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/uri.dart';
+import 'package:proxypin/utils/ip.dart';
 
 import 'channel.dart';
 import 'components/request_block_manager.dart';
@@ -47,9 +47,9 @@ abstract class EventListener {
 /// http请求处理器
 class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   EventListener? listener;
-  RequestRewrites? requestRewrites;
+  RequestRewriteComponent? requestRewriteComponent;
 
-  HttpProxyChannelHandler({this.listener, this.requestRewrites});
+  HttpProxyChannelHandler({this.listener, this.requestRewriteComponent});
 
   @override
   void channelRead(ChannelContext channelContext, Channel channel, HttpRequest msg) async {
@@ -121,7 +121,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
         return;
       }
 
-      var uri = '${httpRequest.remoteDomain()}${httpRequest.path()}';
+      var uri = httpRequest.domainPath;
       //脚本替换
       var scriptManager = await ScriptManager.instance;
       HttpRequest? request = await scriptManager.runScript(httpRequest);
@@ -132,7 +132,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
       httpRequest = request;
       //重写请求
-      await requestRewrites?.requestRewrite(httpRequest);
+      await requestRewriteComponent?.requestRewrite(httpRequest);
 
       listener?.onRequest(channel, httpRequest);
 
@@ -146,7 +146,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       }
 
       //重定向
-      String? redirectUrl = await requestRewrites?.getRedirectRule(uri);
+      String? redirectUrl = await requestRewriteComponent?.getRedirectRule(uri);
       if (redirectUrl?.isNotEmpty == true) {
         await redirect(channelContext, channel, httpRequest, redirectUrl!);
         return;
@@ -158,7 +158,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   //重定向
   Future<void> redirect(
       ChannelContext channelContext, Channel channel, HttpRequest httpRequest, String redirectUrl) async {
-    var proxyHandler = HttpResponseProxyHandler(channel, listener: listener, requestRewrites: requestRewrites);
+    var proxyHandler = HttpResponseProxyHandler(channel, listener: listener, requestRewriteComponent: requestRewriteComponent);
 
     var redirectUri = UriBuild.build(redirectUrl, params: httpRequest.queries.isEmpty ? null : httpRequest.queries);
     log.d("[${channel.id}] 重定向 $redirectUri");
@@ -229,7 +229,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
   /// 连接远程
   Future<Channel> connectRemote(ChannelContext channelContext, Channel clientChannel, HostAndPort connectHost) async {
-    var proxyHandler = HttpResponseProxyHandler(clientChannel, listener: listener, requestRewrites: requestRewrites);
+    var proxyHandler = HttpResponseProxyHandler(clientChannel, listener: listener, requestRewriteComponent: requestRewriteComponent);
     var proxyChannel = await channelContext.connectServerChannel(connectHost, proxyHandler);
     return proxyChannel;
   }
@@ -241,9 +241,9 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
   final Channel clientChannel;
 
   EventListener? listener;
-  RequestRewrites? requestRewrites;
+  RequestRewriteComponent? requestRewriteComponent;
 
-  HttpResponseProxyHandler(this.clientChannel, {this.listener, this.requestRewrites});
+  HttpResponseProxyHandler(this.clientChannel, {this.listener, this.requestRewriteComponent});
 
   @override
   void channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
@@ -274,7 +274,7 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
 
     //重写响应
     try {
-      await requestRewrites?.responseRewrite(msg.request?.requestUrl, msg);
+      await requestRewriteComponent?.responseRewrite(msg.request?.requestUrl, msg);
     } catch (e, t) {
       msg.body = "$e".codeUnits;
       log.e('[${clientChannel.id}] 响应重写异常 ', error: e, stackTrace: t);
@@ -282,7 +282,7 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
     listener?.onResponse(channelContext, msg);
 
     //屏蔽响应
-    var uri = '${request?.remoteDomain()}${request?.path()}';
+    var uri = request?.domainPath ?? '';
     var blockResponse = (await RequestBlockManager.instance).enableBlockResponse(uri);
     if (blockResponse) {
       channel.close();

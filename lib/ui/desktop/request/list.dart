@@ -22,22 +22,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/host_port.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http_client.dart';
-import 'package:network_proxy/ui/component/transition.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/content/panel.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/ui/desktop/request/request.dart';
-import 'package:network_proxy/ui/desktop/request/request_sequence.dart';
-import 'package:network_proxy/ui/desktop/request/search.dart';
-import 'package:network_proxy/utils/har.dart';
-import 'package:network_proxy/utils/listenable_list.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/ui/component/transition.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/content/panel.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/ui/desktop/request/request.dart';
+import 'package:proxypin/ui/desktop/request/request_sequence.dart';
+import 'package:proxypin/ui/desktop/request/search.dart';
+import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 
 /// @author wanghongen
 class DesktopRequestListWidget extends StatefulWidget {
@@ -149,13 +149,26 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   ///清理
   clean() {
     setState(() {
+      container.clear();
       domainListKey.currentState?.clean();
       requestSequenceKey.currentState?.clean();
       widget.panel.change(null, null);
-      container.clear();
     });
   }
 
+  cleanupEarlyData(int retain) {
+    var list = container.source;
+    if (list.length <= retain) {
+      return;
+    }
+
+    container.removeRange(0, list.length - retain);
+
+    domainListKey.currentState?.clean();
+    requestSequenceKey.currentState?.clean();
+  }
+
+  ///导出
   export(String fileName) async {
     final FileSaveLocation? result = await getSaveLocation(suggestedName: fileName);
     if (result == null) {
@@ -395,6 +408,13 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   clean() {
     setState(() {
       containerMap.clear();
+      searchView.clear();
+
+      var container = widget.list;
+      for (var request in container.source) {
+        DomainRequests domainRequests = getDomainRequests(request);
+        domainRequests.addRequest(request.requestId, request);
+      }
     });
   }
 
@@ -509,6 +529,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   late Configuration configuration;
   late bool selected;
   Widget? trailing;
+  bool changing = false;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -521,8 +542,16 @@ class _DomainRequestsState extends State<DomainRequests> {
   }
 
   changeState() {
-    setState(() {});
-    transitionState.currentState?.show();
+    //防止频繁刷新
+    if (!changing) {
+      changing = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        setState(() {
+          changing = false;
+        });
+        transitionState.currentState?.show();
+      });
+    }
   }
 
   @override

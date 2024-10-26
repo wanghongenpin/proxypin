@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/network/http/websocket.dart';
-import 'package:network_proxy/ui/component/share.dart';
-import 'package:network_proxy/ui/component/state_component.dart';
-import 'package:network_proxy/ui/component/utils.dart';
-import 'package:network_proxy/ui/configuration.dart';
-import 'package:network_proxy/utils/lang.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/share.dart';
+import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
+import 'package:proxypin/utils/python.dart';
 
 import 'body.dart';
 
@@ -114,7 +120,44 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
             bottom: tabBar,
             actions: [
               ShareWidget(
-                  proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get())
+                  proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
+              const SizedBox(width: 3),
+              PopupMenuButton(
+                  offset: const Offset(0, 30),
+                  padding: const EdgeInsets.all(0),
+                  itemBuilder: (context) => [
+                        PopupMenuItem(
+                            child: Text(localizations.favorite),
+                            onTap: () {
+                              var request = widget.request.get();
+                              if (request == null) return;
+
+                              FavoriteStorage.addFavorite(request);
+                              FlutterToastr.show(localizations.addSuccess, context);
+                            }),
+                        PopupMenuItem(
+                            child: Text(localizations.requestEdit),
+                            onTap: () {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => MobileRequestEditor(
+                                        request: widget.request.get(), proxyServer: widget.proxyServer)));
+                              });
+                            }),
+                        CustomPopupMenuItem(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Text(localizations.copyAsPythonRequests),
+                            onTap: () {
+                              var request = widget.request.get();
+                              if (request == null) return;
+
+                              var text = copyAsPythonRequests(request);
+                              Clipboard.setData(ClipboardData(text: text));
+                              FlutterToastr.show(localizations.copied, context);
+                            })
+                      ],
+                  child: const SizedBox(height: 38, width: 38, child: Icon(Icons.more_vert, size: 28))),
+              const SizedBox(width: 10),
             ],
           );
 
@@ -242,7 +285,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
     }
 
     var scrollController = ScrollController(); //处理body也有滚动条问题
-    var path = widget.request.get()?.path() ?? '';
+    var path = widget.request.get()?.path ?? '';
     try {
       path = Uri.decodeFull(path);
     } catch (_) {}
@@ -284,6 +327,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
         headers.add(Row(children: [
           SelectableText(name, contextMenuBuilder: contextMenu, style: nameStyle),
           const Text(": ", style: nameStyle),
+          if (Platforms.isDesktop()) SizedBox(width: 5),
           Expanded(
               child: SelectableText(v, style: textStyle, contextMenuBuilder: contextMenu, maxLines: 8, minLines: 1)),
         ]));

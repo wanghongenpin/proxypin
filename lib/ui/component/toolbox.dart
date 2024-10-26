@@ -4,14 +4,15 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/bin/server.dart';
-import 'package:network_proxy/ui/component/cert_hash.dart';
-import 'package:network_proxy/ui/component/encoder.dart';
-import 'package:network_proxy/ui/component/js_run.dart';
-import 'package:network_proxy/ui/component/multi_window.dart';
-import 'package:network_proxy/ui/component/qr_code_page.dart';
-import 'package:network_proxy/ui/mobile/request/request_editor.dart';
-import 'package:network_proxy/utils/platform.dart';
+import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/cert_hash.dart';
+import 'package:proxypin/ui/component/encoder.dart';
+import 'package:proxypin/ui/component/js_run.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/qr_code_page.dart';
+import 'package:proxypin/ui/component/regexp.dart';
+import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 class Toolbox extends StatefulWidget {
@@ -90,7 +91,7 @@ class _ToolboxState extends State<Toolbox> {
                   onTap: () => encodeWindow(EncoderType.base64, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [Icon(Icons.currency_bitcoin), SizedBox(height: 3), Text('Base64')]),
+                    child: const Column(children: [Icon(Icons.format_bold), SizedBox(height: 3), Text('Base64')]),
                   )),
               const SizedBox(width: 15),
               InkWell(
@@ -122,6 +123,17 @@ class _ToolboxState extends State<Toolbox> {
                   },
                   icon: Icons.key,
                   text: localizations.certHashName),
+              const SizedBox(width: 10),
+              IconText(
+                  onTap: () async {
+                    if (Platforms.isMobile()) {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RegExpPage()));
+                      return;
+                    }
+                    MultiWindow.openWindow(localizations.regExp, 'RegExpPage', size: const Size(800, 720));
+                  },
+                  icon: Icons.code,
+                  text: localizations.regExp),
               const SizedBox(width: 10),
               IconText(
                   onTap: () async {

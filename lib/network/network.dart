@@ -18,14 +18,14 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:network_proxy/network/bin/configuration.dart';
-import 'package:network_proxy/network/channel.dart';
-import 'package:network_proxy/network/components/host_filter.dart';
-import 'package:network_proxy/network/handler.dart';
-import 'package:network_proxy/network/util/attribute_keys.dart';
-import 'package:network_proxy/network/util/crts.dart';
-import 'package:network_proxy/network/util/process_info.dart';
-import 'package:network_proxy/network/util/tls.dart';
+import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/util/attribute_keys.dart';
+import 'package:proxypin/network/util/crts.dart';
+import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/network/util/tls.dart';
 
 import 'host_port.dart';
 

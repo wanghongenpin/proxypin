@@ -15,13 +15,15 @@
  */
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:basic_utils/basic_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/ui/component/text_field.dart';
 
 ///证书哈希名称查看
 ///@author Hongen Wang
@@ -50,18 +52,19 @@ class _CertHashPageState extends State<CertHashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title:  Text(localizations.systemCertName, style: TextStyle(fontSize: 16)), centerTitle: true),
+        appBar: AppBar(title: Text(localizations.systemCertName, style: TextStyle(fontSize: 16)), centerTitle: true),
         resizeToAvoidBottomInset: false,
         body: ListView(children: [
           Wrap(alignment: WrapAlignment.end, children: [
             ElevatedButton.icon(
                 onPressed: () async {
                   FilePickerResult? result = await FilePicker.platform
-                      .pickFiles(type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer']);
+                      .pickFiles(type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer', 'der']);
                   if (result == null) return;
+
                   File file = File(result.files.single.path!);
-                  String content = await file.readAsString();
-                  input.text = content;
+                  var bytes = await file.readAsBytes();
+                  input.text = tryDerFormat(bytes) ?? String.fromCharCodes(bytes);
                   getSubjectName();
                 },
                 style: buttonStyle,
@@ -93,7 +96,7 @@ class _CertHashPageState extends State<CertHashPage> {
                   controller: input,
                   onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
                   keyboardType: TextInputType.text,
-                  decoration: decoration(localizations.inputContent))),
+                  decoration: decoration(context, label: localizations.inputContent))),
           Align(
               alignment: Alignment.bottomLeft,
               child: TextButton(onPressed: () {}, child: const Text("Output:", style: TextStyle(fontSize: 16)))),
@@ -105,7 +108,7 @@ class _CertHashPageState extends State<CertHashPage> {
                   maxLines: 30,
                   readOnly: true,
                   controller: decodeData,
-                  decoration: decoration('Android ${localizations.systemCertName}'))),
+                  decoration: decoration(context, label: 'Android ${localizations.systemCertName}'))),
         ]));
   }
 
@@ -114,7 +117,6 @@ class _CertHashPageState extends State<CertHashPage> {
     if (content.isEmpty) return;
     try {
       var caCert = X509Utils.x509CertificateFromPem(content);
-
       var subject = caCert.tbsCertificate?.subject;
       if (subject == null) return;
       var subjectHashName = X509Generate.getSubjectHashName(subject);
@@ -124,25 +126,26 @@ class _CertHashPageState extends State<CertHashPage> {
     }
   }
 
-  ButtonStyle get buttonStyle =>
+  String? tryDerFormat(Uint8List data) {
+    try {
+      final bytes = data.sublist(0, 4);
+
+      // Check if the bytes match the DER format (ASN.1 encoding)
+      // DER encoded certificates typically start with 0x30 (SEQUENCE) or 0xA0 (APPLICATION)
+      if (bytes[0] == 0x30 || bytes[0] == 0xA0) {
+        return X509Utils.crlDerToPem(data);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+   ButtonStyle get buttonStyle =>
       ButtonStyle(
           padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
           textStyle: MaterialStateProperty.all<TextStyle>(const TextStyle(fontSize: 14)),
           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
 
-  InputDecoration decoration(String label, {String? hintText}) {
-    Color color = Theme
-        .of(context)
-        .colorScheme
-        .primary;
-    return InputDecoration(
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelText: label,
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-        border: OutlineInputBorder(borderSide: BorderSide(width: 0.8, color: color)),
-        enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.5, color: color)),
-        focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2, color: color)));
-  }
 }

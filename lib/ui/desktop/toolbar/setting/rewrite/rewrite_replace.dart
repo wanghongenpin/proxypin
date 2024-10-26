@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2023 Hongen Wang
+ * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:math';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/components/request_rewrite_manager.dart';
-import 'package:network_proxy/ui/component/state_component.dart';
-import 'package:network_proxy/ui/component/widgets.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/lang.dart';
 
 /// 重写替换
 /// @author wanghongen
 /// 2023/10/8
-class RewriteReplaceDialog extends StatefulWidget {
-  final int? windowId;
-  final String subtitle;
+class DesktopRewriteReplace extends StatefulWidget {
   final RuleType ruleType;
   final List<RewriteItem>? items;
 
-  const RewriteReplaceDialog(
-      {super.key, required this.windowId, required this.subtitle, this.items, required this.ruleType});
+  const DesktopRewriteReplace({super.key, this.items, required this.ruleType});
 
   @override
-  State<RewriteReplaceDialog> createState() => _RewriteReplaceState();
+  State<DesktopRewriteReplace> createState() => RewriteReplaceState();
 }
 
-class _RewriteReplaceState extends State<RewriteReplaceDialog> {
+class RewriteReplaceState extends State<DesktopRewriteReplace> {
   final _headerKey = GlobalKey<HeadersState>();
-
+  final bodyTextController = TextEditingController();
+  late RuleType ruleType;
   List<RewriteItem> items = [];
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -51,92 +47,92 @@ class _RewriteReplaceState extends State<RewriteReplaceDialog> {
   @override
   initState() {
     super.initState();
-    if (widget.ruleType == RuleType.redirect) {
-      initRewriteItem(RewriteType.redirect, enabled: true);
+    ruleType = widget.ruleType;
+    initItems(widget.ruleType, widget.items);
+  }
+
+  @override
+  dispose() {
+    bodyTextController.dispose();
+    super.dispose();
+  }
+
+  ///初始化重写项
+  initItems(RuleType ruleType, List<RewriteItem>? items) {
+    this.items.clear();
+    this.ruleType = ruleType;
+    if (ruleType == RuleType.redirect) {
+      _initRewriteItem(items, RewriteType.redirect, enabled: true);
       return;
     }
 
-    if (widget.ruleType == RuleType.requestReplace) {
-      initRewriteItem(RewriteType.replaceRequestLine);
-      initRewriteItem(RewriteType.replaceRequestHeader);
-      initRewriteItem(RewriteType.replaceRequestBody, enabled: true);
+    if (ruleType == RuleType.requestReplace) {
+      _initRewriteItem(items, RewriteType.replaceRequestLine);
+      _initRewriteItem(items, RewriteType.replaceRequestHeader);
+      _initRewriteItem(items, RewriteType.replaceRequestBody, enabled: true);
       return;
     }
 
-    if (widget.ruleType == RuleType.responseReplace) {
-      initRewriteItem(RewriteType.replaceResponseStatus);
-      initRewriteItem(RewriteType.replaceResponseHeader);
-      initRewriteItem(RewriteType.replaceResponseBody, enabled: true);
+    if (ruleType == RuleType.responseReplace) {
+      _initRewriteItem(items, RewriteType.replaceResponseStatus);
+      _initRewriteItem(items, RewriteType.replaceResponseHeader);
+      _initRewriteItem(items, RewriteType.replaceResponseBody, enabled: true);
       return;
     }
   }
 
-  initRewriteItem(RewriteType type, {bool enabled = false}) {
-    var item = widget.items?.firstWhereOrNull((it) => it.type == type);
+  RewriteItem _initRewriteItem(List<RewriteItem>? items, RewriteType type, {bool enabled = false}) {
+    var item = items?.firstWhereOrNull((it) => it.type == type);
     RewriteItem rewriteItem = RewriteItem(type, item?.enabled ?? enabled, values: item?.values);
-    items.add(rewriteItem);
+    this.items.add(rewriteItem);
+
+    if (type == RewriteType.replaceRequestHeader || type == RewriteType.replaceResponseHeader) {
+      _headerKey.currentState?.setHeaders(rewriteItem.headers);
+    }
+
+    if ((type == RewriteType.replaceResponseBody || type == RewriteType.replaceRequestBody) &&
+        rewriteItem.bodyType != ReplaceBodyType.file.name) {
+      bodyTextController.text = rewriteItem.body ?? '';
+    }
+
+    return rewriteItem;
+  }
+
+  List<RewriteItem> getItems() {
+    var headers = _headerKey.currentState?.getHeaders();
+    if (headers != null) {
+      items
+          .firstWhere(
+              (item) => item.type == RewriteType.replaceRequestHeader || item.type == RewriteType.replaceResponseHeader)
+          .headers = headers;
+    }
+    return items;
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-
-    return AlertDialog(
-        titlePadding: const EdgeInsets.all(0),
-        actionsPadding: const EdgeInsets.only(right: 10, bottom: 10),
-        contentPadding: const EdgeInsets.only(left: 10, right: 10, top: 0, bottom: 5),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(localizations.cancel)),
-          TextButton(
-              onPressed: () {
-                var headers = _headerKey.currentState?.getHeaders();
-                if (headers != null) {
-                  items
-                      .firstWhere((item) =>
-                          item.type == RewriteType.replaceRequestHeader ||
-                          item.type == RewriteType.replaceResponseHeader)
-                      .headers = headers;
-                }
-                Navigator.of(context).pop(items);
-              },
-              child: Text(localizations.done)),
-        ],
-        title: ListTile(
-            title: Text(isCN ? widget.ruleType.label : widget.ruleType.name,
-                textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            subtitle: Text(widget.subtitle.substring(0, min(widget.subtitle.length, 50)),
-                textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.grey))),
-        content: rewriteWidgets());
-  }
-
-  ///重写
-  Widget rewriteWidgets() {
-    if (widget.ruleType == RuleType.redirect) {
-      return SizedBox(width: 500, height: 120, child: redirectEdit(items.first));
+    if (ruleType == RuleType.redirect) {
+      return SizedBox(
+          height: 120, child: Padding(padding: EdgeInsets.symmetric(vertical: 15), child: redirectEdit(items.first)));
     }
 
-    if (widget.ruleType == RuleType.responseReplace || widget.ruleType == RuleType.requestReplace) {
-      bool requestEdited = widget.ruleType == RuleType.requestReplace;
+    if (ruleType == RuleType.responseReplace || ruleType == RuleType.requestReplace) {
+      bool requestEdited = ruleType == RuleType.requestReplace;
       List<String> tabs = requestEdited
           ? [localizations.requestLine, localizations.requestHeader, localizations.requestBody]
           : [localizations.statusCode, localizations.responseHeader, localizations.responseBody];
 
-      return SizedBox(
-        width: 500,
-        height: 345,
+      return Container(
+        constraints: const BoxConstraints(maxHeight: 360),
         child: DefaultTabController(
             length: tabs.length,
             initialIndex: tabs.length - 1,
             child: Scaffold(
               appBar: tabBar(tabs),
               body: TabBarView(children: [
-                KeepAliveWrapper(
-                    child: Container(
-                  padding: const EdgeInsets.all(10),
-                  child: requestEdited ? requestLine() : statusCodeEdit(),
-                )),
-                KeepAliveWrapper(child: Container(padding: const EdgeInsets.all(10), child: headers())),
-                KeepAliveWrapper(child: Container(padding: const EdgeInsets.all(10), child: body()))
+                KeepAliveWrapper(child: requestEdited ? requestLine() : statusCodeEdit()),
+                KeepAliveWrapper(child: headers()),
+                KeepAliveWrapper(child: body())
               ]),
             )),
       );
@@ -204,9 +200,9 @@ class _RewriteReplaceState extends State<RewriteReplaceDialog> {
         fileBodyEdit(rewriteItem)
       else
         TextFormField(
-            initialValue: rewriteItem.body,
+            controller: bodyTextController,
             style: const TextStyle(fontSize: 14),
-            maxLines: 10,
+            maxLines: 12,
             decoration: decoration(localizations.replaceBodyWith,
                 hintText: '${localizations.example} {"code":"200","data":{}}'),
             onChanged: (val) => rewriteItem.body = val)
@@ -232,10 +228,6 @@ class _RewriteReplaceState extends State<RewriteReplaceDialog> {
               return;
             }
             var path = result.files.first.path;
-            if (widget.windowId != null) {
-              WindowController.fromWindowId(widget.windowId!).show();
-            }
-
             if (path == null) {
               return;
             }
@@ -275,7 +267,7 @@ class _RewriteReplaceState extends State<RewriteReplaceDialog> {
                   }))
         ]))
       ]),
-      Headers(headers: rewriteItem.headers, key: _headerKey)
+      Expanded(child: Headers(headers: rewriteItem.headers, key: _headerKey))
     ]);
   }
 
@@ -320,7 +312,7 @@ class _RewriteReplaceState extends State<RewriteReplaceDialog> {
         ]),
         const SizedBox(height: 15),
         textField("Path", rewriteItem.path, "${localizations.example} /api/v1/user",
-            onChanged: (val) => rewriteItem.values['path'] = val),
+            onChanged: (val) => rewriteItem.path = val),
         const SizedBox(height: 15),
         textField("URL${localizations.param}", rewriteItem.queryParam, "${localizations.example} id=1&name=2",
             onChanged: (val) => rewriteItem.queryParam = val),
@@ -331,8 +323,8 @@ class _RewriteReplaceState extends State<RewriteReplaceDialog> {
   //重定向
   Widget redirectEdit(RewriteItem rewriteItem) {
     return TextFormField(
-        decoration: decoration(localizations.redirectTo, hintText: 'http://www.example.com/api'),
-        maxLines: 3,
+        decoration: decoration(localizations.redirectTo, hintText: 'https://www.example.com/api'),
+        maxLines: 5,
         style: const TextStyle(fontSize: 14),
         initialValue: rewriteItem.redirectUrl,
         onChanged: (val) => rewriteItem.redirectUrl = val,
@@ -445,7 +437,13 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     if (widget.headers == null) {
       return;
     }
-    widget.headers?.forEach((name, value) {
+
+    setHeaders(widget.headers);
+  }
+
+  setHeaders(Map<String, String>? headers) {
+    _clear();
+    headers?.forEach((name, value) {
       _headers[TextEditingController(text: name)] = TextEditingController(text: value);
     });
   }
@@ -463,30 +461,44 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
   }
 
   @override
+  dispose() {
+    _clear();
+    super.dispose();
+  }
+
+  _clear() {
+    _headers.forEach((key, value) {
+      key.dispose();
+      value.dispose();
+    });
+    _headers.clear();
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    var list = [
-      ..._buildRows(),
-    ];
+    var list = _buildRows();
 
-    list.add(TextButton(
-      child: Text("${localizations.add}Header", textAlign: TextAlign.center),
-      onPressed: () {
-        setState(() {
-          _headers[TextEditingController()] = TextEditingController();
-        });
-      },
-    ));
-
-    return Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: ListView.separated(
-            shrinkWrap: true,
-            separatorBuilder: (context, index) =>
-                index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
-            itemBuilder: (context, index) => list[index],
-            itemCount: list.length));
+    return Column(children: [
+      Expanded(
+          child: Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 10),
+              child: ListView.separated(
+                  shrinkWrap: true,
+                  separatorBuilder: (context, index) =>
+                      index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
+                  itemBuilder: (context, index) => list[index],
+                  itemCount: list.length))),
+      TextButton(
+        child: Text("${localizations.add}Header", textAlign: TextAlign.center),
+        onPressed: () {
+          setState(() {
+            _headers[TextEditingController()] = TextEditingController();
+          });
+        },
+      ),
+    ]);
   }
 
   List<Widget> _buildRows() {
@@ -518,7 +530,11 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
             controller: val,
             minLines: 1,
             maxLines: 3,
-            decoration: InputDecoration(isDense: true, border: InputBorder.none, hintText: isKey ? "Key" : "Value")));
+            decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
+                hintText: isKey ? "Key" : "Value")));
   }
 
   Widget _row(Widget key, Widget val, Widget? op) {

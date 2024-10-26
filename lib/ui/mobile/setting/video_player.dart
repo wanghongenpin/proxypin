@@ -33,7 +33,7 @@
 //     super.initState();
 //
 //     _controller = VideoPlayerController.network(
-//       'https://github.com/wanghongenpin/network_proxy_flutter/assets/24794200/38bc5a83-999f-4af2-9d74-863532a81cef',
+//       'https://github.com/wanghongenpin/proxypin/assets/24794200/38bc5a83-999f-4af2-9d74-863532a81cef',
 //       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true, allowBackgroundPlayback: true),
 //     );
 //     _initializeVideoPlayerFuture = _controller.initialize();

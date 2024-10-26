@@ -16,10 +16,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:network_proxy/network/http/content_type.dart';
-import 'package:network_proxy/network/http/http.dart';
-import 'package:network_proxy/ui/desktop/request/model/search_model.dart';
-import 'package:network_proxy/utils/lang.dart';
+import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/desktop/request/model/search_model.dart';
+import 'package:proxypin/utils/lang.dart';
 
 /// @author wanghongen
 /// 2023/8/6

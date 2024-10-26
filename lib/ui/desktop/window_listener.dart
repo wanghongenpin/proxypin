@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import 'package:network_proxy/network/util/logger.dart';
-import 'package:network_proxy/ui/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// 监听窗口变化

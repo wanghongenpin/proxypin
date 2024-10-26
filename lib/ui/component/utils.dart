@@ -15,13 +15,14 @@
  */
 
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:network_proxy/network/http/content_type.dart';
-import 'package:network_proxy/network/http/http.dart';
+import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/network/http/http.dart';
 
 const contentMap = {
   ContentType.json: Icons.data_object,
@@ -115,7 +116,7 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState) {
       onPressed: () {
         unSelect(editableTextState);
         Clipboard.setData(ClipboardData(text: editableTextState.textEditingValue.text)).then((value) {
-          FlutterToastr.show(AppLocalizations.of(context)!.copied, context);
+          if (context.mounted) FlutterToastr.show(AppLocalizations.of(context)!.copied, context);
           editableTextState.hideToolbar();
         });
       },
@@ -203,4 +204,28 @@ Future<T?> showConfirmDialog<T>(BuildContext context, {String? title, String? co
           ],
         );
       });
+}
+
+///滚动条
+ScrollController? trackingScroll(ScrollController? scrollController) {
+  if (scrollController == null) {
+    return null;
+  }
+
+  var trackingScroll = TrackingScrollController();
+  double offset = 0;
+  trackingScroll.addListener(() {
+    if (trackingScroll.offset < 30 && trackingScroll.offset < offset && scrollController.offset > 0) {
+      //往上滚动
+      scrollController.jumpTo(scrollController.offset - max(offset - trackingScroll.offset, 15));
+    } else if (trackingScroll.offset > 0 &&
+        trackingScroll.offset > offset &&
+        scrollController.offset < scrollController.position.maxScrollExtent) {
+      //往下滚动
+      scrollController.jumpTo(scrollController.offset + max(trackingScroll.offset - offset, 15));
+    }
+
+    offset = trackingScroll.offset;
+  });
+  return trackingScroll;
 }
