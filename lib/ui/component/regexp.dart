@@ -55,9 +55,9 @@ class _RegExpPageState extends State<RegExpPage> {
   }
 
   ButtonStyle get buttonStyle => ButtonStyle(
-      padding: WidgetStateProperty.all<EdgeInsets>(EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
-      textStyle: WidgetStateProperty.all<TextStyle>(TextStyle(fontSize: 14)),
-      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+      padding: MaterialStateProperty.all<EdgeInsets>(EdgeInsets.symmetric(horizontal: 15, vertical: 8)),
+      textStyle: MaterialStateProperty.all<TextStyle>(TextStyle(fontSize: 14)),
+      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))));
 
   @override
