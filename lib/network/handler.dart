@@ -329,11 +329,7 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
   void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) {
     proxyChannel.write(msg);
     WebSocketFrame? frame;
-    try {
-      frame = decoder.decode(msg);
-    } catch (e) {
-      log.e("websocket decode error", error: e);
-    }
+    frame = decoder.decode(msg);
     if (frame == null) {
       return;
     }
