@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
   intl: any
   crypto: ^3.0.3
-  cupertino_icons: ^1.0.2
+  cupertino_icons: ^1.0.8
   basic_utils: ^5.7.0
   logger: ^2.4.0
   date_format: ^2.0.9

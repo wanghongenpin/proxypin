@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 /// @author: Hongen Wang
 class HighlightTextEditingController extends TextEditingController {
   RegExp? highlightPattern;
+  String? splitPattern;
 
   //
   bool highlightEnabled = true;
@@ -43,8 +44,20 @@ class HighlightTextEditingController extends TextEditingController {
     final highlightStyle = style?.copyWith(color: color);
     final normalStyle = style;
     List<TextSpan> spans = [];
-    int start = 0;
+    if (splitPattern != null) {
+      var texts = text.split(splitPattern!);
+      for (var i = 0; i < texts.length; i++) {
+        matchHighlight(texts[i], spans, normalStyle: normalStyle, highlightStyle: highlightStyle);
+        spans.add(TextSpan(text: splitPattern, style: normalStyle));
+      }
+    } else {
+      matchHighlight(text, spans, normalStyle: normalStyle, highlightStyle: highlightStyle);
+    }
+    return TextSpan(children: spans, style: style);
+  }
 
+  matchHighlight(String text, List<TextSpan> spans, {TextStyle? normalStyle, TextStyle? highlightStyle}) {
+    int start = 0;
     for (final match in highlightPattern!.allMatches(text)) {
       if (match.start > start) {
         spans.add(TextSpan(text: text.substring(start, match.start), style: normalStyle));
@@ -56,8 +69,6 @@ class HighlightTextEditingController extends TextEditingController {
     if (start < text.length) {
       spans.add(TextSpan(text: text.substring(start), style: normalStyle));
     }
-
-    return TextSpan(children: spans, style: style);
   }
 }
 

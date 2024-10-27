@@ -54,8 +54,9 @@ class _JsonTextSate extends State<JsonText> {
   @override
   Widget build(BuildContext context) {
     var jsnParser = JsnParser(json, colorTheme, indent);
-    var future =
-        compute((message) => message.getJsonTree(), jsnParser).catchError((error) => <Text>[Text(error.toString())]);
+    var future = jsnParser.getLength() < 30
+        ? Future.value(jsnParser.getJsonTree())
+        : compute((message) => message.getJsonTree(), jsnParser).catchError((error) => <Text>[Text(error.toString())]);
 
     return FutureBuilder(
         future: future,
@@ -91,6 +92,16 @@ class JsnParser {
   final String indent;
 
   JsnParser(this.json, this.colorTheme, this.indent);
+
+  int getLength() {
+    if (json is Map) {
+      return json.length;
+    } else if (json is List) {
+      return json.length;
+    } else {
+      return json == null ? 0 : json.toString().length;
+    }
+  }
 
   List<Text> getJsonTree() {
     List<Text> textList = [];

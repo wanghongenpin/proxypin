@@ -90,6 +90,13 @@ extension StringEnhance on String {
     var value = substring(index + 1).trim();
     return [key, value];
   }
+
+  String camelCaseToSpaced() {
+    var input = this;
+    return input.replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (Match match) {
+      return '${match.group(1)} ${match.group(2)}';
+    }).toLowerCase();
+  }
 }
 
 class Pair<K, V> {

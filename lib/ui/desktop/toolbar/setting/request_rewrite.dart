@@ -32,6 +32,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/rewrite/rewrite_replace.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/rewrite/rewrite_update.dart';
+import 'package:proxypin/utils/lang.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -337,7 +338,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                           Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
-                      child: Text(isCN ? list[index].type.label : list[index].type.name,
+                      child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));

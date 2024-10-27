@@ -204,8 +204,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                           onChanged: (val) {
                             setState(() {
                               rewriteType = val!;
-                              initTestData();
                             });
+                            initTestData();
                           })),
                 ],
               ),
@@ -215,7 +215,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
               textField(isUpdate ? i18n.replace : i18n.value, valueTips, controller: valueController),
               const SizedBox(height: 10),
               Row(children: [
-                Align(alignment: Alignment.centerLeft, child: Text(i18n.testData, style: const TextStyle(fontSize: 14))),
+                Align(
+                    alignment: Alignment.centerLeft, child: Text(i18n.testData, style: const TextStyle(fontSize: 14))),
                 const SizedBox(width: 10),
                 if (!isMatch) Text(i18n.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14))
               ]),
@@ -225,6 +226,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   }
 
   initTestData() {
+    dataController.splitPattern = null;
     dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
@@ -244,12 +246,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     }
 
     if (rewriteType == RewriteType.updateQueryParam || rewriteType == RewriteType.removeQueryParam) {
+      dataController.splitPattern = '&';
       dataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
       return;
     }
 
     if (rewriteType == RewriteType.updateHeader || rewriteType == RewriteType.removeHeader) {
-      dataController.text = widget.request?.headers.toRawHeaders() ?? '';
+      var headerData = widget.ruleType == RuleType.requestUpdate
+          ? widget.request?.headers.toRawHeaders()
+          : widget.request?.response?.headers.toRawHeaders();
+      dataController.text = headerData ?? '';
       return;
     }
 
@@ -266,7 +272,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     onMatch = true;
 
     //高亮显示
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       onMatch = false;
       if (dataController.text.isEmpty) {
         if (isMatch) return;
@@ -282,13 +288,15 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
         String key = keyController.text;
         if (isRemove && key.isNotEmpty) {
           if (rewriteType == RewriteType.removeHeader) {
-            key = '$key: ${valueController.text}';
+            key = '$key: ';
           } else {
-            key = '$key=${valueController.text}';
+            key = '$key=';
           }
+          key = '$key${valueController.text}';
         }
 
-        var match = dataController.highlight(key, caseSensitive: rewriteType != RewriteType.updateHeader);
+        var match = dataController.highlight(key,
+            caseSensitive: rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader);
         isMatch = match;
       });
     });
@@ -305,6 +313,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 14),
+      onTapOutside: (event) => FocusScope.of(context).unfocus(),
       minLines: lines ?? 1,
       maxLines: lines ?? 3,
       validator: (val) => val?.isNotEmpty == true || !required ? null : "",
@@ -388,7 +397,7 @@ class _UpdateListState extends State<UpdateList> {
                   : index.isEven
                       ? Colors.grey.withOpacity(0.1)
                       : null,
-              height: 38,
+              constraints: const BoxConstraints(minHeight: 38, maxHeight: 45),
               padding: const EdgeInsets.all(5),
               child: Row(
                 children: [
@@ -405,7 +414,9 @@ class _UpdateListState extends State<UpdateList> {
                             list[index].enabled = val;
                           })),
                   const SizedBox(width: 20),
-                  Expanded(child: Text(getText(list[index]).fixAutoLines(), style: const TextStyle(fontSize: 13))),
+                  Expanded(
+                      child:
+                          Text(getText(list[index]).fixAutoLines(), maxLines: 2, style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });

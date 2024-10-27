@@ -28,6 +28,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/setting/rewrite/rewrite_update.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -180,7 +181,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Container(width: 80, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
+                    Container(width: 60, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
                     SizedBox(width: 46, child: Text(localizations.enable, textAlign: TextAlign.center)),
                     const VerticalDivider(),
                     const Expanded(child: Text("URL")),
@@ -266,7 +267,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
               child: Row(
                 children: [
                   SizedBox(
-                      width: 80,
+                      width: 60,
                       child: Text(list[index].name ?? "",
                           overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
@@ -280,9 +281,10 @@ class _RequestRuleListState extends State<RequestRuleList> {
                           })),
                   const SizedBox(width: 20),
                   Expanded(child: Text(list[index].url, style: const TextStyle(fontSize: 13))),
+                  const SizedBox(width: 3),
                   SizedBox(
                       width: 60,
-                      child: Text(isCN ? list[index].type.label : list[index].type.name,
+                      child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
@@ -297,7 +299,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => RewriteRule(rule: rule, items: rewriteItems)))
         .then((value) {
-      if (value != null) {
+      if (value != null && mounted) {
         setState(() {});
       }
     });

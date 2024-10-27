@@ -90,7 +90,7 @@ class MoreMenu extends StatelessWidget {
               child: ListTile(
                 dense: true,
                 leading: const Icon(Icons.highlight_outlined),
-                title: Text(localizations.keyword + localizations.highlight),
+                title: Text('${localizations.keyword}${localizations.highlight}'),
                 onTap: () {
                   navigator(context, const KeywordHighlight());
                 },

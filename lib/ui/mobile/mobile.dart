@@ -420,7 +420,7 @@ class RequestPageState extends State<RequestPage> {
   /// 检查远程连接
   checkConnectTask(BuildContext context) async {
     int retry = 0;
-    Timer.periodic(const Duration(milliseconds: 10000), (timer) async {
+    Timer.periodic(const Duration(milliseconds: 15000), (timer) async {
       if (remoteDevice.value.connect == false) {
         timer.cancel();
         return;
@@ -438,7 +438,6 @@ class RequestPageState extends State<RequestPage> {
       }
 
       if (retry > 3) {
-        retry = 0;
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text(localizations.remoteConnectDisconnect),

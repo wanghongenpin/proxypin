@@ -161,6 +161,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     var typeList = widget.ruleType == RuleType.requestUpdate ? RewriteType.updateRequest : RewriteType.updateResponse;
 
     return AlertDialog(
+        scrollable: true,
         titlePadding: const EdgeInsets.only(top: 10, left: 20),
         actionsPadding: const EdgeInsets.only(right: 15, bottom: 15),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
@@ -183,7 +184,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
         ],
         content: Container(
             width: 500,
-            constraints: const BoxConstraints(maxHeight: 400),
+            constraints: const BoxConstraints(maxHeight: 420, minHeight: 400),
             child: Form(
                 key: formKey,
                 child: Column(children: [
@@ -208,8 +209,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                               onChanged: (val) {
                                 setState(() {
                                   rewriteType = val!;
-                                  initTestData();
                                 });
+                                initTestData();
                               })),
                     ],
                   ),
@@ -234,6 +235,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   }
 
   initTestData() {
+    dataController.splitPattern = null;
     dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
@@ -253,12 +255,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     }
 
     if (rewriteType == RewriteType.updateQueryParam || rewriteType == RewriteType.removeQueryParam) {
+      dataController.splitPattern = '&';
       dataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
       return;
     }
 
     if (rewriteType == RewriteType.updateHeader || rewriteType == RewriteType.removeHeader) {
-      dataController.text = widget.request?.headers.toRawHeaders() ?? '';
+      var headerData = widget.ruleType == RuleType.requestUpdate
+          ? widget.request?.headers.toRawHeaders()
+          : widget.request?.response?.headers.toRawHeaders();
+      dataController.text = headerData ?? '';
       return;
     }
 
@@ -275,7 +281,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     onMatch = true;
 
     //高亮显示
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       onMatch = false;
       if (dataController.text.isEmpty) {
         if (isMatch) return;
@@ -290,13 +296,15 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
         String key = keyController.text;
         if (isRemove && key.isNotEmpty) {
           if (rewriteType == RewriteType.removeHeader) {
-            key = '$key: ${valueController.text}';
+            key = '$key: ';
           } else {
-            key = '$key=${valueController.text}';
+            key = '$key=';
           }
+          key = '$key${valueController.text}';
         }
 
-        var match = dataController.highlight(key, caseSensitive: rewriteType != RewriteType.updateHeader);
+        var match = dataController.highlight(key,
+            caseSensitive: rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader);
         isMatch = match;
       });
     });

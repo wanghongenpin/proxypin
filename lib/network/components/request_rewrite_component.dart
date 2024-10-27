@@ -109,19 +109,20 @@ class RequestRewriteComponent {
           queryParameters[item.key!] = item.value;
           break;
         case RewriteType.removeQueryParam:
-          if (item.value?.isNotEmpty == true) {
+          print(item.value?.trim().isNotEmpty );
+          if (item.value?.trim().isNotEmpty == true) {
             var val = queryParameters[item.key!];
-            if (val != null && item.value != null && RegExp(item.value!).hasMatch(val)) {
-              return;
+            if (val == null || !RegExp(item.value!).hasMatch(val)) {
+              break;
             }
           }
-          queryParameters.remove(item.value);
+          queryParameters.remove(item.key!);
           break;
         case RewriteType.updateQueryParam:
           var itemKey = item.key;
           if (itemKey == null || itemKey.trim().isEmpty) return;
 
-          var entries = queryParameters.entries;
+          var entries = Map.of(queryParameters).entries;
           var regExp = RegExp(item.key!);
 
           for (var entry in entries) {
@@ -175,9 +176,9 @@ class RequestRewriteComponent {
     }
 
     if (item.type == RewriteType.removeHeader) {
-      if (item.value?.isNotEmpty == true) {
+      if (item.value?.trim().isNotEmpty == true) {
         var val = message.headers.get(item.key!);
-        if (val != null && item.value != null && RegExp(item.value!).hasMatch(val)) {
+        if (val == null || !RegExp(item.value!).hasMatch(val)) {
           return;
         }
       }
@@ -188,20 +189,18 @@ class RequestRewriteComponent {
     if (item.type == RewriteType.updateHeader) {
       if (item.key == null || item.key?.trim().isEmpty == true) return;
 
-      var entries = message.headers.entries;
+      var headers = Map.of(message.headers.getHeaders());
       var regExp = RegExp(item.key!, caseSensitive: false);
 
-      for (var entry in entries) {
-        var line = "${entry.key}: ${entry.value}";
-
+      headers.forEach((key, values) {
+        var line = "$key: ${values.firstOrNull ?? ''}";
         if (regExp.hasMatch(line)) {
           line = line.replaceAll(regExp, item.value ?? '');
           var pair = line.splitFirst(HttpConstants.colon);
-          if (pair.first != entry.key) message.headers.remove(entry.key);
-
+          if (pair.first != key) message.headers.remove(key);
           message.headers.set(pair.first, pair.length > 1 ? pair.last : '');
         }
-      }
+      });
       return;
     }
   }
@@ -231,7 +230,8 @@ class RequestRewriteComponent {
   }
 
   Future<void> _replaceHttpMessage(HttpMessage message, RewriteItem item) async {
-    if (item.type == RewriteType.replaceResponseHeader && item.headers != null) {
+    if ((item.type == RewriteType.replaceRequestHeader || item.type == RewriteType.replaceResponseHeader) &&
+        item.headers != null) {
       item.headers?.forEach((key, value) => message.headers.set(key, value));
       return;
     }
