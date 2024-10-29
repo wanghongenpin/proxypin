@@ -9,7 +9,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_js
   permission_handler_windows
   proxy_manager
-  screen_retriever
+  screen_retriever_windows
   share_plus
   url_launcher_windows
   win32audio

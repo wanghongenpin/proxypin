@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
-import 'package:proxypin/ui/component/utils.dart';
 
-class JsonText extends StatefulWidget {
+class JsonText extends StatelessWidget {
   final ColorTheme colorTheme;
   final dynamic json;
   final String indent;
@@ -27,36 +29,10 @@ class JsonText extends StatefulWidget {
   const JsonText({super.key, required this.json, this.indent = '  ', required this.colorTheme, this.scrollController});
 
   @override
-  State<StatefulWidget> createState() => _JsonTextSate();
-}
-
-class _JsonTextSate extends State<JsonText> {
-  late ColorTheme colorTheme;
-  late dynamic json;
-  late String indent;
-  late ScrollController? scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    colorTheme = widget.colorTheme;
-    json = widget.json;
-    indent = widget.indent;
-    scrollController = trackingScroll(widget.scrollController);
-  }
-
-  @override
-  void dispose() {
-    scrollController?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     var jsnParser = JsnParser(json, colorTheme, indent);
-    var future = jsnParser.getLength() < 30
-        ? Future.value(jsnParser.getJsonTree())
-        : compute((message) => message.getJsonTree(), jsnParser).catchError((error) => <Text>[Text(error.toString())]);
+    var future =
+        compute((message) => message.getJsonTree(), jsnParser).catchError((error) => <Text>[Text(error.toString())]);
 
     return FutureBuilder(
         future: future,
@@ -73,7 +49,7 @@ class _JsonTextSate extends State<JsonText> {
                   height: MediaQuery.of(context).size.height - 160,
                   child: ListView.builder(
                       physics: const BouncingScrollPhysics(),
-                      controller: scrollController,
+                      controller: trackingScroll(),
                       cacheExtent: 1000,
                       itemBuilder: (context, index) => textList[index],
                       itemCount: textList.length));
@@ -83,6 +59,32 @@ class _JsonTextSate extends State<JsonText> {
 
           return Container();
         });
+  }
+
+  ///滚动条
+  ScrollController trackingScroll() {
+    var trackingScroll = TrackingScrollController();
+    double offset = 0;
+    trackingScroll.addListener(() {
+      if (trackingScroll.offset < -10 || (trackingScroll.offset < 30 && trackingScroll.offset < offset)) {
+        if (scrollController != null && scrollController!.offset >= 0) {
+          scrollController?.jumpTo(scrollController!.offset - max((offset - trackingScroll.offset), 15));
+        }
+      }
+      offset = trackingScroll.offset;
+    });
+
+    if (Platform.isIOS) {
+      scrollController?.addListener(() {
+        if (scrollController!.offset >= scrollController!.position.maxScrollExtent) {
+          scrollController?.jumpTo(scrollController!.position.maxScrollExtent);
+          trackingScroll
+              .jumpTo(trackingScroll.offset + (scrollController!.offset - scrollController!.position.maxScrollExtent));
+        }
+      });
+    }
+
+    return trackingScroll;
   }
 }
 
