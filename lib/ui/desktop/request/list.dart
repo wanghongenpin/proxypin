@@ -16,7 +16,7 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
@@ -170,8 +170,8 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
 
   ///导出
   export(String fileName) async {
-    final FileSaveLocation? result = await getSaveLocation(suggestedName: fileName);
-    if (result == null) {
+    var path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
       return;
     }
 
@@ -179,7 +179,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     List<HttpRequest>? requests = currentView();
     if (requests == null) return;
 
-    var file = await File(result.path).create();
+    var file = await File(path).create();
     await Har.writeFile(requests, file, title: fileName);
 
     if (mounted) FlutterToastr.show(AppLocalizations.of(context)!.exportSuccess, context);

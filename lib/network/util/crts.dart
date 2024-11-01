@@ -20,16 +20,20 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:basic_utils/basic_utils.dart';
-import 'package:proxypin/network/util/logger.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pointycastle/api.dart';
+import 'package:pointycastle/asymmetric/api.dart';
 import 'package:proxypin/network/util/cert/basic_constraints.dart';
 import 'package:proxypin/network/util/cert/pkcs12.dart';
 import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:proxypin/network/util/cert/key_usage.dart' as x509;
 
+import 'cert/cert_data.dart';
+import 'cert/extension.dart';
+import 'cert/key_usage.dart';
+import 'crypto.dart';
 import 'file_read.dart';
 
 Future<void> main() async {
@@ -37,8 +41,7 @@ Future<void> main() async {
   CertificateManager.caCert.tbsCertificateSeqAsString;
 
   String cer = CertificateManager.get('www.jianshu.com')!;
-  var x509certificateFromPem = X509Utils.x509CertificateFromPem(cer);
-  print(x509certificateFromPem.plain!);
+  print(cer);
 }
 
 enum StartState { uninitialized, initializing, initialized }
@@ -104,7 +107,7 @@ class CertificateManager {
 
     x509Subject['CN'] = host;
 
-    var csrPem = X509Generate.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 365,
+    var csrPem = X509Utils.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 365,
         sans: [host], serialNumber: Random().nextInt(1000000).toString(), subject: x509Subject);
     return csrPem;
   }
@@ -115,8 +118,8 @@ class CertificateManager {
       await initCAConfig();
     }
 
-    var subject = caCert.tbsCertificate!.subject;
-    return '${X509Generate.getSubjectHashName(subject)}.0';
+    var subject = caCert.subject;
+    return '${X509Utils.getSubjectHashName(subject)}.0';
   }
 
   //重新生成根证书
@@ -139,7 +142,7 @@ class CertificateManager {
     };
     x509Subject['CN'] = 'ProxyPin CA (${DateTime.now().dateFormat()},${RandomUtil.randomString(6).toUpperCase()})';
 
-    var csrPem = X509Generate.generateSelfSignedCertificate(
+    var csrPem = X509Utils.generateSelfSignedCertificate(
       _caCert,
       serverPubKey,
       serverPriKey,
@@ -148,7 +151,7 @@ class CertificateManager {
       serialNumber: DateTime.now().millisecondsSinceEpoch.toString(),
       issuer: x509Subject,
       subject: x509Subject,
-      keyUsage: x509.KeyUsage(x509.KeyUsage.keyCertSign),
+      keyUsage: ExtensionKeyUsage(ExtensionKeyUsage.keyCertSign),
       extKeyUsage: [ExtendedKeyUsage.SERVER_AUTH],
       basicConstraints: BasicConstraints(isCA: true),
     );

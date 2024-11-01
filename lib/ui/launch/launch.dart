@@ -106,6 +106,12 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (widget.proxyServer.isRunning) {
+        widget.proxyServer.startForCheck();
+      }
+    }
+
     if (state == AppLifecycleState.detached) {
       logger.d('AppLifecycleState.detached');
       widget.onStop?.call();

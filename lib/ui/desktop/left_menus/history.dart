@@ -18,7 +18,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:date_format/date_format.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -233,14 +233,14 @@ class _HistoryListState extends State<_HistoryListWidget> {
 
   //导入har
   import() async {
-    const XTypeGroup typeGroup = XTypeGroup(label: 'Har', extensions: <String>['har']);
-    final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
-    if (file == null) {
+    final results = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['har']);
+    if (results == null || results.files.isEmpty) {
       return;
     }
 
+    var file = results.files.first;
     try {
-      var historyItem = await storage.addHarFile(file);
+      var historyItem = await storage.addHarFile(file.xFile);
       setState(() {
         toRequestsView(historyItem);
         FlutterToastr.show(localizations.importSuccess, context);
@@ -370,14 +370,15 @@ class _HistoryListState extends State<_HistoryListWidget> {
     //文件名称
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");
-    final FileSaveLocation? result = await getSaveLocation(suggestedName: fileName);
-    if (result == null) {
+
+    final String? path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
       return;
     }
 
     //获取请求
     List<HttpRequest> requests = await storage.getRequests(item);
-    var file = await File(result.path).create();
+    var file = await File(path).create();
     await Har.writeFile(requests, file, title: item.name);
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     Future.delayed(const Duration(seconds: 30), () => item.requests = null);

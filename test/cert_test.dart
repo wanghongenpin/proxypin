@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:basic_utils/basic_utils.dart';
+import 'package:pointycastle/asymmetric/api.dart';
 import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:proxypin/network/util/cert/cert_data.dart';
+import 'package:proxypin/network/util/cert/extension.dart';
 import 'package:proxypin/network/util/cert/key_usage.dart' as x509;
 import 'package:proxypin/network/util/cert/x509.dart';
+import 'package:proxypin/network/util/crypto.dart';
 
 void main() async {
   var caPem = await File('assets/certs/ca.crt').readAsString();
@@ -77,8 +80,8 @@ String generate(X509CertificateData caRoot, RSAPublicKey serverPubKey, RSAPrivat
   };
   x509Subject['CN'] = 'ProxyPin CA (wanghongen)';
 
-  var csrPem = X509Generate.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 365,
-      keyUsage: x509.KeyUsage(x509.KeyUsage.keyCertSign | x509.KeyUsage.cRLSign),
+  var csrPem = X509Utils.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 365,
+      keyUsage: x509.ExtensionKeyUsage(x509.ExtensionKeyUsage.keyCertSign | x509.ExtensionKeyUsage.cRLSign),
       extKeyUsage: [ExtendedKeyUsage.SERVER_AUTH],
       basicConstraints: BasicConstraints(isCA: true),
       sans: [x509Subject['CN']!],

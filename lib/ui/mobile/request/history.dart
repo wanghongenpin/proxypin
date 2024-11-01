@@ -18,7 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:date_format/date_format.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -156,15 +156,13 @@ class _MobileHistoryState extends State<MobileHistory> {
 
   //导入har
   import(HistoryStorage storage) async {
-    const XTypeGroup typeGroup =
-        XTypeGroup(label: 'har', extensions: <String>['har'], uniformTypeIdentifiers: ["public.item"]);
-    final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
-    if (file == null) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['har']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
 
     try {
-      var historyItem = await storage.addHarFile(file);
+      var historyItem = await storage.addHarFile(result.files.single.xFile);
       setState(() {
         toRequestsView(historyItem, storage);
         FlutterToastr.show(localizations.importSuccess, context);

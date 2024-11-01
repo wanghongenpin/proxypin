@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
-import 'package:basic_utils/basic_utils.dart';
 import 'package:pointycastle/asn1.dart';
 import 'package:pointycastle/export.dart';
 
+import '../crypto.dart';
+import '../lang.dart';
 import 'der.dart';
+import 'x509.dart';
 
 class Pkcs12 {
   ///

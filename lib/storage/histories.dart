@@ -20,7 +20,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:date_format/date_format.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -29,6 +28,7 @@ import 'package:proxypin/utils/files.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 ///历史存储
 ///@Author WangHongEn

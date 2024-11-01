@@ -99,7 +99,7 @@ class ProxyServer {
   ///检查是否监听端口 没有监听则启动
   Future<void> startForCheck() async {
     try {
-      var socket = await Socket.connect('127.0.0.1', port, timeout: const Duration(milliseconds: 100));
+      var socket = await Socket.connect('127.0.0.1', port, timeout: const Duration(milliseconds: 150));
       socket.close();
     } catch (e) {
       await start();

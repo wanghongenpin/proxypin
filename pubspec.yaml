@@ -13,34 +13,38 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: any
-  crypto: ^3.0.3
   cupertino_icons: ^1.0.8
-  basic_utils: ^5.7.0
+  pointycastle: ^3.9.1
   logger: ^2.4.0
   date_format: ^2.0.9
-  window_manager: ^0.4.2
+  window_manager: ^0.4.3
   desktop_multi_window:
     git:
       url: https://gitee.com/wanghongenpin/flutter-plugins.git
       path: packages/desktop_multi_window
   path_provider: ^2.1.4
-  url_launcher: ^6.3.1
+  file_picker: ^7.1.0+1
   proxy_manager: ^0.0.3
   permission_handler: ^11.3.1
-  qr_flutter: ^4.1.0
-  flutter_qr_reader: ^1.0.5
   flutter_toastr: ^1.0.3
   share_plus: ^10.0.0
-  brotli: ^0.6.0
   flutter_js: ^0.8.1
-  flutter_code_editor: ^0.3.2
+  flutter_code_editor:
+    git:
+      url: https://github.com/wanghongenpin/flutter-code-editor.git
+      ref: secure-keyboard
   flutter_desktop_context_menu: ^0.2.0
-  file_picker: ^7.1.0+1
-  file_selector: ^1.0.3
-  win32audio: ^1.3.1
   device_info_plus: ^10.1.2
   shared_preferences: ^2.2.3
   image_pickers: ^2.0.5+2
+
+  qr_flutter: ^4.1.0
+  flutter_qr_reader: ^1.0.5
+
+  brotli: ^0.6.0
+  win32audio: ^1.3.1
+
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

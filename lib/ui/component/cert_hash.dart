@@ -17,7 +17,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:basic_utils/basic_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -80,7 +79,7 @@ class _CertHashPageState extends State<CertHashPage> {
             FilledButton.icon(
                 onPressed: () {
                   getSubjectName();
-                  FocusScope.of(context).requestFocus(FocusNode());
+                  FocusScope.of(context).unfocus();
                 },
                 style: buttonStyle,
                 icon: const Icon(Icons.play_arrow_rounded),
@@ -117,9 +116,8 @@ class _CertHashPageState extends State<CertHashPage> {
     if (content.isEmpty) return;
     try {
       var caCert = X509Utils.x509CertificateFromPem(content);
-      var subject = caCert.tbsCertificate?.subject;
-      if (subject == null) return;
-      var subjectHashName = X509Generate.getSubjectHashName(subject);
+      var subject = caCert.subject;
+      var subjectHashName = X509Utils.getSubjectHashName(subject);
       decodeData.text = '$subjectHashName.0';
     } catch (e) {
       FlutterToastr.show(localizations.decodeFail, context, duration: 3, backgroundColor: Colors.red);

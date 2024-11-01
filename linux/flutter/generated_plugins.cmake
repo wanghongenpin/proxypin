@@ -4,7 +4,6 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_multi_window
-  file_selector_linux
   flutter_desktop_context_menu
   flutter_js
   proxy_manager

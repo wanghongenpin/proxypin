@@ -18,16 +18,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
 import 'package:proxypin/network/components/script_manager.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/util/lists.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/cert_hash.dart';
 import 'package:proxypin/ui/component/device.dart';
@@ -41,7 +39,6 @@ import 'package:proxypin/ui/desktop/request/request_editor.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/request_rewrite.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -214,38 +211,6 @@ void registerMethodHandler() {
 
     if (call.method == 'getApplicationSupportDirectory') {
       return getApplicationSupportDirectory().then((it) => it.path);
-    }
-
-    if (call.method == 'getSaveLocation') {
-      String? path = (await getSaveLocation(suggestedName: call.arguments))?.path;
-      if (Platform.isWindows) windowManager.blur();
-      return path;
-    }
-
-    if (call.method == 'saveFile') {
-      String? path = (await FilePicker.platform.saveFile(fileName: call.arguments));
-      return path;
-    }
-
-    if (call.method == 'openFile') {
-      List<String> extensions =
-          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
-
-      XTypeGroup typeGroup =
-          XTypeGroup(extensions: extensions, uniformTypeIdentifiers: Platform.isMacOS ? const ['public.item'] : null);
-      final XFile? file = await openFile(acceptedTypeGroups: <XTypeGroup>[typeGroup]);
-      if (Platform.isWindows) windowManager.blur();
-      return file?.path;
-    }
-
-    if (call.method == 'pickFile') {
-      List<String> extensions =
-          call.arguments is List ? Lists.convertList<String>(call.arguments) : <String>[call.arguments];
-
-      var file =
-          (await FilePicker.platform.pickFiles(allowedExtensions: extensions, type: FileType.custom))?.files.single;
-      if (Platform.isWindows) windowManager.blur();
-      return file?.path;
     }
 
     if (call.method == 'launchUrl') {

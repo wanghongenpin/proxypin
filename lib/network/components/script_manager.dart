@@ -23,7 +23,7 @@ import 'package:proxypin/network/components/js/file.dart';
 import 'package:proxypin/network/components/js/md5.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/network/util/lists.dart';
+import 'package:proxypin/network/util/lang.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/ui/component/device.dart';

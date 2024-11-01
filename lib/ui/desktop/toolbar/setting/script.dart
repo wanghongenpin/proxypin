@@ -18,7 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -151,14 +151,13 @@ class _ScriptWidgetState extends State<ScriptWidget> {
 
   //导入js
   import() async {
-    String? file = await DesktopMultiWindow.invokeMethod(0, 'openFile', 'json');
-    WindowController.fromWindowId(widget.windowId).show();
-    if (file == null) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
-
+    var file = result.files.single.path;
     try {
-      var json = jsonDecode(await File(file).readAsString());
+      var json = jsonDecode(await File(file!).readAsString());
       var scriptManager = (await ScriptManager.instance);
       if (json is List<dynamic>) {
         for (var item in json) {
@@ -616,9 +615,8 @@ class _ScriptListState extends State<ScriptList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'proxypin-scripts.json';
-    String? saveLocation = await DesktopMultiWindow.invokeMethod(0, 'getSaveLocation', fileName);
-    WindowController.fromWindowId(widget.windowId).show();
-    if (saveLocation == null) {
+    String? path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
       return;
     }
     var scriptManager = await ScriptManager.instance;
@@ -631,8 +629,7 @@ class _ScriptListState extends State<ScriptList> {
       json.add(map);
     }
 
-    final XFile xFile = XFile.fromData(utf8.encode(jsonEncode(json)), mimeType: 'json');
-    await xFile.saveTo(saveLocation);
+    await File(path).writeAsBytes(utf8.encode(jsonEncode(json)));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 

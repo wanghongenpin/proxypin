@@ -17,7 +17,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -203,9 +202,10 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
     }
 
     if (Platforms.isDesktop()) {
-      String? file = await DesktopMultiWindow.invokeMethod(0, 'pickFile', <String>['jpg', 'png', 'jpeg']);
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-      return file;
+      //<String>['jpg', 'png', 'jpeg']
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+      if (result == null || result.files.isEmpty) return null;
+      return result.files.single.path;
     }
 
     return null;

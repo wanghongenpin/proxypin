@@ -16,7 +16,7 @@
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -98,10 +98,12 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
   //导入
   import() async {
-    final XFile? file = await openFile();
-    if (file == null) {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
+    var file = result.files.single.xFile;
 
     try {
       List json = jsonDecode(utf8.decode(await file.readAsBytes()));

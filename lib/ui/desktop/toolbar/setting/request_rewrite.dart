@@ -17,7 +17,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -154,14 +154,16 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   import() async {
-    String? file = await DesktopMultiWindow.invokeMethod(0, 'openFile', 'config');
-    WindowController.fromWindowId(widget.windowId).show();
-    if (file == null) {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
 
+    var file = result.files.single;
+
     try {
-      List json = jsonDecode(await File(file).readAsString());
+      List json = jsonDecode(await File(file.path!).readAsString());
       for (var item in json) {
         var rule = RequestRewriteRule.formJson(item);
         var items = (item['items'] as List).map((e) => RewriteItem.fromJson(e)).toList();
@@ -350,9 +352,8 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
-    String? saveLocation = await DesktopMultiWindow.invokeMethod(0, 'getSaveLocation', fileName);
-    WindowController.fromWindowId(widget.windowId).show();
-    if (saveLocation == null) {
+    var path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
       return;
     }
 
@@ -365,8 +366,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
       list.add(json);
     }
 
-    final XFile xFile = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'json');
-    await xFile.saveTo(saveLocation);
+    await File(path).writeAsBytes(utf8.encode(jsonEncode(list)));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 
@@ -521,7 +521,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
             width: 550,
-            constraints: const BoxConstraints(minHeight: 200,maxHeight: 550),
+            constraints: const BoxConstraints(minHeight: 200, maxHeight: 550),
             child: Form(
                 key: formKey,
                 child: Column(

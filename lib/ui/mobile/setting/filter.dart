@@ -15,8 +15,9 @@
  */
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:file_selector/file_selector.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -135,11 +136,11 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   import() async {
-    final XFile? file = await openFile();
-    if (file == null) {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    if (result == null || result.files.isEmpty) {
       return;
     }
-
+    var file = File(result.files.single.path!);
     try {
       List json = jsonDecode(await file.readAsString());
       for (var item in json) {

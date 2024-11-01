@@ -2,7 +2,36 @@ import 'dart:typed_data';
 
 import 'package:pointycastle/pointycastle.dart';
 
-class KeyUsage {
+enum KeyUsage {
+  /// 0
+  DIGITAL_SIGNATURE,
+
+  /// 1 (Also called contentCommitment now)
+  NON_REPUDIATION,
+
+  /// 2
+  KEY_ENCIPHERMENT,
+
+  /// 3
+  DATA_ENCIPHERMENT,
+
+  /// 4
+  KEY_AGREEMENT,
+
+  /// 5
+  KEY_CERT_SIGN,
+
+  /// 6
+  CRL_SIGN,
+
+  /// 7
+  ENCIPHER_ONLY,
+
+  /// 8
+  DECIPHER_ONLY
+}
+
+class ExtensionKeyUsage {
   static const int digitalSignature = (1 << 7);
   static const int nonRepudiation = (1 << 6);
   static const int keyEncipherment = (1 << 5);
@@ -16,7 +45,7 @@ class KeyUsage {
   final ASN1BitString bitString;
   final bool critical;
 
-  KeyUsage(int usage, {this.critical = true}) : bitString = ASN1BitString.fromBytes(keyUsageBytes(usage));
+  ExtensionKeyUsage(int usage, {this.critical = true}) : bitString = ASN1BitString.fromBytes(keyUsageBytes(usage));
 
   static Uint8List keyUsageBytes(int valueBytes) {
     var bytes = [valueBytes];
