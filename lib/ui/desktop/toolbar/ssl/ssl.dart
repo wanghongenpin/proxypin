@@ -247,11 +247,13 @@ class _SslState extends State<SslWidget> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return SimpleDialog(
-              contentPadding: const EdgeInsets.all(16),
+              contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
               title: Row(children: [
+                const Expanded(child: SizedBox()),
                 Text(isCN ? "电脑HTTPS抓包配置" : "Computer HTTPS Packet Capture Configuration",
-                    style: const TextStyle(fontSize: 16)),
-                const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const Expanded(child: SizedBox()),
+                Align(alignment: Alignment.topRight, child: CloseButton())
               ]),
               alignment: Alignment.center,
               children: list);
@@ -265,10 +267,13 @@ class _SslState extends State<SslWidget> {
         builder: (BuildContext context) {
           return SimpleDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-              contentPadding: const EdgeInsets.all(16),
+              contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
               title: Row(children: [
-                Text("iOS ${localizations.caInstallGuide}", style: const TextStyle(fontSize: 16)),
-                const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
+                const Expanded(child: SizedBox()),
+                Text("iOS ${localizations.caInstallGuide}",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const Expanded(child: SizedBox()),
+                Align(alignment: Alignment.topRight, child: CloseButton())
               ]),
               alignment: Alignment.center,
               children: [
@@ -315,8 +320,11 @@ class _SslState extends State<SslWidget> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
               contentPadding: const EdgeInsets.all(5),
               title: Row(children: [
-                Text("Android ${localizations.caInstallGuide}", style: const TextStyle(fontSize: 16)),
-                const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
+                const Expanded(child: SizedBox()),
+                Text("Android ${localizations.caInstallGuide}",
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const Expanded(child: SizedBox()),
+                Align(alignment: Alignment.topRight, child: CloseButton())
               ]),
               content: SizedBox(
                   width: 600,

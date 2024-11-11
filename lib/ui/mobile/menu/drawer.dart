@@ -19,11 +19,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/host_filter.dart';
-import 'package:proxypin/network/components/request_block_manager.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/request_block_manager.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/storage/histories.dart';
-import 'package:proxypin/ui/component/toolbox.dart';
+import 'package:proxypin/ui/component/toolbox/toolbox.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/setting/preference.dart';
@@ -91,21 +91,21 @@ class DrawerWidget extends StatelessWidget {
                 leading: const Icon(Icons.filter_alt_outlined),
                 onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
             ListTile(
-                title: Text(localizations.requestRewrite),
-                leading: const Icon(Icons.edit_outlined),
-                onTap: () async {
-                  var requestRewrites = await RequestRewriteManager.instance;
-                  if (context.mounted) {
-                    navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
-                  }
-                }),
-            ListTile(
                 title: Text(localizations.requestBlock),
                 leading: const Icon(Icons.block_flipped),
                 onTap: () async {
                   var requestBlockManager = await RequestBlockManager.instance;
                   if (context.mounted) {
                     navigator(context, MobileRequestBlock(requestBlockManager: requestBlockManager));
+                  }
+                }),
+            ListTile(
+                title: Text(localizations.requestRewrite),
+                leading: const Icon(Icons.edit_outlined),
+                onTap: () async {
+                  var requestRewrites = await RequestRewriteManager.instance;
+                  if (context.mounted) {
+                    navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
                   }
                 }),
             ListTile(

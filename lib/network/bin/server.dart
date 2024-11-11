@@ -19,7 +19,11 @@ import 'dart:io';
 
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/channel.dart';
-import 'package:proxypin/network/components/request_rewrite_component.dart';
+import 'package:proxypin/network/components/hosts.dart';
+import 'package:proxypin/network/components/interceptor.dart';
+import 'package:proxypin/network/components/request_block.dart';
+import 'package:proxypin/network/components/request_rewrite.dart';
+import 'package:proxypin/network/components/script.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/util/crts.dart';
@@ -73,14 +77,22 @@ class ProxyServer {
   /// 启动代理服务
   Future<Server> start() async {
     Server server = Server(configuration, listener: CombinedEventListener(listeners));
-    var requestRewriteComponent = RequestRewriteComponent.instance;
+
+    List<Interceptor> interceptors = [
+      Hosts(),
+      RequestRewriteInterceptor.instance,
+      ScriptInterceptor(),
+      RequestBlockInterceptor(),
+    ];
+
+    interceptors.sort((a, b) => a.priority.compareTo(b.priority));
 
     server.initChannel((channel) {
       channel.pipeline.handle(
-          HttpRequestCodec(),
-          HttpResponseCodec(),
-          HttpProxyChannelHandler(
-              listener: CombinedEventListener(listeners), requestRewriteComponent: requestRewriteComponent));
+        HttpRequestCodec(),
+        HttpResponseCodec(),
+        HttpProxyChannelHandler(listener: CombinedEventListener(listeners), interceptors: interceptors),
+      );
     });
 
     return server.bind(port).then((serverSocket) {
@@ -94,16 +106,6 @@ class ProxyServer {
       CertificateManager.initCAConfig();
       return server;
     });
-  }
-
-  ///检查是否监听端口 没有监听则启动
-  Future<void> startForCheck() async {
-    try {
-      var socket = await Socket.connect('127.0.0.1', port, timeout: const Duration(milliseconds: 150));
-      socket.close();
-    } catch (e) {
-      await start();
-    }
   }
 
   /// 停止代理服务
@@ -140,8 +142,8 @@ class ProxyServer {
     await stop().whenComplete(() => start());
   }
 
+  ///检查是否监听端口 没有监听则启动
   Future<void> retryBind() async {
-    //检测端口是否被占用
     try {
       await Socket.connect('127.0.0.1', port, timeout: const Duration(milliseconds: 350));
     } catch (e) {

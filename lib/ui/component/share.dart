@@ -7,6 +7,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 
 ///分享按钮
@@ -29,39 +30,56 @@ class ShareWidget extends StatelessWidget {
           PopupMenuItem(
             padding: const EdgeInsets.only(left: 10, right: 2),
             child: Text(localizations.shareUrl),
-            onTap: () {
+            onTap: () async {
               if (request == null) {
                 FlutterToastr.show("Request is empty", context);
                 return;
               }
-              Share.share(request!.requestUrl, subject: localizations.proxyPinSoftware);
+              Share.share(request!.requestUrl,
+                  subject: localizations.proxyPinSoftware, sharePositionOrigin: await _sharePositionOrigin(context));
             },
           ),
           PopupMenuItem(
               padding: const EdgeInsets.only(left: 10, right: 2),
               child: Text(localizations.shareRequestResponse),
-              onTap: () {
+              onTap: () async {
                 if (request == null) {
                   FlutterToastr.show("Request is empty", context);
                   return;
                 }
                 var file = XFile.fromData(utf8.encode(copyRequest(request!, response)),
                     name: localizations.captureDetail, mimeType: "txt");
-                Share.shareXFiles([file], fileNameOverrides: ['request.txt'], text: localizations.proxyPinSoftware);
+
+                Share.shareXFiles([file],
+                    fileNameOverrides: ['request.txt'],
+                    text: localizations.proxyPinSoftware,
+                    sharePositionOrigin: await _sharePositionOrigin(context));
               }),
           PopupMenuItem(
               padding: const EdgeInsets.only(left: 10, right: 2),
               child: Text(localizations.shareCurl),
-              onTap: () {
+              onTap: () async {
                 if (request == null) {
                   return;
                 }
                 var text = curlRequest(request!);
                 var file = XFile.fromData(utf8.encode(text), name: "cURL.txt", mimeType: "txt");
-                Share.shareXFiles([file], fileNameOverrides: ["cURL.txt"], text: localizations.proxyPinSoftware);
+
+                Share.shareXFiles([file],
+                    fileNameOverrides: ["cURL.txt"],
+                    text: localizations.proxyPinSoftware,
+                    sharePositionOrigin: await _sharePositionOrigin(context));
               }),
         ];
       },
     );
+  }
+
+  Future<Rect?> _sharePositionOrigin(BuildContext context) async {
+    RenderBox? box;
+    if (await Platforms.isIpad() && context.mounted) {
+      box = context.findRenderObject() as RenderBox?;
+    }
+    return box == null ? null : box.localToGlobal(Offset.zero) & box.size;
   }
 }

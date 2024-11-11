@@ -108,7 +108,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (widget.proxyServer.isRunning) {
-        widget.proxyServer.startForCheck();
+        widget.proxyServer.retryBind();
       }
     }
 

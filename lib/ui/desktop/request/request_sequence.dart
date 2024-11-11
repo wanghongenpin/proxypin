@@ -23,6 +23,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
+import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 ///请求序列 列表
@@ -67,7 +68,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
         highlightHandler();
       });
     };
-    KeywordHighlightDialog.keywordsController.addListener(highlightListener);
+    DesktopKeywordHighlight.keywordsController.addListener(highlightListener);
   }
 
   changeState() {
@@ -87,7 +88,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   @override
   void dispose() {
-    KeywordHighlightDialog.keywordsController.removeListener(highlightListener);
+    DesktopKeywordHighlight.keywordsController.removeListener(highlightListener);
     super.dispose();
   }
 
@@ -95,11 +96,12 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   Widget build(BuildContext context) {
     super.build(context);
     return ListView.separated(
-        cacheExtent: 1500,
+        cacheExtent: 1000,
         separatorBuilder: (context, index) => Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
         itemCount: view.length,
         itemBuilder: (context, index) {
           return RequestWidget(
+            key: ValueKey(view.elementAt(index).requestId),
             view.elementAt(index),
             index: view.length - index,
             trailing: appIcon(view.elementAt(index)),

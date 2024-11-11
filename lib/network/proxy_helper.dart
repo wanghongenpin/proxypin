@@ -18,8 +18,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:proxypin/network/channel.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/handler.dart';
 import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/codec.dart';

@@ -101,6 +101,7 @@
   "matchRule": "Match Rule",
   "emptyMatchAll": "Empty means match all",
   "newBuilt": "New",
+  "newFolder": "New Folder",
   "enableSelect": "Enable Select",
   "disableSelect": "Disable Select",
   "deleteSelect": "Delete Select",
@@ -225,7 +226,7 @@
   "shareCurl": "Share cURL Request",
   "shareRequestResponse": "Share Request and Response",
   "captureDetail": "Capture Detail",
-  "proxyPinSoftware": "ProxyPin Full platform packet capture software",
+  "proxyPinSoftware": "ProxyPin Open source traffic capture software for all platforms",
 
   "prompt": "Prompt",
   "curlSchemeRequest": "If the curl format is recognized, should it be converted into an HTTP request?",
@@ -304,5 +305,12 @@
   "saveImage": "Save Image",
   "selectImage": "Select Image",
   "inputContent": "Input Content",
-  "errorCorrectLevel": "Error Correct"
+  "errorCorrectLevel": "Error Correct",
+  "output": "Output",
+  "timestamp": "Timestamp",
+  "convert": "Convert",
+  "time": "DateTime",
+  "nowTimestamp": "Now timestamp",
+  "hosts": "Hosts",
+  "toAddress": "To Address"
 }

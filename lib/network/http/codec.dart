@@ -19,6 +19,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/body_reader.dart';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/h2/codec.dart';
@@ -225,11 +226,18 @@ class HttpRequestCodec extends HttpCodec<HttpRequest> {
 
   @override
   void initialLine(BytesBuilder buffer, HttpRequest message) {
+    String uri = message.uri;
+
+    //http scheme 输入地址和host不一致
+    if (uri.startsWith(HostAndPort.httpScheme) && message.requestUri?.host != message.headers.host) {
+      uri = message.requestUri?.replace(host: message.headers.host).toString() ?? uri;
+    }
+
     //请求行
     buffer
       ..add(message.method.name.codeUnits)
       ..addByte(HttpConstants.sp)
-      ..add(message.uri.codeUnits)
+      ..add(uri.codeUnits)
       ..addByte(HttpConstants.sp)
       ..add(message.protocolVersion.codeUnits)
       ..addByte(HttpConstants.cr)

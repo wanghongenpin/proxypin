@@ -256,7 +256,7 @@ class _HttpState extends State<_HttpWidget> {
     message = widget.message;
     body = TextEditingController(text: widget.message?.bodyAsString);
     if (widget.message?.headers == null && !widget.readOnly) {
-      initHeader["User-Agent"] = ["ProxyPin/1.1.5"];
+      initHeader["User-Agent"] = ["ProxyPin/1.1.6"];
       initHeader["Accept"] = ["*/*"];
       return;
     }

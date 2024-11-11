@@ -23,7 +23,7 @@ import 'package:proxypin/network/handler.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
-import 'package:proxypin/ui/component/toolbox.dart';
+import 'package:proxypin/ui/component/toolbox/toolbox.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -88,7 +88,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
-    if (widget.appConfiguration.upgradeNoticeV15) {
+    if (widget.appConfiguration.upgradeNoticeV16) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -142,37 +142,37 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.appConfiguration.upgradeNoticeV15 = false;
+                      widget.appConfiguration.upgradeNoticeV16 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
                     child: Text(localizations.cancel))
               ],
-              title: Text(isCN ? '更新内容V1.1.5' : "Update content V1.1.5", style: const TextStyle(fontSize: 18)),
+              title: Text(isCN ? '更新内容V1.1.6' : "Update content V1.1.6", style: const TextStyle(fontSize: 18)),
               content: Container(
                   constraints: const BoxConstraints(maxWidth: 600),
                   child: SelectableText(
                       isCN
                           ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
                               '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                              '1. 请求重写升级UI优化, 请求修改增加匹配数据查看；\n'
-                              '2. 请求弹出菜单UI优化, 支持请求高亮；\n'
-                              '3. 脚本内置File Api, 支持文件读取、写入等操作, 详细查看wiki文档；\n'
-                              "4. 脚本内置MD5方法, md5('xxx')；\n"
-                              '5. 支持内存自动清理设置, 到内存限制自动清理请求；\n'
-                              '6. 工具箱增加正则表达式, 支持匹配数据替换；\n'
-                              '7. ios支持生成新根证书, 生成需要重新安装根证书；\n'
-                              '8. 修复暗黑模式icon展示不清晰；\n'
+                              '1. 新增Hosts设置, 支持域名映射；\n'
+                              '2. 工具箱新增时间戳转换；\n'
+                              '3. 修复脚本编辑键盘弹出安全模式问题；\n'
+                              '4. 修复脚本URL编码问题；\n'
+                              '5. 修复请求屏蔽编辑多出空格问题；\n'
+                              '6. 修复ipad分享点击无效问题；\n'
+                              '7. 修复高级重放次数过多不执行问题；\n'
+                              '8. 应用黑白名单增加清除无效应用，添加过滤已存在应用；\n'
                           : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
                               'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-                              '1. Request to rewrite and upgrade UI optimization, request to modify and add matching data viewing；\n'
-                              '2. Request pop-up menu UI optimization, support request highlighting；\n'
-                              '3. The script has built-in File Api, which supports file reading, writing and other operations. For details, please refer to the wiki document；\n'
-                              "4. The script has built-in MD5 method, md5('xxx')；\n"
-                              '5. Support memory automatic cleanup settings, memory limit automatic cleanup requests；\n'
-                              '6. Toolbox adds regular expressions to support matching data replacement；\n'
-                              '7. iOS supports generating new root certificates, which requires reinstalling the root certificate；\n'
-                              '8. Fixed unclear display of dark mode icon；\n'
+                              '1. Added Hosts settings to support domain name mapping；\n'
+                              '2. Toolbox adds timestamp conversion；\n'
+                              '3. Fixed script editing keyboard pop-up safe mode issue；\n'
+                              '4. Fixed script URL encoding issue；\n'
+                              '5. Fixed the issue of extra spaces in request mask editing；\n'
+                              '6. Fixed the issue that iPad share clicks are invalid；\n'
+                              '7. Fixed the issue that the advanced replay would not execute if there were too many times；\n'
+                              '8. Add and remove invalid applications in the application blacklist and whitelist；\n'
                               '',
                       style: const TextStyle(fontSize: 14))));
         });

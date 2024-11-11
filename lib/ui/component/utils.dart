@@ -23,6 +23,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 const contentMap = {
   ContentType.json: Icons.data_object,
@@ -158,7 +159,7 @@ Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {bool
     builder: (BuildContext context, AsyncSnapshot<T> snapshot) {
       if (snapshot.connectionState == ConnectionState.done) {
         if (snapshot.hasError) {
-          print(snapshot.error);
+          logger.e(snapshot.error);
         }
         return toWidget(snapshot.requireData);
       }

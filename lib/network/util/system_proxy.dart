@@ -17,6 +17,7 @@
 import 'dart:io';
 
 import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/utils/ip.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxy_manager/proxy_manager.dart';
@@ -154,7 +155,7 @@ class MacSystemProxy implements SystemProxy {
         'networksetup -setsocksfirewallproxystate $_hardwarePort off',
       ])
     ]);
-    print('set proxyServer, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
+    logger.d('set proxyServer, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
     return results.exitCode == 0;
   }
 
@@ -188,7 +189,7 @@ class MacSystemProxy implements SystemProxy {
     _hardwarePort ??= await hardwarePort();
     var results = await Process.run(
         'bash', ['-c', 'networksetup -setproxybypassdomains $_hardwarePort ${proxyPassDomains.replaceAll(";", " ")}']);
-    print('set proxyPassDomains, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
+    logger.d('set proxyPassDomains, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
   }
 
   ///mac设置代理是否启用
@@ -196,7 +197,7 @@ class MacSystemProxy implements SystemProxy {
   Future<void> _setProxyEnable(bool proxyEnable, bool sslSetting) async {
     var proxyMode = proxyEnable ? 'on' : 'off';
     _hardwarePort ??= await hardwarePort();
-    print('set proxyEnable: $proxyEnable, name: $_hardwarePort');
+    logger.d('set proxyEnable: $proxyEnable, name: $_hardwarePort');
 
     await Process.run('bash', [
       '-c',
@@ -244,10 +245,10 @@ class WindowsSystemProxy extends SystemProxy {
 
       var proxyServer = proxyLine.split(":")[0];
       var proxyPort = proxyLine.split(":")[1];
-      print("$proxyServer:$proxyPort");
+      logger.d("$proxyServer:$proxyPort");
       return ProxyInfo.of(proxyServer, int.parse(proxyPort));
     }).catchError((e) {
-      print(e);
+      logger.e('getSystemProxy error', error: e, stackTrace: StackTrace.current);
       return null;
     });
   }
@@ -256,7 +257,7 @@ class WindowsSystemProxy extends SystemProxy {
   @override
   Future<void> _setProxyPassDomains(String proxyPassDomains) async {
     var results = await _internetSettings('add', ['ProxyOverride', '/t', 'REG_SZ', '/d', proxyPassDomains, '/f']);
-    print('set proxyPassDomains, stdout: $results');
+    logger.e('set proxyPassDomains, stdout: $results');
   }
 
   static Future<String> _internetSettings(String cmd, List<String> args) async {

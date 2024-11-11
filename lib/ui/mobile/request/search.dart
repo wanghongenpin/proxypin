@@ -58,6 +58,7 @@ class MobileSearchState extends State<MobileSearch> {
         padding: const EdgeInsets.only(left: 20),
         child: TextFormField(
             controller: _keywordController,
+            textAlignVertical: TextAlignVertical.center,
             cursorHeight: 20,
             keyboardType: TextInputType.url,
             onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),

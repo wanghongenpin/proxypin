@@ -5,12 +5,13 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/ui/component/cert_hash.dart';
-import 'package:proxypin/ui/component/encoder.dart';
-import 'package:proxypin/ui/component/js_run.dart';
+import 'package:proxypin/ui/component/toolbox/cert_hash.dart';
+import 'package:proxypin/ui/component/toolbox/encoder.dart';
+import 'package:proxypin/ui/component/toolbox/js_run.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
-import 'package:proxypin/ui/component/qr_code_page.dart';
-import 'package:proxypin/ui/component/regexp.dart';
+import 'package:proxypin/ui/component/toolbox/qr_code_page.dart';
+import 'package:proxypin/ui/component/toolbox/regexp.dart';
+import 'package:proxypin/ui/component/toolbox/timestamp.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
@@ -111,8 +112,20 @@ class _ToolboxState extends State<Toolbox> {
           ),
           const Divider(thickness: 0.3),
           Text(localizations.other, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-          Row(
+          Wrap(
             children: [
+              IconText(
+                  onTap: () async {
+                    if (Platforms.isMobile()) {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TimestampPage()));
+                      return;
+                    }
+
+                    MultiWindow.openWindow(localizations.timestamp, 'TimestampPage', size: const Size(700, 350));
+                  },
+                  icon: Icons.av_timer,
+                  text: localizations.timestamp),
+              const SizedBox(width: 10),
               IconText(
                   onTap: () async {
                     if (Platforms.isMobile()) {

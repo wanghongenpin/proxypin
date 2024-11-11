@@ -22,17 +22,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
-import 'package:proxypin/ui/component/cert_hash.dart';
+import 'package:proxypin/ui/component/toolbox/cert_hash.dart';
 import 'package:proxypin/ui/component/device.dart';
-import 'package:proxypin/ui/component/encoder.dart';
-import 'package:proxypin/ui/component/js_run.dart';
-import 'package:proxypin/ui/component/qr_code_page.dart';
-import 'package:proxypin/ui/component/regexp.dart';
+import 'package:proxypin/ui/component/toolbox/encoder.dart';
+import 'package:proxypin/ui/component/toolbox/js_run.dart';
+import 'package:proxypin/ui/component/toolbox/qr_code_page.dart';
+import 'package:proxypin/ui/component/toolbox/regexp.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/ui/desktop/request/request_editor.dart';
@@ -41,6 +41,8 @@ import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'toolbox/timestamp.dart';
 
 bool isMultiWindow = false;
 
@@ -83,7 +85,7 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   }
 
   if (argument['name'] == 'CertHashPage') {
-    return CertHashPage();
+    return CertHashPage(windowId: windowId);
   }
 
   if (argument['name'] == 'JavaScript') {
@@ -91,8 +93,12 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   }
 
   if (argument['name'] == 'RegExpPage') {
-    return const RegExpPage();
+    return RegExpPage(windowId: windowId);
   }
+  if (argument['name'] == 'TimestampPage') {
+    return TimestampPage(windowId: windowId);
+  }
+
   //脚本日志
   if (argument['name'] == 'ScriptConsoleWidget') {
     return ScriptConsoleWidget(windowId: windowId);

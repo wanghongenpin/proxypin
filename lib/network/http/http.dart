@@ -90,10 +90,17 @@ abstract class HttpMessage {
     return mediaType.charset ?? MediaType.defaultCharset(mediaType);
   }
 
+  ///获取消息
   String get bodyAsString {
+    return getBodyString(charset: 'utf-8');
+  }
+
+  String getBodyString({String? charset}) {
     if (body == null || body?.isEmpty == true) {
       return "";
     }
+
+    charset ??= this.charset;
     try {
       List<int> rawBody = body!;
       if (headers.contentEncoding == 'br') {
@@ -116,8 +123,8 @@ abstract class HttpMessage {
 
 ///HTTP请求。
 class HttpRequest extends HttpMessage {
-  String uri;
-  late HttpMethod method;
+  String _uri;
+  HttpMethod method;
 
   HostAndPort? hostAndPort;
   DateTime requestTime = DateTime.now(); //请求时间
@@ -125,7 +132,14 @@ class HttpRequest extends HttpMessage {
   Map<String, dynamic> attributes = {};
   ProcessInfo? processInfo;
 
-  HttpRequest(this.method, this.uri, {String protocolVersion = "HTTP/1.1"}) : super(protocolVersion);
+  String get uri => _uri;
+
+  set uri(String uri) {
+    _uri = uri;
+    _requestUri = null;
+  }
+
+  HttpRequest(this.method, this._uri, {String protocolVersion = "HTTP/1.1"}) : super(protocolVersion);
 
   String? remoteDomain() {
     if (hostAndPort == null && HostAndPort.startsWithScheme(uri)) {
@@ -143,9 +157,12 @@ class HttpRequest extends HttpMessage {
   String get requestUrl => HostAndPort.startsWithScheme(uri) ? uri : '${remoteDomain()}$uri';
 
   /// 请求的uri
+  Uri? _requestUri;
+
   Uri? get requestUri {
     try {
-      return Uri.parse(requestUrl);
+      _requestUri ??= Uri.parse(requestUrl);
+      return _requestUri;
     } catch (e) {
       return null;
     }
@@ -155,22 +172,12 @@ class HttpRequest extends HttpMessage {
   String get domainPath => '${remoteDomain()}$path';
 
   /// 请求的path
-  String get path {
-    try {
-      var requestPath = Uri.parse(requestUrl).path;
-      return requestPath.isEmpty ? "" : requestPath;
-    } catch (e) {
-      return "/";
-    }
-  }
+  String get path => requestUri?.path ?? '';
 
-  Map<String, String> get queries {
-    try {
-      return Uri.parse(requestUrl).queryParameters;
-    } catch (e) {
-      return {};
-    }
-  }
+  /// path and query
+  String get pathAndQuery => '${requestUri?.path}${requestUri?.hasQuery == true ? '?${requestUri?.query}' : ''}';
+
+  Map<String, String> get queries => requestUri?.queryParameters ?? {};
 
   ///获取消息体编码
   @override
@@ -215,7 +222,7 @@ class HttpRequest extends HttpMessage {
 
   @override
   String toString() {
-    return 'HttpRequest{version: $protocolVersion, url: $uri, method: ${method.name}, headers: $headers, contentLength: $contentLength, bodyLength: ${body?.length}}';
+    return 'HttpRequest{version: $protocolVersion, uri: $uri, method: ${method.name}, headers: $headers, contentLength: $contentLength, bodyLength: ${body?.length}}';
   }
 }
 

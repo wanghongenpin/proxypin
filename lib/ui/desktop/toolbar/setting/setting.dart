@@ -19,10 +19,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/components/request_block_manager.dart';
+import 'package:proxypin/network/components/manager/hosts_manager.dart';
+import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/external_proxy.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/hosts.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/request_block.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -53,6 +55,7 @@ class _SettingState extends State<Setting> {
 
   @override
   Widget build(BuildContext context) {
+
     return MenuAnchor(
       builder: (context, controller, child) {
         return IconButton(
@@ -69,8 +72,9 @@ class _SettingState extends State<Setting> {
       menuChildren: [
         _ProxyMenu(proxyServer: widget.proxyServer),
         item(localizations.domainFilter, onPressed: hostFilter),
-        item(localizations.requestRewrite, onPressed: requestRewrite),
+        item(localizations.hosts, onPressed: hosts),
         item(localizations.requestBlock, onPressed: showRequestBlock),
+        item(localizations.requestRewrite, onPressed: requestRewrite),
         item(localizations.script,
             onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 700))),
         item(localizations.externalProxy, onPressed: setExternalProxy),
@@ -107,12 +111,14 @@ class _SettingState extends State<Setting> {
   ///show域名过滤Dialog
   void hostFilter() {
     showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) {
-        return FilterDialog(configuration: configuration);
-      },
-    );
+        barrierDismissible: false, context: context, builder: (context) => FilterDialog(configuration: configuration));
+  }
+
+  ///show域名过滤Dialog
+  void hosts() async {
+    var hosts = await HostsManager.instance;
+    if (!mounted) return;
+    showDialog(barrierDismissible: false, context: context, builder: (context) => HostsDialog(hostsManager: hosts));
   }
 
   //请求屏蔽
@@ -120,12 +126,9 @@ class _SettingState extends State<Setting> {
     var requestBlockManager = await RequestBlockManager.instance;
     if (!mounted) return;
     showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) {
-        return RequestBlock(requestBlockManager: requestBlockManager);
-      },
-    );
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
   }
 }
 

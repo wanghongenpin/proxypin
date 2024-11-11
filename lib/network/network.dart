@@ -24,6 +24,7 @@ import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/handler.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/crts.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
 import 'package:proxypin/network/util/tls.dart';
 
@@ -167,7 +168,7 @@ class Server extends Network {
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate, bufferedData: data);
       channel.serverSecureSocket(secureSocket, channelContext);
     } catch (error, trace) {
-      print('$hostAndPort ssl error: $error');
+      logger.e('$hostAndPort ssl error', error: error);
       try {
         channelContext.processInfo ??=
             await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');

@@ -23,12 +23,13 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/widgets/floating_window.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -87,19 +88,18 @@ class _MobileScriptState extends State<MobileScript> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              const SizedBox(width: 10),
-                              FilledButton.icon(
+                              TextButton.icon(
                                   icon: const Icon(Icons.add, size: 18),
                                   onPressed: scriptEdit,
                                   label: Text(localizations.add)),
-                              const SizedBox(width: 10),
-                              FilledButton.icon(
+                              const SizedBox(width: 5),
+                              TextButton.icon(
                                 icon: const Icon(Icons.input_rounded, size: 18),
                                 onPressed: import,
                                 label: Text(localizations.import),
                               ),
-                              const SizedBox(width: 10),
-                              FilledButton.icon(
+                              const SizedBox(width: 5),
+                              TextButton.icon(
                                 icon: const Icon(Icons.terminal, size: 18),
                                 onPressed: consoleLog,
                                 label: Text(localizations.logger),
@@ -455,28 +455,31 @@ class _ScriptEditState extends State<ScriptEdit> {
                   },
                   child: Text(localizations.save)),
             ]),
-        body: Padding(
-            padding: const EdgeInsets.only(left: 15, right: 10, bottom: 20),
-            child: Form(
-                key: formKey,
-                child: ListView(
-                  children: [
-                    textField("${localizations.name}:", nameController, localizations.pleaseEnter),
-                    const SizedBox(height: 10),
-                    textField("URL:", urlController, "github.com/api/*", keyboardType: TextInputType.url),
-                    const SizedBox(height: 10),
-                    Text("${localizations.script}:"),
-                    const SizedBox(height: 5),
-                    CodeTheme(
-                        data: CodeThemeData(styles: monokaiSublimeTheme),
-                        child: SingleChildScrollView(
-                            child: CodeField(
-                                textStyle: const TextStyle(fontSize: 13),
-                                enableSuggestions: true,
-                                onTapOutside: (event) => FocusScope.of(context).unfocus(),
-                                controller: script)))
-                  ],
-                ))));
+        body: Form(
+            key: formKey,
+            child: ListView(
+              children: [
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: textField("${localizations.name}:", nameController, localizations.pleaseEnter)),
+                const SizedBox(height: 10),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: textField("URL:", urlController, "github.com/api/*", keyboardType: TextInputType.url)),
+                const SizedBox(height: 10),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text("${localizations.script}:")),
+                const SizedBox(height: 5),
+                CodeTheme(
+                    data: CodeThemeData(styles: monokaiSublimeTheme),
+                    child: SingleChildScrollView(
+                        child: CodeField(
+                            textStyle: const TextStyle(fontSize: 13),
+                            enableSuggestions: true,
+                            gutterStyle: const GutterStyle(width: 50, margin: 0),
+                            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                            controller: script)))
+              ],
+            )));
   }
 
   Widget textField(String label, TextEditingController controller, String hint, {TextInputType? keyboardType}) {
@@ -559,7 +562,7 @@ class _ScriptListState extends State<ScriptList> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     TextButton.icon(
                         onPressed: () {
-                          export(selected.toList());
+                          export(context, selected.toList());
                           setState(() {
                             selected.clear();
                             multiple = false;
@@ -627,7 +630,7 @@ class _ScriptListState extends State<ScriptList> {
                                 _refreshScript();
                               }))),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(list[index].url, style: const TextStyle(fontSize: 13))),
+                  Expanded(child: Text(list[index].url.fixAutoLines(), style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
@@ -655,7 +658,7 @@ class _ScriptListState extends State<ScriptList> {
               const Divider(thickness: 0.5, height: 1),
               BottomSheetItem(text: localizations.edit, onPressed: () => showEdit(index)),
               const Divider(thickness: 0.5, height: 1),
-              BottomSheetItem(text: localizations.share, onPressed: () => export([index])),
+              BottomSheetItem(text: localizations.share, onPressed: () => export(context, [index])),
               const Divider(thickness: 0.5, height: 1),
               BottomSheetItem(
                   text: widget.scripts[index].enabled ? localizations.disabled : localizations.enable,
@@ -710,7 +713,7 @@ class _ScriptListState extends State<ScriptList> {
   }
 
   //导出js
-  export(List<int> indexes) async {
+  export(BuildContext context, List<int> indexes) async {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'proxypin-scripts.json';
@@ -724,8 +727,13 @@ class _ScriptListState extends State<ScriptList> {
       json.add(map);
     }
 
+    RenderBox? box;
+    if (await Platforms.isIpad() && context.mounted) {
+      box = context.findRenderObject() as RenderBox?;
+    }
+
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(json)), mimeType: 'json');
-    Share.shareXFiles([file], fileNameOverrides: [fileName]);
+    Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
   }
 
   enableStatus(bool enable) {

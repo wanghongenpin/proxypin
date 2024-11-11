@@ -101,6 +101,7 @@
   "matchRule": "匹配规则",
   "emptyMatchAll": "为空表示匹配全部",
   "newBuilt": "新建",
+  "newFolder": "新建文件夹",
   "enableSelect": "启用选择",
   "disableSelect": "禁用选择",
   "deleteSelect": "删除选择",
@@ -225,7 +226,7 @@
   "shareCurl": "分享 cURL 请求",
   "shareRequestResponse": "分享请求和响应",
   "captureDetail": "抓包详情",
-  "proxyPinSoftware": "ProxyPin全平台抓包软件",
+  "proxyPinSoftware": "ProxyPin全平台开源抓包软件",
 
   "prompt": "提示",
   "curlSchemeRequest": "识别到curl格式，是否转换为HTTP请求？",
@@ -303,5 +304,12 @@
   "saveImage": "保存图片",
   "selectImage": "选择图片",
   "inputContent": "输入内容",
-  "errorCorrectLevel": "纠错等级"
+  "errorCorrectLevel": "纠错等级",
+  "output": "输出",
+  "timestamp": "时间戳",
+  "convert": "转换",
+  "time": "时间",
+  "nowTimestamp": "当前时间戳(秒)",
+  "hosts": "Hosts 映射",
+  "toAddress": "映射地址"
 }

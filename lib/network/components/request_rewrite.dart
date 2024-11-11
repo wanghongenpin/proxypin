@@ -17,23 +17,45 @@
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/interceptor.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/file_read.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/utils/lang.dart';
 
-import 'rewrite/rewrite_rule.dart';
+import 'manager/rewrite_rule.dart';
 
 ///  RequestRewriteComponent is a component that can rewrite the request before sending it to the server.
 /// @author Hongen Wang
-class RequestRewriteComponent {
-  static RequestRewriteComponent instance = RequestRewriteComponent._();
+class RequestRewriteInterceptor extends Interceptor {
+  static RequestRewriteInterceptor instance = RequestRewriteInterceptor._();
 
   final requestRewriteManager = RequestRewriteManager.instance;
 
-  RequestRewriteComponent._();
+  RequestRewriteInterceptor._();
+
+  @override
+  Future<HttpRequest?> onRequest(HttpRequest request) async {
+    //重写请求
+    await requestRewrite(request);
+    return request;
+  }
+
+  @override
+  Future<HttpResponse?> onResponse(HttpRequest request, HttpResponse response) async {
+    //重写响应
+    try {
+      var uri = request.domainPath;
+      await responseRewrite(uri, response);
+    } catch (e, t) {
+      response.body = "$e".codeUnits;
+      logger.e('[${request.requestId}] 响应重写异常 ', error: e, stackTrace: t);
+    }
+    return response;
+  }
 
   ///获取重定向
   Future<String?> getRedirectRule(String? url) async {
@@ -109,7 +131,6 @@ class RequestRewriteComponent {
           queryParameters[item.key!] = item.value;
           break;
         case RewriteType.removeQueryParam:
-          print(item.value?.trim().isNotEmpty );
           if (item.value?.trim().isNotEmpty == true) {
             var val = queryParameters[item.key!];
             if (val == null || !RegExp(item.value!).hasMatch(val)) {
@@ -156,7 +177,7 @@ class RequestRewriteComponent {
   //修改消息
   _updateMessage(HttpMessage message, RewriteItem item) {
     if (item.type == RewriteType.updateBody && message.body != null) {
-      String body = message.bodyAsString.replaceAllMapped(RegExp(item.key!), (match) {
+      String body = message.getBodyString().replaceAllMapped(RegExp(item.key!), (match) {
         if (match.groupCount > 0 && item.value?.contains("\$1") == true) {
           return item.value!.replaceAll("\$1", match.group(1)!);
         }

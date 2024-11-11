@@ -1,4 +1,6 @@
+import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/utils/lang.dart';
 
 // 复制为 Python Requests 请求
 String copyAsPythonRequests(HttpRequest request) {
@@ -73,7 +75,7 @@ void processHeaders(StringBuffer py, List<String> headers) {
         py.write('\n  ');
         first = false;
       }
-      var parts = header.split(':');
+      var parts = header.splitFirst(HttpConstants.colon);
       py.write('"${parts[0].trim()}": "${escapeQuotes(parts[1].substring(2, parts[1].length - 1).trim())}"');
     }
   }

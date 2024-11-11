@@ -17,6 +17,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,12 +59,29 @@ class _QrCodePageState extends State<QrCodePage> with SingleTickerProviderStateM
     if (Platforms.isMobile()) {
       tabController = TabController(initialIndex: 0, length: tabs.length, vsync: this);
     }
+    
+    if (Platforms.isDesktop() && widget.windowId != null) {
+      HardwareKeyboard.instance.addHandler(onKeyEvent);
+    }
   }
 
   @override
   void dispose() {
     tabController?.dispose();
+    HardwareKeyboard.instance.removeHandler(onKeyEvent);
     super.dispose();
+  }
+
+  bool onKeyEvent(KeyEvent event) {
+    if (widget.windowId == null) return false;
+    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+        event.logicalKey == LogicalKeyboardKey.keyW) {
+      HardwareKeyboard.instance.removeHandler(onKeyEvent);
+      WindowController.fromWindowId(widget.windowId!).close();
+      return true;
+    }
+
+    return false;
   }
 
   @override

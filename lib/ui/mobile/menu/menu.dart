@@ -104,7 +104,7 @@ class MoreMenu extends StatelessWidget {
                 onTap: () async {
                   Navigator.maybePop(context);
                   var name = formatDate(DateTime.now(), [m, '-', d, ' ', HH, ':', nn, ':', ss]);
-                  MobileApp.requestStateKey.currentState?.export('ProxyPin$name');
+                  MobileApp.requestStateKey.currentState?.export(context, 'ProxyPin$name');
                 },
               )),
         ];

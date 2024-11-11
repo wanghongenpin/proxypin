@@ -15,3 +15,17 @@ class UriBuild {
     return uri.replace(queryParameters: queries);
   }
 }
+
+class UriUtils {
+  //map转url参数
+  static String mapToQuery(Map<String, dynamic>? map) {
+    if (map == null) {
+      return '';
+    }
+    List<String> list = [];
+    map.forEach((key, value) {
+      list.add('$key=${Uri.encodeComponent(value.toString())}');
+    });
+    return list.join('&');
+  }
+}

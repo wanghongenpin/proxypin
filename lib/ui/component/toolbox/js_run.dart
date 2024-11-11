@@ -145,7 +145,7 @@ class _JavaScriptState extends State<JavaScript> {
                           ))))),
           const SizedBox(height: 10),
           Row(children: [
-            Text("Output:", style: TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500)),
+            Text("${localizations.output}:", style: TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500)),
             const SizedBox(width: 15),
             //copy
             IconButton(

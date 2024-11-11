@@ -15,7 +15,7 @@
  */
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:proxypin/network/components/request_block_manager.dart';
+import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 
@@ -52,8 +52,10 @@ class _RequestBlockState extends State<RequestBlock> {
         contentPadding: const EdgeInsets.only(left: 20, right: 20),
         scrollable: true,
         title: Row(children: [
-          Text(localizations.requestBlock, style: const TextStyle(fontSize: 16)),
-          const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
+          const Expanded(child: SizedBox()),
+          Text(localizations.requestBlock, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          const Expanded(child: SizedBox()),
+          Align(alignment: Alignment.topRight, child: CloseButton())
         ]),
         content: SizedBox(
             width: 550,
@@ -71,10 +73,8 @@ class _RequestBlockState extends State<RequestBlock> {
                       changed = true;
                     }),
                 const Expanded(child: SizedBox()),
-                FilledButton.icon(
-                    icon: const Icon(Icons.add, size: 14),
-                    onPressed: showEdit,
-                    label: Text(localizations.add, style: const TextStyle(fontSize: 12))),
+                TextButton.icon(
+                    icon: const Icon(Icons.add, size: 18), onPressed: showEdit, label: Text(localizations.add)),
                 const SizedBox(width: 5),
               ]),
               const SizedBox(height: 8),
@@ -83,15 +83,13 @@ class _RequestBlockState extends State<RequestBlock> {
                   decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
                   child: Column(children: [
                     const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Container(width: 15),
-                        const Expanded(child: Text('URL', style: TextStyle(fontSize: 14))),
-                        SizedBox(width: 80, child: Text(localizations.enable, style: const TextStyle(fontSize: 14))),
-                        Container(width: 18),
-                        SizedBox(width: 120, child: Text(localizations.action, style: const TextStyle(fontSize: 14))),
-                      ],
-                    ),
+                    Row(children: [
+                      Container(width: 15),
+                      const Expanded(child: Text('URL', style: TextStyle(fontSize: 14))),
+                      SizedBox(width: 80, child: Text(localizations.enable, style: const TextStyle(fontSize: 14))),
+                      Container(width: 18),
+                      SizedBox(width: 120, child: Text(localizations.action, style: const TextStyle(fontSize: 14))),
+                    ]),
                     const Divider(thickness: 0.5),
                     Expanded(
                         child: ListView.builder(
@@ -112,8 +110,8 @@ class _RequestBlockState extends State<RequestBlock> {
         onSecondaryTapDown: (details) => showMenus(details, index),
         onDoubleTap: () => showEdit(index),
         child: Container(
-            color: index.isEven ? Colors.grey.withOpacity(0.1) : null,
-            height: 38,
+            color: index.isEven ? Colors.grey.withOpacity(0.10) : null,
+            height: 36,
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
               children: [
@@ -221,7 +219,8 @@ class RequestBlockAddDialog extends StatelessWidget {
                       onChanged: (val) {}),
                 ]))),
         actions: [
-          FilledButton(
+          TextButton(child: Text(localizations.close), onPressed: () => Navigator.of(context).pop()),
+          TextButton(
               child: Text(localizations.save),
               onPressed: () {
                 if (!(formKey.currentState as FormState).validate()) {
@@ -238,7 +237,6 @@ class RequestBlockAddDialog extends StatelessWidget {
                 }
                 Navigator.of(context).pop(item);
               }),
-          ElevatedButton(child: Text(localizations.close), onPressed: () => Navigator.of(context).pop())
         ]);
   }
 }

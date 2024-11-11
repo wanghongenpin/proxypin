@@ -17,7 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/ui/component/widgets.dart';
@@ -239,8 +239,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
     if (rewriteType == RewriteType.updateBody) {
       dataController.text = (widget.ruleType == RuleType.requestUpdate
-              ? widget.request?.bodyAsString
-              : widget.request?.response?.bodyAsString) ??
+              ? widget.request?.getBodyString()
+              : widget.request?.response?.getBodyString()) ??
           '';
       return;
     }

@@ -19,8 +19,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/components/host_filter.dart';
-import 'package:proxypin/network/components/request_rewrite_component.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/request_rewrite.dart';
 import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
@@ -32,7 +31,7 @@ import 'package:proxypin/network/util/uri.dart';
 import 'package:proxypin/utils/ip.dart';
 
 import 'channel.dart';
-import 'components/request_block_manager.dart';
+import 'components/interceptor.dart';
 import 'http_client.dart';
 
 ///请求和响应事件监听
@@ -47,9 +46,10 @@ abstract class EventListener {
 /// http请求处理器
 class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   EventListener? listener;
-  RequestRewriteComponent? requestRewriteComponent;
 
-  HttpProxyChannelHandler({this.listener, this.requestRewriteComponent});
+  final List<Interceptor> interceptors;
+
+  HttpProxyChannelHandler({this.listener, required this.interceptors});
 
   @override
   void channelRead(ChannelContext channelContext, Channel channel, HttpRequest msg) async {
@@ -121,44 +121,36 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
         return;
       }
 
-      var uri = httpRequest.domainPath;
-      //脚本替换
-      var scriptManager = await ScriptManager.instance;
-      HttpRequest? request = await scriptManager.runScript(httpRequest);
-      if (request == null) {
-        listener?.onRequest(channel, httpRequest);
-        return;
+      HttpRequest? request = httpRequest;
+
+      //拦截器
+      for (var interceptor in interceptors) {
+        request = await interceptor.onRequest(request!);
+        if (request == null) {
+          listener?.onRequest(channel, httpRequest);
+          channel.close();
+          remoteChannel.close();
+          return;
+        }
       }
 
-      httpRequest = request;
-      //重写请求
-      await requestRewriteComponent?.requestRewrite(httpRequest);
-
-      listener?.onRequest(channel, httpRequest);
-
-      //屏蔽请求
-      var blockRequest = (await RequestBlockManager.instance).enableBlockRequest(uri);
-      if (blockRequest) {
-        log.d("[${channel.id}] 屏蔽请求 $uri");
-        channel.close();
-        remoteChannel.close();
-        return;
-      }
+      listener?.onRequest(channel, request!);
 
       //重定向
-      String? redirectUrl = await requestRewriteComponent?.getRedirectRule(uri);
+      var uri = request!.domainPath;
+      String? redirectUrl = await (RequestRewriteInterceptor.instance).getRedirectRule(uri);
       if (redirectUrl?.isNotEmpty == true) {
-        await redirect(channelContext, channel, httpRequest, redirectUrl!);
+        await redirect(channelContext, channel, request, redirectUrl!);
         return;
       }
-      await remoteChannel.write(httpRequest);
+      await remoteChannel.write(request);
     }
   }
 
   //重定向
   Future<void> redirect(
       ChannelContext channelContext, Channel channel, HttpRequest httpRequest, String redirectUrl) async {
-    var proxyHandler = HttpResponseProxyHandler(channel, listener: listener, requestRewriteComponent: requestRewriteComponent);
+    var proxyHandler = HttpResponseProxyHandler(channel, interceptors, listener: listener);
 
     var redirectUri = UriBuild.build(redirectUrl, params: httpRequest.queries.isEmpty ? null : httpRequest.queries);
     log.d("[${channel.id}] 重定向 $redirectUri");
@@ -214,7 +206,12 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       return proxyChannel;
     }
 
-    final proxyChannel = await connectRemote(channelContext, clientChannel, hostAndPort);
+    HostAndPort remoteAddress = hostAndPort;
+    for (var interceptor in interceptors) {
+      remoteAddress = await interceptor.preConnect(remoteAddress);
+    }
+
+    final proxyChannel = await connectRemote(channelContext, clientChannel, remoteAddress);
     if (clientChannel.isSsl) {
       await proxyChannel.secureSocket(channelContext, host: hostAndPort.host);
     }
@@ -229,7 +226,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
   /// 连接远程
   Future<Channel> connectRemote(ChannelContext channelContext, Channel clientChannel, HostAndPort connectHost) async {
-    var proxyHandler = HttpResponseProxyHandler(clientChannel, listener: listener, requestRewriteComponent: requestRewriteComponent);
+    var proxyHandler = HttpResponseProxyHandler(clientChannel, interceptors, listener: listener);
     var proxyChannel = await channelContext.connectServerChannel(connectHost, proxyHandler);
     return proxyChannel;
   }
@@ -241,9 +238,9 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
   final Channel clientChannel;
 
   EventListener? listener;
-  RequestRewriteComponent? requestRewriteComponent;
+  final List<Interceptor> interceptors;
 
-  HttpResponseProxyHandler(this.clientChannel, {this.listener, this.requestRewriteComponent});
+  HttpResponseProxyHandler(this.clientChannel, this.interceptors, {this.listener});
 
   @override
   void channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
@@ -257,40 +254,21 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
     }
 
     // log.i("[${clientChannel.id}] Response $msg");
-    //脚本替换
-    var scriptManager = await ScriptManager.instance;
-    try {
-      HttpResponse? response = await scriptManager.runResponseScript(msg);
+
+    HttpResponse? response = msg;
+    //拦截器
+    for (var interceptor in interceptors) {
+      response = await interceptor.onResponse(request!, response!);
       if (response == null) {
+        listener?.onResponse(channelContext, msg);
         channel.close();
         return;
       }
-      msg = response;
-    } catch (e, t) {
-      msg.status = HttpStatus(-1, 'Script exec error');
-      msg.body = "$e\n${msg.bodyAsString}".codeUnits;
-      log.e('[${clientChannel.id}] 执行脚本异常 ', error: e, stackTrace: t);
     }
 
-    //重写响应
-    try {
-      await requestRewriteComponent?.responseRewrite(msg.request?.requestUrl, msg);
-    } catch (e, t) {
-      msg.body = "$e".codeUnits;
-      log.e('[${clientChannel.id}] 响应重写异常 ', error: e, stackTrace: t);
-    }
-    listener?.onResponse(channelContext, msg);
-
-    //屏蔽响应
-    var uri = request?.domainPath ?? '';
-    var blockResponse = (await RequestBlockManager.instance).enableBlockResponse(uri);
-    if (blockResponse) {
-      channel.close();
-      return;
-    }
-
+    listener?.onResponse(channelContext, response!);
     //发送给客户端
-    await clientChannel.write(msg);
+    await clientChannel.write(response!);
   }
 
   @override

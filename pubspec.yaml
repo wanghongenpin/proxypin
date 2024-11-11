@@ -2,7 +2,7 @@ name: proxypin
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.1.5+15
+version: 1.1.6+16
 
 environment:
   sdk: '>=3.0.2 <4.0.0'

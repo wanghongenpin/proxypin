@@ -94,6 +94,8 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
   static double xPosition = -1;
   static double yPosition = -1;
   static Size? size;
+  late final double _top;
+  late final double _bottom;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -117,40 +119,40 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
     }
 
     if (xPosition == -1) {
-      xPosition = size!.width * 0.9;
+      xPosition = size!.width - 48;
       yPosition = size!.height * 0.35;
+      _top = MediaQuery.of(context).padding.top;
+      _bottom = size!.height - 48 - (AppConfiguration.current?.bottomNavigation == false ? 0 : 56);
     }
 
-    return Stack(children: [
-      Positioned(
-        top: yPosition,
-        left: xPosition,
-        child: GestureDetector(
-            onPanUpdate: (tapInfo) {
-              if (xPosition + tapInfo.delta.dx < 0) return;
-              if (yPosition + tapInfo.delta.dy < 0) return;
+    return Positioned(
+      top: yPosition,
+      left: xPosition,
+      child: GestureDetector(
+          onPanUpdate: (tapInfo) {
+            // if (xPosition + tapInfo.delta.dx < 0) return;
+            // if (yPosition + tapInfo.delta.dy < 0) return;
 
-              setState(() {
-                xPosition += tapInfo.delta.dx;
-                yPosition += tapInfo.delta.dy;
-              });
-            },
-            child: IconButton(
-                tooltip: localizations.windowMode,
-                onPressed: () async {
-                  var configuration = widget.proxyServer.configuration;
-                  List<String>? appList = configuration.appWhitelistEnabled ? configuration.appWhitelist : [];
-                  List<String>? disallowApps;
-                  if (appList.isEmpty) {
-                    disallowApps = configuration.appBlacklist ?? [];
-                  }
+            setState(() {
+              xPosition = (xPosition + tapInfo.delta.dx).clamp(0, size!.width);
+              yPosition = (yPosition + tapInfo.delta.dy).clamp(_top, _bottom);
+            });
+          },
+          child: IconButton(
+              tooltip: localizations.windowMode,
+              onPressed: () async {
+                var configuration = widget.proxyServer.configuration;
+                List<String>? appList = configuration.appWhitelistEnabled ? configuration.appWhitelist : [];
+                List<String>? disallowApps;
+                if (appList.isEmpty) {
+                  disallowApps = configuration.appBlacklist ?? [];
+                }
 
-                  PictureInPicture.enterPictureInPictureMode(
-                      Platform.isAndroid ? await localIp() : "127.0.0.1", widget.proxyServer.port,
-                      appList: appList, disallowApps: disallowApps);
-                },
-                icon: const Icon(Icons.picture_in_picture_alt))),
-      )
-    ]);
+                PictureInPicture.enterPictureInPictureMode(
+                    Platform.isAndroid ? await localIp() : "127.0.0.1", widget.proxyServer.port,
+                    appList: appList, disallowApps: disallowApps);
+              },
+              icon: const Icon(Icons.picture_in_picture_alt))),
+    );
   }
 }

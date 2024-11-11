@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 
 import 'toolbar/setting/request_rewrite.dart';

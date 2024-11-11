@@ -113,7 +113,7 @@ class RewriteItem {
     List<RewriteItem> items = [];
     items.add(RewriteItem(RewriteType.replaceRequestLine, false)..path = request.requestUri?.path);
     items.add(RewriteItem(RewriteType.replaceRequestHeader, false)..headers = request.headers.toMap());
-    items.add(RewriteItem(RewriteType.replaceRequestBody, true)..body = request.bodyAsString);
+    items.add(RewriteItem(RewriteType.replaceRequestBody, true)..body = request.getBodyString());
 
     return items;
   }
@@ -122,7 +122,7 @@ class RewriteItem {
     List<RewriteItem> items = [];
     items.add(RewriteItem(RewriteType.replaceResponseStatus, false)..statusCode = response.status.code);
     items.add(RewriteItem(RewriteType.replaceResponseHeader, false)..headers = response.headers.toMap());
-    items.add(RewriteItem(RewriteType.replaceResponseBody, true)..body = response.bodyAsString);
+    items.add(RewriteItem(RewriteType.replaceResponseBody, true)..body = response.getBodyString());
 
     return items;
   }

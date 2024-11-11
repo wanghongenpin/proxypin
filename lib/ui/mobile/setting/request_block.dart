@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:proxypin/network/components/request_block_manager.dart';
+import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
 
@@ -36,10 +36,8 @@ class _RequestBlockState extends State<MobileRequestBlock> {
                       widget.requestBlockManager.flushConfig();
                     }),
                 const Expanded(child: SizedBox()),
-                FilledButton.icon(
-                    icon: const Icon(Icons.add, size: 14),
-                    onPressed: showEdit,
-                    label: Text(localizations.add, style: const TextStyle(fontSize: 14))),
+                TextButton.icon(
+                    icon: const Icon(Icons.add, size: 20), onPressed: showEdit, label: Text(localizations.add)),
                 const SizedBox(width: 5),
               ]),
               const SizedBox(height: 10),
@@ -183,7 +181,7 @@ class RequestBlockAddDialog extends StatelessWidget {
                   SwitchWidget(title: localizations.enable, value: item.enabled, onChanged: (val) => enabled = val),
                   const SizedBox(height: 10),
                   TextFormField(
-                      initialValue: item.url.fixAutoLines(),
+                      initialValue: item.url,
                       maxLines: 3,
                       minLines: 1,
                       decoration: const InputDecoration(
@@ -206,7 +204,8 @@ class RequestBlockAddDialog extends StatelessWidget {
                       onChanged: (val) {}),
                 ]))),
         actions: [
-          FilledButton(
+          TextButton(child: Text(localizations.cancel), onPressed: () => Navigator.of(context).pop()),
+          TextButton(
               child: Text(localizations.save),
               onPressed: () {
                 if (!(formKey.currentState as FormState).validate()) {
@@ -224,7 +223,6 @@ class RequestBlockAddDialog extends StatelessWidget {
                 requestBlockManager.flushConfig();
                 Navigator.of(context).pop(item);
               }),
-          ElevatedButton(child: Text(localizations.close), onPressed: () => Navigator.of(context).pop())
         ]);
   }
 }

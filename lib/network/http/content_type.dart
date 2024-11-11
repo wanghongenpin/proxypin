@@ -125,7 +125,7 @@ class MediaType {
       int nextIndex = index + 1;
       bool quoted = false;
       while (nextIndex < mediaType.length) {
-        var ch = mediaType[0];
+        var ch = mediaType[nextIndex];
         if (ch == ';') {
           if (!quoted) {
             break;
@@ -135,6 +135,7 @@ class MediaType {
         }
         nextIndex++;
       }
+
       String parameter = mediaType.substring(index + 1, nextIndex).trim();
       if (parameter.isNotEmpty) {
         int eqIndex = parameter.indexOf('=');

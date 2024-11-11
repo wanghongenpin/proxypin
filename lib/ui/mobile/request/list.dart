@@ -26,6 +26,7 @@ import 'package:proxypin/ui/mobile/request/domians.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/listenable_list.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// 请求列表
@@ -146,7 +147,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   //导出har
-  export(String title) async {
+  export(BuildContext context, String title) async {
     //文件名称
     String fileName =
         '${title.contains("ProxyPin") ? '' : 'ProxyPin'}$title.har'.replaceAll(" ", "_").replaceAll(":", "_");
@@ -154,7 +155,14 @@ class RequestListState extends State<RequestListWidget> {
     var view = currentView()!;
     var json = await Har.writeJson(view.toList(), title: title);
     var file = XFile.fromData(utf8.encode(json), name: fileName, mimeType: "har");
-    Share.shareXFiles([file], fileNameOverrides: [fileName]);
+
+    RenderBox? box;
+    if (await Platforms.isIpad() && context.mounted) {
+      box = context.findRenderObject() as RenderBox?;
+    }
+    Share.shareXFiles([file],
+        fileNameOverrides: [fileName],
+        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
   }
 }
 

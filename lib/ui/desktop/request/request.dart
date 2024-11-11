@@ -24,17 +24,17 @@ import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http_client.dart';
 import 'package:proxypin/storage/favorites.dart';
-import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
+import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/python.dart';
@@ -79,6 +79,11 @@ class _RequestWidgetState extends State<RequestWidget> {
   Color? highlightColor; //高亮颜色
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +131,7 @@ class _RequestWidgetState extends State<RequestWidget> {
       return highlightColor;
     }
 
-    return KeywordHighlightDialog.getHighlightColor(path);
+    return DesktopKeywordHighlight.getHighlightColor(path);
   }
 
   void changeState() {
@@ -271,7 +276,7 @@ class _RequestWidgetState extends State<RequestWidget> {
         MenuItem(
             label: localizations.keyword,
             onClick: (_) {
-              showDialog(context: context, builder: (BuildContext context) => const KeywordHighlightDialog());
+              showDialog(context: context, builder: (BuildContext context) => const DesktopKeywordHighlight());
             }),
       ],
     );
@@ -337,107 +342,5 @@ class _RequestWidgetState extends State<RequestWidget> {
 
     selectedState = this;
     NetworkTabController.current?.change(widget.request, widget.response.get() ?? widget.request.response);
-  }
-}
-
-//配置关键词高亮
-class KeywordHighlightDialog extends StatefulWidget {
-  static Map<Color, String> keywords = {};
-  static ValueNotifier keywordsController = ValueNotifier<Map>(keywords);
-
-  static Color? getHighlightColor(String key) {
-    for (var entry in keywords.entries) {
-      if (key.contains(entry.value)) {
-        return entry.key;
-      }
-    }
-    return null;
-  }
-
-  const KeywordHighlightDialog({super.key});
-
-  @override
-  State<KeywordHighlightDialog> createState() => _KeywordHighlightState();
-}
-
-class _KeywordHighlightState extends State<KeywordHighlightDialog> {
-  @override
-  Widget build(BuildContext context) {
-    AppLocalizations localizations = AppLocalizations.of(context)!;
-    var colors = {
-      Colors.red: localizations.red,
-      Colors.yellow.shade600: localizations.yellow,
-      Colors.blue: localizations.blue,
-      Colors.green: localizations.green,
-      Colors.grey: localizations.gray,
-    };
-
-    var map = Map.of(KeywordHighlightDialog.keywords);
-
-    return AlertDialog(
-      title: ListTile(
-          title: Text(localizations.keyword + localizations.highlight,
-              textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
-      titlePadding: const EdgeInsets.all(0),
-      actionsPadding: const EdgeInsets.only(right: 10, bottom: 10),
-      contentPadding: const EdgeInsets.only(left: 10, right: 10, top: 0, bottom: 5),
-      actions: [
-        TextButton(
-          child: Text(localizations.cancel),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        TextButton(
-          child: Text(localizations.done),
-          onPressed: () {
-            KeywordHighlightDialog.keywords = map;
-            Navigator.of(context).pop();
-          },
-        ),
-      ],
-      content: SizedBox(
-        height: 180,
-        width: 400,
-        child: DefaultTabController(
-          length: colors.length,
-          child: Scaffold(
-            appBar: TabBar(tabs: colors.entries.map((e) => Tab(text: e.value)).toList()),
-            body: TabBarView(
-                children: colors.entries
-                    .map((e) => KeepAliveWrapper(
-                        child: Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: TextFormField(
-                              minLines: 2,
-                              maxLines: 2,
-                              initialValue: map[e.key],
-                              onChanged: (value) {
-                                if (value.isEmpty) {
-                                  map.remove(e.key);
-                                } else {
-                                  map[e.key] = value;
-                                }
-                              },
-                              decoration: decoration(localizations.keyword),
-                            ))))
-                    .toList()),
-          ),
-        ),
-      ),
-    );
-  }
-
-  InputDecoration decoration(String label, {String? hintText}) {
-    return InputDecoration(
-      floatingLabelBehavior: FloatingLabelBehavior.always,
-      labelText: label,
-      isDense: true,
-      border: const OutlineInputBorder(),
-    );
-  }
-
-  @override
-  void dispose() {
-    KeywordHighlightDialog.keywordsController.value = Map.from(KeywordHighlightDialog.keywords);
-    super.dispose();
   }
 }

@@ -17,6 +17,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -57,8 +58,10 @@ class _FilterDialogState extends State<FilterDialog> {
         contentPadding: const EdgeInsets.only(left: 20, right: 20),
         scrollable: true,
         title: Row(children: [
-          Text(localizations.domainFilter, style: const TextStyle(fontSize: 18)),
-          const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
+          const Expanded(child: SizedBox()),
+          Text(localizations.domainFilter, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+          const Expanded(child: SizedBox()),
+          Align(alignment: Alignment.topRight, child: CloseButton())
         ]),
         content: SizedBox(
           width: 680,
@@ -138,22 +141,17 @@ class _DomainFilterState extends State<DomainFilter> {
           Text(localizations.enable),
           const SizedBox(width: 10),
           SwitchWidget(
-              scale: 0.8,
+              scale: 0.75,
               value: widget.hostList.enabled,
               onChanged: (value) {
                 widget.hostList.enabled = value;
                 changed = true;
               }),
           const Expanded(child: SizedBox()),
-          FilledButton.icon(
-              icon: const Icon(Icons.add, size: 14),
-              onPressed: add,
-              label: Text(localizations.add, style: const TextStyle(fontSize: 12))),
-          const SizedBox(width: 10),
-          FilledButton.icon(
-              icon: const Icon(Icons.input_rounded, size: 14),
-              onPressed: import,
-              label: Text(localizations.import, style: const TextStyle(fontSize: 12))),
+          TextButton.icon(icon: const Icon(Icons.add, size: 18), onPressed: add, label: Text(localizations.add)),
+          const SizedBox(width: 5),
+          TextButton.icon(
+              icon: const Icon(Icons.input_rounded, size: 18), onPressed: import, label: Text(localizations.import)),
           const SizedBox(width: 5),
         ]),
         DomainList(widget.hostList, onChange: () => changed = true)
@@ -229,8 +227,9 @@ class DomainAddDialog extends StatelessWidget {
                       onChanged: (val) => host = val)
                 ]))),
         actions: [
+          TextButton(child: Text(localizations.cancel), onPressed: () => Navigator.of(context).pop()),
           TextButton(
-              child: Text(localizations.add),
+              child: Text(localizations.save),
               onPressed: () {
                 if (!(formKey.currentState as FormState).validate()) {
                   return;
@@ -246,7 +245,6 @@ class DomainAddDialog extends StatelessWidget {
                 }
                 Navigator.of(context).pop(host);
               }),
-          TextButton(child: Text(localizations.close), onPressed: () => Navigator.of(context).pop())
         ]);
   }
 }
@@ -266,7 +264,8 @@ class _DomainListState extends State<DomainList> {
   Map<int, bool> selected = {};
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
-  bool isPress = false;
+  bool isPressed = false;
+  Offset? lastPressPosition;
   bool changed = false;
 
   onChanged() {
@@ -291,8 +290,13 @@ class _DomainListState extends State<DomainList> {
           });
         },
         child: Listener(
-            onPointerUp: (details) => isPress = false,
-            onPointerDown: (details) => isPress = true,
+            onPointerUp: (event) => isPressed = false,
+            onPointerDown: (event) {
+              lastPressPosition = event.localPosition;
+              if (event.buttons == kPrimaryMouseButton) {
+                isPressed = true;
+              }
+            },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 height: 380,
@@ -323,7 +327,7 @@ class _DomainListState extends State<DomainList> {
           //right click menus
           onDoubleTap: () => showEdit(index),
           onHover: (hover) {
-            if (isPress && selected[index] != true) {
+            if (isPressed && selected[index] != true) {
               setState(() {
                 selected[index] = true;
               });
@@ -345,7 +349,7 @@ class _DomainListState extends State<DomainList> {
           },
           child: Container(
               color: selected[index] == true
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withOpacity(0.6)
                   : index.isEven
                       ? Colors.grey.withOpacity(0.1)
                       : null,

@@ -27,7 +27,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -110,7 +110,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
                                     subtitle: Text(localizations.scriptUseDescribe),
                                     trailing: SwitchWidget(
                                         value: data.enabled,
-                                        scale: 0.9,
+                                        scale: 0.8,
                                         onChanged: (value) {
                                           data.enabled = value;
                                           _refreshScript();
@@ -120,18 +120,18 @@ class _ScriptWidgetState extends State<ScriptWidget> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 const SizedBox(width: 10),
-                                FilledButton.icon(
+                                TextButton.icon(
                                     icon: const Icon(Icons.add, size: 18),
                                     onPressed: scriptAdd,
                                     label: Text(localizations.add)),
                                 const SizedBox(width: 10),
-                                FilledButton.icon(
+                                TextButton.icon(
                                   icon: const Icon(Icons.input_rounded, size: 18),
                                   onPressed: import,
                                   label: Text(localizations.import),
                                 ),
                                 const SizedBox(width: 10),
-                                FilledButton.icon(
+                                TextButton.icon(
                                   icon: const Icon(Icons.terminal, size: 18),
                                   onPressed: consoleLog,
                                   label: Text(localizations.logger),
@@ -441,7 +441,8 @@ class ScriptList extends StatefulWidget {
 
 class _ScriptListState extends State<ScriptList> {
   Set<int> selected = {};
-  bool isPress = false;
+  bool isPressed = false;
+  Offset? lastPressPosition;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -461,8 +462,13 @@ class _ScriptListState extends State<ScriptList> {
           });
         },
         child: Listener(
-            onPointerUp: (details) => isPress = false,
-            onPointerDown: (details) => isPress = true,
+            onPointerUp: (event) => isPressed = false,
+            onPointerDown: (event) {
+              lastPressPosition = event.localPosition;
+              if (event.buttons == kPrimaryMouseButton) {
+                isPressed = true;
+              }
+            },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 height: 530,
@@ -495,7 +501,7 @@ class _ScriptListState extends State<ScriptList> {
           onDoubleTap: () => showEdit(index),
           onSecondaryTapDown: (details) => showMenus(details, index),
           onHover: (hover) {
-            if (isPress && !selected.contains(index)) {
+            if (isPressed && !selected.contains(index)) {
               setState(() {
                 selected.add(index);
               });
@@ -517,7 +523,7 @@ class _ScriptListState extends State<ScriptList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withOpacity(0.6)
                   : index.isEven
                       ? Colors.grey.withOpacity(0.1)
                       : null,

@@ -21,14 +21,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -80,15 +81,13 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
                   ],
                 ),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                  FilledButton.icon(
-                      icon: const Icon(Icons.add, size: 18), onPressed: add, label: Text(localizations.add)),
-                  const SizedBox(width: 10),
-                  FilledButton.icon(
-                    icon: const Icon(Icons.input_rounded, size: 18),
-                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.only(left: 20, right: 20)),
-                    onPressed: import,
-                    label: Text(localizations.import),
-                  ),
+                  TextButton.icon(
+                      icon: const Icon(Icons.add, size: 20), onPressed: add, label: Text(localizations.add)),
+                  const SizedBox(width: 5),
+                  TextButton.icon(
+                      icon: const Icon(Icons.input_rounded, size: 20),
+                      onPressed: import,
+                      label: Text(localizations.import)),
                 ]),
                 const SizedBox(height: 10),
                 Expanded(child: RequestRuleList(widget.requestRewrites)),
@@ -213,7 +212,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                     TextButton.icon(
                         onPressed: () {
-                          export(selected.toList());
+                          export(context, selected.toList());
                           setState(() {
                             selected.clear();
                             multiple = false;
@@ -327,7 +326,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
             const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(text: localizations.edit, onPressed: () => showEdit(index)),
             const Divider(thickness: 0.5, height: 5),
-            BottomSheetItem(text: localizations.share, onPressed: () => export([index])),
+            BottomSheetItem(text: localizations.share, onPressed: () => export(ctx, [index])),
             const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(
                 text: rules[index].enabled ? localizations.disabled : localizations.enable,
@@ -364,8 +363,8 @@ class _RequestRuleListState extends State<RequestRuleList> {
     });
   }
 
-  //导出js
-  Future<void> export(List<int> indexes) async {
+  //导出
+  Future<void> export(BuildContext context, List<int> indexes) async {
     if (indexes.isEmpty) return;
     String fileName = 'proxypin-rewrites.config';
 
@@ -378,8 +377,13 @@ class _RequestRuleListState extends State<RequestRuleList> {
       list.add(json);
     }
 
+    RenderBox? box;
+    if (await Platforms.isIpad() && context.mounted) {
+      box = context.findRenderObject() as RenderBox?;
+    }
+
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'config');
-    await Share.shareXFiles([file], fileNameOverrides: [fileName]);
+    await Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
   }
 
   //删除

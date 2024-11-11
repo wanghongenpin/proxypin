@@ -23,11 +23,14 @@ class AppInfo {
   //icon
   Uint8List? icon;
 
+  bool? inValid;
+
   AppInfo({
     this.name,
     this.packageName,
     this.versionName,
     this.icon,
+    this.inValid,
   });
 
   AppInfo.formJson(Map<dynamic, dynamic> json) {
@@ -50,4 +53,18 @@ class AppInfo {
   String toString() {
     return toJson().toString();
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is AppInfo) {
+      return packageName == other.packageName;
+    }
+    return false;
+  }
+
+  @override
+  int get hashCode => packageName.hashCode;
 }

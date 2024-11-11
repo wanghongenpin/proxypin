@@ -65,7 +65,7 @@ class _AppWhitelistState extends State<AppWhitelist> {
     var appWhitelist = <Future<AppInfo>>[];
     for (var element in configuration.appWhitelist) {
       appWhitelist.add(InstalledApps.getAppInfo(element).catchError((e) {
-        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element);
+        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element, inValid: true);
       }));
     }
 
@@ -75,22 +75,41 @@ class _AppWhitelistState extends State<AppWhitelist> {
           actions: [
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {
+              onPressed: () async {
                 //添加
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) => const InstalledAppsWidget()))
-                    .then((value) {
-                  if (value != null) {
-                    if (configuration.appWhitelist.contains(value)) {
-                      return;
+                List<AppInfo> list = await Future.wait(appWhitelist);
+                if (context.mounted) {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                    return InstalledAppsWidget(addedList: list);
+                  })).then((value) {
+                    if (value != null) {
+                      if (configuration.appWhitelist.contains(value)) {
+                        return;
+                      }
+                      setState(() {
+                        configuration.appWhitelist.add(value);
+                        changed = true;
+                      });
                     }
-                    setState(() {
-                      configuration.appWhitelist.add(value);
-                      changed = true;
-                    });
+                  });
+                }
+              },
+            ),
+            IconButton(
+              tooltip: isCN ? '清除失效应用' : 'clear invalid apps',
+              onPressed: () async {
+                if (configuration.appWhitelist.isEmpty) return;
+                List<AppInfo> list = await Future.wait(appWhitelist);
+                for (AppInfo appInfo in list) {
+                  if (appInfo.inValid == true) {
+                    configuration.appWhitelist.remove(appInfo.packageName);
                   }
+                }
+                setState(() {
+                  changed = true;
                 });
               },
+              icon: Icon(Icons.cleaning_services_outlined),
             ),
           ],
         ),
@@ -193,7 +212,7 @@ class _AppBlacklistState extends State<AppBlacklist> {
     var appBlacklist = <Future<AppInfo>>[];
     for (var element in configuration.appBlacklist ?? []) {
       appBlacklist.add(InstalledApps.getAppInfo(element).catchError((e) {
-        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element);
+        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element, inValid: true);
       }));
     }
 
@@ -203,23 +222,42 @@ class _AppBlacklistState extends State<AppBlacklist> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
+            onPressed: () async {
               //添加
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (context) => const InstalledAppsWidget()))
-                  .then((value) {
-                if (value != null) {
-                  if (configuration.appBlacklist?.contains(value) == true) {
-                    return;
+              List<AppInfo> list = await Future.wait(appBlacklist);
+              if (context.mounted) {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) => InstalledAppsWidget(addedList: list)))
+                    .then((value) {
+                  if (value != null) {
+                    if (configuration.appBlacklist?.contains(value) == true) {
+                      return;
+                    }
+                    setState(() {
+                      configuration.appBlacklist ??= [];
+                      configuration.appBlacklist?.add(value);
+                      changed = true;
+                    });
                   }
-                  setState(() {
-                    configuration.appBlacklist ??= [];
-                    configuration.appBlacklist?.add(value);
-                    changed = true;
-                  });
+                });
+              }
+            },
+          ),
+          IconButton(
+            tooltip: isCN ? '清除失效应用' : 'clear invalid apps',
+            onPressed: () async {
+              if (configuration.appBlacklist?.isEmpty == true) return;
+              List<AppInfo> list = await Future.wait(appBlacklist);
+              for (AppInfo appInfo in list) {
+                if (appInfo.inValid == true) {
+                  configuration.appBlacklist?.remove(appInfo.packageName);
                 }
+              }
+              setState(() {
+                changed = true;
               });
             },
+            icon: Icon(Icons.cleaning_services_outlined),
           ),
         ],
       ),
@@ -267,7 +305,12 @@ class _AppBlacklistState extends State<AppBlacklist> {
 
 ///已安装的app列表
 class InstalledAppsWidget extends StatefulWidget {
-  const InstalledAppsWidget({super.key});
+  const InstalledAppsWidget({
+    super.key,
+    required this.addedList,
+  });
+
+  final List<AppInfo> addedList;
 
   @override
   State<InstalledAppsWidget> createState() => _InstalledAppsWidgetState();
@@ -306,6 +349,7 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
           builder: (BuildContext context, AsyncSnapshot<List<AppInfo>> snapshot) {
             if (snapshot.hasData) {
               List<AppInfo> appInfoList = snapshot.data!;
+              appInfoList = appInfoList.toSet().difference(widget.addedList.toSet()).toList();
               if (keyword != null && keyword!.trim().isNotEmpty) {
                 appInfoList = appInfoList
                     .where((element) =>

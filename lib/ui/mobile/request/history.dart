@@ -36,6 +36,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
 import 'package:proxypin/utils/listenable_list.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../utils/har.dart';
@@ -187,7 +188,8 @@ class _MobileHistoryState extends State<MobileHistory> {
           });
           showContextMenu(context, detail.globalPosition.translate(-50, index == 0 ? -100 : 100), items: [
             PopupMenuItem(child: Text(localizations.rename), onTap: () => renameHistory(storage, item)),
-            PopupMenuItem(child: Text(localizations.share), onTap: () => export(storage, item)),
+            PopupMenuItem(
+                child: Text(localizations.share), onTap: () => export(storage, item, offset: detail.globalPosition)),
             const PopupMenuDivider(height: 0.3),
             PopupMenuItem(
                 child: Text(localizations.repeatAllRequests),
@@ -227,7 +229,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //导出har
-  export(HistoryStorage storage, HistoryItem item) async {
+  export(HistoryStorage storage, HistoryItem item, {Offset? offset}) async {
     //文件名称
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");
@@ -235,7 +237,13 @@ class _MobileHistoryState extends State<MobileHistory> {
     List<HttpRequest> requests = await storage.getRequests(item);
     var json = await Har.writeJson(requests, title: item.name);
     var file = XFile.fromData(utf8.encode(json), mimeType: "har");
-    Share.shareXFiles([file], fileNameOverrides: [fileName]);
+
+    Rect? rect;
+    if (await Platforms.isIpad() && offset != null) {
+      rect = Rect.fromCenter(center: offset, width: 1, height: 1);
+    }
+
+    Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: rect);
     Future.delayed(const Duration(seconds: 30), () => item.requests = null);
   }
 
@@ -359,7 +367,7 @@ class _HistoryRecordState extends State<HistoryRecord> {
                             },
                             child: IconText(icon: const Icon(Icons.search), text: localizations.search)),
                         PopupMenuItem(
-                            onTap: export,
+                            onTap: () => export(context),
                             child: IconText(icon: const Icon(Icons.share), text: localizations.viewExport)),
                         PopupMenuItem(
                             onTap: () async {
@@ -382,8 +390,8 @@ class _HistoryRecordState extends State<HistoryRecord> {
   }
 
   //导出har
-  export() async {
+  export(BuildContext context) async {
     var item = widget.history;
-    requestStateKey.currentState?.export(item.name);
+    requestStateKey.currentState?.export(context, item.name);
   }
 }

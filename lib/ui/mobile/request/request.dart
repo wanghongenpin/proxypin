@@ -21,9 +21,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/components/rewrite/request_rewrite_manager.dart';
-import 'package:proxypin/network/components/rewrite/rewrite_rule.dart';
-import 'package:proxypin/network/components/script_manager.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
+import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http_client.dart';
@@ -72,7 +72,7 @@ class RequestRowState extends State<RequestRow> {
   bool selected = false;
   Color? highlightColor; //高亮颜色
 
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
+  AppLocalizations get localizations => AppLocalizations.of(availableContext)!;
 
   change(HttpResponse response) {
     setState(() {
@@ -341,7 +341,9 @@ class RequestRowState extends State<RequestRow> {
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
 
-    FlutterToastr.show(localizations.reSendRequest, availableContext);
+    if (mounted) {
+      FlutterToastr.show(localizations.reSendRequest, context);
+    }
   }
 
   Widget itemButton(
