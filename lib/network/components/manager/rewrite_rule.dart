@@ -51,7 +51,10 @@ class RequestRewriteRule {
       : _urlReg = RegExp(url.replaceAll("*", ".*").replaceAll('?', '\\?'));
 
   bool match(String url, {RuleType? type}) {
-    return enabled && (type == null || this.type == type) && _urlReg.hasMatch(url);
+    if (enabled && (type == null || this.type == type)) {
+      return _urlReg.hasMatch(url);
+    }
+    return false;
   }
 
   bool matchUrl(String url, RuleType type) {

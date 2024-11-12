@@ -213,7 +213,7 @@ class RequestRewriteManager {
     rewriteItemsCache[rule] = items;
   }
 
-  removeIndex(List<int> indexes) async {
+  Future<void> removeIndex(List<int> indexes) async {
     for (var i in indexes) {
       var rule = rules.removeAt(i);
       rewriteItemsCache.remove(rule); //删除缓存

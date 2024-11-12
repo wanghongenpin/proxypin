@@ -123,7 +123,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
           : [localizations.statusCode, localizations.responseHeader, localizations.responseBody];
 
       return Container(
-        constraints: const BoxConstraints(maxHeight: 360),
+        constraints: const BoxConstraints(maxHeight: 370),
         child: DefaultTabController(
             length: tabs.length,
             initialIndex: tabs.length - 1,

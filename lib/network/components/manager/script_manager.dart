@@ -223,7 +223,7 @@ async function onResponse(context, request, response) {
 
   ///刷新配置
   Future<void> flushConfig() async {
-    _path.then((value) => value.writeAsString(jsonEncode({'enabled': enabled, 'list': list})));
+    await _path.then((value) => value.writeAsString(jsonEncode({'enabled': enabled, 'list': list})));
   }
 
   Map<dynamic, dynamic> scriptSession = {};

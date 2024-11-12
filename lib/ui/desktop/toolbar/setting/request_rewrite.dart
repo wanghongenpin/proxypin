@@ -426,9 +426,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
       showGlobalMenu(details.globalPosition);
       return;
     }
-    // setState(() {
-    //   selected[index] = true;
-    // });
+    setState(() {
+      selected[index] = true;
+    });
     showContextMenu(context, details.globalPosition, items: [
       PopupMenuItem(height: 35, child: Text(localizations.edit), onTap: () => showEdit(index)),
       PopupMenuItem(height: 35, onTap: () => export([index]), child: Text(localizations.export)),
@@ -446,11 +446,12 @@ class _RequestRuleListState extends State<RequestRuleList> {
           onTap: () async {
             await widget.requestRewrites.removeIndex([index]);
             MultiWindow.invokeRefreshRewrite(Operation.delete, index: index);
+            // setState(() {});
           })
     ]).then((value) {
-      // setState(() {
-      //   selected.remove(index);
-      // });
+      setState(() {
+        selected.remove(index);
+      });
     });
   }
 }

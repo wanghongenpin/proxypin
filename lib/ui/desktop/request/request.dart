@@ -170,11 +170,7 @@ class _RequestWidgetState extends State<RequestWidget> {
                     .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
               },
             ),
-          ]),
-          onClick: (_) {
-            Clipboard.setData(ClipboardData(text: curlRequest(widget.request)))
-                .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
-          }),
+          ])),
       MenuItem.separator(),
       MenuItem(label: localizations.repeat, onClick: (_) => onRepeat(widget.request)),
       MenuItem(label: localizations.customRepeat, onClick: (_) => showCustomRepeat(widget.request)),

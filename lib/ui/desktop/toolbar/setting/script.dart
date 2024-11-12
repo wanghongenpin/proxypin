@@ -42,9 +42,9 @@ void _refreshScript() {
     return;
   }
   _refresh = true;
-  Future.delayed(const Duration(milliseconds: 1000), () async {
+  Future.delayed(const Duration(milliseconds: 1500), () async {
     _refresh = false;
-    (await ScriptManager.instance).flushConfig();
+    await ScriptManager.instance.then((manager) => manager.flushConfig());
     await DesktopMultiWindow.invokeMethod(0, "refreshScript");
   });
 }

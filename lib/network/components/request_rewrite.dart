@@ -40,7 +40,8 @@ class RequestRewriteInterceptor extends Interceptor {
   @override
   Future<HttpRequest?> onRequest(HttpRequest request) async {
     //重写请求
-    await requestRewrite(request);
+    var url = request.requestUrl;
+    await requestRewrite(url, request);
     return request;
   }
 
@@ -48,8 +49,8 @@ class RequestRewriteInterceptor extends Interceptor {
   Future<HttpResponse?> onResponse(HttpRequest request, HttpResponse response) async {
     //重写响应
     try {
-      var uri = request.domainPath;
-      await responseRewrite(uri, response);
+      var url = request.requestUrl;
+      await responseRewrite(url, response);
     } catch (e, t) {
       response.body = "$e".codeUnits;
       logger.e('[${request.requestId}] 响应重写异常 ', error: e, stackTrace: t);
@@ -75,8 +76,7 @@ class RequestRewriteInterceptor extends Interceptor {
   }
 
   /// 重写请求
-  Future<void> requestRewrite(HttpRequest request) async {
-    var url = request.requestUrl;
+  Future<void> requestRewrite(String url, HttpRequest request) async {
     var manager = await RequestRewriteManager.instance;
     var rewriteRule = manager.getRewriteRule(url, [RuleType.requestReplace, RuleType.requestUpdate]);
 
