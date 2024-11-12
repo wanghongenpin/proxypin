@@ -18,7 +18,7 @@ class UriBuild {
 
 class UriUtils {
   //map转url参数
-  static String mapToQuery(Map<String, dynamic>? map) {
+  static String mapToQuery(Map? map) {
     if (map == null) {
       return '';
     }

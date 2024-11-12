@@ -67,7 +67,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
   }
 
   bool onKeyEvent(KeyEvent event) {
-    if (event.logicalKey == LogicalKeyboardKey.escape && Navigator.canPop(context)) {
+    if (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.escape) && Navigator.canPop(context)) {
       Navigator.maybePop(context);
       return true;
     }

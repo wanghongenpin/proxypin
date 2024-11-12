@@ -76,6 +76,11 @@ class _ScriptWidgetState extends State<ScriptWidget> {
   }
 
   bool onKeyEvent(KeyEvent event) {
+    if (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.escape) && Navigator.canPop(context)) {
+      Navigator.maybePop(context);
+      return true;
+    }
+
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
