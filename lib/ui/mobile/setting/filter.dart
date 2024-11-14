@@ -137,8 +137,7 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   import() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }

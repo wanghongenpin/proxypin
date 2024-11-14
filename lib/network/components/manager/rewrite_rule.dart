@@ -48,7 +48,7 @@ class RequestRewriteRule {
   String? rewritePath;
 
   RequestRewriteRule({this.enabled = true, this.name, required this.url, required this.type, this.rewritePath})
-      : _urlReg = RegExp(url.replaceAll("*", ".*").replaceAll('?', '\\?'));
+      : _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
 
   bool match(String url, {RuleType? type}) {
     if (enabled && (type == null || this.type == type)) {
@@ -72,7 +72,7 @@ class RequestRewriteRule {
   }
 
   void updatePathReg() {
-    _urlReg = RegExp(url.replaceAll("*", ".*"));
+    _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
   }
 
   toJson() {

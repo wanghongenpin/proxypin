@@ -48,7 +48,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   final requestKey = GlobalKey<_HttpState>();
   final responseKey = GlobalKey<_HttpState>();
 
-  ValueNotifier responseChange = ValueNotifier<bool>(false);
+  ValueNotifier<int> responseChange = ValueNotifier<int>(-1);
 
   late TabController tabController;
 
@@ -66,6 +66,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   void dispose() {
     tabController.dispose();
     responseChange.dispose();
+    _expanded.clear();
     super.dispose();
   }
 
@@ -151,15 +152,21 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                 ),
                 ValueListenableBuilder(
                     valueListenable: responseChange,
-                    builder: (_, value, __) => _HttpWidget(
-                        key: responseKey,
-                        title: Row(children: [
-                          Text("${localizations.statusCode}: ", style: const TextStyle(fontWeight: FontWeight.w500)),
-                          const SizedBox(width: 10),
-                          Text(response?.status.toString() ?? "", style: const TextStyle(color: Colors.blue))
-                        ]),
-                        readOnly: true,
-                        message: response)),
+                    builder: (_, value, __) {
+                      if (value == 0) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      return _HttpWidget(
+                          key: responseKey,
+                          title: Row(children: [
+                            Text("${localizations.statusCode}: ", style: const TextStyle(fontWeight: FontWeight.w500)),
+                            const SizedBox(width: 10),
+                            Text(response?.status.toString() ?? "", style: const TextStyle(color: Colors.blue))
+                          ]),
+                          readOnly: true,
+                          message: response);
+                    }),
               ],
             )));
   }
@@ -178,16 +185,18 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     var proxyInfo = widget.proxyServer?.isRunning == true ? ProxyInfo.of("127.0.0.1", widget.proxyServer?.port) : null;
 
     responseKey.currentState?.change(null);
-    responseChange.value = !responseChange.value;
+    responseChange.value = 0;
 
     HttpClients.proxyRequest(proxyInfo: proxyInfo, request, timeout: Duration(seconds: 15)).then((response) {
-      FlutterToastr.show(localizations.requestSuccess, context);
       this.response = response;
       this.response?.request = request;
       responseKey.currentState?.change(response);
-      responseChange.value = !responseChange.value;
+      responseChange.value = 1;
+
       tabController.animateTo(1);
+      // FlutterToastr.show(localizations.requestSuccess, context);
     }).catchError((e) {
+      responseChange.value = -1;
       FlutterToastr.show('${localizations.fail}$e', context);
     });
   }
@@ -422,6 +431,8 @@ class KeyValWidget extends StatefulWidget {
   }
 }
 
+final Map<String, bool> _expanded = {};
+
 class KeyValState extends State<KeyValWidget> {
   final List<KeyVal> _params = [];
 
@@ -502,7 +513,8 @@ class KeyValState extends State<KeyValWidget> {
     return ExpansionTile(
       title: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.blue)),
       tilePadding: const EdgeInsets.only(left: 0, top: 10, bottom: 10),
-      initiallyExpanded: widget.expanded,
+      initiallyExpanded: _expanded[widget.title] ?? widget.expanded,
+      onExpansionChanged: (value) => _expanded[widget.title] = value,
       shape: const Border(),
       children: [
         ..._buildRows(),

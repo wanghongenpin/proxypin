@@ -51,7 +51,7 @@ class RequestEditorState extends State<RequestEditor> {
   final requestKey = GlobalKey<_HttpState>();
   final responseKey = GlobalKey<_HttpState>();
 
-  ValueNotifier responseChange = ValueNotifier<bool>(false);
+  ValueNotifier<int> responseChange = ValueNotifier<int>(-1);
   HttpRequest? request;
   HttpResponse? response;
 
@@ -70,6 +70,12 @@ class RequestEditorState extends State<RequestEditor> {
   }
 
   bool onKeyEvent(KeyEvent event) {
+    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+        event.logicalKey == LogicalKeyboardKey.enter) {
+      sendRequest();
+      return true;
+    }
+
     //cmd+w 关闭窗口
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
@@ -122,15 +128,24 @@ class RequestEditorState extends State<RequestEditor> {
             ),
             right: ValueListenableBuilder(
                 valueListenable: responseChange,
-                builder: (_, value, __) => _HttpWidget(
-                    key: responseKey,
-                    title: Row(children: [
-                      const Text("Response", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                      const Spacer(),
-                      Text(response?.status.toString() ?? '', style: const TextStyle(fontSize: 14))
-                    ]),
-                    message: response,
-                    readOnly: true)),
+                builder: (_, value, __) {
+                  return Stack(
+                    children: [
+                      Offstage(offstage: value != 0, child: const Center(child: CircularProgressIndicator())),
+                      Offstage(
+                          offstage: value == 0,
+                          child: _HttpWidget(
+                              key: responseKey,
+                              title: Row(children: [
+                                const Text("Response", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                const Spacer(),
+                                Text(response?.status.toString() ?? '', style: const TextStyle(fontSize: 14))
+                              ]),
+                              message: response,
+                              readOnly: true))
+                    ],
+                  );
+                }),
           )),
         ]));
   }
@@ -147,18 +162,19 @@ class RequestEditorState extends State<RequestEditor> {
     request.body = requestBody == null ? null : utf8.encode(requestBody);
 
     responseKey.currentState?.change(null);
-    responseChange.value = !responseChange.value;
+    responseChange.value = 0;
 
     Map? proxyResult = await DesktopMultiWindow.invokeMethod(0, 'getProxyInfo');
     ProxyInfo? proxyInfo = proxyResult == null ? null : ProxyInfo.of(proxyResult['host'], proxyResult['port']);
 
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo, timeout: Duration(seconds: 15)).then((response) {
-      FlutterToastr.show(localizations.requestSuccess, context);
       this.response = response;
       responseKey.currentState?.change(response);
-      responseChange.value = !responseChange.value;
+      responseChange.value = 1;
+      // if (mounted) FlutterToastr.show(localizations.requestSuccess, context);
     }).catchError((e) {
-      FlutterToastr.show('${localizations.fail}$e', context);
+      responseChange.value = -1;
+      if (mounted) FlutterToastr.show('${localizations.fail}$e', context);
     });
   }
 

@@ -97,8 +97,7 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
   //导入
   import() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
