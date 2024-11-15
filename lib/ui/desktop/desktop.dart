@@ -162,8 +162,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                               '5. 修复脚本URL编码问题；\n'
                               '6. 修复请求屏蔽编辑多出空格问题；\n'
                               '7. 修复ipad分享点击无效问题；\n'
-                              '8. 修复高级重放次数过多不执行问题；\n'
-                              '9. 应用黑白名单增加清除无效应用，添加过滤已存在应用；\n'
+                              '9. 修复重写请求修改bug；\n'
+                              '10. 应用黑白名单增加清除无效应用，添加过滤已存在应用；\n'
                           : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
                               'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
                               '1. Added Hosts settings to support domain name mapping；\n'
@@ -173,8 +173,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                               '5. Fixed script URL encoding issue；\n'
                               '6. Fixed the issue of extra spaces in request mask editing；\n'
                               '7. Fixed the issue that iPad share clicks are invalid；\n'
-                              '8. Fixed the issue that the advanced replay would not execute if there were too many times；\n'
-                              '9. Add and remove invalid applications in the application blacklist and whitelist；\n'
+                              '9. Fixed the rewrite request modification bug；\n'
+                              '10. Add and remove invalid applications in the application blacklist and whitelist；\n'
                               '',
                       style: const TextStyle(fontSize: 14))));
         });

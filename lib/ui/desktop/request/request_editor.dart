@@ -70,7 +70,9 @@ class RequestEditorState extends State<RequestEditor> {
   }
 
   bool onKeyEvent(KeyEvent event) {
-    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+    if ((HardwareKeyboard.instance.isMetaPressed ||
+            HardwareKeyboard.instance.isControlPressed ||
+            HardwareKeyboard.instance.isAltPressed) &&
         event.logicalKey == LogicalKeyboardKey.enter) {
       sendRequest();
       return true;

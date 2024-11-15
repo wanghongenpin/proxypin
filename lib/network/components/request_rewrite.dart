@@ -151,10 +151,11 @@ class RequestRewriteInterceptor extends Interceptor {
 
             if (regExp.hasMatch(line)) {
               line = line.replaceAll(regExp, item.value ?? '');
-              var pair = line.splitFirst(HttpConstants.colon);
+              var pair = line.splitFirst(HttpConstants.equal);
               if (pair.first != entry.key) queryParameters.remove(entry.key);
 
               queryParameters[pair.first] = pair.length > 1 ? pair.last : '';
+              break;
             }
           }
           break;

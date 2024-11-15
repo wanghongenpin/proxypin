@@ -13,4 +13,7 @@ class HttpConstants {
 
   /// Colon ':'
   static const int colon = 58;
+
+  /// Colon '='
+  static const int equal = 61;
 }
