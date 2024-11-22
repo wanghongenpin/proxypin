@@ -25,7 +25,7 @@ dependencies:
   path_provider: ^2.1.4
   file_picker: ^7.1.0+1
   proxy_manager: ^0.0.3
-  permission_handler: ^11.3.1
+  easy_permission: ^1.0.0
   flutter_toastr: ^1.0.3
   share_plus: ^10.0.0
   flutter_js: ^0.8.1

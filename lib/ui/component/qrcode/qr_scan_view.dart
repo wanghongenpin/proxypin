@@ -1,23 +1,23 @@
+import 'package:easy_permission/easy_permission.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:image_pickers/image_pickers.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 ///@Author: Hongen Wang
 /// qr code scanner
 class QrCodeScanner {
   static Future<String?> scan(BuildContext context) async {
-    var status = await Permission.camera.status;
+    var status = await EasyPermission.getSinglePermissionStatus(PermissionType.CAMERA);
 
-    if (status.isRestricted || status.isPermanentlyDenied) {
-      openAppSettings();
+    if (status == PermissionStatus.DENY) {
+      EasyPermission.openSettings();
       return Future.value(null);
-    } else if (!status.isGranted) {
-      status = await Permission.camera.request();
+    } else if (status == PermissionStatus.ALLOW) {
+      status = await EasyPermission.requestSinglePermission(PermissionType.CAMERA);
     }
 
-    if (status.isDenied) {
+    if (status != PermissionStatus.ALLOW) {
       if (!context.mounted) return Future.value(null);
       AppLocalizations localizations = AppLocalizations.of(context)!;
       bool isCN = localizations.localeName == 'zh';
