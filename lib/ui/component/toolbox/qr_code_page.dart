@@ -16,10 +16,12 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_qr_reader/flutter_qr_reader.dart';
@@ -59,7 +61,7 @@ class _QrCodePageState extends State<QrCodePage> with SingleTickerProviderStateM
     if (Platforms.isMobile()) {
       tabController = TabController(initialIndex: 0, length: tabs.length, vsync: this);
     }
-    
+
     if (Platforms.isDesktop() && widget.windowId != null) {
       HardwareKeyboard.instance.addHandler(onKeyEvent);
     }
@@ -244,6 +246,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
   var errorCorrectLevel = QrErrorCorrectLevel.M;
   String? data;
   TextEditingController inputData = TextEditingController();
+  final GlobalKey imageKey = GlobalKey();
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -316,7 +319,14 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
               SizedBox(width: 20),
             ]),
             SizedBox(height: 5),
-            Center(child: QrImageView(size: 300, data: inputData.text, errorCorrectionLevel: errorCorrectLevel)),
+            Center(
+                child: RepaintBoundary(
+                    key: imageKey,
+                    child: QrImageView(
+                        size: 300,
+                        data: inputData.text,
+                        backgroundColor: Colors.white,
+                        errorCorrectionLevel: errorCorrectLevel))),
           ],
         ),
       SizedBox(height: 15),
@@ -331,6 +341,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
 
     if (Platforms.isMobile()) {
       var imageBytes = await toImageBytes();
+      if (imageBytes == null) return;
       String? path = await ImagePickers.saveByteDataImageToGallery(imageBytes);
       if (path != null && mounted) {
         FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
@@ -343,6 +354,8 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       if (path == null) return;
 
       var imageBytes = await toImageBytes();
+      if (imageBytes == null) return;
+
       await File(path).writeAsBytes(imageBytes);
       if (mounted) {
         FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
@@ -350,10 +363,10 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
     }
   }
 
-  Future<Uint8List> toImageBytes() async {
-    QrPainter painter = QrPainter(data: data!, errorCorrectionLevel: errorCorrectLevel, version: QrVersions.auto);
-    var imageData = await painter.toImageData(300);
-
-    return imageData!.buffer.asUint8List();
+  Future<Uint8List?> toImageBytes() async {
+    RenderRepaintBoundary render = imageKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    ui.Image image = await render.toImage();
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData?.buffer.asUint8List();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:proxypin/network/util/process_info.dart';
 
@@ -9,7 +11,10 @@ class ProcessInfoPlugin {
       if (process == null) return null;
 
       return ProcessInfo(process['packageName'], process['name'], process['packageName'],
-          icon: process['icon'], remoteHost: process['remoteHost'], remotePost: process['remotePost']);
+          os: Platform.operatingSystem,
+          icon: process['icon'],
+          remoteHost: process['remoteHost'],
+          remotePost: process['remotePost']);
     });
   }
 }

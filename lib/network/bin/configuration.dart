@@ -37,6 +37,9 @@ class Configuration {
   //代理忽略域名
   String proxyPassDomains = SystemProxy.proxyPassDomains;
 
+  //enabled socks5 proxy
+  bool enableSocks5 = true;
+
   //外部代理
   ProxyInfo? externalProxy;
 
@@ -84,6 +87,7 @@ class Configuration {
     enableSsl = config['enableSsl'] == true;
     startup = config['startup'] ?? Platforms.isDesktop();
     enableSystemProxy = config['enableSystemProxy'] ?? (config['enableDesktop'] ?? true);
+    enableSocks5 = config['enableSocks5'] ?? true;
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
     historyCacheTime = config['historyCacheTime'] ?? 0;
     if (config['externalProxy'] != null) {
@@ -136,6 +140,7 @@ class Configuration {
       'enableSsl': enableSsl,
       'startup': startup,
       'enableSystemProxy': enableSystemProxy,
+      'enableSocks5': enableSocks5,
       'proxyPassDomains': proxyPassDomains,
       'externalProxy': externalProxy?.toJson(),
       'appWhitelist': appWhitelist,

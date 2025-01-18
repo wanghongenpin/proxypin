@@ -267,6 +267,7 @@ class _DomainListState extends State<DomainList> {
   bool isPressed = false;
   Offset? lastPressPosition;
   bool changed = false;
+  bool _isSecondaryTapHandled = false;
 
   onChanged() {
     changed = true;
@@ -418,6 +419,10 @@ class _DomainListState extends State<DomainList> {
   }
 
   showGlobalMenu(Offset offset) {
+    if (_isSecondaryTapHandled) {
+      return;
+    }
+
     showContextMenu(context, offset, items: [
       PopupMenuItem(height: 35, child: Text(localizations.newBuilt), onTap: () => showEdit()),
       PopupMenuItem(
@@ -436,11 +441,12 @@ class _DomainListState extends State<DomainList> {
 
   //点击菜单
   showMenus(TapDownDetails details, int index) {
-    if (selected.length > 1) {
+    if (selected.isNotEmpty) {
       showGlobalMenu(details.globalPosition);
       return;
     }
 
+    _isSecondaryTapHandled = true;
     setState(() {
       selected[index] = true;
     });
@@ -464,6 +470,7 @@ class _DomainListState extends State<DomainList> {
             onChanged();
           })
     ]).then((value) {
+      _isSecondaryTapHandled = false;
       setState(() {
         selected.remove(index);
       });

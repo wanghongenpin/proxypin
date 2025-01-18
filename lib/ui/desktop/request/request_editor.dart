@@ -26,6 +26,7 @@ import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/split_view.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/content/body.dart';
@@ -174,7 +175,8 @@ class RequestEditorState extends State<RequestEditor> {
       responseKey.currentState?.change(response);
       responseChange.value = 1;
       // if (mounted) FlutterToastr.show(localizations.requestSuccess, context);
-    }).catchError((e) {
+    }).catchError((e, stackTrace) {
+      logger.e("Request failed", error: e, stackTrace: stackTrace);
       responseChange.value = -1;
       if (mounted) FlutterToastr.show('${localizations.fail}$e', context);
     });
@@ -274,7 +276,7 @@ class _HttpState extends State<_HttpWidget> {
     message = widget.message;
     body = TextEditingController(text: widget.message?.bodyAsString);
     if (widget.message?.headers == null && !widget.readOnly) {
-      initHeader["User-Agent"] = ["ProxyPin/1.1.6"];
+      initHeader["User-Agent"] = ["ProxyPin/1.1.7"];
       initHeader["Accept"] = ["*/*"];
       return;
     }

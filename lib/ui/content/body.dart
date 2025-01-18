@@ -17,10 +17,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:image_pickers/image_pickers.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/content_type.dart';
@@ -111,6 +113,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     if (tabIndex > 0 && tabIndex >= tabs.list.length) tabIndex = tabs.list.length - 1;
     bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[tabIndex]);
 
+    //TabBar
     List<Widget> list = [
       widget.inNewWindow ? const SizedBox() : titleWidget(),
       const SizedBox(height: 3),
@@ -140,6 +143,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
             ? ListView(children: list)
             : Column(crossAxisAlignment: CrossAxisAlignment.start, children: list));
 
+    //在新窗口打开
     if (widget.inNewWindow) {
       return Scaffold(
           appBar: AppBar(title: titleWidget(inNewWindow: true), toolbarHeight: Platform.isWindows ? 36 : null),
@@ -160,20 +164,25 @@ class HttpBodyState extends State<HttpBodyWidget> {
   Widget titleWidget({inNewWindow = false}) {
     var type = widget.httpMessage is HttpRequest ? "Request" : "Response";
 
+    bool isImage = widget.httpMessage?.contentType == ContentType.image;
+
     var list = [
       Text('$type Body', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
       const SizedBox(width: 10),
-      IconButton(
-          icon: const Icon(Icons.copy, size: 18),
-          tooltip: localizations.copy,
-          onPressed: () {
-            var body = bodyKey.currentState?.body;
-            if (body == null) {
-              return;
-            }
-            Clipboard.setData(ClipboardData(text: body))
-                .then((value) => FlutterToastr.show(localizations.copied, context));
-          }),
+      isImage
+          ? downloadImageButton()
+          : IconButton(
+              icon: Icon(Icons.copy, size: 18),
+              tooltip: localizations.copy,
+              onPressed: () {
+                var body = bodyKey.currentState?.body;
+                if (body == null) {
+                  return;
+                }
+                Clipboard.setData(ClipboardData(text: body)).then((value) {
+                  if (mounted) FlutterToastr.show(localizations.copied, context);
+                });
+              }),
     ];
 
     if (!widget.hideRequestRewrite) {
@@ -197,13 +206,42 @@ class HttpBodyState extends State<HttpBodyWidget> {
           icon: const Icon(Icons.open_in_new, size: 18), tooltip: localizations.newWindow, onPressed: () => openNew()));
     }
 
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: list,
-    );
+    return Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: list);
   }
 
-  //展示请求重写
+  ///下载图片
+  Widget downloadImageButton() {
+    return IconButton(
+        icon: Icon(Icons.download, size: 20),
+        tooltip: localizations.saveImage,
+        onPressed: () async {
+          var body = bodyKey.currentState?.message?.body;
+          if (body == null) {
+            return;
+          }
+          var bytes = Uint8List.fromList(body);
+          if (Platforms.isMobile()) {
+            String? path = await ImagePickers.saveByteDataImageToGallery(bytes);
+            if (path != null && mounted) {
+              FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
+            }
+            return;
+          }
+
+          if (Platforms.isDesktop()) {
+            var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.png";
+            String? path = (await FilePicker.platform.saveFile(fileName: fileName));
+            if (path == null) return;
+
+            await File(path).writeAsBytes(bytes);
+            if (mounted) {
+              FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
+            }
+          }
+        });
+  }
+
+  ///展示请求重写
   showRequestRewrite() async {
     HttpRequest? request;
     if (widget.httpMessage == null) {
@@ -241,6 +279,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     }
   }
 
+  ///打开新窗口
   void openNew() async {
     if (Platforms.isDesktop()) {
       var size = MediaQuery.of(context).size;
@@ -376,7 +415,7 @@ class _BodyState extends State<_Body> {
         return SelectableText(Uri.decodeFull(message!.bodyAsString), contextMenuBuilder: contextMenu);
       }
       if (type == ViewType.image) {
-        return Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown);
+        return Center(child: Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
       }
       if (type == ViewType.video) {
         return const Center(child: Text("video not support preview"));

@@ -107,7 +107,7 @@ class Channel {
   bool get isSsl => _socket is SecureSocket;
 
   Future<void> write(Object obj) async {
-    var data = pipeline._encoder.encode(obj);
+    var data = pipeline.encoder.encode(obj);
     await writeBytes(data);
   }
 
@@ -251,16 +251,20 @@ class ChannelContext {
 }
 
 class ChannelPipeline extends ChannelHandler<Uint8List> {
-  late Decoder _decoder;
-  late Encoder _encoder;
+  late Decoder decoder;
+  late Encoder encoder;
   late ChannelHandler handler;
 
   final ByteBuf buffer = ByteBuf();
 
   handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
-    _encoder = encoder;
-    _decoder = decoder;
+    this.encoder = encoder;
+    this.decoder = decoder;
     this.handler = handler;
+  }
+
+  channelHandle(Codec codec, ChannelHandler handler) {
+    handle(codec, codec, handler);
   }
 
   /// 监听
@@ -297,8 +301,8 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
   /// 转发请求
   void relay(ChannelContext channelContext, Channel clientChannel, Channel remoteChannel) {
     var rawCodec = RawCodec();
-    clientChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(remoteChannel));
-    remoteChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(clientChannel));
+    clientChannel.pipeline.channelHandle(rawCodec, RelayHandler(remoteChannel));
+    remoteChannel.pipeline.channelHandle(rawCodec, RelayHandler(clientChannel));
 
     var body = buffer.bytes;
     buffer.clear();
@@ -326,7 +330,7 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
         return;
       }
 
-      var decodeResult = _decoder.decode(channelContext, buffer);
+      var decodeResult = decoder.decode(channelContext, buffer);
       if (!decodeResult.isDone) {
         return;
       }
@@ -376,7 +380,8 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
       //websocket协议
       if (data is HttpResponse && data.isWebSocket && remoteChannel != null) {
         data.request?.response = data;
-        channelContext.host = channelContext.host?.copyWith(scheme: channel.isSsl ? HostAndPort.wssScheme : HostAndPort.wsScheme);
+        channelContext.host =
+            channelContext.host?.copyWith(scheme: channel.isSsl ? HostAndPort.wssScheme : HostAndPort.wsScheme);
         channelContext.currentRequest?.hostAndPort = channelContext.host;
 
         logger.d("webSocket ${data.request?.hostAndPort}");
@@ -385,8 +390,8 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
         channelContext.listener?.onResponse(channelContext, data);
 
         var rawCodec = RawCodec();
-        channel.pipeline.handle(rawCodec, rawCodec, WebSocketChannelHandler(remoteChannel, data));
-        remoteChannel.pipeline.handle(rawCodec, rawCodec, WebSocketChannelHandler(channel, data.request!));
+        channel.pipeline.channelHandle(rawCodec, WebSocketChannelHandler(remoteChannel, data));
+        remoteChannel.pipeline.channelHandle(rawCodec, WebSocketChannelHandler(channel, data.request!));
         return;
       }
 
@@ -408,10 +413,10 @@ class ChannelPipeline extends ChannelHandler<Uint8List> {
   }
 }
 
-class RawCodec extends Codec<dynamic> {
+class RawCodec extends Codec<Uint8List, List<int>> {
   @override
-  DecoderResult<dynamic> decode(ChannelContext channelContext, ByteBuf byteBuf, {bool resolveBody = true}) {
-    var decoderResult = DecoderResult()..data = byteBuf.readAvailableBytes();
+  DecoderResult<Uint8List> decode(ChannelContext channelContext, ByteBuf byteBuf, {bool resolveBody = true}) {
+    var decoderResult = DecoderResult<Uint8List>()..data = byteBuf.readAvailableBytes();
     return decoderResult;
   }
 

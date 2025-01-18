@@ -114,7 +114,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV16) {
+    if (widget.appConfiguration.upgradeNoticeV17) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -239,6 +239,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
           context,
           PageRouteBuilder(
               transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
               pageBuilder: (context, animation, secondaryAnimation) {
                 return PictureInPictureWindow(MobileApp.container);
               }));
@@ -259,31 +260,29 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 新增Hosts设置, 支持域名映射；\n'
-            '2. 工具箱新增时间戳转换；\n'
-            '3. 编辑请求发送快捷键和发送loading；\n'
-            '4. 修复脚本编辑键盘弹出安全模式问题；\n'
-            '5. 修复脚本URL编码问题；\n'
-            '6. 修复请求屏蔽编辑多出空格问题；\n'
-            '7. 修复ipad分享点击无效问题；\n'
-            '8. 修复高级重放次数过多不执行问题；\n'
-            '9. 修复重写请求修改bug；\n'
-            '10. 应用黑白名单增加清除无效应用，添加过滤已存在应用；\n'
+            '1. 新增socks5代理支持, 可在设置中关闭；\n'
+            '2. 请求列表增加按时间排序；\n'
+            '3. 响应新增图片保存；\n'
+            '4. 请求重写新增json格式化；\n'
+            '5. 修复安卓首次在画中画开启VPN闪退；\n'
+            '6. 修复Illegal IPv6 address问题；\n'
+            '7. 修复Windows历史导入安卓har历史文件崩溃问题；\n'
+            '8. 修复复制python请求头不全问题；\n'
+            '9. 修复二维码保存的背景颜色问题；\n'
         : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n\n'
             'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-            '1. Added Hosts settings to support domain name mapping；\n'
-            '2. Toolbox adds timestamp conversion；\n'
-            '3. Edit request to send shortcut keys and send loading；\n'
-            '4. Fixed script editing keyboard pop-up safe mode issue；\n'
-            '5. Fixed script URL encoding issue；\n'
-            '6. Fixed the issue of extra spaces in request mask editing；\n'
-            '7. Fixed the issue that iPad share clicks are invalid；\n'
-            '8. Fixed the issue that the advanced replay would not execute if there were too many times；\n'
-            '9. Fixed the rewrite request update bug；\n'
-            '10. Add and remove invalid applications in the application blacklist and whitelist；\n'
+            '1. Added support for socks5 proxy, which can be turned off in settings；\n'
+            '2. Add request list sorted by time；\n'
+            '3. Response to saving newly added images；\n'
+            '4. Request rewriting to add json format；\n'
+            '5. Fixed the issue when opening VPN in Picture-in-Picture mode on Android for the first time；\n'
+            '6. Fix Illegal IPv6 address issue；\n'
+            '7. Fix Windows history import Android har history file crash issue；\n'
+            '8. Fix the problem of incomplete copy of python request header；\n'
+            '9. Fixed the background color issue when saving QR code；\n'
             '';
-    showAlertDialog(isCN ? '更新内容V1.1.6' : "Update content V1.1.6", content, () {
-      widget.appConfiguration.upgradeNoticeV16 = false;
+    showAlertDialog(isCN ? '更新内容V1.1.7' : "Update content V1.1.7", content, () {
+      widget.appConfiguration.upgradeNoticeV17 = false;
       widget.appConfiguration.flushConfig();
     });
   }

@@ -50,6 +50,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   Queue<HttpRequest> view = Queue();
   bool changing = false;
 
+  bool sortDesc = true;
+
   //搜索的内容
   SearchModel? searchModel;
 
@@ -103,7 +105,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
           return RequestWidget(
             key: ValueKey(view.elementAt(index).requestId),
             view.elementAt(index),
-            index: view.length - index,
+            index: sortDesc ? view.length - index : index,
             trailing: appIcon(view.elementAt(index)),
             proxyServer: widget.proxyServer,
             displayDomain: widget.displayDomain,
@@ -125,8 +127,14 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
     return futureWidget(
         processInfo.getIcon(),
-        (data) =>
-            data.isEmpty ? const SizedBox() : Image.memory(data, width: 23, height: Platform.isWindows ? 16 : null));
+        (data) => data.isEmpty
+            ? const SizedBox()
+            : Image.memory(
+                data,
+                width: 23,
+                height: Platform.isWindows ? 16 : null,
+                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) => const SizedBox(),
+              ));
   }
 
   ///高亮处理
@@ -141,7 +149,12 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       return;
     }
 
-    view.addFirst(request);
+    if (sortDesc) {
+      view.addFirst(request);
+    } else {
+      view.addLast(request);
+    }
+
     changeState();
   }
 
@@ -182,6 +195,14 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     setState(() {
       view.clear();
       view.addAll(widget.container.source.reversed);
+    });
+  }
+
+  ///排序
+  sort(bool desc) {
+    sortDesc = desc;
+    setState(() {
+      view = Queue.of(view.toList().reversed);
     });
   }
 }

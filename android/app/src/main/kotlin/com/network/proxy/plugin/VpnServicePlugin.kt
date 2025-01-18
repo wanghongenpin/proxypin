@@ -1,6 +1,5 @@
 package com.network.proxy.plugin
 
-import android.net.VpnService
 import com.network.proxy.ProxyVpnService
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
@@ -24,7 +23,7 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                     val port = call.argument<Int>("proxyPort")
                     val allowApps = call.argument<ArrayList<String>>("allowApps")
                     val disallowApps = call.argument<ArrayList<String>>("disallowApps")
-                    val prepareVpn = prepareVpn(host!!, port!!, allowApps, disallowApps)
+                    val prepareVpn = ProxyVpnService.prepareVpn(activity, host!!, port!!, allowApps, disallowApps)
                     if (prepareVpn) {
                         startVpn(host, port, allowApps, disallowApps)
                     }
@@ -50,28 +49,6 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                 }
             }
         }
-    }
-
-    /**
-     * 准备vpn<br>
-     * 设备可能弹出连接vpn提示
-     */
-    private fun prepareVpn(
-        host: String,
-        port: Int,
-        allowApps: ArrayList<String>?,
-        disallowApps: ArrayList<String>?
-    ): Boolean {
-        val intent = VpnService.prepare(activity)
-        if (intent != null) {
-            ProxyVpnService.host = host
-            ProxyVpnService.port = port
-            ProxyVpnService.allowApps = allowApps
-            ProxyVpnService.disallowApps = disallowApps
-            activity.startActivityForResult(intent, REQUEST_CODE)
-            return false
-        }
-        return true
     }
 
     /**

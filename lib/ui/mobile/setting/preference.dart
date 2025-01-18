@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/widgets.dart';
@@ -25,6 +26,7 @@ class Preference extends StatefulWidget {
 
 class _PreferenceState extends State<Preference> {
   late ProxyServer proxyServer;
+  late Configuration configuration;
   late AppConfiguration appConfiguration;
 
   final memoryCleanupController = TextEditingController();
@@ -34,6 +36,7 @@ class _PreferenceState extends State<Preference> {
   void initState() {
     super.initState();
     proxyServer = widget.proxyServer;
+    configuration = widget.proxyServer.configuration;
     appConfiguration = widget.appConfiguration;
 
     if (!memoryCleanupList.contains(appConfiguration.memoryCleanupThreshold)) {
@@ -61,6 +64,15 @@ class _PreferenceState extends State<Preference> {
                   proxyServer: proxyServer,
                   title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
                   textStyle: const TextStyle(fontSize: 16)),
+              ListTile(
+                  title: Text("SOCKS5"),
+                  trailing: SwitchWidget(
+                      value: configuration.enableSocks5,
+                      scale: 0.8,
+                      onChanged: (value) {
+                        configuration.enableSocks5 = value;
+                        proxyServer.configuration.flushConfig();
+                      })),
               ListTile(
                   title: Text(localizations.externalProxy),
                   trailing: const Icon(Icons.keyboard_arrow_right),

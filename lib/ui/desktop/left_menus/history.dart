@@ -86,67 +86,12 @@ class HistoryPageWidget extends StatelessWidget {
                   localizations.historyRecordTitle(
                       item.requestLength, item.name.substring(0, min(item.name.length, 25))),
                   style: const TextStyle(fontSize: 14)),
-              actions: [
-                PopupMenuButton(
-                    offset: const Offset(0, 32),
-                    icon: const Icon(Icons.more_vert_outlined, size: 20),
-                    itemBuilder: (BuildContext context) {
-                      return <PopupMenuEntry>[
-                        CustomPopupMenuItem(
-                            height: 35,
-                            onTap: () {
-                              String fileName = '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'
-                                  .replaceAll(" ", "_")
-                                  .replaceAll(":", "_");
-                              requestListKey.currentState?.export(fileName);
-                            },
-                            child: IconText(
-                                icon: const Icon(Icons.share, size: 16),
-                                text: localizations.viewExport,
-                                textStyle: const TextStyle(fontSize: 13))),
-                        CustomPopupMenuItem(
-                            height: 35,
-                            onTap: () async {
-                              var requests = requestListKey.currentState?.currentView();
-                              if (requests == null) return;
-
-                              //重发所有请求
-                              _repeatAllRequests(requests.toList(), proxyServer,
-                                  context: context.mounted ? context : null);
-                            },
-                            child: IconText(
-                                icon: const Icon(Icons.repeat, size: 16),
-                                text: localizations.repeatAllRequests,
-                                textStyle: const TextStyle(fontSize: 13))),
-                      ];
-                    }),
-              ],
             )),
         body: futureWidget(HistoryStorage.instance.then((value) => value.getRequests(item)), (data) {
           //shrinkWrap: false,
           return DesktopRequestListWidget(
               panel: panel, proxyServer: proxyServer, list: ListenableList(data), key: requestListKey);
         }, loading: true));
-  }
-}
-
-///重发所有请求
-void _repeatAllRequests(Iterable<HttpRequest> requests, ProxyServer proxyServer, {BuildContext? context}) async {
-  var localizations = context == null ? null : AppLocalizations.of(context);
-
-  for (var request in requests) {
-    var httpRequest = request.copy(uri: request.requestUrl);
-    var proxyInfo = proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", proxyServer.port) : null;
-    try {
-      await HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo, timeout: const Duration(seconds: 3));
-      if (context != null && context.mounted) {
-        FlutterToastr.show(localizations!.reSendRequest, rootNavigator: true, context);
-      }
-    } catch (e) {
-      if (context != null && context.mounted) {
-        FlutterToastr.show('${localizations!.fail} $e', rootNavigator: true, context);
-      }
-    }
   }
 }
 
@@ -299,7 +244,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
                 onTap: () async {
                   var requests = (await storage.getRequests(item)).reversed;
                   //重发所有请求
-                  _repeatAllRequests(requests.toList(), proxyServer, context: rootContext.mounted ? rootContext : null);
+                  _repeatAllRequests(requests.toList());
                 }),
             const PopupMenuDivider(height: 3),
             CustomPopupMenuItem(
@@ -382,5 +327,25 @@ class _HistoryListState extends State<_HistoryListWidget> {
     await Har.writeFile(requests, file, title: item.name);
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     Future.delayed(const Duration(seconds: 30), () => item.requests = null);
+  }
+
+  ///重发所有请求
+  void _repeatAllRequests(Iterable<HttpRequest> requests) async {
+    var localizations = AppLocalizations.of(context);
+
+    for (var request in requests) {
+      var httpRequest = request.copy(uri: request.requestUrl);
+      var proxyInfo = proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", proxyServer.port) : null;
+      try {
+        await HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo, timeout: const Duration(seconds: 3));
+        if (mounted) {
+          FlutterToastr.show(localizations!.reSendRequest, rootNavigator: true, context);
+        }
+      } catch (e) {
+        if (mounted) {
+          FlutterToastr.show('${localizations!.fail} $e', rootNavigator: true, context);
+        }
+      }
+    }
   }
 }

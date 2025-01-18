@@ -151,6 +151,8 @@
   "editRequest": "Edit and Request",
   "reSendRequest": "The request has been resent",
   "viewExport": "View Export",
+  "timeDesc": "Descending by time",
+  "timeAsc": "Ascending by time",
 
   "search": "Search",
   "clearSearch": "Clear Search",
@@ -187,6 +189,7 @@
   "installRootCa": "Install Certificate",
   "installCaLocal": "Install Certificate to Local-Machine",
   "downloadRootCa": "Download Certificate",
+  "downloadRootCaNote": "Note: If you set the default browser to other than Safari, click this line to copy and paste the link to Safari browser",
   "generateCA": "Generate new root certificate",
   "generateCADescribe": "Are you sure you want to generate a new root certificate? If confirmed,\nYou need to reinstall and trust the new certificate",
   "resetDefaultCA": "Reset Default Root Certificate",

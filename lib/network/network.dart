@@ -22,6 +22,7 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/channel.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/socks/socks5.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -54,8 +55,8 @@ abstract class Network {
   /// 转发请求
   void relay(Channel clientChannel, Channel remoteChannel) {
     var rawCodec = RawCodec();
-    clientChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(remoteChannel));
-    remoteChannel.pipeline.handle(rawCodec, rawCodec, RelayHandler(clientChannel));
+    clientChannel.pipeline.channelHandle(rawCodec, RelayHandler(remoteChannel));
+    remoteChannel.pipeline.channelHandle(rawCodec, RelayHandler(clientChannel));
   }
 }
 
@@ -121,6 +122,12 @@ class Server extends Network {
     if (hostAndPort?.isSsl() == true || TLS.isTLSClientHello(data)) {
       ssl(channelContext, channel, data);
       return;
+    }
+
+    //socks5
+    if (configuration.enableSocks5 && Socks5.isSocks5(data) && channel.pipeline.handler is! SocksServerHandler) {
+      channel.pipeline.channelHandle(
+          RawCodec(), SocksServerHandler(channel.pipeline.decoder, channel.pipeline.encoder, channel.pipeline.handler));
     }
 
     channel.pipeline.channelRead(channelContext, channel, data);

@@ -76,7 +76,7 @@ void processHeaders(StringBuffer py, List<String> headers) {
         first = false;
       }
       var parts = header.splitFirst(HttpConstants.colon);
-      py.write('"${parts[0].trim()}": "${escapeQuotes(parts[1].substring(2, parts[1].length - 1).trim())}"');
+      py.write('"${parts[0].trim()}": "${escapeQuotes(parts[1].substring(1, parts[1].length - 1).trim())}"');
     }
   }
   if (!first) {

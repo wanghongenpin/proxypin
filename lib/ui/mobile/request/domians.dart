@@ -68,6 +68,8 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
 
   bool changing = false;
 
+  bool sortDesc = true;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -163,6 +165,11 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     changeState();
   }
 
+  ///排序
+  sort(bool desc) {
+    sortDesc = desc;
+  }
+
   bool filter(HostAndPort hostAndPort) {
     if (searchText?.isNotEmpty == true) {
       return hostAndPort.domain.toLowerCase().contains(searchText!);
@@ -222,12 +229,15 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
         onTap: () {
           Navigator.push(context, MaterialPageRoute(builder: (context) {
             showHostAndPort = view.elementAt(index);
+            var list = containerMap[view.elementAt(index)];
+
             return Scaffold(
                 appBar: AppBar(title: Text(view.elementAt(index).domain, style: const TextStyle(fontSize: 16))),
                 body: RequestSequence(
                     key: requestSequenceKey,
                     displayDomain: false,
-                    container: ListenableList(containerMap[view.elementAt(index)]),
+                    container: ListenableList(sortDesc ? list : list?.reversed.toList()),
+                    sortDesc: sortDesc,
                     onRemove: widget.onRemove,
                     proxyServer: widget.proxyServer));
           }));

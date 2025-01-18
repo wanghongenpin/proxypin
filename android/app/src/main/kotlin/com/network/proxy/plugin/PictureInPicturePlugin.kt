@@ -45,15 +45,18 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
             if (isRunning) {
                 activity.startService(ProxyVpnService.stopVpnIntent(activity))
             } else {
-                activity.startService(
-                    ProxyVpnService.startVpnIntent(
-                        activity,
-                        proxyHost,
-                        proxyPort,
-                        allowApps,
-                        disallowApps
+                val prepareVpn = ProxyVpnService.prepareVpn(activity, proxyHost!!, proxyPort!!, allowApps, disallowApps)
+                if (prepareVpn) {
+                    activity.startService(
+                        ProxyVpnService.startVpnIntent(
+                            activity,
+                            proxyHost,
+                            proxyPort,
+                            allowApps,
+                            disallowApps
+                        )
                     )
-                )
+                }
             }
 
             //设置画中画参数

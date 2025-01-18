@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -71,13 +70,13 @@ abstract interface class Encoder<T> {
 }
 
 /// 编解码器
-abstract class Codec<T> implements Decoder<T>, Encoder<T> {
+abstract class Codec<D, E> implements Decoder<D>, Encoder<E> {
   static const int defaultMaxInitialLineLength = 1024000; // 1M
   static const int maxBodyLength = 4096000; // 4M
 }
 
 /// http编解码
-abstract class HttpCodec<T extends HttpMessage> implements Codec<T> {
+abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
   final HttpParse _httpParse = HttpParse();
   Http2Codec<T>? _h2Codec;
   State _state = State.readInitial;
@@ -229,7 +228,8 @@ class HttpRequestCodec extends HttpCodec<HttpRequest> {
     String uri = message.uri;
 
     //http scheme 输入地址和host不一致
-    if (uri.startsWith(HostAndPort.httpScheme) && message.requestUri?.host != message.headers.host) {
+    if (uri.startsWith(HostAndPort.httpScheme) &&
+        (message.requestUri?.host != message.headers.host && message.headers.host?.contains(':') != true)) {
       uri = message.requestUri?.replace(host: message.headers.host).toString() ?? uri;
     }
 
@@ -263,5 +263,35 @@ class HttpResponseCodec extends HttpCodec<HttpResponse> {
     buffer.add(message.status.reasonPhrase.codeUnits);
     buffer.addByte(HttpConstants.cr);
     buffer.addByte(HttpConstants.lf);
+  }
+}
+
+class HttpServerCodec extends Codec<HttpRequest, HttpResponse> {
+  HttpRequestCodec requestCodec = HttpRequestCodec();
+  HttpResponseCodec responseCodec = HttpResponseCodec();
+
+  @override
+  DecoderResult<HttpRequest> decode(ChannelContext channelContext, ByteBuf byteBuf) {
+    return requestCodec.decode(channelContext, byteBuf);
+  }
+
+  @override
+  List<int> encode(HttpResponse data) {
+    return responseCodec.encode(data);
+  }
+}
+
+class HttpClientCodec extends Codec<HttpResponse, HttpRequest> {
+  HttpRequestCodec requestCodec = HttpRequestCodec();
+  HttpResponseCodec responseCodec = HttpResponseCodec();
+
+  @override
+  DecoderResult<HttpResponse> decode(ChannelContext channelContext, ByteBuf byteBuf) {
+    return responseCodec.decode(channelContext, byteBuf);
+  }
+
+  @override
+  List<int> encode(HttpRequest data) {
+    return requestCodec.encode(data);
   }
 }

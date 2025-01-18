@@ -154,6 +154,8 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
             .toList());
   }
 
+  bool jsonFormatted = false;
+
   //body
   Widget body() {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
@@ -183,8 +185,21 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
                     }))),
         Expanded(
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          IconButton(
+            tooltip: 'JSON Format',
+            icon:
+                Icon(Icons.data_object, size: 20, color: jsonFormatted ? Theme.of(context).colorScheme.primary : null),
+            onPressed: () {
+              setState(() {
+                jsonFormatted = !jsonFormatted;
+                bodyTextController.text =
+                    jsonFormatted ? JSON.pretty(bodyTextController.text) : JSON.compact(bodyTextController.text);
+              });
+            },
+          ),
+          const SizedBox(width: 5),
           Text(localizations.enable),
-          const SizedBox(width: 10),
+          const SizedBox(width: 5),
           SwitchWidget(
               value: rewriteItem.enabled,
               scale: 0.65,
@@ -481,7 +496,8 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
             physics: const ClampingScrollPhysics(),
             separatorBuilder: (context, index) =>
                 index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
-            itemBuilder: (context, index) => index < list.length?list[index]
+            itemBuilder: (context, index) => index < list.length
+                ? list[index]
                 : TextButton(
                     child: Text("${localizations.add}Header", textAlign: TextAlign.center),
                     onPressed: () {

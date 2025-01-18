@@ -39,6 +39,8 @@ enum ContentType {
   bool get isBinary {
     return this == image || this == font || this == video;
   }
+
+  bool get isImage => this == image;
 }
 
 class MediaType {

@@ -155,6 +155,8 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
             .toList());
   }
 
+  bool jsonFormatted = false;
+
   //body
   Widget body() {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
@@ -185,6 +187,19 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
                     }))),
         Expanded(
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          IconButton(
+            tooltip: 'JSON Format',
+            icon:
+                Icon(Icons.data_object, size: 20, color: jsonFormatted ? Theme.of(context).colorScheme.primary : null),
+            onPressed: () {
+              setState(() {
+                jsonFormatted = !jsonFormatted;
+                bodyTextController.text =
+                    jsonFormatted ? JSON.pretty(bodyTextController.text) : JSON.compact(bodyTextController.text);
+              });
+            },
+          ),
+          const SizedBox(width: 15),
           Text(localizations.enable),
           const SizedBox(width: 10),
           SwitchWidget(

@@ -151,6 +151,8 @@
   "editRequest": "编辑请求",
   "reSendRequest": "已重新发送请求",
   "viewExport": "视图导出",
+  "timeDesc": "按时间降序",
+  "timeAsc": "按时间升序",
 
   "search": "搜索",
   "clearSearch": "清除搜索",
@@ -188,6 +190,7 @@
   "installRootCa": "安装根证书",
   "installCaLocal": "安装根证书到本机",
   "downloadRootCa": "下载根证书",
+  "downloadRootCaNote": "注意：如果您将默认浏览器设置为 Safari 以外的浏览器，请单击此行复制并粘贴 Safari 浏览器的链接",
   "generateCA": "重新生成根证书",
   "generateCADescribe": "您确定要生成新的根证书吗? 如果确认，\n则需要重新安装并信任新的证书",
   "resetDefaultCA": "重置默认根证书",

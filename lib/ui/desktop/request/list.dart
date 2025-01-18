@@ -21,12 +21,16 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/desktop/request/request_sequence.dart';
 import 'package:proxypin/ui/desktop/request/search.dart';
 import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import 'domians.dart';
@@ -51,6 +55,8 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
 
   //请求列表容器
   ListenableList<HttpRequest> container = ListenableList();
+
+  bool sortDesc = true;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -83,9 +89,11 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
         length: tabs.length,
         child: Scaffold(
             appBar: AppBar(
-                toolbarHeight: 40,
-                title: SizedBox(height: 40, child: TabBar(tabs: tabs)),
-                automaticallyImplyLeading: false),
+              toolbarHeight: 40,
+              title: SizedBox(height: 40, child: TabBar(tabs: tabs)),
+              automaticallyImplyLeading: false,
+              actions: [popupMenus()],
+            ),
             bottomNavigationBar: Search(onSearch: search),
             body: Padding(
                 padding: const EdgeInsets.only(right: 5),
@@ -102,6 +110,41 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                       proxyServer: widget.proxyServer,
                       onRemove: sequenceRemove),
                 ]))));
+  }
+
+  Widget popupMenus() {
+    return PopupMenuButton(
+        offset: const Offset(0, 32),
+        icon: const Icon(Icons.more_vert_outlined, size: 20),
+        itemBuilder: (BuildContext context) {
+          return <PopupMenuEntry>[
+            CustomPopupMenuItem(
+                height: 35,
+                onTap: () => export('ProxyPin_${DateTime.now().dateFormat()}.har'),
+                child: IconText(
+                    icon: const Icon(Icons.share, size: 16),
+                    text: localizations.viewExport,
+                    textStyle: const TextStyle(fontSize: 13))),
+            CustomPopupMenuItem(
+                height: 35,
+                onTap: () => repeatAllRequests(),
+                child: IconText(
+                    icon: const Icon(Icons.repeat, size: 16),
+                    text: localizations.repeatAllRequests,
+                    textStyle: const TextStyle(fontSize: 13))),
+            CustomPopupMenuItem(
+                height: 35,
+                onTap: () {
+                  sortDesc = !sortDesc;
+                  requestSequenceKey.currentState?.sort(sortDesc);
+                  domainListKey.currentState?.sort(sortDesc);
+                },
+                child: IconText(
+                    icon: const Icon(Icons.sort, size: 16),
+                    text: sortDesc ? localizations.timeAsc : localizations.timeDesc,
+                    textStyle: const TextStyle(fontSize: 13))),
+          ];
+        });
   }
 
   ///添加请求
@@ -175,5 +218,29 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     await Har.writeFile(requests, file, title: fileName);
 
     if (mounted) FlutterToastr.show(AppLocalizations.of(context)!.exportSuccess, context);
+  }
+
+  ///重发所有请求
+  void repeatAllRequests() async {
+    var requests = currentView();
+    if (requests == null) return;
+
+    var localizations = AppLocalizations.of(context);
+    final proxyServer = widget.proxyServer;
+
+    for (var request in requests) {
+      var httpRequest = request.copy(uri: request.requestUrl);
+      var proxyInfo = proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", proxyServer.port) : null;
+      try {
+        await HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo, timeout: const Duration(seconds: 3));
+        if (mounted) {
+          FlutterToastr.show(localizations!.reSendRequest, rootNavigator: true, context);
+        }
+      } catch (e) {
+        if (mounted) {
+          FlutterToastr.show('${localizations!.fail} $e', rootNavigator: true, context);
+        }
+      }
+    }
   }
 }

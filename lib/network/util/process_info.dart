@@ -42,7 +42,9 @@ class ProcessInfoUtils {
       if (app != null) {
         return app;
       }
-      if (socketAddress.host == '127.0.0.1') return ProcessInfo('com.network.proxy', "ProxyPin", '');
+      if (socketAddress.host == '127.0.0.1') {
+        return ProcessInfo('com.network.proxy', "ProxyPin", '', os: Platform.operatingSystem);
+      }
       return null;
     }
 
@@ -102,7 +104,7 @@ class ProcessInfoUtils {
       var output = result.stdout.toString();
       var path = output.split('\n')[1].trim();
       String name = path.substring(path.lastIndexOf('\\') + 1);
-      return ProcessInfo(name, name.split(".")[0], path);
+      return ProcessInfo(name, name.split(".")[0], path, os: Platform.operatingSystem);
     }
 
     if (Platform.isMacOS) {
@@ -115,7 +117,7 @@ class ProcessInfoUtils {
             parts.removeAt(0).trim();
             var path = parts.join(" ").split(".app/")[0];
             String name = path.substring(path.lastIndexOf('/') + 1);
-            return ProcessInfo(name, name, "$path.app");
+            return ProcessInfo(name, name, "$path.app", os: Platform.operatingSystem);
           }
         }
       }
@@ -131,15 +133,16 @@ class ProcessInfo {
   final String id; //应用包名
   final String name; //应用名称
   final String path;
+  final String? os;
 
   Uint8List? icon;
   String? remoteHost;
   int? remotePost;
 
-  ProcessInfo(this.id, this.name, this.path, {this.icon, this.remoteHost, this.remotePost});
+  ProcessInfo(this.id, this.name, this.path, {required this.os, this.icon, this.remoteHost, this.remotePost});
 
   factory ProcessInfo.fromJson(Map<String, dynamic> json) {
-    return ProcessInfo(json['id'], json['name'], json['path']);
+    return ProcessInfo(json['id'], json['name'], json['path'], os: json['os']);
   }
 
   bool get hasCacheIcon => icon != null || _iconCache.get(id) != null;
@@ -149,13 +152,12 @@ class ProcessInfo {
   Future<Uint8List> getIcon() async {
     if (icon != null) return icon!;
     if (_iconCache.get(id) != null) return _iconCache.get(id)!;
-
     try {
       if (Platform.isAndroid) {
         icon = (await InstalledApps.getAppInfo(id)).icon;
       }
 
-      if (Platform.isWindows) {
+      if ('windows' == os || path.endsWith('.exe')) {
         icon = await _getWindowsIcon(path);
       }
 
@@ -188,7 +190,7 @@ class ProcessInfo {
   }
 
   Map<String, dynamic> toJson() {
-    return {'id': id, 'name': name, 'path': path};
+    return {'id': id, 'name': name, 'path': path, 'os': os};
   }
 
   @override

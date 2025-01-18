@@ -23,6 +23,7 @@ import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/hosts.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/request_block.dart';
@@ -78,7 +79,7 @@ class _SettingState extends State<Setting> {
         item(localizations.script,
             onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 700))),
         item(localizations.externalProxy, onPressed: setExternalProxy),
-        item("Github", onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin"))),
+        item(localizations.about, onPressed: showAbout),
       ],
     );
   }
@@ -90,6 +91,52 @@ class _SettingState extends State<Setting> {
         child: Padding(
             padding: const EdgeInsets.only(left: 10, right: 5),
             child: Text(text, style: const TextStyle(fontSize: 14))));
+  }
+
+  showAbout() {
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+
+    String gitHub = "https://github.com/wanghongenpin/proxypin";
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            titlePadding: const EdgeInsets.only(left: 20, top: 10, right: 15),
+            title: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Expanded(child: SizedBox()),
+              Text(localizations.about, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+              const Expanded(child: SizedBox()),
+              Align(alignment: Alignment.topRight, child: CloseButton())
+            ]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("ProxyPin", style: TextStyle(fontSize: 20)),
+                const SizedBox(height: 10),
+                Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child:
+                        Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software")),
+                const SizedBox(height: 10),
+                const Text("V1.1.7"),
+                const SizedBox(height: 10),
+                ListTile(
+                    title: Text('GitHub', textAlign: TextAlign.center, style: TextStyle(color: Colors.blue)),
+                    onTap: () => launchUrl(Uri.parse(gitHub))),
+                ListTile(
+                    title:
+                        Text(localizations.feedback, textAlign: TextAlign.center, style: TextStyle(color: Colors.blue)),
+                    onTap: () => launchUrl(Uri.parse("$gitHub/issues"))),
+                ListTile(
+                    title: Text(isCN ? "下载地址" : "Download",
+                        textAlign: TextAlign.center, style: TextStyle(color: Colors.blue)),
+                    onTap: () => launchUrl(
+                        Uri.parse(isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases")))
+              ],
+            ),
+          );
+        });
   }
 
   ///设置外部代理地址
@@ -180,6 +227,21 @@ class _ProxyMenuState extends State<_ProxyMenu> {
         const Divider(thickness: 0.3, height: 8),
         setSystemProxy(),
         const Divider(thickness: 0.3, height: 8),
+        Row(children: [
+          Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 15),
+                  child: Text("SOCKS5", style: const TextStyle(fontSize: 14)))),
+          SwitchWidget(
+              value: configuration.enableSocks5,
+              scale: 0.75,
+              onChanged: (val) {
+                configuration.enableSocks5 = val;
+                changed = true;
+              }),
+          SizedBox(width: 10)
+        ]),
+        const Divider(thickness: 0.3, height: 8),
         const SizedBox(height: 3),
         Padding(
             padding: const EdgeInsets.only(left: 15),
@@ -225,22 +287,23 @@ class _ProxyMenuState extends State<_ProxyMenu> {
   ///设置系统代理
   Widget setSystemProxy() {
     return Row(children: [
-      Padding(
-          padding: const EdgeInsets.only(left: 15),
-          child: Text(localizations.systemProxy, style: const TextStyle(fontSize: 14))),
       Expanded(
-          child: Transform.scale(
-              scale: 0.8,
-              child: Switch(
-                  hoverColor: Colors.transparent,
-                  value: configuration.enableSystemProxy,
-                  onChanged: (val) {
-                    widget.proxyServer.setSystemProxyEnable(val);
-                    configuration.enableSystemProxy = val;
-                    setState(() {
-                      changed = true;
-                    });
-                  })))
+          child: Padding(
+              padding: const EdgeInsets.only(left: 15, right: 20),
+              child: Text(localizations.systemProxy, style: const TextStyle(fontSize: 14)))),
+      Transform.scale(
+          scale: 0.75,
+          child: Switch(
+              hoverColor: Colors.transparent,
+              value: configuration.enableSystemProxy,
+              onChanged: (val) {
+                widget.proxyServer.setSystemProxyEnable(val);
+                configuration.enableSystemProxy = val;
+                setState(() {
+                  changed = true;
+                });
+              })),
+      SizedBox(width: 10)
     ]);
   }
 }

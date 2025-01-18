@@ -26,6 +26,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class MobileSslWidget extends StatefulWidget {
   final ProxyServer proxyServer;
@@ -201,6 +202,7 @@ class _MobileSslState extends State<MobileSslWidget> {
             padding: const EdgeInsets.all(10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               TextButton(onPressed: () => _downloadCert(), child: Text("1. ${localizations.downloadRootCa}")),
+              TextButton(onPressed: _copyProxyLink, child: Text(localizations.downloadRootCaNote)),
               TextButton(
                   onPressed: () {}, child: Text("2. ${localizations.installRootCa} -> ${localizations.trustCa}")),
               TextButton(onPressed: () {}, child: Text("2.1 ${localizations.installCaDescribe}")),
@@ -220,6 +222,18 @@ class _MobileSslState extends State<MobileSslWidget> {
     CertificateManager.cleanCache();
     await widget.proxyServer.retryBind();
     launchUrl(Uri.parse("http://127.0.0.1:${widget.proxyServer.port}/ssl"), mode: LaunchMode.externalApplication);
+  }
+
+  void _copyProxyLink() async {
+    CertificateManager.cleanCache();
+    await widget.proxyServer.retryBind();
+    var urlStr = Uri.parse("http://127.0.0.1:${widget.proxyServer.port}/ssl").toString();
+    Clipboard.setData(ClipboardData(text: urlStr)).then((_) {
+      if (!mounted) {
+        return;
+      }
+      FlutterToastr.show(localizations.copied, context);
+    });
   }
 
   void _exportFile(String name, {File? file, Uint8List? bytes}) async {

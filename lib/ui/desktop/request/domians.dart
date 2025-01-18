@@ -75,6 +75,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   //关键词高亮监听
   late VoidCallback highlightListener;
 
+  bool sortDesc = true;
+
   changeState() {
     if (!changing) {
       changing = true;
@@ -92,7 +94,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     var container = widget.list;
     for (var request in container.source) {
       DomainRequests domainRequests = getDomainRequests(request);
-      domainRequests.addRequest(request.requestId, request);
+      domainRequests.addRequest(request.requestId, request, sortDesc);
     }
     highlightListener = () {
       //回调时机在高亮设置页面dispose之后。所以需要在下一帧刷新，否则会报错
@@ -172,10 +174,10 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     DomainRequests domainRequests = getDomainRequests(request);
     var isNew = domainRequests.body.isEmpty;
 
-    domainRequests.addRequest(request.requestId, request);
+    domainRequests.addRequest(request.requestId, request, sortDesc);
     //搜索视图
     if (searchModel?.isNotEmpty == true && searchModel?.filter(request, null) == true) {
-      searchView[host]?.addRequest(request.requestId, request);
+      searchView[host]?.addRequest(request.requestId, request, sortDesc);
     }
 
     if (isNew) {
@@ -242,7 +244,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     if (searchModel?.isNotEmpty == true && searchModel?.filter(pathRow.request, response) == true) {
       var requests = searchView[domain];
       if (requests?.getRequest(response) == null) {
-        requests?.addRequest(response.requestId, pathRow.request);
+        requests?.addRequest(response.requestId, pathRow.request, sortDesc);
       }
       requests?.getRequest(response)?.setResponse(response);
     }
@@ -264,7 +266,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
       var container = widget.list;
       for (var request in container.source) {
         DomainRequests domainRequests = getDomainRequests(request);
-        domainRequests.addRequest(request.requestId, request);
+        domainRequests.addRequest(request.requestId, request, sortDesc);
       }
     });
   }
@@ -275,6 +277,17 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
       container = searchView.values;
     }
     return container.expand((list) => list.body.map((it) => it.request)).toList();
+  }
+
+  ///排序
+  sort(bool desc) {
+    sortDesc = desc;
+    containerMap.forEach((key, request) {
+      var reversed = request.body.toList().reversed;
+      request.body.clear();
+      request.body.addAll(reversed);
+      request.changeState();
+    });
   }
 }
 
@@ -302,15 +315,17 @@ class DomainRequests extends StatefulWidget {
       : super(key: GlobalKey<_DomainRequestsState>());
 
   ///添加请求
-  void addRequest(String? requestId, HttpRequest request) {
+  void addRequest(String? requestId, HttpRequest request, bool sortDesc) {
     if (requestMap.containsKey(requestId)) return;
 
     var requestWidget = RequestWidget(request,
         index: body.length, proxyServer: proxyServer, displayDomain: false, remove: (it) => _remove(it));
-    body.addFirst(requestWidget);
+    sortDesc ? body.addFirst(requestWidget) : body.addLast(requestWidget);
+
     if (requestId == null) {
       return;
     }
+
     requestMap[requestId] = requestWidget;
     changeState();
   }
@@ -407,6 +422,7 @@ class _DomainRequestsState extends State<DomainRequests> {
 
   @override
   Widget build(BuildContext context) {
+
     return Column(children: [
       _hostWidget(widget.domain),
       Offstage(offstage: !selected, child: Column(children: widget.body.toList()))
@@ -521,7 +537,7 @@ class HostWidget extends StatelessWidget {
   final String host;
   final Function()? onMenu;
 
-  HostWidget(this.host, {this.onMenu});
+  const HostWidget(this.host, {super.key, this.onMenu});
 
   @override
   Widget build(BuildContext context) {

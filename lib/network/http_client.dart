@@ -32,7 +32,7 @@ class HttpClients {
   static Future<Channel> startConnect(
       HostAndPort hostAndPort, ChannelHandler handler, ChannelContext channelContext) async {
     var client = Client()
-      ..initChannel((channel) => channel.pipeline.handle(HttpResponseCodec(), HttpRequestCodec(), handler));
+      ..initChannel((channel) => channel.pipeline.channelHandle(HttpClientCodec(), handler));
 
     return client.connect(hostAndPort, channelContext);
   }
@@ -41,7 +41,7 @@ class HttpClients {
   static Future<Channel> proxyConnect(HostAndPort hostAndPort, ChannelHandler handler, ChannelContext channelContext,
       {ProxyInfo? proxyInfo}) async {
     var client = Client()
-      ..initChannel((channel) => channel.pipeline.handle(HttpResponseCodec(), HttpRequestCodec(), handler));
+      ..initChannel((channel) => channel.pipeline.channelHandle(HttpClientCodec(), handler));
 
     if (proxyInfo == null) {
       var proxyTypes = hostAndPort.isSsl() ? ProxyTypes.https : ProxyTypes.http;
@@ -141,7 +141,7 @@ class HttpClients {
     Channel channel =
         await proxyConnect(proxyInfo: proxyInfo, request.hostAndPort!, httpResponseHandler, channelContext);
 
-    if (channel.isSsl && !request.uri.startsWith("/")) {
+    if (!request.uri.startsWith("/")) {
       Uri? uri = request.requestUri;
       request = request.copy(uri: '${uri!.path}${uri.hasQuery ? '?${uri.query}' : ''}');
     }

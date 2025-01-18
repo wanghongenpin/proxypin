@@ -27,7 +27,7 @@ import 'package:proxypin/network/util/byte_buf.dart';
 import 'frame.dart';
 
 /// http编解码
-abstract class Http2Codec<T extends HttpMessage> implements Codec<T> {
+abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   static const maxFrameSize = 16384;
 
   static final List<int> connectionPrefacePRI = "PRI * HTTP/2.0".codeUnits;

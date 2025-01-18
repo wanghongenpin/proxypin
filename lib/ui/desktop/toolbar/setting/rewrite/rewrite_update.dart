@@ -121,6 +121,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   var valueController = TextEditingController();
   var dataController = HighlightTextEditingController();
 
+  bool jsonFormatted = false;
+
   @override
   void initState() {
     super.initState();
@@ -227,7 +229,21 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                         child: Text(localizations.testData, style: const TextStyle(fontSize: 14))),
                     const SizedBox(width: 10),
                     if (!isMatch)
-                      Text(localizations.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14))
+                      Text(localizations.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14)),
+                    Expanded(child: SizedBox()),
+                    IconButton(
+                      tooltip: 'JSON Format',
+                      icon: Icon(Icons.data_object,
+                          size: 20, color: jsonFormatted ? Theme.of(context).colorScheme.primary : null),
+                      onPressed: () {
+                        setState(() {
+                          jsonFormatted = !jsonFormatted;
+                          dataController.text =
+                              jsonFormatted ? JSON.pretty(dataController.text) : JSON.compact(dataController.text);
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 5),
                   ]),
                   const SizedBox(height: 5),
                   formField(localizations.enterMatchData, lines: 10, required: false, controller: dataController),

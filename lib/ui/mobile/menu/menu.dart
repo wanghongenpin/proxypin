@@ -27,6 +27,8 @@ import 'package:proxypin/ui/mobile/widgets/remote_device.dart';
 
 /// +号菜单
 class MoreMenu extends StatelessWidget {
+  static bool sortDesc = true;
+
   final ProxyServer proxyServer;
   final ValueNotifier<RemoteModel> remoteDevice;
 
@@ -105,6 +107,19 @@ class MoreMenu extends StatelessWidget {
                   Navigator.maybePop(context);
                   var name = formatDate(DateTime.now(), [m, '-', d, ' ', HH, ':', nn, ':', ss]);
                   MobileApp.requestStateKey.currentState?.export(context, 'ProxyPin$name');
+                },
+              )),
+          PopupMenuItem(
+              height: 32,
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.sort, size: 16),
+                title: Text(sortDesc ? localizations.timeAsc : localizations.timeDesc),
+                onTap: () async {
+                  await Navigator.maybePop(context);
+
+                  sortDesc = !sortDesc;
+                  MobileApp.requestStateKey.currentState?.sort(sortDesc);
                 },
               )),
         ];

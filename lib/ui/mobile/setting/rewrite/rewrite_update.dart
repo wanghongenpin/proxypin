@@ -118,6 +118,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   var valueController = TextEditingController();
   var dataController = HighlightTextEditingController();
 
+  bool jsonFormatted = false;
+
   AppLocalizations get i18n => AppLocalizations.of(context)!;
 
   @override
@@ -218,7 +220,21 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                 Align(
                     alignment: Alignment.centerLeft, child: Text(i18n.testData, style: const TextStyle(fontSize: 14))),
                 const SizedBox(width: 10),
-                if (!isMatch) Text(i18n.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14))
+                if (!isMatch) Text(i18n.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14)),
+                Expanded(child: SizedBox()),
+                IconButton(
+                  tooltip: 'JSON Format',
+                  icon: Icon(Icons.data_object,
+                      size: 20, color: jsonFormatted ? Theme.of(context).colorScheme.primary : null),
+                  onPressed: () {
+                    setState(() {
+                      jsonFormatted = !jsonFormatted;
+                      dataController.text =
+                          jsonFormatted ? JSON.pretty(dataController.text) : JSON.compact(dataController.text);
+                    });
+                  },
+                ),
+                const SizedBox(width: 3),
               ]),
               const SizedBox(height: 5),
               formField(i18n.enterMatchData, lines: 15, required: false, controller: dataController),

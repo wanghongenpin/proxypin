@@ -2,7 +2,7 @@ name: proxypin
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.1.6+16
+version: 1.1.7+17
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -15,7 +15,7 @@ dependencies:
   intl: any
   cupertino_icons: ^1.0.8
   pointycastle: ^3.9.1
-  logger: ^2.4.0
+  logger: ^2.5.0
   date_format: ^2.0.9
   window_manager: ^0.4.3
   desktop_multi_window:

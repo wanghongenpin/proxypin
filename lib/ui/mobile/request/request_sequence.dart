@@ -14,10 +14,11 @@ class RequestSequence extends StatefulWidget {
   final ListenableList<HttpRequest> container;
   final ProxyServer proxyServer;
   final bool displayDomain;
+  final bool? sortDesc;
   final Function(List<HttpRequest>)? onRemove;
 
   const RequestSequence(
-      {super.key, required this.container, required this.proxyServer, this.displayDomain = true, this.onRemove});
+      {super.key, required this.container, required this.proxyServer, this.displayDomain = true, this.onRemove, this.sortDesc});
 
   @override
   State<StatefulWidget> createState() {
@@ -33,6 +34,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   Queue<HttpRequest> view = Queue();
   bool changing = false;
 
+  bool sortDesc = true;
+
   //搜索的内容
   SearchModel? searchModel;
 
@@ -42,6 +45,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   @override
   initState() {
     super.initState();
+    sortDesc = widget.sortDesc ?? true;
     view.addAll(widget.container.source.reversed);
     highlightListener = () {
       //回调时机在高亮设置页面dispose之后。所以需要在下一帧刷新，否则会报错
@@ -65,7 +69,12 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       return;
     }
 
-    view.addFirst(request);
+    if (sortDesc) {
+      view.addFirst(request);
+    } else {
+      view.addLast(request);
+    }
+
     changeState();
   }
 
@@ -146,7 +155,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
             itemCount: view.length,
             itemBuilder: (context, index) {
               return RequestRow(
-                  index: view.length - index,
+                  index: sortDesc ? view.length - index : index,
                   key: indexes[view.elementAt(index).requestId] ??= GlobalKey(),
                   request: view.elementAt(index),
                   proxyServer: widget.proxyServer,
@@ -163,5 +172,17 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   scrollToTop() {
     PrimaryScrollController.maybeOf(context)
         ?.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+  }
+
+  ///排序
+  sort(bool desc) {
+    if (sortDesc == desc) {
+      return;
+    }
+
+    sortDesc = desc;
+    setState(() {
+      view = Queue.of(view.toList().reversed);
+    });
   }
 }

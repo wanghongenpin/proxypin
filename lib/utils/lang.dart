@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 
@@ -28,6 +30,29 @@ extension DateTimeFormat on DateTime {
 
   String timeFormat() {
     return formatDate(this, [HH, ':', nn, ':', ss]);
+  }
+}
+
+class JSON {
+  ///  格式化json
+  static String pretty(String jsonString) {
+    try {
+      var jsonObject = jsonDecode(jsonString);
+      var encoder = JsonEncoder.withIndent('  ');
+      return encoder.convert(jsonObject);
+    } catch (e) {
+      return jsonString;
+    }
+  }
+
+  /// 压缩json
+  static String compact(String jsonString) {
+    try {
+      var jsonObject = jsonDecode(jsonString);
+      return jsonEncode(jsonObject);
+    } catch (e) {
+      return jsonString;
+    }
   }
 }
 

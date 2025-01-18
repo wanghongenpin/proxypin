@@ -164,6 +164,12 @@ class RequestListState extends State<RequestListWidget> {
         fileNameOverrides: [fileName],
         sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
   }
+
+  sort(bool sortDesc) {
+    requestSequenceKey.currentState?.sort(sortDesc);
+    domainListKey.currentState?.sort(sortDesc);
+  }
+
 }
 
 class DoubleClickHandle {

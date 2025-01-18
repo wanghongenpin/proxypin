@@ -1,5 +1,6 @@
 package com.network.proxy
 
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,6 +12,7 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.network.proxy.plugin.VpnServicePlugin.Companion.REQUEST_CODE
 import com.network.proxy.vpn.ProxyVpnThread
 import com.network.proxy.vpn.socket.ProtectSocket
 import com.network.proxy.vpn.socket.ProtectSocketHolder
@@ -70,6 +72,29 @@ class ProxyVpnService : VpnService(), ProtectSocket {
                 it.putStringArrayListExtra(ALLOW_APPS_KEY, allowApps)
                 it.putStringArrayListExtra(DISALLOW_APPS_KEY, disallowApps)
             }
+        }
+
+        /**
+         * 准备vpn<br>
+         * 设备可能弹出连接vpn提示
+         */
+        fun prepareVpn(
+            activity: Activity,
+            host: String,
+            port: Int,
+            allowApps: ArrayList<String>?,
+            disallowApps: ArrayList<String>?
+        ): Boolean {
+            val intent = prepare(activity)
+            if (intent != null) {
+                ProxyVpnService.host = host
+                ProxyVpnService.port = port
+                ProxyVpnService.allowApps = allowApps
+                ProxyVpnService.disallowApps = disallowApps
+                activity.startActivityForResult(intent, REQUEST_CODE)
+                return false
+            }
+            return true
         }
     }
 

@@ -118,7 +118,7 @@ class _MobileScriptState extends State<MobileScript> {
 
   //导入js
   import() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }

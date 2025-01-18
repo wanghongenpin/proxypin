@@ -207,6 +207,12 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
     }
 
     HostAndPort remoteAddress = hostAndPort;
+
+    final ProxyInfo? socksProxy = channelContext.getAttribute(AttributeKeys.socks5Proxy);
+    if (socksProxy != null) {
+      remoteAddress = hostAndPort.copyWith(host: socksProxy.host, port: socksProxy.port!);
+    }
+
     for (var interceptor in interceptors) {
       remoteAddress = await interceptor.preConnect(remoteAddress);
     }
