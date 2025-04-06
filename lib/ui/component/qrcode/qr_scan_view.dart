@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:image_pickers/image_pickers.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
+import 'package:zxing2/qrcode.dart' hide BarcodeFormat;
+import 'package:image/image.dart' as img;
 
 ///@Author: Hongen Wang
 /// qr code scanner
@@ -53,8 +57,10 @@ class QeCodeScanView extends StatefulWidget {
 
 class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateMixin {
   final int animationTime = 2000;
-  QrReaderViewController? _controller;
+  QRViewController? _controller;
   AnimationController? _animationController;
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  final QRCodeReader qrCodeReader = QRCodeReader();
 
   bool isScan = false;
   bool openFlashlight = false;
@@ -67,16 +73,18 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     super.dispose();
   }
 
-  void _onCreateController(QrReaderViewController controller) async {
-    _controller = controller;
+  void _onCreateController(QRViewController controller) async {
+    setState(() {
+      _controller = controller;
+    });
     startScan();
   }
 
   void startScan() async {
     isScan = true;
 
-    _controller?.startCamera((data, _) async {
-      await handle(data);
+    _controller!.scannedDataStream.listen((scanData) async {
+      await handle(scanData.code!);
     });
 
     _initAnimation();
@@ -133,19 +141,40 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
 
   setFlashlight() async {
     if (!isScan) return false;
-    _controller?.setFlashlight();
+    _controller?.toggleFlash();
     setState(() {
       openFlashlight = !openFlashlight;
     });
   }
 
   scanImage(String path) {
-    FlutterQrReader.imgScan(path).then((value) {
-      stop();
-      if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(value.isEmpty ? "-1" : value);
+    stop();
+
+    final bytes = File(path).readAsBytesSync();
+    final image = img.decodeImage(bytes);
+    if (image != null) {
+      final luminanceSource = RGBLuminanceSource(
+          image.width,
+          image.height,
+          image.convert(numChannels: 4).getBytes(order: img.ChannelOrder.abgr).buffer.asInt32List()
+      );
+
+      final bitmap = BinaryBitmap(GlobalHistogramBinarizer(luminanceSource));
+      try {
+        final decoded = qrCodeReader.decode(bitmap);
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop(decoded.text);
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop("-1");
+        }
       }
-    });
+    } else {
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop("-1");
+      }
+    }
   }
 
   @override
@@ -161,11 +190,14 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
               SizedBox(
                   width: constraints.maxWidth,
                   height: constraints.maxHeight,
-                  child: QrReaderView(
-                    width: constraints.maxWidth,
-                    height: constraints.maxHeight,
-                    autoFocusIntervalInMs: 1000,
-                    callback: _onCreateController,
+                  child: QRView(
+                    key: qrKey,
+                    formatsAllowed: [BarcodeFormat.qrcode],
+                    overlay: QrScannerOverlayShape(
+                      cutOutWidth: constraints.maxWidth,
+                      cutOutHeight: constraints.maxHeight
+                    ),
+                    onQRViewCreated: _onCreateController,
                   )),
               Positioned(
                 left: (constraints.maxWidth - qrScanSize) / 2,
