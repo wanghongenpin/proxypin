@@ -37,7 +37,7 @@ dependencies:
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^11.2.1
   shared_preferences: ^2.5.3
-  image_pickers: ^2.0.5+2
+  image_pickers: ^2.0.6
   url_launcher: ^6.3.1
 
   qr_flutter: ^4.1.0
