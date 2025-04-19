@@ -29,7 +29,7 @@ class AppUpdateRepository {
       var availableUpdates = compareVersions(AppConfiguration.version, lastVersion.version);
       if (availableUpdates) {
         if (canIgnore) {
-          var ignoreVersion = await SharedPreferencesAsync().getString(Constants.ignoreReleaseVersionKey);
+          var ignoreVersion = (await SharedPreferences.getInstance()).getString(Constants.ignoreReleaseVersionKey);
           if (ignoreVersion == lastVersion.version) {
             logger.d("ignored release [${lastVersion.version}]");
             return;

@@ -37,9 +37,9 @@ dependencies:
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^10.1.2
   shared_preferences: ^2.2.3
-  image_pickers: ^2.0.5+2
+  image_pickers: 2.0.5+2
   url_launcher: ^6.3.1
-  toastification: ^3.0.2
+  toastification: ^2.3.0
 
   qr_flutter: ^4.1.0
   flutter_qr_reader: ^1.0.5

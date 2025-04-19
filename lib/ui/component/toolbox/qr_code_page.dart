@@ -24,7 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_qr_reader_plus/flutter_qr_reader.dart';
+import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
 import 'package:proxypin/ui/component/app_dialog.dart';
@@ -153,7 +153,7 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
                 String? path = await selectImage();
                 if (path == null) return;
                 var result = await FlutterQrReader.imgScan(path);
-                if (result == null) {
+                if (result.isEmpty) {
                   if (context.mounted) FlutterToastr.show(localizations.decodeFail, context, duration: 2);
                   return;
                 }
