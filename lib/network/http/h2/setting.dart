@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/h2/frame.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 

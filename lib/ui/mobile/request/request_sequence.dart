@@ -5,7 +5,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/mobile/request/request.dart';
-import 'package:proxypin/ui/mobile/widgets/highlight.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 ///请求序列 列表
@@ -53,12 +53,12 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
         setState(() {});
       });
     };
-    KeywordHighlight.keywordsController.addListener(highlightListener);
+    KeywordHighlights.addListener(highlightListener);
   }
 
   @override
   dispose() {
-    KeywordHighlight.keywordsController.removeListener(highlightListener);
+    KeywordHighlights.removeListener(highlightListener);
     super.dispose();
   }
 

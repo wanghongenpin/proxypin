@@ -25,9 +25,11 @@ import 'codec.dart';
 
 class Result {
   final bool isDone;
+  final bool supportedParse;
+
   Uint8List? body;
 
-  Result(this.isDone, {this.body});
+  Result(this.isDone, {this.body, this.supportedParse = true});
 }
 
 class BodyReader {
@@ -56,6 +58,9 @@ class BodyReader {
     //chunked编码
     if (message.headers.isChunked) {
       _readChunked(data);
+    } else if (message.headers.contentType == 'video/x-flv') {
+      //Directly forward without processing for now
+      return Result(false, supportedParse: false, body: data);
     } else {
       _readFixedLengthContent(data);
     }

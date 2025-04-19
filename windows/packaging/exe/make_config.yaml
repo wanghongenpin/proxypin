@@ -1,0 +1,11 @@
+app_id: 502cbca5-a7f1-4f8f-894d-9820bac2e36f
+publisher: ProxyPin
+publisher_url: https://github.com/wanghongenpin/proxypin
+display_name: ProxyPin
+create_desktop_icon: true
+install_dir_name: "{autopf64}\\ProxyPin"
+setup_icon_file: windows\runner\resources\app_icon.ico
+locales:
+  - en
+  - zh
+script_template: inno_setup.sas

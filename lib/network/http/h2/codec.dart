@@ -17,7 +17,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/http/h2/hpack.dart';
 import 'package:proxypin/network/http/h2/setting.dart';

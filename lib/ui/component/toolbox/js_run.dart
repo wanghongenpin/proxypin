@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,9 +12,12 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:proxypin/network/components/js/file.dart';
 import 'package:proxypin/network/components/js/md5.dart';
+import 'package:proxypin/network/components/js/xhr.dart';
 
 class JavaScript extends StatefulWidget {
-  const JavaScript({super.key});
+  final int? windowId;
+
+  const JavaScript({super.key, this.windowId});
 
   @override
   State<StatefulWidget> createState() {
@@ -40,13 +44,14 @@ class _JavaScriptState extends State<JavaScript> {
   void initState() {
     super.initState();
     if (resetEnvironment || flutterJs == null) {
-      flutterJs = getJavascriptRuntime();
+      flutterJs = getJavascriptRuntime(xhr: false);
     }
     // register channel callback
     final channelCallbacks = JavascriptRuntime.channelFunctionsRegistered[flutterJs!.getEngineInstanceId()];
     channelCallbacks!["ConsoleLog"] = consoleLog;
     Md5Bridge.registerMd5(flutterJs!);
     FileBridge.registerFile(flutterJs!);
+    flutterJs?.enableFetch2(enabledProxy: true);
 
     code = CodeController(language: javascript, text: 'console.log("Hello, World!")');
   }
@@ -86,10 +91,20 @@ class _JavaScriptState extends State<JavaScript> {
               //选择文件
               ElevatedButton.icon(
                   onPressed: () async {
-                    FilePickerResult? result =
-                        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
-                    if (result != null) {
-                      File file = File(result.files.single.path!);
+                    String? path;
+                    if (Platform.isMacOS) {
+                      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+                        "allowedExtensions": ['js']
+                      });
+                      WindowController.fromWindowId(widget.windowId!).show();
+                    } else {
+                      FilePickerResult? result =
+                          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
+                      path = result?.files.single.path;
+                    }
+
+                    if (path != null) {
+                      File file = File(path);
                       String content = await file.readAsString();
                       code.text = content;
                       setState(() {});
@@ -145,7 +160,8 @@ class _JavaScriptState extends State<JavaScript> {
                           ))))),
           const SizedBox(height: 10),
           Row(children: [
-            Text("${localizations.output}:", style: TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500)),
+            Text("${localizations.output}:",
+                style: TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500)),
             const SizedBox(width: 15),
             //copy
             IconButton(

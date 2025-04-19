@@ -1,4 +1,4 @@
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 
 /// A Interceptor that can intercept and modify the request and response.

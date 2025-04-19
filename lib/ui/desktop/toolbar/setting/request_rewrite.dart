@@ -153,16 +153,24 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   import() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
-    if (result == null || result.files.isEmpty) {
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+        "allowedExtensions": ['config', 'json']
+      });
+      WindowController.fromWindowId(widget.windowId).show();
+    } else {
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+      path = result?.files.single.path;
+    }
+
+    if (path == null) {
       return;
     }
 
-    var file = result.files.single;
-
     try {
-      List json = jsonDecode(await File(file.path!).readAsString());
+      List json = jsonDecode(await File(path).readAsString());
       for (var item in json) {
         var rule = RequestRewriteRule.formJson(item);
         var items = (item['items'] as List).map((e) => RewriteItem.fromJson(e)).toList();
@@ -176,7 +184,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
       }
       setState(() {});
     } catch (e, t) {
-      logger.e('导入失败 $file', error: e, stackTrace: t);
+      logger.e('导入失败 $path', error: e, stackTrace: t);
       if (mounted) {
         FlutterToastr.show("${localizations.importFailed} $e", context);
       }
@@ -362,7 +370,15 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
-    var path = await FilePicker.platform.saveFile(fileName: fileName);
+
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+      WindowController.fromWindowId(widget.windowId).show();
+    } else {
+      path = await FilePicker.platform.saveFile(fileName: fileName);
+    }
+
     if (path == null) {
       return;
     }
@@ -644,7 +660,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
       return DesktopRewriteUpdate(key: rewriteUpdateKey, items: items, ruleType: ruleType, request: widget.request);
     }
 
-    return DesktopRewriteReplace(key: rewriteReplaceKey, items: items, ruleType: ruleType);
+    return DesktopRewriteReplace(key: rewriteReplaceKey, items: items, ruleType: ruleType, windowId: widget.windowId);
   }
 
   Widget textField(String label, TextEditingController controller, String hint,

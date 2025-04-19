@@ -23,7 +23,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
-import 'package:proxypin/ui/desktop/widgets/highlight.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 ///请求序列 列表
@@ -70,7 +70,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
         highlightHandler();
       });
     };
-    DesktopKeywordHighlight.keywordsController.addListener(highlightListener);
+    KeywordHighlights.addListener(highlightListener);
   }
 
   changeState() {
@@ -90,7 +90,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   @override
   void dispose() {
-    DesktopKeywordHighlight.keywordsController.removeListener(highlightListener);
+    KeywordHighlights.removeListener(highlightListener);
     super.dispose();
   }
 

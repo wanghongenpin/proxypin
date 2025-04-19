@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
@@ -89,7 +90,7 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   }
 
   if (argument['name'] == 'JavaScript') {
-    return const JavaScript();
+    return JavaScript(windowId: windowId);
   }
 
   if (argument['name'] == 'RegExpPage') {
@@ -213,6 +214,20 @@ void registerMethodHandler() {
     if (call.method == 'refreshRequestRewrite') {
       await MultiWindow._handleRefreshRewrite(Operation.of(call.arguments['operation']), call.arguments);
       return 'done';
+    }
+
+    if (call.method == 'pickFiles') {
+      var extensions = call.arguments['allowedExtensions'];
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: extensions == null ? FileType.any : FileType.custom,
+          allowedExtensions: extensions == null ? null : List.from(extensions),
+          initialDirectory: "/Downloads");
+      if (result == null || result.files.isEmpty) return null;
+      return result.files.single.path;
+    }
+
+    if (call.method == 'saveFile') {
+      return await FilePicker.platform.saveFile(fileName: call.arguments['fileName']);
     }
 
     if (call.method == 'getApplicationSupportDirectory') {

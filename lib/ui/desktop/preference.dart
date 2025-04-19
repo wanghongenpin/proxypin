@@ -155,7 +155,7 @@ class _PreferenceState extends State<Preference> {
   ///主题颜色
   Widget themeColor(BuildContext context) {
     return Wrap(
-      children: ThemeModel.colors.entries.map((pair) {
+      children: ColorMapping.colors.entries.map((pair) {
         var dividerColor = Theme.of(context).focusColor;
         var background = appConfiguration.themeColor == pair.value ? dividerColor : Colors.transparent;
 

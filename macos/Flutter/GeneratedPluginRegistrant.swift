@@ -7,6 +7,7 @@ import Foundation
 
 import desktop_multi_window
 import device_info_plus
+import file_picker
 import flutter_desktop_context_menu
 import flutter_js
 import path_provider_foundation
@@ -20,6 +21,7 @@ import window_manager
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FlutterMultiWindowPlugin.register(with: registry.registrar(forPlugin: "FlutterMultiWindowPlugin"))
   DeviceInfoPlusMacosPlugin.register(with: registry.registrar(forPlugin: "DeviceInfoPlusMacosPlugin"))
+  FilePickerPlugin.register(with: registry.registrar(forPlugin: "FilePickerPlugin"))
   FlutterDesktopContextMenuPlugin.register(with: registry.registrar(forPlugin: "FlutterDesktopContextMenuPlugin"))
   FlutterJsPlugin.register(with: registry.registrar(forPlugin: "FlutterJsPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))

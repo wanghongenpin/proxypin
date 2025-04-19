@@ -24,9 +24,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_qr_reader/flutter_qr_reader.dart';
+import 'package:flutter_qr_reader_plus/flutter_qr_reader.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
+import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/qrcode/qr_scan_view.dart';
 import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -152,7 +153,7 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
                 String? path = await selectImage();
                 if (path == null) return;
                 var result = await FlutterQrReader.imgScan(path);
-                if (result.isEmpty) {
+                if (result == null) {
                   if (context.mounted) FlutterToastr.show(localizations.decodeFail, context, duration: 2);
                   return;
                 }
@@ -349,17 +350,22 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       return;
     }
 
-    if (Platforms.isDesktop()) {
-      String? path = (await FilePicker.platform.saveFile(fileName: "qrcode.png"));
-      if (path == null) return;
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "qrcode.png"});
+      WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      path = (await FilePicker.platform.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads"));
+    }
 
-      var imageBytes = await toImageBytes();
-      if (imageBytes == null) return;
+    if (path == null) return;
 
-      await File(path).writeAsBytes(imageBytes);
-      if (mounted) {
-        FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
-      }
+    var imageBytes = await toImageBytes();
+    if (imageBytes == null) return;
+
+    await File(path).writeAsBytes(imageBytes);
+    if (mounted) {
+      CustomToast.success(localizations.saveSuccess).show(context);
     }
   }
 

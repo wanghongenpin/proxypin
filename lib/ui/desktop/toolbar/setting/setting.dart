@@ -24,10 +24,10 @@ import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/about.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/hosts.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/request_block.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'filter.dart';
 
@@ -56,7 +56,6 @@ class _SettingState extends State<Setting> {
 
   @override
   Widget build(BuildContext context) {
-
     return MenuAnchor(
       builder: (context, controller, child) {
         return IconButton(
@@ -94,49 +93,7 @@ class _SettingState extends State<Setting> {
   }
 
   showAbout() {
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-
-    String gitHub = "https://github.com/wanghongenpin/proxypin";
-
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            titlePadding: const EdgeInsets.only(left: 20, top: 10, right: 15),
-            title: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Expanded(child: SizedBox()),
-              Text(localizations.about, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-              const Expanded(child: SizedBox()),
-              Align(alignment: Alignment.topRight, child: CloseButton())
-            ]),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("ProxyPin", style: TextStyle(fontSize: 20)),
-                const SizedBox(height: 10),
-                Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child:
-                        Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software")),
-                const SizedBox(height: 10),
-                const Text("V1.1.7"),
-                const SizedBox(height: 10),
-                ListTile(
-                    title: Text('GitHub', textAlign: TextAlign.center, style: TextStyle(color: Colors.blue)),
-                    onTap: () => launchUrl(Uri.parse(gitHub))),
-                ListTile(
-                    title:
-                        Text(localizations.feedback, textAlign: TextAlign.center, style: TextStyle(color: Colors.blue)),
-                    onTap: () => launchUrl(Uri.parse("$gitHub/issues"))),
-                ListTile(
-                    title: Text(isCN ? "下载地址" : "Download",
-                        textAlign: TextAlign.center, style: TextStyle(color: Colors.blue)),
-                    onTap: () => launchUrl(
-                        Uri.parse(isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases")))
-              ],
-            ),
-          );
-        });
+    showDialog(context: context, builder: (context) => DesktopAbout());
   }
 
   ///设置外部代理地址

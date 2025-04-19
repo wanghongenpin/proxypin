@@ -38,8 +38,9 @@ class HostAndPort {
   String scheme;
   String host;
   final int port;
+  bool ipv6 = false;
 
-  HostAndPort(this.scheme, this.host, this.port);
+  HostAndPort(this.scheme, this.host, this.port, {this.ipv6 = false});
 
   factory HostAndPort.host(String host, int port, {String? scheme}) {
     return HostAndPort(scheme ?? (port == 443 ? httpsScheme : httpScheme), host, port);
@@ -74,15 +75,20 @@ class HostAndPort {
         return HostAndPort(scheme, domain, scheme == httpScheme ? 80 : 443);
       }
     }
+
     //ip格式 host:port
-    List<String> hostAndPort = domain.split(":");
-    if (hostAndPort.length == 2) {
-      bool isSsl = ssl ?? hostAndPort[1] == "443";
+    var indexOf = domain.lastIndexOf(':');
+    String host = domain.substring(0, indexOf == -1 ? domain.length : indexOf);
+    String? port = indexOf == -1 ? null : domain.substring(indexOf + 1, domain.length);
+    bool ipv6 = host.startsWith('[') && host.endsWith(']');
+
+    if (port != null) {
+      bool isSsl = port == "443" || ssl == true;
       scheme ??= isSsl ? httpsScheme : httpScheme;
-      return HostAndPort(scheme, hostAndPort[0], int.parse(hostAndPort[1]));
+      return HostAndPort(scheme, host, int.parse(port), ipv6: ipv6);
     }
     scheme ??= (ssl == true ? httpsScheme : httpScheme);
-    return HostAndPort(scheme, hostAndPort[0], scheme == httpScheme ? 80 : 443);
+    return HostAndPort(scheme, host, scheme == httpScheme ? 80 : 443, ipv6: ipv6);
   }
 
   String get domain {

@@ -17,8 +17,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:proxypin/network/channel.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/body_reader.dart';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/h2/codec.dart';
@@ -51,11 +51,12 @@ enum State {
 class DecoderResult<T> {
   bool isDone = true;
   T? data;
+  bool supportedParse;
 
   //转发消息
   List<int>? forward;
 
-  DecoderResult({this.isDone = true});
+  DecoderResult({this.isDone = true, this.supportedParse = true});
 }
 
 /// 解码
@@ -121,6 +122,13 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
         if (!resolveBody || bodyResult?.isDone == true) {
           _state = State.done;
           result.data!.body = bodyResult?.body;
+        }
+
+        //If the body does not support parsing, forward directly
+        if (bodyResult != null && !bodyResult.supportedParse) {
+          result.supportedParse = false;
+          result.forward = bodyResult.body;
+          return result;
         }
       }
 

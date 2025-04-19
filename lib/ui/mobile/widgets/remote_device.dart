@@ -26,7 +26,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/qrcode/qr_scan_view.dart';
 import 'package:proxypin/ui/component/utils.dart';

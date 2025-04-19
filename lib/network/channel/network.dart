@@ -19,9 +19,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/bin/configuration.dart';
-import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
+import 'package:proxypin/network/channel/channel_dispatcher.dart';
 import 'package:proxypin/network/components/host_filter.dart';
-import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/handle/relay_handle.dart';
 import 'package:proxypin/network/socks/socks5.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/crts.dart';
@@ -29,6 +31,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
 import 'package:proxypin/network/util/tls.dart';
 
+import '../bin/listener.dart';
 import 'host_port.dart';
 
 abstract class Network {
@@ -41,12 +44,12 @@ abstract class Network {
 
   Channel listen(Channel channel, ChannelContext channelContext) {
     _channelInitializer.call(channel);
-    channel.pipeline.channelActive(channelContext, channel);
+    channel.dispatcher.channelActive(channelContext, channel);
 
     channel.socket.listen((data) => onEvent(data, channelContext, channel),
         onError: (error, StackTrace trace) =>
-            channel.pipeline.exceptionCaught(channelContext, channel, error, trace: trace),
-        onDone: () => channel.pipeline.channelInactive(channelContext, channel));
+            channel.dispatcher.exceptionCaught(channelContext, channel, error, trace: trace),
+        onDone: () => channel.dispatcher.channelInactive(channelContext, channel));
     return channel;
   }
 
@@ -55,8 +58,8 @@ abstract class Network {
   /// 转发请求
   void relay(Channel clientChannel, Channel remoteChannel) {
     var rawCodec = RawCodec();
-    clientChannel.pipeline.channelHandle(rawCodec, RelayHandler(remoteChannel));
-    remoteChannel.pipeline.channelHandle(rawCodec, RelayHandler(clientChannel));
+    clientChannel.dispatcher.channelHandle(rawCodec, RelayHandler(remoteChannel));
+    remoteChannel.dispatcher.channelHandle(rawCodec, RelayHandler(clientChannel));
   }
 }
 
@@ -114,7 +117,7 @@ class Server extends Network {
       var remoteChannel = channelContext.serverChannel ??
           await channelContext.connectServerChannel(hostAndPort!, RelayHandler(channel));
       relay(channel, remoteChannel);
-      channel.pipeline.channelRead(channelContext, channel, data);
+      channel.dispatcher.channelRead(channelContext, channel, data);
       return;
     }
 
@@ -125,20 +128,22 @@ class Server extends Network {
     }
 
     //socks5
-    if (configuration.enableSocks5 && Socks5.isSocks5(data) && channel.pipeline.handler is! SocksServerHandler) {
-      channel.pipeline.channelHandle(
-          RawCodec(), SocksServerHandler(channel.pipeline.decoder, channel.pipeline.encoder, channel.pipeline.handler));
+    if (configuration.enableSocks5 && Socks5.isSocks5(data) && channel.dispatcher.handler is! SocksServerHandler) {
+      channel.dispatcher.channelHandle(RawCodec(),
+          SocksServerHandler(channel.dispatcher.decoder, channel.dispatcher.encoder, channel.dispatcher.handler));
     }
 
-    channel.pipeline.channelRead(channelContext, channel, data);
+    channel.dispatcher.channelRead(channelContext, channel, data);
   }
 
   /// ssl握手
   void ssl(ChannelContext channelContext, Channel channel, Uint8List data) async {
     var hostAndPort = channelContext.host;
     try {
+      String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
+
       if (hostAndPort == null) {
-        var domain = TLS.getDomain(data);
+        var domain = serviceName;
         var port = 443;
         if (domain == null) {
           var process = await ProcessInfoUtils.getProcessByPort(
@@ -157,17 +162,17 @@ class Server extends Network {
       if (HostFilter.filter(hostAndPort.host) || !configuration.enableSsl) {
         remoteChannel = remoteChannel ?? await channelContext.connectServerChannel(hostAndPort, RelayHandler(channel));
         relay(channel, remoteChannel);
-        channel.pipeline.channelRead(channelContext, channel, data);
+        channel.dispatcher.channelRead(channelContext, channel, data);
         return;
       }
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : null;
-        await remoteChannel.secureSocket(channelContext, host: hostAndPort.host, supportedProtocols: supportProtocols);
+        await remoteChannel.secureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
       //ssl自签证书
-      var certificate = await CertificateManager.getCertificateContext(hostAndPort.host);
+      var certificate = await CertificateManager.getCertificateContext(serviceName!);
       var selectedProtocol = remoteChannel?.selectedProtocol;
       if (selectedProtocol != null) certificate.setAlpnProtocols([selectedProtocol], true);
 
@@ -184,7 +189,7 @@ class Server extends Network {
       }
 
       channelContext.host ??= hostAndPort;
-      channel.pipeline.exceptionCaught(channelContext, channel, error, trace: trace);
+      channel.dispatcher.exceptionCaught(channelContext, channel, error, trace: trace);
     }
   }
 }
@@ -195,7 +200,7 @@ class Client extends Network {
     String host = hostAndPort.host;
     //说明支持ipv6
     if (host.startsWith("[") && host.endsWith(']')) {
-      host = host.substring(host.lastIndexOf(":") + 1, host.length - 1);
+      host = host.substring(1, host.length - 1);
     }
 
     return Socket.connect(host, hostAndPort.port, timeout: timeout).then((socket) {
@@ -220,6 +225,6 @@ class Client extends Network {
 
   @override
   Future<void> onEvent(Uint8List data, ChannelContext channelContext, Channel channel) async {
-    channel.pipeline.channelRead(channelContext, channel, data);
+    channel.dispatcher.channelRead(channelContext, channel, data);
   }
 }

@@ -1,47 +1,19 @@
-/*
- * Copyright 2023 Hongen Wang All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:proxypin/network/bin/listener.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/interceptor.dart';
 import 'package:proxypin/network/components/request_rewrite.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/network/http/websocket.dart';
-import 'package:proxypin/network/proxy_helper.dart';
+import 'package:proxypin/network/util/proxy_helper.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
-import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/uri.dart';
 import 'package:proxypin/utils/ip.dart';
-
-import 'channel.dart';
-import 'components/interceptor.dart';
-import 'http_client.dart';
-
-///请求和响应事件监听
-abstract class EventListener {
-  void onRequest(Channel channel, HttpRequest request);
-
-  void onResponse(ChannelContext channelContext, HttpResponse response);
-
-  void onMessage(Channel channel, HttpMessage message, WebSocketFrame frame) {}
-}
 
 /// http请求处理器
 class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
@@ -280,51 +252,5 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
   @override
   void channelInactive(ChannelContext channelContext, Channel channel) {
     clientChannel.close();
-  }
-}
-
-class RelayHandler extends ChannelHandler<Object> {
-  final Channel remoteChannel;
-
-  RelayHandler(this.remoteChannel);
-
-  @override
-  void channelRead(ChannelContext channelContext, Channel channel, Object msg) async {
-    //发送给客户端
-    remoteChannel.write(msg);
-  }
-
-  @override
-  void channelInactive(ChannelContext channelContext, Channel channel) {
-    remoteChannel.close();
-  }
-}
-
-/// websocket处理器
-class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
-  final WebSocketDecoder decoder = WebSocketDecoder();
-
-  final Channel proxyChannel;
-  final HttpMessage message;
-
-  WebSocketChannelHandler(this.proxyChannel, this.message);
-
-  @override
-  void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) {
-    proxyChannel.write(msg);
-    WebSocketFrame? frame;
-    try {
-      frame = decoder.decode(msg);
-    } catch (e) {
-      log.e("websocket decode error", error: e);
-    }
-    if (frame == null) {
-      return;
-    }
-    frame.isFromClient = message is HttpRequest;
-
-    message.messages.add(frame);
-    channelContext.listener?.onMessage(channel, message, frame);
-    logger.d("socket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
   }
 }

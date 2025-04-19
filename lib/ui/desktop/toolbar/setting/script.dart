@@ -156,13 +156,23 @@ class _ScriptWidgetState extends State<ScriptWidget> {
 
   //导入js
   import() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-    if (result == null || result.files.isEmpty) {
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+        "allowedExtensions": ['json']
+      });
+      WindowController.fromWindowId(widget.windowId).show();
+    } else {
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      path = result?.files.single.path;
+    }
+
+    if (path == null) {
       return;
     }
-    var file = result.files.single.path;
     try {
-      var json = jsonDecode(await File(file!).readAsString());
+      var json = jsonDecode(await File(path).readAsString());
       var scriptManager = (await ScriptManager.instance);
       if (json is List<dynamic>) {
         for (var item in json) {
@@ -180,7 +190,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
       }
       setState(() {});
     } catch (e, t) {
-      logger.e('导入失败 $file', error: e, stackTrace: t);
+      logger.e('导入失败 $path', error: e, stackTrace: t);
       if (mounted) {
         FlutterToastr.show("${localizations.importFailed} $e", context);
       }
@@ -626,7 +636,13 @@ class _ScriptListState extends State<ScriptList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'proxypin-scripts.json';
-    String? path = await FilePicker.platform.saveFile(fileName: fileName);
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+      WindowController.fromWindowId(widget.windowId).show();
+    } else {
+       path = await FilePicker.platform.saveFile(fileName: fileName);
+    }
     if (path == null) {
       return;
     }

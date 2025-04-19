@@ -22,13 +22,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/split_view.dart';
 import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -204,7 +205,7 @@ class RequestEditorState extends State<RequestEditor> {
                     onPressed: () {
                       try {
                         setState(() {
-                          request = parseCurl(text!);
+                          request = Curl.parse(text!);
                           requestKey.currentState?.change(request!);
                           requestLineKey.currentState?.change(request?.requestUrl, request?.method.name);
                         });
@@ -276,7 +277,7 @@ class _HttpState extends State<_HttpWidget> {
     message = widget.message;
     body = TextEditingController(text: widget.message?.bodyAsString);
     if (widget.message?.headers == null && !widget.readOnly) {
-      initHeader["User-Agent"] = ["ProxyPin/1.1.7"];
+      initHeader["User-Agent"] = ["ProxyPin/${AppConfiguration.version}"];
       initHeader["Accept"] = ["*/*"];
       return;
     }

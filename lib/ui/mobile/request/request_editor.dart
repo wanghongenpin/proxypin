@@ -21,10 +21,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -102,7 +103,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                     onPressed: () {
                       try {
                         setState(() {
-                          request = parseCurl(text!);
+                          request = Curl.parse(text!);
                           requestKey.currentState?.change(request!);
                           requestLineKey.currentState?.change(request?.requestUrl, request?.method.name);
                         });
@@ -193,12 +194,13 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
       responseKey.currentState?.change(response);
       responseChange.value = 1;
 
-      tabController.animateTo(1);
       // FlutterToastr.show(localizations.requestSuccess, context);
     }).catchError((e) {
       responseChange.value = -1;
       FlutterToastr.show('${localizations.fail}$e', context);
     });
+
+    tabController.animateTo(1);
   }
 }
 
@@ -252,7 +254,7 @@ class _HttpState extends State<_HttpWidget> with AutomaticKeepAliveClientMixin {
     message = widget.message;
     body = widget.message?.bodyAsString;
     if (widget.message?.headers == null && !widget.readOnly) {
-      initHeader["User-Agent"] = ["ProxyPin/1.1.7"];
+      initHeader["User-Agent"] = ["ProxyPin/${AppConfiguration.version}"];
       initHeader["Accept"] = ["*/*"];
       return;
     }

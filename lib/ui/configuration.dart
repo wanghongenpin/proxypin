@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -25,7 +24,7 @@ import 'package:path_provider/path_provider.dart';
 
 /// @author wanghongen
 /// 2024/1/1
-class ThemeModel {
+class ColorMapping {
   static final Map<String, Color> colors = {
     "Blue": Colors.blue,
     "Pink": Colors.pink,
@@ -39,9 +38,19 @@ class ThemeModel {
     "Grey": Colors.grey,
   };
 
+  static Color getColor(String colorName) {
+    return colors[colorName] ?? Colors.blue;
+  }
+
+  static String getColorName(Color color) {
+    return colors.entries.firstWhere((entry) => entry.value == color).key;
+  }
+}
+
+class ThemeModel {
   ThemeMode mode;
   bool useMaterial3;
-  String color = "Blue";
+  String color = "Pink";
 
   ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true});
 
@@ -50,17 +59,19 @@ class ThemeModel {
         useMaterial3: useMaterial3 ?? this.useMaterial3,
       );
 
-  Color get themeColor => colors[color] ?? Colors.blue;
+  Color get themeColor => ColorMapping.colors[color] ?? Colors.blue;
 }
 
 class AppConfiguration {
+  static const String version = "1.1.8";
+
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
   ThemeModel _theme = ThemeModel();
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV17 = true;
+  bool upgradeNoticeV18 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -93,9 +104,14 @@ class AppConfiguration {
 
   static Future<AppConfiguration> get instance async {
     if (_instance == null) {
-      AppConfiguration configuration = AppConfiguration._();
-      await configuration.initConfig();
-      _instance = configuration;
+      try {
+        AppConfiguration configuration = AppConfiguration._();
+        await configuration.initConfig();
+        _instance = configuration;
+      } catch (e) {
+        logger.e("load config error: $e");
+        _instance = AppConfiguration._();
+      }
     }
     return _instance!;
   }
@@ -124,7 +140,7 @@ class AppConfiguration {
   Color get themeColor => _theme.themeColor;
 
   set setThemeColor(String colorName) {
-    var color = ThemeModel.colors[colorName];
+    var color = ColorMapping.colors[colorName];
     if (color == null || color == themeColor) return;
 
     _theme.color = colorName;
@@ -145,7 +161,7 @@ class AppConfiguration {
   Future<File> get _path async {
     if (Platforms.isDesktop()) {
       var userHome = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-      return File('$userHome/.proxypin/ui_config.json');
+      return File('$userHome${Platform.pathSeparator}.proxypin${Platform.pathSeparator}ui_config.json');
     }
 
     final directory = await getApplicationSupportDirectory();
@@ -177,7 +193,7 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV17 = config['upgradeNoticeV17'] ?? true;
+      upgradeNoticeV18 = config['upgradeNoticeV18'] ?? true;
       _language = config['language'] == null ? null : Locale.fromSubtags(languageCode: config['language']);
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
@@ -222,16 +238,13 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV17': upgradeNoticeV17,
+      'upgradeNoticeV18': upgradeNoticeV18,
       "language": _language?.languageCode,
       "headerExpanded": headerExpanded,
-
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
-
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,
       if (Platforms.isMobile()) 'bottomNavigation': bottomNavigation,
-
       if (Platforms.isDesktop())
         "windowSize": windowSize == null ? null : {"width": windowSize?.width, "height": windowSize?.height},
       if (Platforms.isDesktop())

@@ -315,5 +315,15 @@
   "time": "DateTime",
   "nowTimestamp": "Now timestamp",
   "hosts": "Hosts",
-  "toAddress": "To Address"
+  "toAddress": "To Address",
+
+  "appUpdateCheckVersion": "Check for Updates",
+  "appUpdateNotAvailableMsg": "Already Using The Latest Version",
+  "appUpdateDialogTitle": "Update Available",
+  "appUpdateUpdateMsg": "A new version of ProxyPin is available. Would you like to update now?",
+  "appUpdateCurrentVersionLbl": "Current Version",
+  "appUpdateNewVersionLbl": "New Version",
+  "appUpdateUpdateNowBtnTxt": "Update Now",
+  "appUpdateLaterBtnTxt": "Later",
+  "appUpdateIgnoreBtnTxt": "Ignore"
 }

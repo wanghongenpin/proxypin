@@ -18,22 +18,20 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:proxypin/network/bin/configuration.dart';
-import 'package:proxypin/network/channel.dart';
 import 'package:proxypin/network/components/hosts.dart';
 import 'package:proxypin/network/components/interceptor.dart';
 import 'package:proxypin/network/components/request_block.dart';
 import 'package:proxypin/network/components/request_rewrite.dart';
 import 'package:proxypin/network/components/script.dart';
-import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/handle/http_proxy_handle.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/utils/platform.dart';
 
-import '../handler.dart';
 import '../http/codec.dart';
-import '../network.dart';
+import '../channel/network.dart';
 import '../util/logger.dart';
 import '../util/system_proxy.dart';
+import 'listener.dart';
 
 Future<void> main() async {
   var configuration = await Configuration.instance;
@@ -71,7 +69,9 @@ class ProxyServer {
       return;
     }
 
-    SystemProxy.setSslProxyEnable(enableSsl, port);
+    if (configuration.enableSystemProxy) {
+      SystemProxy.setSslProxyEnable(enableSsl, port);
+    }
   }
 
   /// 启动代理服务
@@ -88,7 +88,7 @@ class ProxyServer {
     interceptors.sort((a, b) => a.priority.compareTo(b.priority));
 
     server.initChannel((channel) {
-      channel.pipeline.handle(
+      channel.dispatcher.handle(
         HttpRequestCodec(),
         HttpResponseCodec(),
         HttpProxyChannelHandler(listener: CombinedEventListener(listeners), interceptors: interceptors),
@@ -154,32 +154,5 @@ class ProxyServer {
   ///添加监听器
   addListener(EventListener listener) {
     listeners.add(listener);
-  }
-}
-
-class CombinedEventListener extends EventListener {
-  final List<EventListener> listeners;
-
-  CombinedEventListener(this.listeners);
-
-  @override
-  void onRequest(Channel channel, HttpRequest request) {
-    for (var element in listeners) {
-      element.onRequest(channel, request);
-    }
-  }
-
-  @override
-  void onResponse(ChannelContext channelContext, HttpResponse response) {
-    for (var element in listeners) {
-      element.onResponse(channelContext, response);
-    }
-  }
-
-  @override
-  void onMessage(Channel channel, HttpMessage message, WebSocketFrame frame) {
-    for (var element in listeners) {
-      element.onMessage(channel, message, frame);
-    }
   }
 }

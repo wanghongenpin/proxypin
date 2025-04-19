@@ -1,0 +1,18 @@
+output: dist/
+
+releases:
+  - name: dev
+    jobs:
+      - name: macos-dmg
+        package:
+          platform: macos
+          target: dmg
+          build_args:
+            profile: true
+
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+          build_args:
+            profile: true

@@ -55,7 +55,7 @@ class MobileSearchState extends State<MobileSearch> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.only(left: 20),
+        padding: const EdgeInsets.only(left: 0),
         child: TextFormField(
             controller: _keywordController,
             textAlignVertical: TextAlignVertical.center,

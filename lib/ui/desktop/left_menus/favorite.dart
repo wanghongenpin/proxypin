@@ -25,10 +25,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -86,7 +87,7 @@ class _FavoritesState extends State<Favorites> {
                   panel: widget.panel,
                   onRemove: (Favorite favorite) {
                     FavoriteStorage.removeFavorite(favorite);
-                    FlutterToastr.show(localizations.deleteFavoriteSuccess, context);
+                    CustomToast.success(localizations.deleteFavoriteSuccess).show(context);
                     setState(() {});
                   },
                 );
@@ -208,7 +209,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
 
     if (mounted) {
-      FlutterToastr.show(localizations.reSendRequest, context);
+      CustomToast.success(localizations.reSendRequest).show(context);
     }
   }
 

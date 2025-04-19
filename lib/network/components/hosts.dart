@@ -15,7 +15,7 @@
  */
 
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/util/logger.dart';
 
 import 'interceptor.dart';

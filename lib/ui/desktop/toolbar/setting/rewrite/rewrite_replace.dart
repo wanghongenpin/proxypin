@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import 'dart:io';
+
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,10 +30,11 @@ import 'package:proxypin/utils/lang.dart';
 /// @author wanghongen
 /// 2023/10/8
 class DesktopRewriteReplace extends StatefulWidget {
+  final int? windowId;
   final RuleType ruleType;
   final List<RewriteItem>? items;
 
-  const DesktopRewriteReplace({super.key, this.items, required this.ruleType});
+  const DesktopRewriteReplace({super.key, this.items, required this.ruleType, this.windowId});
 
   @override
   State<DesktopRewriteReplace> createState() => RewriteReplaceState();
@@ -238,11 +242,15 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
       const SizedBox(width: 10),
       FilledButton(
           onPressed: () async {
-            FilePickerResult? result = await FilePicker.platform.pickFiles();
-            if (result == null || result.files.isEmpty) {
-              return;
+            String? path;
+            if (Platform.isMacOS) {
+              path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+              if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+            } else {
+              FilePickerResult? result = await FilePicker.platform.pickFiles();
+              path = result?.files.single.path;
             }
-            var path = result.files.first.path;
+
             if (path == null) {
               return;
             }

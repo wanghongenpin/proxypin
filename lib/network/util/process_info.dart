@@ -19,6 +19,7 @@ import 'dart:typed_data';
 
 import 'package:proxypin/native/installed_apps.dart';
 import 'package:proxypin/native/process_info.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/socket_address.dart';
 import 'package:win32audio/win32audio.dart';
 
@@ -37,27 +38,32 @@ class ProcessInfoUtils {
   static final processInfoCache = ExpiringCache<String, ProcessInfo>(const Duration(minutes: 5));
 
   static Future<ProcessInfo?> getProcessByPort(InetSocketAddress socketAddress, String cacheKeyPre) async {
-    if (Platform.isAndroid) {
-      var app = await ProcessInfoPlugin.getProcessByPort(socketAddress.host, socketAddress.port);
-      if (app != null) {
-        return app;
+    try {
+      if (Platform.isAndroid) {
+        var app = await ProcessInfoPlugin.getProcessByPort(socketAddress.host, socketAddress.port);
+        if (app != null) {
+          return app;
+        }
+        if (socketAddress.host == '127.0.0.1') {
+          return ProcessInfo('com.network.proxy', "ProxyPin", '', os: Platform.operatingSystem);
+        }
+        return null;
       }
-      if (socketAddress.host == '127.0.0.1') {
-        return ProcessInfo('com.network.proxy', "ProxyPin", '', os: Platform.operatingSystem);
-      }
+
+      var pid = await _getPid(socketAddress);
+      if (pid == null) return null;
+
+      String cacheKey = "$cacheKeyPre:$pid";
+      var processInfo = processInfoCache.get(cacheKey);
+      if (processInfo != null) return processInfo;
+
+      processInfo = await getProcess(pid);
+      processInfoCache.set(cacheKey, processInfo!);
+      return processInfo;
+    } catch (e) {
+      logger.e("getProcessByPort error: $e");
       return null;
     }
-
-    var pid = await _getPid(socketAddress);
-    if (pid == null) return null;
-
-    String cacheKey = "$cacheKeyPre:$pid";
-    var processInfo = processInfoCache.get(cacheKey);
-    if (processInfo != null) return processInfo;
-
-    processInfo = await getProcess(pid);
-    processInfoCache.set(cacheKey, processInfo!);
-    return processInfo;
   }
 
   // 获取进程 ID

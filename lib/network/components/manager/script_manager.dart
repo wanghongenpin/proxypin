@@ -21,7 +21,9 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/components/js/file.dart';
 import 'package:proxypin/network/components/js/md5.dart';
+import 'package:proxypin/network/components/js/xhr.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http.dart' as http;
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/lang.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -69,7 +71,7 @@ async function onResponse(context, request, response) {
 
   final Map<ScriptItem, String> _scriptMap = {};
 
-  static JavascriptRuntime flutterJs = getJavascriptRuntime();
+  static JavascriptRuntime flutterJs = getJavascriptRuntime(xhr: false);
 
   static String? deviceId;
 
@@ -89,6 +91,9 @@ async function onResponse(context, request, response) {
       deviceId = await DeviceUtils.deviceId();
       Md5Bridge.registerMd5(flutterJs);
       FileBridge.registerFile(flutterJs);
+
+      flutterJs.enableFetch2();
+
       logger.d('init script manager $deviceId');
     }
     return _instance!;
@@ -252,9 +257,7 @@ async function onResponse(context, request, response) {
         }
         request.attributes['scriptContext'] = result['scriptContext'];
         scriptSession = result['scriptContext']['session'] ?? {};
-        var httpRequest = convertHttpRequest(request, result);
-
-        return httpRequest;
+        request = convertHttpRequest(request, result);
       }
     }
     return request;
@@ -283,7 +286,7 @@ async function onResponse(context, request, response) {
           return null;
         }
         scriptSession = result['scriptContext']['session'] ?? {};
-        return convertHttpResponse(response, result);
+        response = convertHttpResponse(response, result);
       }
     }
     return response;
@@ -349,7 +352,7 @@ async function onResponse(context, request, response) {
   //http request
   HttpRequest convertHttpRequest(HttpRequest request, Map<dynamic, dynamic> map) {
     request.headers.clear();
-    request.method = HttpMethod.values.firstWhere((element) => element.name == map['method']);
+    request.method = http.HttpMethod.values.firstWhere((element) => element.name == map['method']);
     String query = UriUtils.mapToQuery(map['queries']);
 
     var requestUri = request.requestUri!.replace(path: map['path'], query: query);
@@ -364,7 +367,7 @@ async function onResponse(context, request, response) {
         request.headers.addValues(key, value.map((e) => e.toString()).toList());
         return;
       }
-      request.headers.add(key, value);
+      request.headers.set(key, value);
     });
 
     //判断是否是二进制
@@ -391,7 +394,7 @@ async function onResponse(context, request, response) {
         return;
       }
 
-      response.headers.add(key, value);
+      response.headers.set(key, value);
     });
 
     response.headers.remove(HttpHeaders.CONTENT_ENCODING);

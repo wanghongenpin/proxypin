@@ -17,18 +17,19 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/bin/listener.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
-import 'package:proxypin/network/handler.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/localizations.dart';
 
-import 'components/host_filter.dart';
+import '../components/host_filter.dart';
 
 class ProxyHelper {
   //请求本服务

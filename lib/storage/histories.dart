@@ -163,9 +163,9 @@ class HistoryStorage {
     var json = jsonDecode(readAsBytes);
     var log = json['log'];
     String name = formatDate(DateTime.now(), [mm, '-', d, ' ', HH, ':', nn, ':', ss]);
-    List? pages = log['pages'] as List;
-    if (pages.isNotEmpty) {
-      name = pages.first['title'];
+    List? pages = log['pages'] as List?;
+    if (pages?.isNotEmpty == true) {
+      name = pages?.first['title'];
     }
 
     //解析请求

@@ -17,7 +17,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -342,7 +342,11 @@ class HttpStatus {
   /// 504 Gateway Timeout
   static final HttpStatus gatewayTimeout = newStatus(504, "Gateway Timeout");
 
-  static HttpStatus newStatus(int statusCode, String reasonPhrase) {
+  static HttpStatus newStatus(int statusCode, String? reasonPhrase) {
+    if (reasonPhrase == null) {
+      return HttpStatus.valueOf(statusCode);
+    }
+
     return HttpStatus(statusCode, reasonPhrase);
   }
 

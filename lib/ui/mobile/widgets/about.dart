@@ -15,12 +15,24 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../../app_update/app_update_repository.dart';
+
 /// 关于
-class About extends StatelessWidget {
+class About extends StatefulWidget {
   const About({super.key});
+
+  @override
+  State<StatefulWidget> createState() {
+    return _AboutState();
+  }
+}
+
+class _AboutState extends State<About> {
+  bool checkUpdating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,26 +51,41 @@ class About extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 10, right: 10),
                 child: Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software")),
             const SizedBox(height: 10),
-            const Text("V1.1.7"),
+            Text("v${AppConfiguration.version}"),
             ListTile(
                 title: const Text("GitHub"),
-                trailing: const Icon(Icons.arrow_right),
+                trailing: const Icon(Icons.open_in_new, size: 22),
                 onTap: () {
                   launchUrl(Uri.parse(gitHub), mode: LaunchMode.externalApplication);
                 }),
             ListTile(
                 title: Text(localizations.feedback),
-                trailing: const Icon(Icons.arrow_right),
+                trailing: const Icon(Icons.open_in_new, size: 22),
                 onTap: () {
                   launchUrl(Uri.parse("$gitHub/issues"), mode: LaunchMode.externalApplication);
                 }),
             ListTile(
+                title: Text(localizations.appUpdateCheckVersion),
+                trailing: checkUpdating
+                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator())
+                    : const Icon(Icons.sync, size: 22),
+                onTap: () async {
+                  if (checkUpdating) {
+                    return;
+                  }
+                  setState(() {
+                    checkUpdating = true;
+                  });
+                  await AppUpdateRepository.checkUpdate(context, canIgnore: false, showToast: true);
+                  setState(() {
+                    checkUpdating = false;
+                  });
+                }),
+            ListTile(
                 title: Text(isCN ? "下载地址" : "Download"),
-                trailing: const Icon(Icons.arrow_right),
+                trailing: const Icon(Icons.open_in_new, size: 22),
                 onTap: () {
-                  launchUrl(
-                      Uri.parse(
-                          isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases"),
+                  launchUrl(Uri.parse(isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases"),
                       mode: LaunchMode.externalApplication);
                 })
           ],

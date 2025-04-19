@@ -1,22 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 
 ///配置关键词高亮
 ///@Author: WangHongEn
 class DesktopKeywordHighlight extends StatefulWidget {
-  static Map<Color, String> keywords = {};
-  static ValueNotifier keywordsController = ValueNotifier<Map>(keywords);
-
-  static Color? getHighlightColor(String key) {
-    for (var entry in keywords.entries) {
-      if (key.contains(entry.value)) {
-        return entry.key;
-      }
-    }
-    return null;
-  }
-
   const DesktopKeywordHighlight({super.key});
 
   @override
@@ -35,7 +24,7 @@ class _KeywordHighlightState extends State<DesktopKeywordHighlight> {
       Colors.grey: localizations.gray,
     };
 
-    var map = Map.of(DesktopKeywordHighlight.keywords);
+    Map<Color, String> map = Map.of(KeywordHighlights.keywords);
 
     return AlertDialog(
       title: ListTile(
@@ -52,7 +41,7 @@ class _KeywordHighlightState extends State<DesktopKeywordHighlight> {
         TextButton(
           child: Text(localizations.done),
           onPressed: () {
-            DesktopKeywordHighlight.keywords = map;
+            KeywordHighlights.saveKeywords(map);
             Navigator.of(context).pop();
           },
         ),
@@ -96,11 +85,5 @@ class _KeywordHighlightState extends State<DesktopKeywordHighlight> {
       isDense: true,
       border: const OutlineInputBorder(),
     );
-  }
-
-  @override
-  void dispose() {
-    DesktopKeywordHighlight.keywordsController.value = Map.from(DesktopKeywordHighlight.keywords);
-    super.dispose();
   }
 }

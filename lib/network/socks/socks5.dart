@@ -16,12 +16,13 @@
 
 import 'dart:typed_data';
 
-import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/logger.dart';
 
-import '../host_port.dart';
+import '../channel/host_port.dart';
 
 /// @author wanghongen
 class Socks5 {
@@ -62,7 +63,7 @@ class SocksServerHandler extends ChannelHandler<Uint8List> {
     final int version = msg[idx++];
     if (version != Socks5.version) {
       await channel.writeBytes(Uint8List.fromList([Socks5.version, Socks5.methodNoAcceptable]));
-      channel.pipeline.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS version: $version'));
+      channel.dispatcher.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS version: $version'));
       return;
     }
 
@@ -78,7 +79,7 @@ class SocksServerHandler extends ChannelHandler<Uint8List> {
       if (cmd != Socks5.cmdConnect) {
         var out = encodeCommandResponse(Socks5.repCommandNotSupported);
         await channel.writeBytes(out);
-        channel.pipeline.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS cmd: $cmd'));
+        channel.dispatcher.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS cmd: $cmd'));
         return;
       }
 
@@ -89,7 +90,7 @@ class SocksServerHandler extends ChannelHandler<Uint8List> {
       if (dstAddrType != Socks5.atypIpv4) {
         var out = encodeCommandResponse(Socks5.repAddressTypeNotSupported);
         await channel.writeBytes(out);
-        channel.pipeline.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS atyp: $dstAddrType'));
+        channel.dispatcher.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS atyp: $dstAddrType'));
         return;
       }
 
@@ -103,7 +104,7 @@ class SocksServerHandler extends ChannelHandler<Uint8List> {
       final out = encodeCommandResponse(Socks5.repSuccess, bndAddrType: Socks5.repSocks5ServerAtypIpv4);
       await channel.writeBytes(out);
 
-      channel.pipeline.handle(originalDecoder, originalEncoder, originalHandler);
+      channel.dispatcher.handle(originalDecoder, originalEncoder, originalHandler);
       socksState = SocksState.connected;
       return;
     }

@@ -17,12 +17,17 @@
 import 'dart:io';
 
 import 'package:flutter_js/flutter_js.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/util/logger.dart';
 
 /// FileBridge for file operation
 /// @Author: Hongen Wang
 class FileBridge {
   static const String code = '''
+    function getApplicationSupportDirectory() {
+      return sendMessage('getApplicationSupportDirectory', JSON.stringify(''));
+    }
+    
     function File(path) {
       return {
         path: path,
@@ -91,6 +96,10 @@ class FileBridge {
     if (result.isError) {
       logger.e('registerFile error: ${result.stringResult}');
     }
+
+    flutterJs.onMessage('getApplicationSupportDirectory', (args) {
+      return getApplicationSupportDirectory().then((dir) => dir.path);
+    });
 
     flutterJs.onMessage('file.readAsString', (path) {
       return File(path).readAsString();

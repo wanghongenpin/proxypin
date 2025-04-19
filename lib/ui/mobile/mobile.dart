@@ -25,12 +25,13 @@ import 'package:proxypin/native/app_lifecycle.dart';
 import 'package:proxypin/native/pip.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/channel.dart';
-import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -47,6 +48,8 @@ import 'package:proxypin/utils/ip.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 import 'package:proxypin/utils/navigator.dart';
+
+import '../app_update/app_update_repository.dart';
 
 ///移动端首页
 ///@author wanghongen
@@ -114,10 +117,12 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV17) {
+    if (widget.appConfiguration.upgradeNoticeV18) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
+    } else if (Platform.isAndroid) {
+      AppUpdateRepository.checkUpdate(context);
     }
   }
 
@@ -271,18 +276,19 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
             '9. 修复二维码保存的背景颜色问题；\n'
         : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n\n'
             'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-            '1. Added support for socks5 proxy, which can be turned off in settings；\n'
-            '2. Add request list sorted by time；\n'
-            '3. Response to saving newly added images；\n'
-            '4. Request rewriting to add json format；\n'
-            '5. Fixed the issue when opening VPN in Picture-in-Picture mode on Android for the first time；\n'
-            '6. Fix Illegal IPv6 address issue；\n'
-            '7. Fix Windows history import Android har history file crash issue；\n'
-            '8. Fix the problem of incomplete copy of python request header；\n'
-            '9. Fixed the background color issue when saving QR code；\n'
+            '1. Added app check update；\n'
+            '2. Keyword highlighting supports persistence；\n'
+            '3. Fixed TLS SNI inconsistency；\n'
+            '4. Fixed the issue of IPV6 link establishment failure；\n'
+            '5. Windows singleton window with built-in VCLibs；\n'
+            '6. Fixed Illegal IPv6 address issue；\n'
+            '7. The script supports obtaining application directories, fixes byte response request exception issues, and supports executing multiple instances；\n'
+            '8. Toolbox js fetch supports proxy；\n'
+            '9. Fixed some curl import failure issues；\n'
             '';
-    showAlertDialog(isCN ? '更新内容V1.1.7' : "Update content V1.1.7", content, () {
-      widget.appConfiguration.upgradeNoticeV17 = false;
+    showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "Update content V${AppConfiguration.version}", content,
+        () {
+      widget.appConfiguration.upgradeNoticeV18 = false;
       widget.appConfiguration.flushConfig();
     });
   }

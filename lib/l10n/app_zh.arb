@@ -314,5 +314,15 @@
   "time": "时间",
   "nowTimestamp": "当前时间戳(秒)",
   "hosts": "Hosts 映射",
-  "toAddress": "映射地址"
+  "toAddress": "映射地址",
+
+  "appUpdateCheckVersion": "检查更新",
+  "appUpdateNotAvailableMsg": "已是最新版本",
+  "appUpdateDialogTitle": "有可用更新",
+  "appUpdateUpdateMsg": "ProxyPin 的新版本现已推出。您想现在更新吗？",
+  "appUpdateCurrentVersionLbl": "当前版本",
+  "appUpdateNewVersionLbl": "新版本",
+  "appUpdateUpdateNowBtnTxt": "现在更新",
+  "appUpdateLaterBtnTxt": "以后再说",
+  "appUpdateIgnoreBtnTxt": "忽略"
 }

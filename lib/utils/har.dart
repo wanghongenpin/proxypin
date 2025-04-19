@@ -16,11 +16,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/ui/configuration.dart';
 
 class Har {
   static int maxBodyLength = 1024 * 1024 * 4;
@@ -81,7 +82,7 @@ class Har {
     title = title.contains("ProxyPin") ? title : "[ProxyPin]$title";
     har["log"] = {
       "version": "1.2",
-      "creator": {"name": "ProxyPin", "version": "1.1.7"},
+      "creator": {"name": "ProxyPin", "version": AppConfiguration.version},
       "pages": [
         {
           "title": title,
@@ -136,7 +137,7 @@ class Har {
     List headers = request['headers'];
 
     var httpRequest = HttpRequest(HttpMethod.valueOf(method), request['url'], protocolVersion: request['httpVersion']);
-    if (har.containsKey("_id")) httpRequest.requestId = har['_id']; // 页面标识
+    if (har.containsKey("_id")) httpRequest.requestId = har['_id'].toString(); // 页面标识
     httpRequest.processInfo = har['_app'] == null ? null : ProcessInfo.fromJson(har['_app']);
     httpRequest.body = request['postData']?['text']?.toString().codeUnits;
     for (var element in headers) {

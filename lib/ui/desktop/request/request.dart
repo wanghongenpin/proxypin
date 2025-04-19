@@ -25,10 +25,11 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -36,6 +37,7 @@ import 'package:proxypin/ui/desktop/request/repeat.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
 import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -131,7 +133,7 @@ class _RequestWidgetState extends State<RequestWidget> {
       return highlightColor;
     }
 
-    return DesktopKeywordHighlight.getHighlightColor(path);
+    return KeywordHighlights.getHighlightColor(path);
   }
 
   void changeState() {
@@ -295,7 +297,7 @@ class _RequestWidgetState extends State<RequestWidget> {
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo);
 
-    FlutterToastr.show(localizations.reSendRequest, rootNavigator: true, context);
+    CustomToast.success(localizations.reSendRequest).show(context);
   }
 
   PopupMenuItem popupItem(String text, {VoidCallback? onTap}) {

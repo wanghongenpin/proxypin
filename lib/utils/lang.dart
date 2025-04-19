@@ -13,6 +13,15 @@ extension ListFirstWhere<T> on Iterable<T> {
       return null;
     }
   }
+
+  T elementAtOrElse(int index, T Function(int index) defaultValue) {
+    if (index < 0) return defaultValue(index);
+    var count = 0;
+    for (final element in this) {
+      if (index == count++) return element;
+    }
+    return defaultValue(index);
+  }
 }
 
 extension DateTimeFormat on DateTime {
@@ -102,6 +111,14 @@ class Strings {
 /// 这样会导致，换行时上一行可能会留很大的空白区域
 /// 把每个字符插入一个0宽的字符， \u{200B}
 extension StringEnhance on String {
+
+  String removePrefix(String prefix) {
+    if (startsWith(prefix)) {
+      return substring(prefix.length, length);
+    } else {
+      return this;
+    }
+  }
   String fixAutoLines() {
     return Characters(this).join('\u{200B}');
   }

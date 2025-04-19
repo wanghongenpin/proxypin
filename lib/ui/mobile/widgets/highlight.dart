@@ -13,28 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 
 class KeywordHighlight extends StatefulWidget {
-  static Map<Color, String> keywords = {};
-  static bool enabled = true;
-  static ValueNotifier keywordsController = ValueNotifier<Map>(keywords);
-
-  static Color? getHighlightColor(String? key) {
-    if (key == null || !enabled) {
-      return null;
-    }
-    for (var entry in keywords.entries) {
-      if (key.contains(entry.value)) {
-        return entry.key;
-      }
-    }
-    return null;
-  }
-
   const KeywordHighlight({super.key});
 
   @override
@@ -59,7 +45,8 @@ class _KeywordHighlightState extends State<KeywordHighlight> {
         title: Text(localizations.keyword + localizations.highlight,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         actions: [
-          SwitchWidget(scale: 0.7, value: KeywordHighlight.enabled, onChanged: (val) => KeywordHighlight.enabled = val),
+          SwitchWidget(
+              scale: 0.7, value: KeywordHighlights.enabled, onChanged: (val) => KeywordHighlights.enabled = val),
           const SizedBox(width: 10)
         ],
       ),
@@ -75,12 +62,12 @@ class _KeywordHighlightState extends State<KeywordHighlight> {
                           child: TextFormField(
                             minLines: 2,
                             maxLines: 2,
-                            initialValue: KeywordHighlight.keywords[e.key],
+                            initialValue: KeywordHighlights.keywords[e.key],
                             onChanged: (value) {
                               if (value.isEmpty) {
-                                KeywordHighlight.keywords.remove(e.key);
+                                KeywordHighlights.keywords.remove(e.key);
                               } else {
-                                KeywordHighlight.keywords[e.key] = value;
+                                KeywordHighlights.keywords[e.key] = value;
                               }
                             },
                             decoration: decoration(localizations.keyword),
@@ -102,10 +89,10 @@ class _KeywordHighlightState extends State<KeywordHighlight> {
 
   @override
   void dispose() {
-    if (KeywordHighlight.enabled) {
-      KeywordHighlight.keywordsController.value = Map.from(KeywordHighlight.keywords);
+    if (KeywordHighlights.enabled) {
+      KeywordHighlights.saveKeywords(Map.from(KeywordHighlights.keywords));
     } else {
-      KeywordHighlight.keywordsController.value = {};
+      KeywordHighlights.saveKeywords(KeywordHighlights.keywords);
     }
     super.dispose();
   }

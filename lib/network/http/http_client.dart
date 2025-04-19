@@ -17,22 +17,23 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/network/network.dart';
+import 'package:proxypin/network/channel/network.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxy_manager/proxy_manager.dart';
 
-import 'channel.dart';
-import 'http/codec.dart';
+import '../channel/channel.dart';
+import 'codec.dart';
 
 class HttpClients {
   /// 建立连接
   static Future<Channel> startConnect(
       HostAndPort hostAndPort, ChannelHandler handler, ChannelContext channelContext) async {
     var client = Client()
-      ..initChannel((channel) => channel.pipeline.channelHandle(HttpClientCodec(), handler));
+      ..initChannel((channel) => channel.dispatcher.channelHandle(HttpClientCodec(), handler));
 
     return client.connect(hostAndPort, channelContext);
   }
@@ -41,7 +42,7 @@ class HttpClients {
   static Future<Channel> proxyConnect(HostAndPort hostAndPort, ChannelHandler handler, ChannelContext channelContext,
       {ProxyInfo? proxyInfo}) async {
     var client = Client()
-      ..initChannel((channel) => channel.pipeline.channelHandle(HttpClientCodec(), handler));
+      ..initChannel((channel) => channel.dispatcher.channelHandle(HttpClientCodec(), handler));
 
     if (proxyInfo == null) {
       var proxyTypes = hostAndPort.isSsl() ? ProxyTypes.https : ProxyTypes.http;
@@ -64,10 +65,10 @@ class HttpClients {
 
   ///发起代理连接请求
   static Future<Channel> connectRequest(HostAndPort hostAndPort, Channel channel, {ProxyInfo? proxyInfo}) async {
-    ChannelHandler handler = channel.pipeline.handler;
+    ChannelHandler handler = channel.dispatcher.handler;
     //代理 发送connect请求
     var httpResponseHandler = HttpResponseHandler();
-    channel.pipeline.handler = httpResponseHandler;
+    channel.dispatcher.handler = httpResponseHandler;
 
     HttpRequest proxyRequest = HttpRequest(HttpMethod.connect, '${hostAndPort.host}:${hostAndPort.port}');
     proxyRequest.headers.set(HttpHeaders.HOST, '${hostAndPort.host}:${hostAndPort.port}');
@@ -81,7 +82,7 @@ class HttpClients {
     await channel.write(proxyRequest);
     var response = await httpResponseHandler.getResponse(const Duration(seconds: 5));
 
-    channel.pipeline.handler = handler;
+    channel.dispatcher.handler = handler;
 
     if (!response.status.isSuccessful()) {
       throw Exception("$hostAndPort Proxy failed to establish tunnel "
@@ -94,7 +95,7 @@ class HttpClients {
   /// 建立连接
   static Future<Channel> connect(Uri uri, ChannelHandler handler, ChannelContext channelContext) async {
     Client client = Client()
-      ..initChannel((channel) => channel.pipeline.handle(HttpResponseCodec(), HttpRequestCodec(), handler));
+      ..initChannel((channel) => channel.dispatcher.handle(HttpResponseCodec(), HttpRequestCodec(), handler));
     if (uri.scheme == "https" || uri.scheme == "wss") {
       return client.secureConnect(HostAndPort.of(uri.toString()), channelContext);
     }
@@ -114,7 +115,7 @@ class HttpClients {
     var httpResponseHandler = HttpResponseHandler();
 
     var client = Client()
-      ..initChannel((channel) => channel.pipeline.handle(HttpResponseCodec(), HttpRequestCodec(), httpResponseHandler));
+      ..initChannel((channel) => channel.dispatcher.handle(HttpResponseCodec(), HttpRequestCodec(), httpResponseHandler));
 
     ChannelContext channelContext = ChannelContext();
     Channel channel = await client.connect(hostAndPort, channelContext);
@@ -125,7 +126,7 @@ class HttpClients {
 
   /// 发送代理请求
   static Future<HttpResponse> proxyRequest(HttpRequest request,
-      {ProxyInfo? proxyInfo, Duration timeout = const Duration(seconds: 15)}) async {
+      {ProxyInfo? proxyInfo, Duration timeout = const Duration(seconds: 30)}) async {
     if (request.headers.host == null || request.headers.host?.trim().isEmpty == true) {
       try {
         var uri = Uri.parse(request.requestUrl);

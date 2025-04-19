@@ -17,9 +17,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/channel.dart';
-import 'package:proxypin/network/handler.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
@@ -34,6 +35,7 @@ import 'package:proxypin/ui/desktop/request/list.dart';
 import 'package:proxypin/ui/desktop/toolbar/toolbar.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
+import '../app_update/app_update_repository.dart';
 import '../component/split_view.dart';
 
 /// @author wanghongen
@@ -88,10 +90,12 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
-    if (widget.appConfiguration.upgradeNoticeV17) {
+    if (widget.appConfiguration.upgradeNoticeV18) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
+    } else {
+      AppUpdateRepository.checkUpdate(context);
     }
   }
 
@@ -142,39 +146,39 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.appConfiguration.upgradeNoticeV17 = false;
+                      widget.appConfiguration.upgradeNoticeV18 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
                     child: Text(localizations.cancel))
               ],
-              title: Text(isCN ? '更新内容V1.1.7' : "Update content V1.1.7", style: const TextStyle(fontSize: 18)),
+              title: Text(isCN ? '更新内容V${AppConfiguration.version}' : "Update content V${AppConfiguration.version}",
+                  style: const TextStyle(fontSize: 18)),
               content: Container(
                   constraints: const BoxConstraints(maxWidth: 600),
                   child: SelectableText(
                       isCN
                           ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
                               '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                              '1. 新增socks5代理支持, 可在设置中关闭；\n'
-                              '2. 请求列表增加按时间排序；\n'
-                              '3. 响应新增图片保存；\n'
-                              '4. 请求重写新增json格式化；\n'
-                              '5. 修复安卓首次在画中画开启VPN闪退；\n'
-                              '6. 修复Illegal IPv6 address问题；\n'
-                              '7. 修复Windows历史导入安卓har历史文件崩溃问题；\n'
-                              '8. 修复复制python请求头不全问题；\n'
-                              '9. 修复二维码保存的背景颜色问题；\n'
+                              '1. 新增app检查更新；\n'
+                              '2. 关键词高亮支持持久化；\n'
+                              '3. 修复请求域名和tls域名不一致问题；\n'
+                              '4. 修复IPV6建立链接失败问题；\n'
+                              '5. Windows单例窗口，内置VCLibs；\n'
+                              '6. 脚本支持获取应用目录, 脚本修复字节响应请求异常问题, 脚本支持执行多个；\n'
+                              '7. 工具箱js fetch支持代理；\n'
+                              '8. 修复部分curl导入失败问题；\n'
                           : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
                               'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-                              '1. Added support for socks5 proxy, which can be turned off in settings；\n'
-                              '2. Add request list sorted by time；\n'
-                              '3. Response to saving newly added images；\n'
-                              '4. Request rewriting to add json format；\n'
-                              '5. Fixed the issue when opening VPN in Picture-in-Picture mode on Android for the first time；\n'
-                              '6. Fix Illegal IPv6 address issue；\n'
-                              '7. Fix Windows history import Android har history file crash issue；\n'
-                              '8. Fix the problem of incomplete copy of python request header；\n'
-                              '9. Fixed the background color issue when saving QR code；\n'
+                              '1. Added app check update；\n'
+                              '2. Keyword highlighting supports persistence；\n'
+                              '3. Fixed TLS SNI inconsistency；\n'
+                              '4. Fixed the issue of IPV6 link establishment failure；\n'
+                              '5. Windows singleton window with built-in VCLibs；\n'
+                              '6. Fixed Illegal IPv6 address issue；\n'
+                              '7. The script supports obtaining application directories, fixes byte response request exception issues, and supports executing multiple instances；\n'
+                              '8. Toolbox js fetch supports proxy；\n'
+                              '9. Fixed some curl import failure issues；\n'
                               '',
                       style: const TextStyle(fontSize: 14))));
         });

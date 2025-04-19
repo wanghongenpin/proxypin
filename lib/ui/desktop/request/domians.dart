@@ -24,17 +24,18 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/channel.dart';
+import 'package:proxypin/network/channel/channel.dart';
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/components/host_filter.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/transition.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
-import 'package:proxypin/ui/desktop/widgets/highlight.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 /// 左侧域名
@@ -102,12 +103,12 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
         highlightHandler();
       });
     };
-    DesktopKeywordHighlight.keywordsController.addListener(highlightListener);
+    KeywordHighlights.addListener(highlightListener);
   }
 
   @override
   dispose() {
-    DesktopKeywordHighlight.keywordsController.removeListener(highlightListener);
+    KeywordHighlights.removeListener(highlightListener);
     super.dispose();
   }
 
@@ -412,17 +413,18 @@ class _DomainRequestsState extends State<DomainRequests> {
     if (!changing) {
       changing = true;
       Future.delayed(const Duration(milliseconds: 500), () {
-        setState(() {
-          changing = false;
-        });
-        transitionState.currentState?.show();
+        if (mounted) {
+          setState(() {
+            changing = false;
+          });
+          transitionState.currentState?.show();
+        }
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Column(children: [
       _hostWidget(widget.domain),
       Offstage(offstage: !selected, child: Column(children: widget.body.toList()))

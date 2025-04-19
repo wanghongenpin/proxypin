@@ -24,9 +24,9 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
-import 'package:proxypin/network/host_port.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http_client.dart';
+import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -36,8 +36,8 @@ import 'package:proxypin/ui/mobile/request/repeat.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
-import 'package:proxypin/ui/mobile/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/navigator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -92,7 +92,7 @@ class RequestRowState extends State<RequestRow> {
       return highlightColor;
     }
 
-    return KeywordHighlight.getHighlightColor(url);
+    return KeywordHighlights.getHighlightColor(url);
   }
 
   BuildContext getContext() => mounted ? super.context : NavigatorHelper().context;
