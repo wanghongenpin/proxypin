@@ -23,7 +23,7 @@ class _RequestBlockState extends State<MobileRequestBlock> {
         appBar: AppBar(title: Text(localizations.requestBlock, style: const TextStyle(fontSize: 16))),
         body: Container(
             padding: const EdgeInsets.all(10),
-            child: Wrap(children: [
+            child: Column(children: [
               Row(children: [
                 const SizedBox(width: 8),
                 Text(localizations.enable),
@@ -35,30 +35,31 @@ class _RequestBlockState extends State<MobileRequestBlock> {
                       widget.requestBlockManager.enabled = value;
                       widget.requestBlockManager.flushConfig();
                     }),
-                const Expanded(child: SizedBox()),
+                const Spacer(),
                 TextButton.icon(
                     icon: const Icon(Icons.add, size: 20), onPressed: showEdit, label: Text(localizations.add)),
                 const SizedBox(width: 5),
               ]),
               const SizedBox(height: 10),
-              Container(
-                  height: 600,
-                  decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
-                  child: Column(children: [
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Container(width: 15),
-                        const Expanded(child: Text('URL', style: TextStyle(fontSize: 14))),
-                        SizedBox(width: 60, child: Text(localizations.enable, style: const TextStyle(fontSize: 14))),
-                        SizedBox(width: 75, child: Text(localizations.action, style: const TextStyle(fontSize: 14))),
-                      ],
-                    ),
-                    const Divider(thickness: 0.5),
-                    Expanded(
-                        child: ListView.builder(
-                            itemCount: widget.requestBlockManager.list.length, itemBuilder: (_, index) => row(index)))
-                  ]))
+              Flexible(
+                child: Container(
+                    constraints: const BoxConstraints(maxHeight: 600),
+                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                    child: Column(children: [
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Container(width: 15),
+                          const Expanded(child: Text('URL', style: TextStyle(fontSize: 14))),
+                          SizedBox(width: 60, child: Text(localizations.enable, style: const TextStyle(fontSize: 14))),
+                          SizedBox(width: 75, child: Text(localizations.action, style: const TextStyle(fontSize: 14))),
+                        ],
+                      ),
+                      const Divider(thickness: 0.5),
+                      Expanded(
+                          child: ListView.builder(
+                              itemCount: widget.requestBlockManager.list.length, itemBuilder: (_, index) => row(index)))
+                    ]))),
             ])));
   }
 
