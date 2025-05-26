@@ -19,6 +19,7 @@ enum FrameType { data, headers, priority, rstStream, settings, pushPromise, ping
 class FrameHeader {
   static const flagsEndStream = 0x01;
   static const flagsEndHeaders = 0x04;
+  static const flagsPriority = 0x20;
 
   final int length;
   final FrameType type;
@@ -29,7 +30,7 @@ class FrameHeader {
 
   bool get hasPaddedFlag => (flags & 0x08) == 0x08;
 
-  bool get hasPriorityFlag => (flags & 0x20) == 0x20;
+  bool get hasPriorityFlag => (flags & flagsPriority) == flagsPriority;
 
   bool get hasEndHeadersFlag => (flags & flagsEndHeaders) == flagsEndHeaders;
 
@@ -74,10 +75,15 @@ class HeadersFrame extends Frame {
   final bool exclusiveDependency;
   final int? streamDependency;
   final int? weight;
-  final List<int> headerBlockFragment;
+  List<int> headerBlockFragment;
 
   HeadersFrame(super.header, this.padLength, this.exclusiveDependency, this.streamDependency, this.weight,
       this.headerBlockFragment);
+
+  @override
+  String toString() {
+    return "HeadersFrame{padLength: $padLength, exclusiveDependency: $exclusiveDependency, streamDependency: $streamDependency, weight: $weight, headerBlockFragment: ${headerBlockFragment.length}}";
+  }
 }
 
 class DataFrame extends Frame {

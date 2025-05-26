@@ -17,7 +17,9 @@
   "password": "密码",
   "proxySetting": "代理设置",
   "systemProxy": "设置为系统代理",
+  "enabledHTTP2": "启用HTTP2",
   "serverNotStart": "未开启抓包",
+  "download": "下载",
 
   "start": "开始",
   "stop": "停止",
@@ -286,6 +288,7 @@
   "iosVpnBackgroundAudio": "开启抓包后，退出到后台。为了维护主UI线程的网络通信，将启用静音音频播放以保持主线程运行。否则，它将只在后台运行30秒。您同意在启用抓包后在后台播放音频吗?",
 
   "markRead": "标记已读",
+  "autoRead": "自动已读",
   "highlight": "高亮",
   "blue": "蓝色",
   "green": "绿色",
@@ -315,6 +318,9 @@
   "nowTimestamp": "当前时间戳(秒)",
   "hosts": "Hosts 映射",
   "toAddress": "映射地址",
+  "encrypt": "加密",
+  "decrypt": "解密",
+  "cipher": "加解密",
 
   "appUpdateCheckVersion": "检查更新",
   "appUpdateNotAvailableMsg": "已是最新版本",

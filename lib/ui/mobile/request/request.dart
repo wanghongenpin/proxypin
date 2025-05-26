@@ -31,6 +31,7 @@ import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/mobile/request/repeat.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
@@ -66,6 +67,7 @@ class RequestRow extends StatefulWidget {
 
 class RequestRowState extends State<RequestRow> {
   static ExpiringCache<String, Image> imageCache = ExpiringCache<String, Image>(const Duration(minutes: 5));
+  static Set<String> autoReadRequests = <String>{};
 
   late HttpRequest request;
   HttpResponse? response;
@@ -92,7 +94,12 @@ class RequestRowState extends State<RequestRow> {
       return highlightColor;
     }
 
-    return KeywordHighlights.getHighlightColor(url);
+    highlightColor = KeywordHighlights.getHighlightColor(url);
+    if (highlightColor != null) {
+      return highlightColor;
+    }
+
+    return autoReadRequests.contains(request.requestId) ? Colors.grey : null;
   }
 
   BuildContext getContext() => mounted ? super.context : NavigatorHelper().context;
@@ -122,17 +129,24 @@ class RequestRowState extends State<RequestRow> {
           textColor: highlightColor,
           selectedColor: highlightColor,
           leading: appIcon(),
-          title: Text(title, overflow: TextOverflow.ellipsis, maxLines: 2, style: const TextStyle(fontSize: 14)),
+          title: Text(title.fixAutoLines(),
+              overflow: TextOverflow.ellipsis, maxLines: 2, style: const TextStyle(fontSize: 14)),
           subtitle: Text.rich(
               maxLines: 1,
               TextSpan(children: [
                 TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
                 TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ])),
-          trailing: getIcon(response),
+          trailing: getIcon(response, color: highlightColor),
           contentPadding:
               Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
           onTap: () {
+            if (AppConfiguration.current?.autoReadEnabled == true) {
+              if (autoReadRequests.add(request.requestId)) {
+                setState(() {});
+              }
+            }
+
             Navigator.of(getContext()).push(MaterialPageRoute(builder: (context) {
               return NetworkTabController(
                   proxyServer: widget.proxyServer,
@@ -300,11 +314,14 @@ class RequestRowState extends State<RequestRow> {
                     icon: Icons.highlight_outlined),
                 right: itemButton(
                     onPressed: () {
+                      AppConfiguration.current?.autoReadEnabled = !AppConfiguration.current!.autoReadEnabled;
                       highlightColor = Colors.grey;
                       Navigator.maybePop(availableContext);
                     },
-                    label: localizations.markRead,
-                    icon: Icons.mark_chat_read_outlined),
+                    label: localizations.autoRead,
+                    icon: AppConfiguration.current?.autoReadEnabled == true
+                        ? Icons.check_box_outlined
+                        : Icons.check_box_outline_blank_outlined),
               ),
               SizedBox(height: 2),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [

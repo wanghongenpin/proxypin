@@ -32,6 +32,7 @@ import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
@@ -76,6 +77,8 @@ class _RequestWidgetState extends State<RequestWidget> {
   //选择的节点
   static _RequestWidgetState? selectedState;
 
+  static Set<String> autoReadRequests = <String>{};
+
   bool selected = false;
 
   Color? highlightColor; //高亮颜色
@@ -98,16 +101,18 @@ class _RequestWidgetState extends State<RequestWidget> {
     String contentType = response?.contentType.name.toUpperCase() ?? '';
     var packagesSize = getPackagesSize(request, response);
 
+    var requestColor = color(path);
+
     return GestureDetector(
         onSecondaryTap: contextualMenu,
         child: ListTile(
             minLeadingWidth: 5,
-            textColor: color(path),
-            selectedColor: color(path),
+            textColor: requestColor,
+            selectedColor: requestColor,
             selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            leading: getIcon(widget.response.get() ?? widget.request.response),
+            leading: getIcon(widget.response.get() ?? widget.request.response, color: requestColor),
             trailing: widget.trailing,
-            title: Text(title, overflow: TextOverflow.ellipsis, maxLines: 2),
+            title: Text(title.fixAutoLines(), overflow: TextOverflow.ellipsis, maxLines: 2),
             subtitle: Container(
                 padding: const EdgeInsets.only(top: 3),
                 child: Text.rich(
@@ -128,12 +133,17 @@ class _RequestWidgetState extends State<RequestWidget> {
             onTap: onClick));
   }
 
-  Color? color(String path) {
+  Color? color(String url) {
     if (highlightColor != null) {
       return highlightColor;
     }
 
-    return KeywordHighlights.getHighlightColor(path);
+    highlightColor = KeywordHighlights.getHighlightColor(url);
+    if (highlightColor != null) {
+      return highlightColor;
+    }
+
+    return autoReadRequests.contains(widget.request.requestId) ? Colors.grey : null;
   }
 
   void changeState() {
@@ -264,11 +274,21 @@ class _RequestWidgetState extends State<RequestWidget> {
               });
             }),
         MenuItem.separator(),
+        MenuItem.checkbox(
+            label: localizations.autoRead,
+            checked: AppConfiguration.current?.autoReadEnabled,
+            onClick: (_) {
+              setState(() {
+                AppConfiguration.current?.autoReadEnabled = !AppConfiguration.current!.autoReadEnabled;
+              });
+            }),
+        MenuItem.separator(),
         MenuItem(
             label: localizations.reset,
             onClick: (_) {
               setState(() {
                 highlightColor = null;
+                autoReadRequests.clear();
               });
             }),
         MenuItem(
@@ -330,6 +350,11 @@ class _RequestWidgetState extends State<RequestWidget> {
         selected = true;
       });
     }
+
+    if (AppConfiguration.current?.autoReadEnabled == true) {
+      autoReadRequests.add(widget.request.requestId);
+    }
+
 
     //切换选中的节点
     if (selectedState?.mounted == true && selectedState != this) {

@@ -161,9 +161,14 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                       return _HttpWidget(
                           key: responseKey,
                           title: Row(children: [
+                            Text(response?.protocolVersion ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.blue)),
+                            const SizedBox(width: 10),
                             Text("${localizations.statusCode}: ", style: const TextStyle(fontWeight: FontWeight.w500)),
                             const SizedBox(width: 10),
-                            Text(response?.status.toString() ?? "", style: const TextStyle(color: Colors.blue))
+                            Text(response?.status.toString() ?? "",
+                                style:
+                                    TextStyle(color: response?.status.isSuccessful() == true ? Colors.blue : Colors.red))
                           ]),
                           readOnly: true,
                           message: response);
@@ -179,7 +184,9 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     var requestBody = requestKey.currentState?.getBody();
     String url = currentState.requestUrl.text;
 
-    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.parse(url).toString());
+    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.parse(url).toString(),
+        protocolVersion: this.request?.protocolVersion ?? "HTTP/1.1");
+
     request.headers.addAll(headers);
     request.body = requestBody == null ? null : utf8.encode(requestBody);
 

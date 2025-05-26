@@ -28,6 +28,23 @@ HostAndPort getHostAndPort(HttpRequest request, {bool? ssl}) {
 }
 
 class HostAndPort {
+  static final ipv6Pattern = r'^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|'
+      r'([0-9a-fA-F]{1,4}:){1,7}:|'
+      r'([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|'
+      r'([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|'
+      r'([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|'
+      r'([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|'
+      r'([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|'
+      r'[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|'
+      r':((:[0-9a-fA-F]{1,4}){1,7}|:)|'
+      r'fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|'
+      r'::(ffff(:0{1,4}){0,1}:){0,1}'
+      r'(([0-9]{1,3}\.){3,3}[0-9]{1,3})|'
+      r'([0-9a-fA-F]{1,4}:){1,4}:'
+      r'(([0-9]{1,3}\.){3,3}[0-9]{1,3}))$';
+
+  static final ipV6RegExp = RegExp(ipv6Pattern);
+
   static const String httpScheme = "http://";
   static const String httpsScheme = "https://";
   static const String wsScheme = "ws://";
@@ -38,9 +55,18 @@ class HostAndPort {
   String scheme;
   String host;
   final int port;
-  bool ipv6 = false;
+  bool? _ipv6;
 
-  HostAndPort(this.scheme, this.host, this.port, {this.ipv6 = false});
+  bool get isIPv6 {
+    _ipv6 ??= _isIPv6(host);
+    return _ipv6!;
+  }
+
+  static bool _isIPv6(String address) {
+    return ipV6RegExp.hasMatch(address);
+  }
+
+  HostAndPort(this.scheme, this.host, this.port, {bool? ipv6}) : _ipv6 = ipv6;
 
   factory HostAndPort.host(String host, int port, {String? scheme}) {
     return HostAndPort(scheme ?? (port == 443 ? httpsScheme : httpScheme), host, port);
@@ -72,7 +98,7 @@ class HostAndPort {
 
       //说明支持ipv6
       if (domain.startsWith('[') && domain.endsWith(']')) {
-        return HostAndPort(scheme, domain, scheme == httpScheme ? 80 : 443);
+        return HostAndPort(scheme, domain, scheme == httpScheme ? 80 : 443, ipv6: true);
       }
     }
 
@@ -80,7 +106,7 @@ class HostAndPort {
     var indexOf = domain.lastIndexOf(':');
     String host = domain.substring(0, indexOf == -1 ? domain.length : indexOf);
     String? port = indexOf == -1 ? null : domain.substring(indexOf + 1, domain.length);
-    bool ipv6 = host.startsWith('[') && host.endsWith(']');
+    bool? ipv6 = host.startsWith('[') && host.endsWith(']') ? true : null;
 
     if (port != null) {
       bool isSsl = port == "443" || ssl == true;
@@ -92,6 +118,10 @@ class HostAndPort {
   }
 
   String get domain {
+    String host = this.host;
+    if (isIPv6 && !host.startsWith('[') && !host.endsWith(']')) {
+      host = '[$host]';
+    }
     return '$scheme$host${(port == 80 || port == 443) ? "" : ":$port"}';
   }
 

@@ -184,6 +184,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
         const Divider(thickness: 0.3, height: 8),
         setSystemProxy(),
         const Divider(thickness: 0.3, height: 8),
+
         Row(children: [
           Expanded(
               child: Padding(
@@ -194,6 +195,22 @@ class _ProxyMenuState extends State<_ProxyMenu> {
               scale: 0.75,
               onChanged: (val) {
                 configuration.enableSocks5 = val;
+                changed = true;
+              }),
+          SizedBox(width: 10)
+        ]),
+        const Divider(thickness: 0.3, height: 8),
+
+        Row(children: [
+          Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 15),
+                  child: Text(localizations.enabledHTTP2, style: const TextStyle(fontSize: 14)))),
+          SwitchWidget(
+              value: configuration.enabledHttp2,
+              scale: 0.75,
+              onChanged: (val) {
+                configuration.enabledHttp2 = val;
                 changed = true;
               }),
           SizedBox(width: 10)

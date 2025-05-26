@@ -1,155 +1,22 @@
-import 'dart:typed_data';
+// Copyright (c) 2015, the Dart project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
 
-main() {
-  var list = [241, 227, 194, 254, 231, 52, 246, 174, 67, 211];
-  print(HuffmanDecoder().decode(list));
-}
-class HuffmanDecoder {
-  static const int eosByte = 256; //end of string
+import 'huffman.dart';
 
-  final HuffmanTreeNode _root;
+/// The huffman codec for encoding/decoding HTTP/2 header blocks.
+final HuffmanCodec http2HuffmanCodec = HuffmanCodec(
+  HuffmanEncoder(_codeWords),
+  HuffmanDecoder(generateHuffmanTree(_codeWords)),
+);
 
-  HuffmanDecoder() : _root = generateHuffmanTree(_huffmanTable);
+/// This is the integer representing the End-of-String symbol
+/// (it is not representable by a byte).
+const int EOS_BYTE = 256;
 
-  //http2协议规范 huffman解码
-  List<int> decode(List<int> bytes) {
-    var buffer = BytesBuilder();
-
-    var currentByteOffset = 0;
-    var node = _root;
-    var currentDepth = 0;
-    while (currentByteOffset < bytes.length) {
-      var byte = bytes[currentByteOffset];
-      for (var currentBit = 7; currentBit >= 0; currentBit--) {
-        var right = (byte >> currentBit) & 1 == 1;
-        if (right) {
-          node = node.right!;
-        } else {
-          node = node.left!;
-        }
-        currentDepth++;
-        if (node.value != null) {
-          if (node.value == eosByte) {
-            throw Exception('More than 7 bit padding is not allowed. Found entire EOS '
-                'encoding');
-          }
-          buffer.addByte(node.value!);
-          node = _root;
-          currentDepth = 0;
-        }
-      }
-      currentByteOffset++;
-    }
-
-    if (node != _root) {
-      if (currentDepth > 7) {
-        throw Exception('Incomplete encoding of a byte or more than 7 bit padding.');
-      }
-
-      while (node.right != null) {
-        node = node.right!;
-      }
-
-      if (node.value != 256) {
-        throw Exception('Incomplete encoding of a byte.');
-      }
-    }
-
-    return buffer.takeBytes();
-  }
-}
-
-class HuffmanEncoder {
-  static const int eosByte = 256; //end of string
-
-  final List<EncodedHuffmanValue> _codewords;
-
-  HuffmanEncoder() : _codewords = _huffmanTable;
-
-  //http2协议规范 huffman编码
-  List<int> encode(List<int> bytes) {
-    var buffer = BytesBuilder();
-
-    var currentByte = 0;
-    var currentBitOffset = 7;
-
-    void writeValue(int value, int numBits) {
-      var i = numBits - 1;
-      while (i >= 0) {
-        if (currentBitOffset == 7 && i >= 7) {
-          assert(currentByte == 0);
-
-          buffer.addByte((value >> (i - 7)) & 0xff);
-          currentBitOffset = 7;
-          currentByte = 0;
-          i -= 8;
-        } else {
-          currentByte |= ((value >> i) & 1) << currentBitOffset;
-
-          currentBitOffset--;
-          if (currentBitOffset == -1) {
-            buffer.addByte(currentByte);
-            currentBitOffset = 7;
-            currentByte = 0;
-          }
-          i--;
-        }
-      }
-    }
-
-    for (var i = 0; i < bytes.length; i++) {
-      var byte = bytes[i];
-      var value = _codewords[byte];
-      writeValue(value.encodedBytes, value.numBits);
-    }
-
-    if (currentBitOffset < 7) {
-      writeValue(0xff, 1 + currentBitOffset);
-    }
-
-    return buffer.takeBytes();
-  }
-
-}
-///生成h2 huffman解码tree
-HuffmanTreeNode generateHuffmanTree(List<EncodedHuffmanValue> valueEncodings) {
-  var root = HuffmanTreeNode();
-
-  for (var byteOffset = 0; byteOffset < valueEncodings.length; byteOffset++) {
-    var entry = valueEncodings[byteOffset];
-
-    var current = root;
-    for (var bitNr = 0; bitNr < entry.numBits; bitNr++) {
-      var right = ((entry.encodedBytes >> (entry.numBits - bitNr - 1)) & 1) == 1;
-
-      if (right) {
-        current.right ??= HuffmanTreeNode();
-        current = current.right!;
-      } else {
-        current.left ??= HuffmanTreeNode();
-        current = current.left!;
-      }
-    }
-
-    current.value = byteOffset;
-  }
-
-  return root;
-}
-
-class HuffmanTreeNode {
-  int? value;
-
-  HuffmanTreeNode? left;
-  HuffmanTreeNode? right;
-
-  bool isLeaf() {
-    return left == null && right == null;
-  }
-}
-
-//HPACK规范 huffman编码的字节编码列表。
-final List<EncodedHuffmanValue> _huffmanTable = [
+/// This list of byte encodings via huffman encoding was generated from the
+/// HPACK specification.
+const List<EncodedHuffmanValue> _codeWords = <EncodedHuffmanValue>[
   EncodedHuffmanValue(0x1ff8, 13),
   EncodedHuffmanValue(0x7fffd8, 23),
   EncodedHuffmanValue(0xfffffe2, 28),
@@ -408,10 +275,3 @@ final List<EncodedHuffmanValue> _huffmanTable = [
   EncodedHuffmanValue(0x3ffffee, 26),
   EncodedHuffmanValue(0x3fffffff, 30),
 ];
-
-class EncodedHuffmanValue {
-  final int encodedBytes;
-  final int numBits;
-
-  EncodedHuffmanValue(this.encodedBytes, this.numBits);
-}

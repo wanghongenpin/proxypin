@@ -1,6 +1,7 @@
 class HttpConstants {
   //h2协议
   static const String h2 = 'h2';
+  static const String h2_14 = 'h2-14';
 
   /// Line feed character /n
   static const int lf = 10;

@@ -9,7 +9,8 @@ import 'package:proxypin/ui/component/buttons.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 
-import '../text_field.dart';
+import '../component/text_field.dart';
+
 
 /// Timestamp page
 /// @author Hongen Wang

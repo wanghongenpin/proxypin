@@ -122,7 +122,7 @@ class HttpHeaders {
 
   bool get isChunked => get(HttpHeaders.TRANSFER_ENCODING)?.toLowerCase().trimLeft() == "chunked";
 
-  String get cookie => get(Cookie) ?? "";
+  List<String> get cookies => getList(Cookie) ?? [];
 
   void forEach(void Function(String name, List<String> values) f) {
     _headers.forEach(f);

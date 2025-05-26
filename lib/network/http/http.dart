@@ -20,15 +20,18 @@ import 'dart:math';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/util/compress.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
-import 'package:proxypin/utils/compress.dart';
 
 import 'http_headers.dart';
 
 ///定义HTTP消息的接口，为HttpRequest和HttpResponse提供公共属性。
 ///@author WangHongEn
 abstract class HttpMessage {
+  /// HTTP/1.1
+  static const String http1Version = "HTTP/1.1";
+
   ///内容类型
   static final Map<String, ContentType> contentTypes = {
     "javascript": ContentType.js,
@@ -52,7 +55,9 @@ abstract class HttpMessage {
   //报文大小
   int? packageSize;
 
-  List<int>? body;
+  List<int>? _body;
+  String? _bodyString;
+
   String? remoteHost;
   int? remotePort;
 
@@ -79,6 +84,14 @@ abstract class HttpMessage {
           orElse: () => const MapEntry("unknown", ContentType.http))
       .value;
 
+  List<int>? get body => _body;
+
+  set body(List<int>? body) {
+    _body = body;
+    _bodyString = null;
+    packageSize = body?.length ?? 0;
+  }
+
   ///获取消息体编码
   String? get charset {
     var contentType = headers.contentType;
@@ -100,12 +113,21 @@ abstract class HttpMessage {
       return "";
     }
 
+    if (_bodyString != null) {
+      return _bodyString!;
+    }
+
     charset ??= this.charset;
     try {
       List<int> rawBody = body!;
       if (headers.contentEncoding == 'br') {
         rawBody = brDecode(body!);
       }
+
+      if (headers.isGzip) {
+        rawBody = gzipDecode(body!);
+      }
+
       if (charset == 'utf-8' || charset == 'utf8') {
         return utf8.decode(rawBody);
       }
@@ -116,7 +138,30 @@ abstract class HttpMessage {
     }
   }
 
-  String get cookie => headers.cookie;
+  Future<String> decodeBodyString() async {
+    if (body == null || body?.isEmpty == true) {
+      return "";
+    }
+
+    if (_bodyString != null) {
+      return _bodyString!;
+    }
+
+    List<int> rawBody = body!;
+    if (headers.contentEncoding == 'zstd') {
+      rawBody = await zstdDecode(body!) ?? [];
+      if (charset == 'utf-8' || charset == 'utf8') {
+        _bodyString = utf8.decode(rawBody);
+      } else {
+        _bodyString = String.fromCharCodes(rawBody);
+      }
+      return _bodyString!;
+    }
+
+    return getBodyString();
+  }
+
+  List<String> get cookies => headers.cookies;
 
   List<WebSocketFrame> messages = [];
 }
@@ -154,7 +199,17 @@ class HttpRequest extends HttpMessage {
     return hostAndPort?.domain;
   }
 
-  String get requestUrl => HostAndPort.startsWithScheme(uri) ? uri : '${remoteDomain()}$uri';
+  String get requestUrl {
+    if (HostAndPort.startsWithScheme(uri)) {
+      return uri;
+    }
+
+    if (method == HttpMethod.connect) {
+      return "${hostAndPort?.scheme ?? 'http://'}$uri";
+    }
+
+    return '${remoteDomain()}$uri';
+  }
 
   /// 请求的uri
   Uri? _requestUri;
@@ -192,6 +247,8 @@ class HttpRequest extends HttpMessage {
     if (uri != null && !uri.startsWith('/')) {
       request.hostAndPort = HostAndPort.of(uri);
     }
+    request.hostAndPort ??= hostAndPort;
+    request.streamId = streamId;
     request.body = body;
     return request;
   }
@@ -202,6 +259,7 @@ class HttpRequest extends HttpMessage {
       '_class': 'HttpRequest',
       'uri': requestUrl,
       'method': method.name,
+      'protocolVersion': protocolVersion,
       'packageSize': packageSize,
       'headers': headers.toJson(),
       'body': body == null ? null : String.fromCharCodes(body!),
@@ -210,7 +268,9 @@ class HttpRequest extends HttpMessage {
   }
 
   factory HttpRequest.fromJson(Map<String, dynamic> json) {
-    var request = HttpRequest(HttpMethod.valueOf(json['method']), json['uri']);
+    var request = HttpRequest(HttpMethod.valueOf(json['method']), json['uri'],
+        protocolVersion: json['protocolVersion'] ?? "HTTP/1.1");
+    
     request.headers.addAll(HttpHeaders.fromJson(json['headers']));
     request.body = json['body']?.toString().codeUnits;
     if (json['requestTime'] != null) {
@@ -276,7 +336,7 @@ class HttpResponse extends HttpMessage {
 
   @override
   String toString() {
-    return 'HttpResponse{status: ${status.code}, headers: $headers, contentLength: $contentLength, bodyLength: ${body?.length}}';
+    return 'HttpResponse{status: ${status.code}, protocolVersion: $protocolVersion headers: $headers, contentLength: $contentLength, bodyLength: ${body?.length}}';
   }
 }
 

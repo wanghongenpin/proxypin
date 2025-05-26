@@ -43,7 +43,7 @@ class Socks5 {
   static const int repSocks5ServerAtypIpv6 = 0x04;
 
   static bool isSocks5(Uint8List data) {
-    return data.length > 2 && data[0] == version;
+    return data.length == 3 && data[0] == version && data[1] == 1 && data[2] == methodNoAuth;
   }
 }
 
@@ -58,7 +58,7 @@ class SocksServerHandler extends ChannelHandler<Uint8List> {
   SocksServerHandler(this.originalDecoder, this.originalEncoder, this.originalHandler);
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
     int idx = 0;
     final int version = msg[idx++];
     if (version != Socks5.version) {

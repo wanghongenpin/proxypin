@@ -14,6 +14,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   win32audio
   window_manager
   windows_single_instance
+  zstandard_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

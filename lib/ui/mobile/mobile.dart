@@ -33,7 +33,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
-import 'package:proxypin/ui/component/toolbox/toolbox.dart';
+import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/launch/launch.dart';
@@ -117,7 +117,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV18) {
+    if (widget.appConfiguration.upgradeNoticeV19) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -265,30 +265,23 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 新增socks5代理支持, 可在设置中关闭；\n'
-            '2. 请求列表增加按时间排序；\n'
-            '3. 响应新增图片保存；\n'
-            '4. 请求重写新增json格式化；\n'
-            '5. 修复安卓首次在画中画开启VPN闪退；\n'
-            '6. 修复Illegal IPv6 address问题；\n'
-            '7. 修复Windows历史导入安卓har历史文件崩溃问题；\n'
-            '8. 修复复制python请求头不全问题；\n'
-            '9. 修复二维码保存的背景颜色问题；\n'
+            '1. 支持HTTP2协议,可在设置中开启；\n'
+            '2. 支持zstd解码；\n'
+            '3. 增加自动已读标记；\n'
+            '4. 工具箱支持AES加解密；\n'
+            '5. 修复WebSocket解析错误，以及二进制支持下载；\n'
+            '6. 修复部分代理转发失败问题；\n'
         : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n\n'
             'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-            '1. Added app check update；\n'
-            '2. Keyword highlighting supports persistence；\n'
-            '3. Fixed TLS SNI inconsistency；\n'
-            '4. Fixed the issue of IPV6 link establishment failure；\n'
-            '5. Windows singleton window with built-in VCLibs；\n'
-            '6. Fixed Illegal IPv6 address issue；\n'
-            '7. The script supports obtaining application directories, fixes byte response request exception issues, and supports executing multiple instances；\n'
-            '8. Toolbox js fetch supports proxy；\n'
-            '9. Fixed some curl import failure issues；\n'
-            '';
+            '1. Support for HTTP2 protocol, which can be enabled in settings.\n'
+            '2. Support for zstd decode.'
+            '3. Added auto read marking.'
+            '4. Toolbox now supports AES encryption and decryption.'
+            '5. Fixed WebSocket parsing errors.'
+            '6. Fix some proxy forwarding failure issues.';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "Update content V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV18 = false;
+      widget.appConfiguration.upgradeNoticeV19 = false;
       widget.appConfiguration.flushConfig();
     });
   }

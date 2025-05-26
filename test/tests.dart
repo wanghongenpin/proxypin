@@ -1,6 +1,7 @@
 import 'dart:io';
 
 void main() async {
+  Uri.parse("https://[2408:8726:a000:f0:70::21]/");
   String str = 'https://zhihu.com/giftList?(?:[^&]*&)*page=1(?:&[^&]*)*\$'.replaceAll("*", ".*")..replaceAll('?', '\\?');
   print(RegExp(str).hasMatch("https://zhihu.com/giftList?type=1&sort=0&page=1&orderBy=desc&pageSize=20"));
   // print(RegExp('^www.baidu.com').hasMatch("https://www.baidu.com/wqeqweqe"));

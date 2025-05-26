@@ -8,7 +8,7 @@
 PRODUCT_NAME = ProxyPin
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.proxypin
+PRODUCT_BUNDLE_IDENTIFIER = com.proxy.pin
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2023 Hongen Wang. All rights reserved.

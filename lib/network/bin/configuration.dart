@@ -55,7 +55,7 @@ class Configuration {
   //远程连接 不持久化保存
   String? remoteHost;
 
-  bool enabledHttp2 = false; //
+  bool enabledHttp2 = false; // 是否启用http2
 
   //历史记录缓存时间
   int historyCacheTime = 0;
@@ -88,6 +88,8 @@ class Configuration {
     startup = config['startup'] ?? Platforms.isDesktop();
     enableSystemProxy = config['enableSystemProxy'] ?? (config['enableDesktop'] ?? true);
     enableSocks5 = config['enableSocks5'] ?? true;
+    enabledHttp2 = config['enabledHttp2'] ?? false;
+
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
     historyCacheTime = config['historyCacheTime'] ?? 0;
     if (config['externalProxy'] != null) {
@@ -147,6 +149,7 @@ class Configuration {
       'appWhitelistEnabled': appWhitelistEnabled,
       'appBlacklist': appBlacklist,
       'historyCacheTime': historyCacheTime,
+      'enabledHttp2': enabledHttp2,
       'whitelist': HostFilter.whitelist.toJson(),
       'blacklist': HostFilter.blacklist.toJson(),
     };

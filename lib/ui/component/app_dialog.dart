@@ -79,7 +79,7 @@ class CustomToast extends StatelessWidget {
   const CustomToast.success(
     this.message, {
     super.key,
-    this.duration = const Duration(seconds: 3),
+    this.duration = const Duration(seconds: 2),
   })  : type = AlertType.success,
         icon = Icons.check_circle;
 

@@ -33,7 +33,7 @@ import '../components/host_filter.dart';
 
 class ProxyHelper {
   //请求本服务
-  static localRequest(HttpRequest msg, Channel channel) async {
+  static localRequest(ChannelContext channelContext, HttpRequest msg, Channel channel) async {
     //获取配置
     if (msg.path == '/config') {
       final requestRewrites = await RequestRewriteManager.instance;
@@ -50,7 +50,7 @@ class ProxyHelper {
         }),
       };
       response.body = utf8.encode(json.encode(body));
-      channel.writeAndClose(response);
+      channel.writeAndClose(channelContext, response);
       return;
     }
 
@@ -58,11 +58,11 @@ class ProxyHelper {
     response.body = utf8.encode('pong');
     response.headers.set("os", Platform.operatingSystem);
     response.headers.set("hostname", Platform.isAndroid ? Platform.operatingSystem : Platform.localHostname);
-    channel.writeAndClose(response);
+    channel.writeAndClose(channelContext, response);
   }
 
   /// 下载证书
-  static void crtDownload(Channel channel, HttpRequest request) async {
+  static void crtDownload(ChannelContext channelContext, Channel channel, HttpRequest request) async {
     const String fileMimeType = 'application/x-x509-ca-cert';
     var response = HttpResponse(HttpStatus.ok);
     response.headers.set(HttpHeaders.CONTENT_TYPE, fileMimeType);
@@ -74,11 +74,11 @@ class ProxyHelper {
     response.headers.set("Content-Length", caBytes.lengthInBytes.toString());
 
     if (request.method == HttpMethod.head) {
-      channel.writeAndClose(response);
+      channel.writeAndClose(channelContext, response);
       return;
     }
     response.body = caBytes;
-    channel.writeAndClose(response);
+    channel.writeAndClose(channelContext, response);
   }
 
   ///异常处理
@@ -113,10 +113,13 @@ class ProxyHelper {
       request.uri = hostAndPort.domain;
     }
 
-    request.response = HttpResponse(status)
-      ..headers.contentType = 'text/plain'
-      ..headers.contentLength = message.codeUnits.length
-      ..body = message.codeUnits;
+    if (request.response == null || request.method == HttpMethod.connect) {
+      request.response = HttpResponse(status)
+        ..headers.contentType = 'text/plain'
+        ..headers.contentLength = message.codeUnits.length
+        ..body = message.codeUnits;
+    }
+
     request.response?.request = request;
 
     channelContext.host = hostAndPort;

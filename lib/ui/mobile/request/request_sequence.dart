@@ -18,7 +18,12 @@ class RequestSequence extends StatefulWidget {
   final Function(List<HttpRequest>)? onRemove;
 
   const RequestSequence(
-      {super.key, required this.container, required this.proxyServer, this.displayDomain = true, this.onRemove, this.sortDesc});
+      {super.key,
+      required this.container,
+      required this.proxyServer,
+      this.displayDomain = true,
+      this.onRemove,
+      this.sortDesc});
 
   @override
   State<StatefulWidget> createState() {
@@ -154,15 +159,21 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                 Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
             itemCount: view.length,
             itemBuilder: (context, index) {
+              final requestId = view.elementAt(index).requestId;
+
+              final key = GlobalKey<RequestRowState>();
+              indexes[requestId] = key;
+
               return RequestRow(
                   index: sortDesc ? view.length - index : index,
-                  key: indexes[view.elementAt(index).requestId] ??= GlobalKey(),
+                  key: key,
                   request: view.elementAt(index),
                   proxyServer: widget.proxyServer,
                   displayDomain: widget.displayDomain,
                   onRemove: (request) {
                     setState(() {
                       view.remove(request);
+                      indexes.remove(requestId);
                     });
                     widget.onRemove?.call([request]);
                   });

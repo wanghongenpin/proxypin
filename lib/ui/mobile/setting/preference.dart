@@ -74,6 +74,15 @@ class _PreferenceState extends State<Preference> {
                         proxyServer.configuration.flushConfig();
                       })),
               ListTile(
+                  title: Text(localizations.enabledHTTP2),
+                  trailing: SwitchWidget(
+                      value: configuration.enabledHttp2,
+                      scale: 0.8,
+                      onChanged: (value) {
+                        configuration.enabledHttp2 = value;
+                        proxyServer.configuration.flushConfig();
+                      })),
+              ListTile(
                   title: Text(localizations.externalProxy),
                   trailing: const Icon(Icons.keyboard_arrow_right),
                   onTap: () {

@@ -23,7 +23,7 @@ import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/storage/histories.dart';
-import 'package:proxypin/ui/component/toolbox/toolbox.dart';
+import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/setting/preference.dart';

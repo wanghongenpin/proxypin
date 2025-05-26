@@ -16,8 +16,9 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
+
+import 'package:proxypin/network/util/logger.dart';
 
 class WebSocketFrame {
   final bool fin;
@@ -52,12 +53,14 @@ class WebSocketFrame {
 
   bool get isText => opcode == 0x01;
 
+  bool get isBinary => opcode == 0x02;
+
   String get payloadDataAsString {
     if (opcode == 0x08) {
-      return '[连接关闭]';
+      return '连接关闭';
     }
     if (opcode == 0x02) {
-      return '[二进制数据]';
+      return '二进制数据';
     }
     try {
       return utf8.decode(payloadData);
@@ -69,9 +72,22 @@ class WebSocketFrame {
 
 ///websocket 解码器
 class WebSocketDecoder {
-  WebSocketFrame? decode(Uint8List byteBuf) {
-    var frame = _parseWebSocketFrame(byteBuf);
-    return frame;
+  ByteBuffer buffer = ByteBuffer();
+
+  WebSocketFrame? decode(Uint8List newData) {
+    buffer.putBytes(newData);
+    if (!canParseWebSocketFrame(buffer.bytes)) {
+      return null;
+    }
+
+    try {
+      WebSocketFrame frame = _parseWebSocketFrame(buffer.bytes);
+      buffer.clear();
+      return frame;
+    } catch (e, stackTrace) {
+      logger.e("WebSocket decode error", error: e, stackTrace: stackTrace);
+      return null;
+    }
   }
 
   bool canParseWebSocketFrame(Uint8List data) {
@@ -88,20 +104,29 @@ class WebSocketDecoder {
 
     var mask = reader.getUint8(1) >> 7;
     int payloadStart = 2;
-    if (mask == 1) {
-      payloadStart += 4;
-    }
+    int payloadLength = reader.getUint8(1) & 0x7f;
 
-    var payloadLength = reader.getUint8(1) & 0x7f;
     if (payloadLength == 126) {
+      if (data.length < 4) return false;
+      payloadLength = reader.getUint16(2);
       payloadStart += 2;
     } else if (payloadLength == 127) {
+      if (data.length < 10) return false;
+      payloadLength = reader.getUint64(2);
       payloadStart += 8;
+    }
+
+    if (mask == 1) {
+      if (data.length < payloadStart + 4) {
+        return false;
+      }
+      payloadStart += 4;
     }
 
     if (data.length < payloadStart + payloadLength) {
       return false;
     }
+
     return true;
   }
 
@@ -115,8 +140,7 @@ class WebSocketDecoder {
     var opcode = reader.getUint8(0) & 0x0f;
 
     var mask = reader.getUint8(1) >> 7;
-
-    var payloadLength = reader.getUint8(1) & 0x7f;
+    int payloadLength = reader.getUint8(1) & 0x7f;
 
     int payloadStart = 2;
 
@@ -134,9 +158,14 @@ class WebSocketDecoder {
       payloadStart += 4;
     }
 
-    var payloadData = data.sublist(payloadStart, min(payloadStart + payloadLength, data.length));
+    int payloadDataLength = payloadLength;
+    if (payloadStart + payloadDataLength > data.length) {
+      payloadDataLength = data.length - payloadStart;
+      logger.w("Payload data length exceeds available data, truncating.");
+    }
 
-    //根据maskKey解密内容
+    var payloadData = data.sublist(payloadStart, payloadStart + payloadDataLength);
+
     if (mask == 1) {
       payloadData = unmaskPayload(payloadData, maskingKey);
     }
@@ -145,6 +174,7 @@ class WebSocketDecoder {
       //inflate
       payloadData = decompress(payloadData);
     }
+
     return WebSocketFrame(
       fin: fin == 1,
       opcode: opcode,
@@ -163,6 +193,7 @@ class WebSocketDecoder {
     try {
       return Uint8List.fromList(_ensureDecoder().convert(msg));
     } catch (e) {
+      logger.e("Decompression error", error: e);
       return msg;
     }
   }
@@ -174,5 +205,22 @@ class WebSocketDecoder {
       unmaskedData[i] = payloadData[i] ^ keyByte;
     }
     return unmaskedData;
+  }
+}
+
+class ByteBuffer {
+  Uint8List _bytes = Uint8List(0);
+
+  Uint8List get bytes => _bytes;
+
+  void putBytes(Uint8List newBytes) {
+    Uint8List tmp = Uint8List(_bytes.length + newBytes.length);
+    tmp.setAll(0, _bytes);
+    tmp.setAll(_bytes.length, newBytes);
+    _bytes = tmp;
+  }
+
+  void clear() {
+    _bytes = Uint8List(0);
   }
 }

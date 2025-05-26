@@ -1,14 +1,15 @@
-
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/http/codec.dart';
+import 'package:proxypin/network/http/h2/frame.dart';
 import 'package:proxypin/network/http/h2/setting.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/process_info.dart';
 import 'package:proxypin/utils/lang.dart';
 
 import '../bin/listener.dart';
+import 'network.dart';
 
 ///
 class ChannelContext {
@@ -23,16 +24,25 @@ class ChannelContext {
   EventListener? listener;
 
   //http2 stream
-  final Map<int, Pair<HttpRequest, ValueWrap<HttpResponse>>> _streams = {};
+  final Map<int, Pair<HttpRequest?, HttpResponse?>> _streams = {};
+  final Map<int, HeadersFrame> _streamDependency = {};
 
   ChannelContext();
 
   //创建服务端连接
   Future<Channel> connectServerChannel(HostAndPort hostAndPort, ChannelHandler channelHandler) async {
-    serverChannel = await HttpClients.startConnect(hostAndPort, channelHandler, this);
+    serverChannel = await startConnect(hostAndPort, channelHandler, this);
     putAttribute(clientChannel!.id, serverChannel);
     putAttribute(serverChannel!.id, clientChannel);
     return serverChannel!;
+  }
+
+  /// 建立连接
+  static Future<Channel> startConnect(
+      HostAndPort hostAndPort, ChannelHandler handler, ChannelContext channelContext) async {
+    var client = Client()..initChannel((channel) => channel.dispatcher.channelHandle(HttpClientCodec(), handler));
+
+    return client.connect(hostAndPort, channelContext);
   }
 
   T? getAttribute<T>(String key) {
@@ -66,15 +76,20 @@ class ChannelContext {
 
   HttpRequest? putStreamRequest(int streamId, HttpRequest request) {
     var old = _streams[streamId]?.key;
-    _streams[streamId] = Pair(request, ValueWrap());
+    _streams[streamId] = Pair(request, null);
     return old;
   }
 
   void putStreamResponse(int streamId, HttpResponse response) {
-    var stream = _streams[streamId]!;
-    stream.key.response = response;
-    response.request = stream.key;
-    stream.value.set(response);
+    var pair = _streams[streamId];
+    if (pair == null) {
+      pair = Pair(null, response);
+      _streams[streamId] = pair;
+    }
+
+    pair.key?.response = response;
+    response.request = pair.key;
+    pair.value = response;
   }
 
   HttpRequest? getStreamRequest(int streamId) {
@@ -82,10 +97,27 @@ class ChannelContext {
   }
 
   HttpResponse? getStreamResponse(int streamId) {
-    return _streams[streamId]?.value.get();
+    return _streams[streamId]?.value;
   }
 
   void removeStream(int streamId) {
     _streams.remove(streamId);
+  }
+
+  void put(int streamId, HeadersFrame frame) {
+    _streamDependency[streamId] = frame;
+  }
+
+  HeadersFrame? removeStreamDependency(int streamId) {
+    return _streamDependency.remove(streamId);
+  }
+
+  HeadersFrame? getStreamDependency(int streamId) {
+    return _streamDependency[streamId];
+  }
+
+  bool containsStreamDependency(int? streamId) {
+    if (streamId == null) return false;
+    return _streamDependency.containsKey(streamId);
   }
 }

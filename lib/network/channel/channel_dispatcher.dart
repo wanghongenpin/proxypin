@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel.dart';
@@ -13,12 +14,17 @@ import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
 
+import '../util/task_queue.dart';
+
 class ChannelDispatcher extends ChannelHandler<Uint8List> {
   late Decoder decoder;
   late Encoder encoder;
   late ChannelHandler handler;
 
   final ByteBuf buffer = ByteBuf();
+
+  //h2 stream dependency Sequential exec
+  SequentialTaskQueue taskQueue = SequentialTaskQueue();
 
   handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
     this.encoder = encoder;
@@ -52,7 +58,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     if (clientChannel.isSsl && !remoteChannel.isSsl) {
       //代理认证
       if (proxyInfo?.isAuthenticated == true) {
-        await HttpClients.connectRequest(remote, remoteChannel, proxyInfo: proxyInfo);
+        await HttpClients.connectRequest(channelContext, remote, remoteChannel, proxyInfo: proxyInfo);
       }
 
       await remoteChannel.secureSocket(channelContext, host: channelContext.getAttribute(AttributeKeys.domain));
@@ -73,7 +79,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   }
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
     try {
       //手机扫码连接转发远程
       HostAndPort? remote = channelContext.getAttribute(AttributeKeys.remote);
@@ -101,17 +107,21 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
         return;
       }
 
-      if (!decodeResult.isDone) {
-        return;
-      }
-
       if (decodeResult.forward != null) {
+        buffer.clearRead();
+
         if (remoteChannel != null) {
           await remoteChannel.writeBytes(decodeResult.forward!);
         } else {
           logger.w("[$channel] forward remoteChannel is null");
         }
-        buffer.clearRead();
+
+        if (decodeResult.data == null) {
+          return;
+        }
+      }
+
+      if (!decodeResult.isDone) {
         return;
       }
 
@@ -146,11 +156,25 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
         return;
       }
 
-      handler.channelRead(channelContext, channel, data!);
+      if (data is HttpMessage && channelContext.containsStreamDependency(data.streamId)) {
+        taskQueue.add(data.streamId!, channelContext.getStreamDependency(data.streamId!)?.streamDependency,
+            () => handler.channelRead(channelContext, channel, data),
+            onError: (error, stackTrace) => onError(channelContext, channel, error, trace: stackTrace));
+      } else {
+        await handler.channelRead(channelContext, channel, data!);
+      }
     } catch (error, trace) {
-      buffer.clear();
-      exceptionCaught(channelContext, channel, error, trace: trace);
+      onError(channelContext, channel, error, trace: trace);
     }
+  }
+
+  onError(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
+    logger.e(
+        "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} client: ${channelContext.clientChannel?.selectedProtocol} server: ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
+        error: error,
+        stackTrace: trace);
+    buffer.clear();
+    exceptionCaught(channelContext, channel, error, trace: trace);
   }
 
   /// websocket 处理
@@ -163,7 +187,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     channelContext.currentRequest?.hostAndPort = channelContext.host;
 
     logger.d("webSocket ${data.request?.hostAndPort}");
-    remoteChannel.write(data);
+    remoteChannel.write(channelContext, data);
 
     channelContext.listener?.onResponse(channelContext, data);
 
@@ -191,7 +215,8 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   }
 
   @override
-  channelInactive(ChannelContext channelContext, Channel channel) {
+  channelInactive(ChannelContext channelContext, Channel channel) async {
+    await taskQueue.waitForAll();
     handler.channelInactive(channelContext, channel);
   }
 }
@@ -204,7 +229,7 @@ class RawCodec extends Codec<Uint8List, List<int>> {
   }
 
   @override
-  List<int> encode(dynamic data) {
+  List<int> encode(ChannelContext channelContext, dynamic data) {
     return data as List<int>;
   }
 }

@@ -28,22 +28,23 @@ import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
-import 'package:proxypin/ui/component/toolbox/cert_hash.dart';
 import 'package:proxypin/ui/component/device.dart';
-import 'package:proxypin/ui/component/toolbox/encoder.dart';
-import 'package:proxypin/ui/component/toolbox/js_run.dart';
-import 'package:proxypin/ui/component/toolbox/qr_code_page.dart';
-import 'package:proxypin/ui/component/toolbox/regexp.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/ui/desktop/request/request_editor.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/request_rewrite.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
+import 'package:proxypin/ui/toolbox/aes_page.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'toolbox/timestamp.dart';
+import '../toolbox/cert_hash.dart';
+import '../toolbox/encoder.dart';
+import '../toolbox/js_run.dart';
+import '../toolbox/qr_code_page.dart';
+import '../toolbox/regexp.dart';
+import '../toolbox/timestamp.dart';
 
 bool isMultiWindow = false;
 
@@ -98,6 +99,10 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   }
   if (argument['name'] == 'TimestampPage') {
     return TimestampPage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'AesPage') {
+    return AesPage();
   }
 
   //脚本日志

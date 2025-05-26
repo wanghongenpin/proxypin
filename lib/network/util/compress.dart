@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:brotli/brotli.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:zstandard/zstandard.dart';
 
 ///GZIP 解压缩
 List<int> gzipDecode(List<int> byteBuffer) {
@@ -25,6 +27,17 @@ List<int> brDecode(List<int> byteBuffer) {
     return brotli.decode(byteBuffer);
   } catch (e) {
     logger.e("brDecode error: $e");
+    return byteBuffer;
+  }
+}
+
+///zstd 解压缩
+Future<List<int>?> zstdDecode(List<int> byteBuffer) async {
+  final zstandard = Zstandard();
+  try {
+    return zstandard.decompress(Uint8List.fromList(byteBuffer));
+  } catch (e) {
+    logger.e("zstdDecode error: $e");
     return byteBuffer;
   }
 }

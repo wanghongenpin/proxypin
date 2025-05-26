@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -21,6 +23,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/share.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -218,13 +221,28 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
                             child:
                                 Text(message.time.format(), style: const TextStyle(fontSize: 12, color: Colors.grey))),
                         Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: message.isFromClient ? Colors.green.withOpacity(0.26) : Colors.blue.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(message.payloadDataAsString),
-                        )
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color:
+                                  message.isFromClient ? Colors.green.withOpacity(0.26) : Colors.blue.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: SelectableText(
+                              "${message.payloadDataAsString}${message.isBinary ? ' ${getPackage(message.payloadLength)}' : ''}",
+                              contextMenuBuilder: (context, editableTextState) =>
+                                  contextMenu(context, editableTextState,
+                                      customItem: ContextMenuButtonItem(
+                                        label: localizations.download,
+                                        onPressed: () async {
+                                          String? path =
+                                              (await FilePicker.platform.saveFile(bytes: message.payloadData));
+                                          if (path != null && mounted) {
+                                            CustomToast.success(localizations.saveSuccess).show(this.context);
+                                          }
+                                        },
+                                        type: ContextMenuButtonType.custom,
+                                      )),
+                            ))
                       ]),
                 ),
                 const SizedBox(width: 8),
@@ -266,9 +284,9 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
       const SizedBox(height: 20),
       rowWidget("Response Content-Type", response?.headers.contentType),
       const SizedBox(height: 20),
-      rowWidget("Request Package", getPackage(request)),
+      rowWidget("Request Package", getPackage(request.packageSize)),
       const SizedBox(height: 20),
-      rowWidget("Response Package", getPackage(response)),
+      rowWidget("Response Package", getPackage(response?.packageSize)),
       const SizedBox(height: 20),
     ];
     if (request.processInfo != null) {
@@ -309,7 +327,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   }
 
   Widget cookies() {
-    var requestCookie = _cookieWidget(widget.request.get()?.cookie);
+    var requestCookie = widget.request.get()?.cookies.expand((cookie) => _cookieWidget(cookie)!);
 
     var responseCookie = widget.response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(e)!);
     return ListView(children: [

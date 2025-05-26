@@ -24,21 +24,21 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   HttpProxyChannelHandler({this.listener, required this.interceptors});
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, HttpRequest msg) async {
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, HttpRequest msg) async {
     //下载证书
     if (msg.uri == 'http://proxy.pin/ssl' || msg.requestUrl == 'http://127.0.0.1:${channel.socket.port}/ssl') {
-      ProxyHelper.crtDownload(channel, msg);
+      ProxyHelper.crtDownload(channelContext, channel, msg);
       return;
     }
     //请求本服务
     if ((await localIps()).contains(msg.hostAndPort?.host) && msg.hostAndPort?.port == channel.socket.port) {
-      ProxyHelper.localRequest(msg, channel);
+      ProxyHelper.localRequest(channelContext, msg, channel);
       return;
     }
 
     //代理转发请求
     try {
-      forward(channelContext, channel, msg).catchError((error, trace) {
+      await forward(channelContext, channel, msg).catchError((error, trace) {
         exceptionCaught(channelContext, channel, error, trace: trace);
       });
     } catch (error, trace) {
@@ -77,7 +77,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       if (httpRequest.method == HttpMethod.connect) {
         channel.error = error; //记录异常
         //https代理新建connect连接请求 返回ok 会继续发起正常请求 可以获取到请求内容
-        await channel.write(
+        await channel.write(channelContext,
             HttpResponse(HttpStatus.ok.reason('Connection established'), protocolVersion: httpRequest.protocolVersion));
       } else {
         rethrow;
@@ -87,9 +87,10 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     //实现抓包代理转发
     if (httpRequest.method != HttpMethod.connect) {
-      log.d("[${channel.id}] ${httpRequest.method.name} ${httpRequest.requestUrl}");
+      log.d(
+          "[${channel.id}] streamId:${httpRequest.streamId ?? ''} ${httpRequest.protocolVersion}  ${httpRequest.method.name} ${httpRequest.requestUrl}");
       if (HostFilter.filter(httpRequest.hostAndPort?.host)) {
-        await remoteChannel.write(httpRequest);
+        await remoteChannel.write(channelContext, httpRequest);
         return;
       }
 
@@ -115,7 +116,15 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
         await redirect(channelContext, channel, request, redirectUrl!);
         return;
       }
-      await remoteChannel.write(request);
+
+      //http1 直接请求  不需要携带域名
+      if (!remoteChannel.useProxy &&
+          request.protocolVersion == HttpMessage.http1Version &&
+          request.uri.startsWith(HostAndPort.httpScheme)) {
+        final requestUri = request.requestUri!;
+        request.uri = "${requestUri.path}${requestUri.hasQuery ? '?${requestUri.query}' : ''}";
+      }
+      await remoteChannel.write(channelContext, request);
     }
   }
 
@@ -135,7 +144,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
     httpRequest.headers.host = '${redirectUri.host}${redirectUri.hasPort ? ':${redirectUri.port}' : ''}';
     var redirectChannel = await HttpClients.connect(redirectUri, proxyHandler, channelContext);
     channelContext.serverChannel = redirectChannel;
-    await redirectChannel.write(httpRequest);
+    await redirectChannel.write(channelContext, httpRequest);
   }
 
   /// 获取远程连接
@@ -158,6 +167,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
     if (remote != null || proxyInfo != null) {
       HostAndPort connectHost = remote ?? HostAndPort.host(proxyInfo!.host, proxyInfo.port!);
       final proxyChannel = await connectRemote(channelContext, clientChannel, connectHost);
+      proxyChannel.useProxy = true;
 
       //代理建立完连接判断是否是https 需要发起connect请求
       if (httpRequest.method == HttpMethod.connect) {
@@ -167,11 +177,12 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
           httpRequest.headers.set(HttpHeaders.PROXY_AUTHORIZATION, 'Basic $auth');
         }
 
-        await proxyChannel.write(httpRequest);
+        await proxyChannel.write(channelContext, httpRequest);
       } else {
         if (clientChannel.isSsl) {
-          await HttpClients.connectRequest(hostAndPort, proxyChannel, proxyInfo: proxyInfo);
-          await proxyChannel.secureSocket(channelContext, host: hostAndPort.host);
+          await HttpClients.connectRequest(channelContext, hostAndPort, proxyChannel, proxyInfo: proxyInfo);
+          await proxyChannel.secureSocket(channelContext,
+              host: hostAndPort.host, supportedProtocols: httpRequest.protocolVersion == "HTTP/2" ? ["h2"] : null);
         }
       }
 
@@ -191,12 +202,16 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     final proxyChannel = await connectRemote(channelContext, clientChannel, remoteAddress);
     if (clientChannel.isSsl) {
-      await proxyChannel.secureSocket(channelContext, host: hostAndPort.host);
+      await proxyChannel.secureSocket(channelContext,
+          host: hostAndPort.host,
+          supportedProtocols: channelContext.clientChannel?.selectedProtocol == null
+              ? null
+              : [channelContext.clientChannel!.selectedProtocol!]);
     }
 
     //https代理新建连接请求
     if (httpRequest.method == HttpMethod.connect) {
-      await clientChannel.write(
+      await clientChannel.write(channelContext,
           HttpResponse(HttpStatus.ok.reason('Connection established'), protocolVersion: httpRequest.protocolVersion));
     }
     return proxyChannel;
@@ -221,13 +236,13 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
   HttpResponseProxyHandler(this.clientChannel, this.interceptors, {this.listener});
 
   @override
-  void channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
-    var request = channelContext.currentRequest;
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
+    var request = msg.request ?? channelContext.currentRequest;
     request?.response = msg;
 
     //域名是否过滤
     if (HostFilter.filter(request?.hostAndPort?.host) || request?.method == HttpMethod.connect) {
-      await clientChannel.write(msg);
+      await clientChannel.write(channelContext, msg);
       return;
     }
 
@@ -246,7 +261,7 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
 
     listener?.onResponse(channelContext, response!);
     //发送给客户端
-    await clientChannel.write(response!);
+    await clientChannel.write(channelContext, response!);
   }
 
   @override

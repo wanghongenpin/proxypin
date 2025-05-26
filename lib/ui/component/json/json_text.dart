@@ -16,7 +16,6 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 
@@ -31,34 +30,23 @@ class JsonText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var jsnParser = JsnParser(json, colorTheme, indent);
-    var future =
-        compute((message) => message.getJsonTree(), jsnParser).catchError((error) => <Text>[Text(error.toString())]);
+    var textList = jsnParser.getJsonTree();
 
-    return FutureBuilder(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-            var textList = snapshot.data as List<Text>;
-
-            Widget widget;
-            if (textList.length < 2000) {
-              widget = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textList);
-            } else {
-              widget = SizedBox(
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height - 160,
-                  child: ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      controller: trackingScroll(),
-                      cacheExtent: 1000,
-                      itemBuilder: (context, index) => textList[index],
-                      itemCount: textList.length));
-            }
-            return SelectionArea(child: widget);
-          }
-
-          return Container();
-        });
+    Widget widget;
+    if (textList.length < 1500) {
+      widget = Column(crossAxisAlignment: CrossAxisAlignment.start, children: textList);
+    } else {
+      widget = SizedBox(
+          width: double.infinity,
+          height: MediaQuery.of(context).size.height - 160,
+          child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              controller: trackingScroll(),
+              cacheExtent: 1000,
+              itemBuilder: (context, index) => textList[index],
+              itemCount: textList.length));
+    }
+    return SelectionArea(child: widget);
   }
 
   ///滚动条

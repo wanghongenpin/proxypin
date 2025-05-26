@@ -6,7 +6,7 @@ cd ../build/linux/x64/release
 rm -rf package
 mkdir -p package/DEBIAN
 echo "Package: ProxyPin" >> package/DEBIAN/control
-echo "Version: 1.1.8" >> package/DEBIAN/control
+echo "Version: 1.1.9" >> package/DEBIAN/control
 echo "Priority: optional" >> package/DEBIAN/control
 echo "Architecture: amd64" >> package/DEBIAN/control
 echo "Depends: ca-certificates" >> package/DEBIAN/control

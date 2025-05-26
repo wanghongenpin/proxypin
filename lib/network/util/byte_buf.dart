@@ -45,10 +45,16 @@ class ByteBuf {
   void clear() {
     readerIndex = 0;
     writerIndex = 0;
+    _buffer = Uint8List(0);
   }
 
   ///释放已读的空间
   void clearRead() {
+    if (readerIndex == writerIndex) {
+      clear();
+      return;
+    }
+
     if (readerIndex > 0) {
       _buffer = Uint8List.sublistView(_buffer, readerIndex, writerIndex);
       writerIndex -= readerIndex;

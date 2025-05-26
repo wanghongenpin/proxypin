@@ -91,7 +91,14 @@ class RequestRewriteInterceptor extends Interceptor {
 
     if (rewriteRule?.type == RuleType.requestUpdate) {
       var rewriteItems = await manager.getRewriteItems(rewriteRule!);
-      rewriteItems?.where((item) => item.enabled).forEach((item) => _updateRequest(request, item));
+      if (rewriteItems == null) {
+        return;
+      }
+      for (var item in rewriteItems) {
+        if (item.enabled) {
+          await _updateRequest(request, item);
+        }
+      }
     }
   }
 
@@ -115,7 +122,15 @@ class RequestRewriteInterceptor extends Interceptor {
 
     if (rewriteRule.type == RuleType.responseUpdate) {
       var rewriteItems = await manager.getRewriteItems(rewriteRule);
-      rewriteItems?.where((item) => item.enabled).forEach((item) => _updateMessage(response, item));
+      if (rewriteItems == null) {
+        return;
+      }
+
+      for (var item in rewriteItems) {
+        if (item.enabled) {
+          await _updateMessage(response, item);
+        }
+      }
     }
   }
 
@@ -176,9 +191,9 @@ class RequestRewriteInterceptor extends Interceptor {
   }
 
   //修改消息
-  _updateMessage(HttpMessage message, RewriteItem item) {
+  Future<void> _updateMessage(HttpMessage message, RewriteItem item) async {
     if (item.type == RewriteType.updateBody && message.body != null) {
-      String body = message.getBodyString().replaceAllMapped(RegExp(item.key!), (match) {
+      String body = (await message.decodeBodyString()).replaceAllMapped(RegExp(item.key!), (match) {
         if (match.groupCount > 0 && item.value?.contains("\$1") == true) {
           return item.value!.replaceAll("\$1", match.group(1)!);
         }
@@ -264,6 +279,7 @@ class RequestRewriteInterceptor extends Interceptor {
 
         message.body = await FileRead.readFile(item.bodyFile!);
         message.headers.contentLength = message.body!.length;
+        message.headers.remove(HttpHeaders.CONTENT_ENCODING);
         return;
       }
 
@@ -271,6 +287,7 @@ class RequestRewriteInterceptor extends Interceptor {
         message.body =
             message.charset == 'utf-8' || message.charset == 'utf8' ? utf8.encode(item.body!) : item.body?.codeUnits;
         message.headers.contentLength = message.body!.length;
+        message.headers.remove(HttpHeaders.CONTENT_ENCODING);
       }
       return;
     }

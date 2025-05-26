@@ -2,7 +2,7 @@ name: proxypin
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.1.8+18
+version: 1.1.9+19
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -45,6 +45,8 @@ dependencies:
   flutter_qr_reader: ^1.0.5
 
   brotli: ^0.6.0
+  zstandard: ^1.3.27
+
   win32audio: ^1.3.1
   vclibs: ^0.1.3
 

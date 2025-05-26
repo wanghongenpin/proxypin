@@ -35,16 +35,16 @@ abstract class ChannelHandler<T> {
   void channelActive(ChannelContext context, Channel channel) {}
 
   ///读取数据事件
-  void channelRead(ChannelContext channelContext, Channel channel, T msg) {}
+  Future<void> channelRead(ChannelContext channelContext, Channel channel, T msg) async {}
 
   ///连接断开
   void channelInactive(ChannelContext channelContext, Channel channel) {
-    // log.i("close $channel");
+    //log.i("[${channel.id}] close $channel");
   }
 
   void exceptionCaught(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
     HostAndPort? host = channelContext.host;
-    log.e("[${channel.id}] error $host $channel", error: error, stackTrace: trace);
+    log.e("[${channel.id}] exceptionCaught $host $channel", error: error, stackTrace: trace);
     channel.close();
   }
 }
@@ -65,6 +65,8 @@ class Channel {
   bool isWriting = false;
 
   Object? error; //异常
+  //是否使用代理
+  bool useProxy = false;
 
   Channel(this._socket)
       : _id = DateTime.now().millisecondsSinceEpoch + Random().nextInt(999999),
@@ -75,6 +77,13 @@ class Channel {
 
   Socket get socket => _socket;
 
+  serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
+    _socket = secureSocket;
+    _socket.done.then((value) => isOpen = false);
+    dispatcher.listen(this, channelContext);
+  }
+
+  //向远程发起ssl连接
   Future<SecureSocket> secureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
     SecureSocket secureSocket = await SecureSocket.secure(socket,
@@ -87,26 +96,33 @@ class Channel {
     return secureSocket;
   }
 
-  serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
+  Future<SecureSocket> startSecureSocket(ChannelContext channelContext,
+      {String? host, List<String>? supportedProtocols}) async {
+    SecureSocket secureSocket = await SecureSocket.secure(socket,
+        host: host, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+
     _socket = secureSocket;
     _socket.done.then((value) => isOpen = false);
+    return secureSocket;
+  }
+
+  listen(ChannelContext channelContext) {
     dispatcher.listen(this, channelContext);
   }
 
-  String? get selectedProtocol => isSsl ? (_socket as SecureSocket).selectedProtocol : null;
+  String? get selectedProtocol => isSsl && isOpen ? (_socket as SecureSocket).selectedProtocol : null;
 
   ///是否是ssl链接
   bool get isSsl => _socket is SecureSocket;
 
-  Future<void> write(Object obj) async {
-    var data = dispatcher.encoder.encode(obj);
+  Future<void> write(ChannelContext channelContext, Object obj) async {
+    var data = dispatcher.encoder.encode(channelContext, obj);
     await writeBytes(data);
   }
 
   Future<void> writeBytes(List<int> bytes) async {
     if (isClosed) {
-      logger.w("[$id] channel is closed");
-      return;
+      logger.w("[$id] $remoteSocketAddress channel is closed", stackTrace: StackTrace.current);
     }
 
     //只能有一个写入
@@ -115,15 +131,19 @@ class Channel {
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
+    if (isWriting) {
+      logger.d("[$id] write busy");
+    }
+
     isWriting = true;
     try {
       if (!isClosed) {
         _socket.add(bytes);
       }
-      await _socket.flush();
+
     } catch (e, t) {
       if (e is StateError && e.message == "StreamSink is closed") {
-        isOpen = false;
+        logger.w("[$id] $remoteSocketAddress write error channel is closed $e", stackTrace: t);
       } else {
         logger.e("[$id] write error", error: e, stackTrace: t);
       }
@@ -133,8 +153,8 @@ class Channel {
   }
 
   ///写入并关闭此channel
-  Future<void> writeAndClose(Object obj) async {
-    await write(obj);
+  Future<void> writeAndClose(ChannelContext channelContext, Object obj) async {
+    await write(channelContext, obj);
     close();
   }
 
@@ -150,6 +170,10 @@ class Channel {
       await Future.delayed(const Duration(milliseconds: 150));
     }
     isOpen = false;
+    if (!isWriting) {
+      await _socket.flush();
+    }
+    await _socket.close();
     _socket.destroy();
   }
 

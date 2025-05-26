@@ -28,7 +28,6 @@ import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
-import 'package:proxypin/ui/component/toolbox/encoder.dart';
 import 'package:proxypin/ui/component/json/json_viewer.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -41,6 +40,7 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../component/json/json_text.dart';
+import '../toolbox/encoder.dart';
 
 ///请求响应的body部分
 ///@Author wanghongen
@@ -174,8 +174,8 @@ class HttpBodyState extends State<HttpBodyWidget> {
           : IconButton(
               icon: Icon(Icons.copy, size: 18),
               tooltip: localizations.copy,
-              onPressed: () {
-                var body = bodyKey.currentState?.body;
+              onPressed: () async {
+                var body = await bodyKey.currentState?.getBody();
                 if (body == null) {
                   return;
                 }
@@ -197,8 +197,11 @@ class HttpBodyState extends State<HttpBodyWidget> {
     list.add(IconButton(
         icon: const Icon(Icons.text_format, size: 21),
         tooltip: localizations.encode,
-        onPressed: () {
-          encodeWindow(EncoderType.base64, context, bodyKey.currentState?.body);
+        onPressed: () async {
+          var body = await bodyKey.currentState?.getBody();
+          if (mounted) {
+            encodeWindow(EncoderType.base64, context, body);
+          }
         }));
     if (!inNewWindow) {
       list.add(const SizedBox(width: 3));
@@ -339,7 +342,7 @@ class _BodyState extends State<_Body> {
     return _getBody(viewType);
   }
 
-  String? get body {
+  Future<String?> getBody() async {
     if (message?.isWebSocket == true) {
       return message?.messages.map((e) => e.payloadDataAsString).join("\n");
     }
@@ -351,17 +354,19 @@ class _BodyState extends State<_Body> {
     if (viewType == ViewType.hex) {
       return message!.body!.map(intToHex).join(" ");
     }
+
     try {
       if (viewType == ViewType.formUrl) {
         return Uri.decodeFull(message!.bodyAsString);
       }
+
       if (viewType == ViewType.jsonText || viewType == ViewType.json) {
         //json格式化
-        var jsonObject = json.decode(message!.bodyAsString);
+        var jsonObject = json.decode(await message!.decodeBodyString());
         return const JsonEncoder.withIndent("  ").convert(jsonObject);
       }
     } catch (_) {}
-    return message!.bodyAsString;
+    return message!.decodeBodyString();
   }
 
   Widget _getBody(ViewType type) {
@@ -397,37 +402,40 @@ class _BodyState extends State<_Body> {
       return const SizedBox();
     }
 
-    try {
-      if (type == ViewType.jsonText) {
-        var jsonObject = json.decode(message!.bodyAsString);
-        return JsonText(
-            json: jsonObject,
-            indent: Platforms.isDesktop() ? '    ' : '  ',
-            colorTheme: ColorTheme.of(Theme.of(context).brightness),
-            scrollController: widget.scrollController);
-      }
-
-      if (type == ViewType.json) {
-        return JsonViewer(json.decode(message!.bodyAsString), colorTheme: ColorTheme.of(Theme.of(context).brightness));
-      }
-
-      if (type == ViewType.formUrl) {
-        return SelectableText(Uri.decodeFull(message!.bodyAsString), contextMenuBuilder: contextMenu);
-      }
-      if (type == ViewType.image) {
-        return Center(child: Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
-      }
-      if (type == ViewType.video) {
-        return const Center(child: Text("video not support preview"));
-      }
-      if (type == ViewType.hex) {
-        return SelectableText(message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
-      }
-    } catch (e) {
-      logger.e(e, stackTrace: StackTrace.current);
+    if (type == ViewType.image) {
+      return Center(child: Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
+    }
+    if (type == ViewType.video) {
+      return const Center(child: Text("video not support preview"));
+    }
+    if (type == ViewType.hex) {
+      return SelectableText(message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
     }
 
-    return SelectableText.rich(TextSpan(text: message?.bodyAsString), contextMenuBuilder: contextMenu);
+    if (type == ViewType.formUrl) {
+      return SelectableText(Uri.decodeFull(message!.getBodyString()), contextMenuBuilder: contextMenu);
+    }
+
+    return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
+      try {
+        if (type == ViewType.jsonText) {
+          var jsonObject = json.decode(body);
+          return JsonText(
+              json: jsonObject,
+              indent: Platforms.isDesktop() ? '    ' : '  ',
+              colorTheme: ColorTheme.of(Theme.of(context).brightness),
+              scrollController: widget.scrollController);
+        }
+
+        if (type == ViewType.json) {
+          return JsonViewer(json.decode(body), colorTheme: ColorTheme.of(Theme.of(context).brightness));
+        }
+      } catch (e) {
+        logger.e(e, stackTrace: StackTrace.current);
+      }
+
+      return SelectableText.rich(TextSpan(text: body), contextMenuBuilder: contextMenu);
+    });
   }
 }
 

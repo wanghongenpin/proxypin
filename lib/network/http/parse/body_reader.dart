@@ -20,8 +20,8 @@ import 'dart:typed_data';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/http.dart';
 
-import '../../utils/num.dart';
-import 'codec.dart';
+import '../../../utils/num.dart';
+import '../codec.dart';
 
 class Result {
   final bool isDone;
@@ -55,12 +55,14 @@ class BodyReader {
 
     _offset = 0;
 
+    if (message.headers.contentType == 'video/x-flv' || message.headers.contentType.startsWith("text/event-stream")) {
+      //Directly forward without processing for now
+      return Result(false, supportedParse: false, body: data);
+    }
+
     //chunked编码
     if (message.headers.isChunked) {
       _readChunked(data);
-    } else if (message.headers.contentType == 'video/x-flv') {
-      //Directly forward without processing for now
-      return Result(false, supportedParse: false, body: data);
     } else {
       _readFixedLengthContent(data);
     }

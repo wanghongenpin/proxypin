@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/http/http.dart';
 
@@ -29,13 +30,13 @@ socketTest() async {
   httpRequest.headers.set('user-agent', 'Dart/3.0 (dart:io)');
   httpRequest.headers.set('accept-encoding', 'gzip');
   httpRequest.headers.set(HttpHeaders.hostHeader, host);
-
+  ChannelContext channelContext = ChannelContext();
   var codec = HttpRequestCodec();
-  print(String.fromCharCodes(codec.encode(httpRequest)));
-  socket.add(codec.encode(httpRequest));
+  print(String.fromCharCodes(codec.encode(channelContext, httpRequest)));
+  socket.add(codec.encode(channelContext, httpRequest));
   await socket.flush();
 
-   // subscription.resume();
+  // subscription.resume();
 
   await completer.future;
   // await Future.delayed(const Duration(milliseconds: 1600));
@@ -55,7 +56,7 @@ socketTest() async {
   httpRequest = HttpRequest(HttpMethod.get, "/");
   httpRequest.headers.set(HttpHeaders.hostHeader, host);
 
-  secureSocket.add(codec.encode(httpRequest));
+  secureSocket.add(codec.encode(channelContext, httpRequest));
   await secureSocket.flush();
   await completer.future;
 }

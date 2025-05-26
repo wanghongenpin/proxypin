@@ -19,13 +19,12 @@ import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
-import 'package:proxypin/network/http/body_reader.dart';
+import 'package:proxypin/network/http/parse/body_reader.dart';
 import 'package:proxypin/network/http/constants.dart';
-import 'package:proxypin/network/http/h2/codec.dart';
-import 'package:proxypin/network/http/http_parser.dart';
+import 'package:proxypin/network/http/h2/h2_codec.dart';
+import 'package:proxypin/network/http/parse/http_parser.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 
-import '../../utils/compress.dart';
 import 'http.dart';
 import 'http_headers.dart';
 
@@ -67,7 +66,7 @@ abstract interface class Decoder<T> {
 
 /// 编码
 abstract interface class Encoder<T> {
-  List<int> encode(T data);
+  List<int> encode(ChannelContext channelContext, T data);
 }
 
 /// 编解码器
@@ -94,7 +93,8 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf data) {
-    if (channelContext.serverChannel?.selectedProtocol == HttpConstants.h2) {
+    var protocol = channelContext.serverChannel?.selectedProtocol;
+    if (protocol == HttpConstants.h2 || protocol == HttpConstants.h2_14) {
       return getH2Codec().decode(channelContext, data);
     }
 
@@ -154,9 +154,9 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
   void initialLine(BytesBuilder buffer, T message);
 
   @override
-  List<int> encode(T message) {
-    if (message.streamId != null) {
-      return getH2Codec().encode(message);
+  List<int> encode(ChannelContext channelContext, T message) {
+    if (message.protocolVersion == "HTTP/2") {
+      return getH2Codec().encode(channelContext, message);
     }
 
     BytesBuilder builder = BytesBuilder();
@@ -164,9 +164,6 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
     initialLine(builder, message);
 
     List<int>? body = message.body;
-    if (message.headers.isGzip && body != null) {
-      body = gzipEncode(body);
-    }
 
     //请求头
     bool isChunked = message.headers.isChunked;
@@ -215,9 +212,6 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
   List<int>? _convertBody(List<int>? bytes) {
     if (bytes == null) {
       return null;
-    }
-    if (result.data!.headers.isGzip) {
-      bytes = gzipDecode(bytes);
     }
     return bytes;
   }
@@ -284,8 +278,8 @@ class HttpServerCodec extends Codec<HttpRequest, HttpResponse> {
   }
 
   @override
-  List<int> encode(HttpResponse data) {
-    return responseCodec.encode(data);
+  List<int> encode(ChannelContext channelContext, HttpResponse data) {
+    return responseCodec.encode(channelContext, data);
   }
 }
 
@@ -299,7 +293,7 @@ class HttpClientCodec extends Codec<HttpResponse, HttpRequest> {
   }
 
   @override
-  List<int> encode(HttpRequest data) {
-    return requestCodec.encode(data);
+  List<int> encode(ChannelContext channelContext, HttpRequest data) {
+    return requestCodec.encode(channelContext, data);
   }
 }

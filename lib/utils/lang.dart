@@ -119,6 +119,7 @@ extension StringEnhance on String {
       return this;
     }
   }
+
   String fixAutoLines() {
     return Characters(this).join('\u{200B}');
   }
@@ -142,8 +143,8 @@ extension StringEnhance on String {
 }
 
 class Pair<K, V> {
-  final K key;
-  final V value;
+  final K? key;
+  V? value;
 
   Pair(this.key, this.value);
 }

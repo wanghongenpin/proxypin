@@ -143,7 +143,22 @@ class RequestEditorState extends State<RequestEditor> {
                               title: Row(children: [
                                 const Text("Response", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                 const Spacer(),
-                                Text(response?.status.toString() ?? '', style: const TextStyle(fontSize: 14))
+                                Text.rich(TextSpan(children: [
+                                  TextSpan(
+                                      text: response?.protocolVersion,
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          decorationColor: Colors.green,
+                                          color: Colors.green)),
+                                  WidgetSpan(child: SizedBox(width: 12)),
+                                  TextSpan(
+                                      text: response?.status.code.toString() ?? '',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                          color: response?.status.isSuccessful() == true ? Colors.green : Colors.red))
+                                ]))
                               ]),
                               message: response,
                               readOnly: true))
@@ -160,8 +175,8 @@ class RequestEditorState extends State<RequestEditor> {
     var headers = requestKey.currentState?.getHeaders();
     var requestBody = requestKey.currentState?.getBody();
     String url = currentState.requestUrl.text;
-
-    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.parse(url).toString());
+    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.parse(url).toString(),
+        protocolVersion: this.request?.protocolVersion ?? "HTTP/1.1");
     request.headers.addAll(headers);
     request.body = requestBody == null ? null : utf8.encode(requestBody);
 
@@ -300,6 +315,7 @@ class _HttpState extends State<_HttpWidget> {
             height: MediaQuery.of(context).size.height - 120,
             child: DefaultTabController(
                 length: tabs.length,
+                initialIndex: tabs.length >= 3 ? 1 : 0,
                 child: Scaffold(
                   primary: false,
                   appBar: PreferredSize(

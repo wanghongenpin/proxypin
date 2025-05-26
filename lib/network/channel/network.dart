@@ -150,6 +150,7 @@ class Server extends Network {
               channel.remoteSocketAddress, channel.remoteSocketAddress.toString());
           domain = process?.remoteHost;
           port = process?.remotePost ?? port;
+          serviceName = domain;
         }
         hostAndPort = HostAndPort.host(domain!, port, scheme: HostAndPort.httpsScheme);
       }
@@ -168,19 +169,28 @@ class Server extends Network {
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : null;
-        await remoteChannel.secureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
+        await remoteChannel.startSecureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
       //ssl自签证书
       var certificate = await CertificateManager.getCertificateContext(serviceName!);
       var selectedProtocol = remoteChannel?.selectedProtocol;
-      if (selectedProtocol != null) certificate.setAlpnProtocols([selectedProtocol], true);
+
+      var supportedProtocols = selectedProtocol != null ? [selectedProtocol] : ['http/1.1'];
+
+      certificate.setAlpnProtocols(supportedProtocols, true);
 
       //处理客户端ssl握手
-      var secureSocket = await SecureSocket.secureServer(channel.socket, certificate, bufferedData: data);
+      var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,
+          bufferedData: data, supportedProtocols: supportedProtocols);
+
       channel.serverSecureSocket(secureSocket, channelContext);
+      // logger.d(
+      //     '[${channelContext.clientChannel?.id}] $hostAndPort ssl handshake done, selectedProtocol: ${secureSocket.selectedProtocol}');
+
+      remoteChannel?.listen(channelContext);
     } catch (error, trace) {
-      logger.e('$hostAndPort ssl error', error: error);
+      logger.e('[${channelContext.clientChannel?.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
       try {
         channelContext.processInfo ??=
             await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
@@ -199,9 +209,9 @@ class Client extends Network {
       {Duration timeout = const Duration(seconds: 3)}) async {
     String host = hostAndPort.host;
     //说明支持ipv6
-    if (host.startsWith("[") && host.endsWith(']')) {
-      host = host.substring(1, host.length - 1);
-    }
+    // if (host.startsWith("[") && host.endsWith(']')) {
+    //   host = host.substring(1, host.length - 1);
+    // }
 
     return Socket.connect(host, hostAndPort.port, timeout: timeout).then((socket) {
       if (socket.address.type != InternetAddressType.unix) {

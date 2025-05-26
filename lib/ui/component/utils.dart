@@ -36,37 +36,40 @@ const contentMap = {
   ContentType.font: Icons.font_download,
 };
 
-Icon getIcon(HttpResponse? response) {
+Icon getIcon(HttpResponse? response, {Color? color}) {
   if (response == null) {
-    return const Icon(Icons.question_mark, size: 16, color: Colors.green);
+    return Icon(Icons.question_mark, size: 16, color: color ?? Colors.green);
   }
   if (response.status.code < 0) {
-    return const Icon(Icons.error, size: 16, color: Colors.red);
+    return Icon(Icons.error, size: 16, color: color ?? Colors.red);
   }
 
   var contentType = response.contentType;
-  return Icon(contentMap[contentType] ?? Icons.http, size: 16, color: Colors.green);
+  return Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green);
 }
 
 //展示报文大小
 String getPackagesSize(HttpRequest request, HttpResponse? response) {
-  var package = getPackage(request);
-  var responsePackage = getPackage(response);
+  var package = getPackage(request.packageSize);
+  var responsePackage = getPackage(response?.packageSize);
   if (responsePackage.isEmpty) {
     return package;
   }
   return "$package / $responsePackage ";
 }
 
-String getPackage(HttpMessage? message) {
-  var size = message?.packageSize;
+String getPackage(int? size) {
   if (size == null) {
     return "";
   }
-  if (size > 1024 * 1024) {
-    return "${(size / 1024 / 1024).toStringAsFixed(2)}M";
+  if (size < 1025) {
+    return "$size B";
   }
-  return "${(size / 1024).toStringAsFixed(2)}K";
+
+  if (size > 1024 * 1024) {
+    return "${(size / 1024 / 1024).toStringAsFixed(2)} MB";
+  }
+  return "${(size / 1024).toStringAsFixed(2)} KB";
 }
 
 String copyRequest(HttpRequest request, HttpResponse? response) {
@@ -100,7 +103,7 @@ RelativeRect menuPosition(BuildContext context) {
   return position;
 }
 
-Widget contextMenu(BuildContext context, EditableTextState editableTextState) {
+Widget contextMenu(BuildContext context, EditableTextState editableTextState, {ContextMenuButtonItem? customItem}) {
   List<ContextMenuButtonItem> list = [
     ContextMenuButtonItem(
       onPressed: () {
@@ -128,8 +131,13 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState) {
         editableTextState.selectAll(SelectionChangedCause.tap);
       },
       type: ContextMenuButtonType.selectAll,
-    )
+    ),
   ];
+
+  if (customItem != null) {
+    list.add(customItem);
+  }
+
   if (Platform.isIOS) {
     list.add(ContextMenuButtonItem(
       onPressed: () async {
@@ -153,10 +161,15 @@ void unSelect(EditableTextState editableTextState) {
 }
 
 ///Future
-Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {bool loading = false}) {
+Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {T? initialData, bool loading = false}) {
   return FutureBuilder<T>(
     future: future,
+    initialData: initialData,
     builder: (BuildContext context, AsyncSnapshot<T> snapshot) {
+      if (snapshot.data != null) {
+        return toWidget(snapshot.requireData);
+      }
+
       if (snapshot.connectionState == ConnectionState.done) {
         if (snapshot.hasError) {
           logger.e(snapshot.error);

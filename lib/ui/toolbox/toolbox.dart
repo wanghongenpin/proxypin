@@ -5,16 +5,18 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/ui/component/toolbox/cert_hash.dart';
-import 'package:proxypin/ui/component/toolbox/encoder.dart';
-import 'package:proxypin/ui/component/toolbox/js_run.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
-import 'package:proxypin/ui/component/toolbox/qr_code_page.dart';
-import 'package:proxypin/ui/component/toolbox/regexp.dart';
-import 'package:proxypin/ui/component/toolbox/timestamp.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/ui/toolbox/qr_code_page.dart';
+import 'package:proxypin/ui/toolbox/regexp.dart';
+import 'package:proxypin/ui/toolbox/timestamp.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'aes_page.dart';
+import 'cert_hash.dart';
+import 'encoder.dart';
+import 'js_run.dart';
 
 class Toolbox extends StatefulWidget {
   final ProxyServer? proxyServer;
@@ -79,7 +81,7 @@ class _ToolboxState extends State<Toolbox> {
           ]),
           const Divider(thickness: 0.3),
           Text(localizations.encode, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-          Row(
+          Wrap(
             children: [
               InkWell(
                   onTap: () => encodeWindow(EncoderType.url, context),
@@ -92,24 +94,40 @@ class _ToolboxState extends State<Toolbox> {
                   onTap: () => encodeWindow(EncoderType.base64, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [Icon(Icons.format_bold), SizedBox(height: 3), Text('Base64')]),
+                    child: const Column(children: [Icon(Icons.format_bold_outlined  ), SizedBox(height: 3), Text('Base64')]),
                   )),
               const SizedBox(width: 15),
               InkWell(
                   onTap: () => encodeWindow(EncoderType.unicode, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [Icon(Icons.format_underline), SizedBox(height: 3), Text('Unicode')]),
+                    child: const Column(children: [Icon(Icons.format_underline_outlined), SizedBox(height: 3), Text('Unicode')]),
                   )),
               const SizedBox(width: 15),
               InkWell(
                   onTap: () => encodeWindow(EncoderType.md5, context),
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    child: const Column(children: [Icon(Icons.enhanced_encryption), SizedBox(height: 3), Text('MD5')]),
+                    child: const Column(children: [Icon(Icons.tag_outlined), SizedBox(height: 3), Text('MD5')]),
                   )),
             ],
           ),
+          const Divider(thickness: 0.3),
+          Text(localizations.cipher, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Wrap(children: [
+            InkWell(
+                onTap: () {
+                  if (Platforms.isMobile()) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AesPage()));
+                    return;
+                  }
+                  MultiWindow.openWindow("AES", "AesPage", size: const Size(700, 672));
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  child:  Column(children: [Icon(Icons.enhanced_encryption_outlined), SizedBox(height: 3), Text('AES')]),
+                )),
+          ]),
           const Divider(thickness: 0.3),
           Text(localizations.other, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           Wrap(
@@ -134,7 +152,7 @@ class _ToolboxState extends State<Toolbox> {
                     }
                     MultiWindow.openWindow(localizations.certHashName, 'CertHashPage');
                   },
-                  icon: Icons.key,
+                  icon: Icons.key_outlined,
                   text: localizations.certHashName),
               const SizedBox(width: 10),
               IconText(

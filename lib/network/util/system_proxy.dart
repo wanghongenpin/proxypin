@@ -257,7 +257,7 @@ class WindowsSystemProxy extends SystemProxy {
   @override
   Future<void> _setProxyPassDomains(String proxyPassDomains) async {
     var results = await _internetSettings('add', ['ProxyOverride', '/t', 'REG_SZ', '/d', proxyPassDomains, '/f']);
-    logger.e('set proxyPassDomains, stdout: $results');
+    logger.i('set proxyPassDomains, stdout: $results');
   }
 
   static Future<String> _internetSettings(String cmd, List<String> args) async {
