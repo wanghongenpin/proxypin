@@ -182,14 +182,14 @@ class _AesWidgetState extends State<AesPage> {
             children: [
               FilledButton(
                   style: ButtonStyle(
-                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
                   onPressed: encryptText,
                   child: Text(localizations.encrypt)),
               const SizedBox(width: 60),
               FilledButton(
                   style: ButtonStyle(
-                      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
                   onPressed: decryptText,
                   child: Text(localizations.decrypt)),

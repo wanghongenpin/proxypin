@@ -147,16 +147,16 @@ abstract class HttpMessage {
       return _bodyString!;
     }
 
-    List<int> rawBody = body!;
-    if (headers.contentEncoding == 'zstd') {
-      rawBody = await zstdDecode(body!) ?? [];
-      if (charset == 'utf-8' || charset == 'utf8') {
-        _bodyString = utf8.decode(rawBody);
-      } else {
-        _bodyString = String.fromCharCodes(rawBody);
-      }
-      return _bodyString!;
-    }
+    // List<int> rawBody = body!;
+    // if (headers.contentEncoding == 'zstd') {
+    //   rawBody = await zstdDecode(body!) ?? [];
+    //   if (charset == 'utf-8' || charset == 'utf8') {
+    //     _bodyString = utf8.decode(rawBody);
+    //   } else {
+    //     _bodyString = String.fromCharCodes(rawBody);
+    //   }
+    //   return _bodyString!;
+    // }
 
     return getBodyString();
   }
