@@ -1,3 +1,4 @@
+[Flutter 3.32.0+ flutter_gen not found? Click here for solution](#flutter-3320-and-above-flutter_gen-usage-note)
 # ProxyPin
 
 English | [中文](README_CN.md)
@@ -30,3 +31,24 @@ TG: https://t.me/proxypin_en
 
 <img alt="image"  width="580px" height="420px"  src="https://github.com/user-attachments/assets/6c1345ab-c95c-415d-ac59-470c764b59a2">.<img alt="image"  height="500px" src="https://github.com/user-attachments/assets/3c5572b0-a9e5-497c-8b42-f935e836c164">
 
+---
+
+## Flutter 3.32.0 and Above: flutter_gen Usage Note
+
+[Flutter Breaking Change: generate localizations source](https://docs.flutter.dev/release/breaking-changes/flutter-generate-i10n-source)
+
+> **If you encounter build errors related to `package:flutter_gen` when using Flutter 3.32.0 or later, please follow the steps below:**
+
+This project uses `flutter_gen` for localization and resource generation.
+
+- If you see build errors (such as “package:flutter_gen not found”) with Flutter 3.32.0 and above, please run before building:
+  ```bash
+  flutter config --no-explicit-package-dependencies
+  ```
+  After building, it is recommended to restore the default config:
+  ```bash
+  flutter config --explicit-package-dependencies
+  ```
+
+- For long-term compatibility, please follow Flutter's official announcements regarding `flutter_gen` migration and consider moving to the new localization solution as soon as possible.
+---
