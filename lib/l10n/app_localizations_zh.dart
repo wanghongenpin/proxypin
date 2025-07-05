@@ -955,3 +955,956 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get appUpdateIgnoreBtnTxt => '忽略';
 }
+
+/// The translations for Chinese, using the Han script (`zh_Hant`).
+class AppLocalizationsZhHant extends AppLocalizationsZh {
+  AppLocalizationsZhHant() : super('zh_Hant');
+
+  @override
+  String get requests => '抓包';
+
+  @override
+  String get favorites => '收藏';
+
+  @override
+  String get history => '歷史';
+
+  @override
+  String get toolbox => '工具箱';
+
+  @override
+  String get me => '我的';
+
+  @override
+  String get preference => '偏好設定';
+
+  @override
+  String get feedback => '意見回饋';
+
+  @override
+  String get about => '關於';
+
+  @override
+  String get filter => '代理過濾';
+
+  @override
+  String get script => '腳本';
+
+  @override
+  String get share => '分享';
+
+  @override
+  String get port => '連接埠號: ';
+
+  @override
+  String get proxy => '代理';
+
+  @override
+  String get externalProxy => '外部代理設定';
+
+  @override
+  String get username => '使用者名稱';
+
+  @override
+  String get password => '密碼';
+
+  @override
+  String get proxySetting => '代理設定';
+
+  @override
+  String get systemProxy => '設定為系統代理';
+
+  @override
+  String get enabledHTTP2 => '啟用HTTP2';
+
+  @override
+  String get serverNotStart => '未開啟抓包';
+
+  @override
+  String get download => '下載';
+
+  @override
+  String get start => '開始';
+
+  @override
+  String get stop => '停止';
+
+  @override
+  String get clear => '清空';
+
+  @override
+  String get httpsProxy => 'HTTPS 代理';
+
+  @override
+  String get setting => '設定';
+
+  @override
+  String get mobileConnect => '手機連接';
+
+  @override
+  String get connectRemote => '連接終端';
+
+  @override
+  String get remoteDevice => '遠端裝置';
+
+  @override
+  String get remoteDeviceList => '遠端裝置列表';
+
+  @override
+  String get myQRCode => '我的二維碼';
+
+  @override
+  String get theme => '主題';
+
+  @override
+  String get followSystem => '跟隨系統';
+
+  @override
+  String get themeColor => '主題顏色';
+
+  @override
+  String get themeLight => '淺色';
+
+  @override
+  String get themeDark => '深色';
+
+  @override
+  String get language => '語言';
+
+  @override
+  String get autoStartup => '自動開啟抓包';
+
+  @override
+  String get autoStartupDescribe => '程式啟動時自動開始記錄流量';
+
+  @override
+  String get copied => '已複製到剪貼簿';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get close => '關閉';
+
+  @override
+  String get save => '儲存';
+
+  @override
+  String get confirm => '確認';
+
+  @override
+  String get confirmTitle => '確認操作';
+
+  @override
+  String get confirmContent => '是否確認此操作?';
+
+  @override
+  String get addSuccess => '新增成功';
+
+  @override
+  String get saveSuccess => '儲存成功';
+
+  @override
+  String get operationSuccess => '操作成功';
+
+  @override
+  String get import => '匯入';
+
+  @override
+  String get importSuccess => '匯入成功';
+
+  @override
+  String get importFailed => '匯入失敗';
+
+  @override
+  String get export => '匯出';
+
+  @override
+  String get exportSuccess => '匯出成功';
+
+  @override
+  String get deleteSuccess => '刪除成功';
+
+  @override
+  String get send => '傳送';
+
+  @override
+  String get fail => '失敗';
+
+  @override
+  String get success => '成功';
+
+  @override
+  String get emptyData => '無資料';
+
+  @override
+  String get requestSuccess => '請求成功';
+
+  @override
+  String get add => '新增';
+
+  @override
+  String get all => '全部';
+
+  @override
+  String get modify => '修改';
+
+  @override
+  String get responseType => '回應類型';
+
+  @override
+  String get request => '請求';
+
+  @override
+  String get response => '回應';
+
+  @override
+  String get statusCode => '狀態碼';
+
+  @override
+  String get done => '完成';
+
+  @override
+  String get type => '類型';
+
+  @override
+  String get enable => '啟用';
+
+  @override
+  String get example => '範例: ';
+
+  @override
+  String get responseHeader => '回應標頭';
+
+  @override
+  String get requestHeader => '請求標頭';
+
+  @override
+  String get requestLine => '請求行';
+
+  @override
+  String get requestMethod => '請求方法';
+
+  @override
+  String get param => '參數';
+
+  @override
+  String get replaceBodyWith => '訊息體替換為:';
+
+  @override
+  String get redirectTo => '重新導向到:';
+
+  @override
+  String get redirect => '重新導向';
+
+  @override
+  String get cannotBeEmpty => '不能為空';
+
+  @override
+  String get requestRewriteList => '請求重寫列表';
+
+  @override
+  String get requestRewriteRule => '請求重寫規則';
+
+  @override
+  String get requestRewriteEnable => '是否啟用請求重寫';
+
+  @override
+  String get action => '行為';
+
+  @override
+  String get multiple => '多選';
+
+  @override
+  String get edit => '編輯';
+
+  @override
+  String get disabled => '停用';
+
+  @override
+  String requestRewriteDeleteConfirm(Object size) {
+    return '是否刪除$size條規則?';
+  }
+
+  @override
+  String get useGuide => '使用文件';
+
+  @override
+  String get pleaseEnter => '請輸入';
+
+  @override
+  String get click => '點選';
+
+  @override
+  String get replace => '替換';
+
+  @override
+  String get clickEdit => '點選編輯';
+
+  @override
+  String get refresh => '重新整理';
+
+  @override
+  String get selectFile => '選擇檔案';
+
+  @override
+  String get match => '符合';
+
+  @override
+  String get value => '值';
+
+  @override
+  String get matchRule => '符合規則';
+
+  @override
+  String get emptyMatchAll => '為空表示符合全部';
+
+  @override
+  String get newBuilt => '新建';
+
+  @override
+  String get newFolder => '新建資料夾';
+
+  @override
+  String get enableSelect => '啟用選擇';
+
+  @override
+  String get disableSelect => '停用選擇';
+
+  @override
+  String get deleteSelect => '刪除選擇';
+
+  @override
+  String get testData => '測試資料';
+
+  @override
+  String get noChangesDetected => '未檢測到變更';
+
+  @override
+  String get enterMatchData => '輸入待符合的資料';
+
+  @override
+  String get modifyRequestHeader => '修改請求標頭';
+
+  @override
+  String get headerName => '請求標頭名稱';
+
+  @override
+  String get headerValue => '請求標頭值';
+
+  @override
+  String get deleteHeaderConfirm => '是否刪除該請求標頭';
+
+  @override
+  String get sequence => '全部請求';
+
+  @override
+  String get domainList => '網域名稱列表';
+
+  @override
+  String get domainWhitelist => '代理網域名稱白名單';
+
+  @override
+  String get domainBlacklist => '代理網域名稱黑名單';
+
+  @override
+  String get domainFilter => '網域名稱代理列表';
+
+  @override
+  String get appWhitelist => '應用程式白名單';
+
+  @override
+  String get appWhitelistDescribe => '只代理白名單中的應用程式, 白名單啟用黑名單將會失效';
+
+  @override
+  String get appBlacklist => '應用程式黑名單';
+
+  @override
+  String get scanCode => '掃碼連接';
+
+  @override
+  String get addBlacklist => '新增代理黑名單';
+
+  @override
+  String get addWhitelist => '新增代理白名單';
+
+  @override
+  String get deleteWhitelist => '刪除代理白名單';
+
+  @override
+  String domainListSubtitle(Object count, Object time) {
+    return '最後請求時間: $time,  次數: $count';
+  }
+
+  @override
+  String get selectAction => '選擇操作';
+
+  @override
+  String get copy => '複製';
+
+  @override
+  String get copyHost => '複製網域名稱';
+
+  @override
+  String get copyUrl => '複製URL';
+
+  @override
+  String get copyRequestResponse => '複製 請求和回應';
+
+  @override
+  String get copyCurl => '複製 cURL';
+
+  @override
+  String get copyAsPythonRequests => '複製 Python Requests';
+
+  @override
+  String get delete => '刪除';
+
+  @override
+  String get rename => '重新命名';
+
+  @override
+  String get repeat => '重放';
+
+  @override
+  String get repeatAllRequests => '重放所有請求';
+
+  @override
+  String get repeatDomainRequests => '重放網域名稱下請求';
+
+  @override
+  String get customRepeat => '進階重放';
+
+  @override
+  String get repeatCount => '次數';
+
+  @override
+  String get repeatInterval => '間隔(ms)';
+
+  @override
+  String get repeatDelay => '延遲(ms)';
+
+  @override
+  String get scheduleTime => '指定時間';
+
+  @override
+  String get fixed => '固定';
+
+  @override
+  String get random => '隨機';
+
+  @override
+  String get keepCustomSettings => '保持自訂設定';
+
+  @override
+  String get editRequest => '編輯請求';
+
+  @override
+  String get reSendRequest => '已重新傳送請求';
+
+  @override
+  String get viewExport => '檢視匯出';
+
+  @override
+  String get timeDesc => '按時間降序';
+
+  @override
+  String get timeAsc => '按時間升序';
+
+  @override
+  String get search => '搜尋';
+
+  @override
+  String get clearSearch => '清除搜尋';
+
+  @override
+  String get requestType => '請求類型';
+
+  @override
+  String get keyword => '關鍵字';
+
+  @override
+  String get keywordSearchScope => '關鍵字搜尋範圍: ';
+
+  @override
+  String get favorite => '收藏';
+
+  @override
+  String get deleteFavorite => '刪除收藏';
+
+  @override
+  String get emptyFavorite => '暫無收藏';
+
+  @override
+  String get deleteFavoriteSuccess => '已刪除收藏';
+
+  @override
+  String get name => '名稱';
+
+  @override
+  String get historyRecord => '歷史記錄';
+
+  @override
+  String get historyCacheTime => '快取時間';
+
+  @override
+  String get historyManualSave => '手動儲存';
+
+  @override
+  String historyDay(Object day) {
+    return '$day天';
+  }
+
+  @override
+  String get historyForever => '永久';
+
+  @override
+  String historyRecordTitle(Object length, Object name) {
+    return '$name 記錄數 $length';
+  }
+
+  @override
+  String get historyEmptyName => '名稱不能為空';
+
+  @override
+  String historySubtitle(Object requestLength, Object size) {
+    return '記錄數 $requestLength  檔案 $size';
+  }
+
+  @override
+  String get historyUnSave => '目前對話記錄未儲存';
+
+  @override
+  String get historyDeleteConfirm => '是否刪除該歷史記錄？';
+
+  @override
+  String get requestEdit => '請求編輯';
+
+  @override
+  String get encode => '編碼';
+
+  @override
+  String get requestBody => '請求體';
+
+  @override
+  String get responseBody => '回應體';
+
+  @override
+  String get requestRewrite => '請求重寫';
+
+  @override
+  String get newWindow => '新視窗開啟';
+
+  @override
+  String get httpRequest => 'HTTP請求';
+
+  @override
+  String get enabledHttps => '啟用HTTPS代理';
+
+  @override
+  String get installRootCa => '安裝根憑證';
+
+  @override
+  String get installCaLocal => '安裝根憑證到本機';
+
+  @override
+  String get downloadRootCa => '下載根憑證';
+
+  @override
+  String get downloadRootCaNote => '注意：如果您將預設瀏覽器設定為 Safari 以外的瀏覽器，請點選此行複製並貼上 Safari 瀏覽器的連結';
+
+  @override
+  String get generateCA => '重新產生根憑證';
+
+  @override
+  String get generateCADescribe => '您確定要產生新的根憑證嗎? 如果確認，\n則需要重新安裝並信任新的憑證';
+
+  @override
+  String get resetDefaultCA => '重置預設根憑證';
+
+  @override
+  String get resetDefaultCADescribe => '確定要重置為預設根憑證嗎? ProxyPin預設\n根憑證對所有使用者都是相同的.';
+
+  @override
+  String get exportCaP12 => '匯出根憑證 (.p12)';
+
+  @override
+  String get importCaP12 => '匯入根憑證 (.p12)';
+
+  @override
+  String get trustCa => '信任憑證';
+
+  @override
+  String get profileDownload => '已下載描述檔案';
+
+  @override
+  String get exportCA => '匯出根憑證';
+
+  @override
+  String get exportPrivateKey => '匯出私鑰';
+
+  @override
+  String get install => '安裝';
+
+  @override
+  String get installCaDescribe => '安裝憑證 設定 > 已下載描述檔案 > 安裝';
+
+  @override
+  String get trustCaDescribe => '信任憑證 設定 > 一般 > 關於本機 > 憑證信任設定';
+
+  @override
+  String get androidRoot => '系統憑證 (ROOT裝置)';
+
+  @override
+  String get androidRootMagisk =>
+      'Magisk模組: \n安卓ROOT裝置可以使用Magisk ProxyPinCA系統憑證模組, 安裝完重新開機後 在系統憑證檢視是否有ProxyPinCA憑證，如果有說明憑證安裝成功。';
+
+  @override
+  String androidRootRename(Object name) {
+    return '模組不生效可以根據網上教學安裝系統根憑證, 根憑證命名成 $name';
+  }
+
+  @override
+  String get androidRootCADownload => '下載系統根憑證(.0)';
+
+  @override
+  String get androidUserCA => '使用者憑證';
+
+  @override
+  String get androidUserCATips => '提示：Android7+ 很多軟體不會信任使用者憑證';
+
+  @override
+  String get androidUserCAInstall => '開啟設定 -> 安全性 -> 加密和憑證 -> 安裝憑證 -> CA 憑證';
+
+  @override
+  String get androidUserXposed => '推薦使用Xposed模組抓包(無需ROOT), 點選檢視wiki';
+
+  @override
+  String get configWifiProxy => '設定手機Wi-Fi代理';
+
+  @override
+  String get caInstallGuide => '憑證安裝指南';
+
+  @override
+  String get caAndroidBrowser => '在 Android 裝置上開啟瀏覽器存取：';
+
+  @override
+  String get caIosBrowser => '在 iOS 裝置上開啟 Safari存取：';
+
+  @override
+  String get localIP => '本機IP ';
+
+  @override
+  String get mobileScan => '設定Wi-Fi代理或使用手機版掃描二維碼';
+
+  @override
+  String get decode => '解碼';
+
+  @override
+  String get encodeInput => '輸入要轉換的內容';
+
+  @override
+  String get encodeResult => '轉換結果';
+
+  @override
+  String get encodeFail => '編碼失敗';
+
+  @override
+  String get decodeFail => '解碼失敗';
+
+  @override
+  String get shareUrl => '分享請求連結';
+
+  @override
+  String get shareCurl => '分享 cURL 請求';
+
+  @override
+  String get shareRequestResponse => '分享請求和回應';
+
+  @override
+  String get captureDetail => '抓包詳情';
+
+  @override
+  String get proxyPinSoftware => 'ProxyPin全平台開源抓包軟體';
+
+  @override
+  String get prompt => '提示';
+
+  @override
+  String get curlSchemeRequest => '識別到curl格式，是否轉換為HTTP請求？';
+
+  @override
+  String get appExitTips => '再按一次退出程式';
+
+  @override
+  String get remoteConnectDisconnect => '檢查遠端連接失敗，已中斷連接';
+
+  @override
+  String get reconnect => '重新連接';
+
+  @override
+  String remoteConnected(Object os) {
+    return '已連接$os，流量將轉發到$os';
+  }
+
+  @override
+  String get remoteConnectForward => '遠端連接，將其他裝置流量轉發到目前裝置';
+
+  @override
+  String get connectSuccess => '連接成功';
+
+  @override
+  String get connectedRemote => '已連接遠端';
+
+  @override
+  String get connected => '已連接';
+
+  @override
+  String get notConnected => '未連接';
+
+  @override
+  String get disconnect => '中斷連接';
+
+  @override
+  String get ipLayerProxy => 'IP層代理(Beta)';
+
+  @override
+  String get ipLayerProxyDesc => 'IP層代理可抓取Flutter應用程式請求，目前不是很穩定,歡迎提交PR';
+
+  @override
+  String get inputAddress => '輸入地址';
+
+  @override
+  String get syncConfig => '同步設定';
+
+  @override
+  String get pullConfigFail => '拉取設定失敗, 請檢查網路連接';
+
+  @override
+  String get sync => '同步';
+
+  @override
+  String get invalidQRCode => '無法識別的二維碼';
+
+  @override
+  String get remoteConnectFail => '連接失敗，請檢查是否在同一區域網路和防火牆是否允許, ios需要開啟本機網路權限';
+
+  @override
+  String get remoteConnectSuccessTips => '手機需要開啟抓包才可以抓取請求哦';
+
+  @override
+  String get windowMode => '視窗模式';
+
+  @override
+  String get windowModeSubTitle => '開啟抓包後 如果應用程式退回到背景，顯示一個小視窗';
+
+  @override
+  String get pipIcon => '視窗快捷圖示';
+
+  @override
+  String get pipIconDescribe => '展示快捷進入小視窗Icon';
+
+  @override
+  String get headerExpanded => 'Headers自動展開';
+
+  @override
+  String get headerExpandedSubtitle => '詳情頁Headers欄是否自動展開';
+
+  @override
+  String get bottomNavigation => '底部導航';
+
+  @override
+  String get bottomNavigationSubtitle => '底部導航欄是否顯示，重新啟動後生效';
+
+  @override
+  String get memoryCleanup => '記憶體清理';
+
+  @override
+  String get memoryCleanupSubtitle => '到記憶體限制自動清理請求，清理後保留最近32條請求';
+
+  @override
+  String get unlimited => '無限制';
+
+  @override
+  String get custom => '自訂';
+
+  @override
+  String get externalProxyAuth => '代理認證 (可選)';
+
+  @override
+  String get externalProxyServer => '代理伺服器';
+
+  @override
+  String get externalProxyConnectFailure => '外部代理連接失敗';
+
+  @override
+  String get externalProxyFailureConfirm => '網路不通所有介面將會存取失敗，是否繼續設定外部代理。';
+
+  @override
+  String get mobileDisplayPacketCapture => '手機端是否展示抓包:';
+
+  @override
+  String proxyPortRepeat(Object port) {
+    return '啟動失敗，請檢查連接埠號$port是否被占用';
+  }
+
+  @override
+  String get reset => '重置';
+
+  @override
+  String get proxyIgnoreDomain => '代理忽略網域名稱';
+
+  @override
+  String get domainWhitelistDescribe => '只代理白名單中的網域名稱, 白名單啟用黑名單將會失效';
+
+  @override
+  String get domainBlacklistDescribe => '黑名單中的網域名稱不會代理';
+
+  @override
+  String get domain => '網域名稱';
+
+  @override
+  String get enableScript => '啟用腳本工具';
+
+  @override
+  String get scriptUseDescribe => '使用 JavaScript 修改請求和回應';
+
+  @override
+  String get scriptEdit => '編輯腳本';
+
+  @override
+  String get scrollEnd => '跟蹤滾動';
+
+  @override
+  String get logger => '日誌';
+
+  @override
+  String get material3 => 'Material3是Google開源設計系統的最新版本';
+
+  @override
+  String get iosVpnBackgroundAudio =>
+      '開啟抓包後，退出到背景。為了維護主UI執行緒的網路通信，將啟用靜音音訊播放以保持主執行緒運作。否則，它將只在背景運作30秒。您同意在啟用抓包後在背景播放音訊嗎?';
+
+  @override
+  String get markRead => '標記已讀';
+
+  @override
+  String get autoRead => '自動已讀';
+
+  @override
+  String get highlight => '高亮顯示';
+
+  @override
+  String get blue => '藍色';
+
+  @override
+  String get green => '綠色';
+
+  @override
+  String get yellow => '黃色';
+
+  @override
+  String get red => '紅色';
+
+  @override
+  String get pink => '粉色';
+
+  @override
+  String get gray => '灰色';
+
+  @override
+  String get underline => '底線';
+
+  @override
+  String get requestBlock => '請求阻擋';
+
+  @override
+  String get other => '其他';
+
+  @override
+  String get certHashName => '憑證Hash名稱';
+
+  @override
+  String get regExp => '正規表示式';
+
+  @override
+  String get systemCertName => '系統憑證名稱';
+
+  @override
+  String get qrCode => '二維碼';
+
+  @override
+  String get scanQrCode => '掃描二維碼';
+
+  @override
+  String get generateQrCode => '產生二維碼';
+
+  @override
+  String get saveImage => '儲存圖片';
+
+  @override
+  String get selectImage => '選擇圖片';
+
+  @override
+  String get inputContent => '輸入內容';
+
+  @override
+  String get errorCorrectLevel => '糾錯等級';
+
+  @override
+  String get output => '輸出';
+
+  @override
+  String get timestamp => '時間戳';
+
+  @override
+  String get convert => '轉換';
+
+  @override
+  String get time => '時間';
+
+  @override
+  String get nowTimestamp => '目前時間戳(秒)';
+
+  @override
+  String get hosts => 'Hosts 對應';
+
+  @override
+  String get toAddress => '對應地址';
+
+  @override
+  String get encrypt => '加密';
+
+  @override
+  String get decrypt => '解密';
+
+  @override
+  String get cipher => '密文';
+
+  @override
+  String get appUpdateCheckVersion => '檢查更新';
+
+  @override
+  String get appUpdateNotAvailableMsg => '已是最新版本';
+
+  @override
+  String get appUpdateDialogTitle => '有可用更新';
+
+  @override
+  String get appUpdateUpdateMsg => 'ProxyPin 的新版本現已推出。您想現在更新嗎？';
+
+  @override
+  String get appUpdateCurrentVersionLbl => '目前版本';
+
+  @override
+  String get appUpdateNewVersionLbl => '新版本';
+
+  @override
+  String get appUpdateUpdateNowBtnTxt => '現在更新';
+
+  @override
+  String get appUpdateLaterBtnTxt => '稍後再說';
+
+  @override
+  String get appUpdateIgnoreBtnTxt => '忽略';
+}

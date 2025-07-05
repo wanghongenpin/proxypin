@@ -81,7 +81,8 @@ class _PreferenceState extends State<Preference> {
                     focusColor: Colors.transparent,
                     items: [
                       DropdownMenuItem(value: null, child: Text(localizations.followSystem)),
-                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh"), child: Text("中文")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh"), child: Text("简体中文")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh", scriptCode: "Hant"), child: Text("繁體中文")),
                       const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "en"), child: Text("English")),
                     ]),
               ]),

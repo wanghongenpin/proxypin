@@ -197,7 +197,12 @@ class AppConfiguration {
       _theme.color = config['themeColor'] ?? "Blue";
 
       upgradeNoticeV19 = config['upgradeNoticeV19'] ?? true;
-      _language = config['language'] == null ? null : Locale.fromSubtags(languageCode: config['language']);
+      _language = config['language'] == null 
+        ? null 
+        : Locale.fromSubtags(
+            languageCode: config['language'], 
+            scriptCode: config['languageScript']
+          );
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerExpanded = config['headerExpanded'] ?? true;
@@ -244,6 +249,7 @@ class AppConfiguration {
       'useMaterial3': _theme.useMaterial3,
       'upgradeNoticeV19': upgradeNoticeV19,
       "language": _language?.languageCode,
+      "languageScript": _language?.scriptCode,
       "headerExpanded": headerExpanded,
       "autoReadEnabled": autoReadEnabled,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,

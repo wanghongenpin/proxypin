@@ -207,6 +207,13 @@ class _PreferenceState extends State<Preference> {
                     child: const Text("简体中文")),
                 const Divider(thickness: 0.5, height: 0),
                 TextButton(
+                    onPressed: () {
+                      appConfiguration.language = const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant');
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text("繁體中文")),
+                const Divider(thickness: 0.5, height: 0),
+                TextButton(
                     child: const Text("English"),
                     onPressed: () {
                       appConfiguration.language = const Locale.fromSubtags(languageCode: 'en');
