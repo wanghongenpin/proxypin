@@ -152,7 +152,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
   }
 
   //导入js
-  import() async {
+  Future<void> import() async {
     String? path;
     if (Platform.isMacOS) {
       path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
@@ -275,7 +275,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                 ])))));
   }
 
-  enableStatus(bool enable) {
+  void enableStatus(bool enable) {
     if (selected.isEmpty) return;
     selected.forEach((key, value) {
       if (rules[key].enabled == enable) return;
@@ -287,7 +287,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
     setState(() {});
   }
 
-  showGlobalMenu(Offset offset) {
+  void showGlobalMenu(Offset offset) {
     showContextMenu(context, offset, items: [
       PopupMenuItem(height: 35, child: Text(localizations.newBuilt), onTap: () => showEdit()),
       PopupMenuItem(height: 35, child: Text(localizations.export), onTap: () => export(selected.keys.toList())),
@@ -302,7 +302,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   List<Widget> rows(List<RequestRewriteRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
 
     return List.generate(list.length, (index) {
       return InkWell(
@@ -358,7 +358,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                           Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
-                      child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
+                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
@@ -366,7 +366,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
   }
 
   //导出
-  export(List<int> indexes) async {
+  Future<void> export(List<int> indexes) async {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
@@ -415,7 +415,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
     });
   }
 
-  showEdit([int? index]) async {
+  Future<void> showEdit([int? index]) async {
     RequestRewriteRule? rule;
     List<RewriteItem>? rewriteItems;
 
@@ -437,7 +437,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
   }
 
   //点击菜单
-  showMenus(TapDownDetails details, int index) {
+  void showMenus(TapDownDetails details, int index) {
     if (selected.length > 1) {
       showGlobalMenu(details.globalPosition);
       return;

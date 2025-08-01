@@ -969,4 +969,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appUpdateIgnoreBtnTxt => 'Ignore';
+
+  @override
+  String get requestMap => 'Request Map';
+
+  @override
+  String get requestMapDescribe => 'Do not request remote services, use local configuration or script for response';
 }

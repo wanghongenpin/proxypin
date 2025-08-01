@@ -331,5 +331,8 @@
   "appUpdateNewVersionLbl": "新版本",
   "appUpdateUpdateNowBtnTxt": "现在更新",
   "appUpdateLaterBtnTxt": "以后再说",
-  "appUpdateIgnoreBtnTxt": "忽略"
+  "appUpdateIgnoreBtnTxt": "忽略",
+
+  "requestMap": "请求映射",
+  "requestMapDescribe": "不请求远程服务，使用本地配置或脚本进行响应"
 }

@@ -15,9 +15,9 @@ dependencies:
   intl: any
   cupertino_icons: ^1.0.8
   pointycastle: ^4.0.0
-  logger: ^2.5.0
+  logger: ^2.6.1
   date_format: ^2.0.9
-  window_manager: ^0.5.0
+  window_manager: ^0.5.1
   windows_single_instance: ^1.0.1
   desktop_multi_window:
     git:
@@ -26,7 +26,7 @@ dependencies:
   path_provider: ^2.1.5
   file_picker: ^10.2.0
   proxy_manager: ^0.0.3
-  permission_handler: ^12.0.0+1
+  permission_handler: ^12.0.1
   flutter_toastr: ^1.0.3
   share_plus: ^11.0.0
   flutter_js:
@@ -41,8 +41,9 @@ dependencies:
   device_info_plus: ^11.5.0
   shared_preferences: ^2.5.3
   image_pickers: ^2.0.6
-  url_launcher: ^6.3.1
+  url_launcher: ^6.3.2
   toastification: ^3.0.2
+  get: ^4.7.2
 
   qr_flutter: ^4.1.0
   flutter_qr_reader_plus: ^1.0.6

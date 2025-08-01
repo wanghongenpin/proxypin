@@ -1961,6 +1961,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ignore'**
   String get appUpdateIgnoreBtnTxt;
+
+  /// No description provided for @requestMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Map'**
+  String get requestMap;
+
+  /// No description provided for @requestMapDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not request remote services, use local configuration or script for response'**
+  String get requestMapDescribe;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

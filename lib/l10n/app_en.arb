@@ -332,5 +332,8 @@
   "appUpdateNewVersionLbl": "New Version",
   "appUpdateUpdateNowBtnTxt": "Update Now",
   "appUpdateLaterBtnTxt": "Later",
-  "appUpdateIgnoreBtnTxt": "Ignore"
+  "appUpdateIgnoreBtnTxt": "Ignore",
+
+  "requestMap": "Request Map",
+  "requestMapDescribe": "Do not request remote services, use local configuration or script for response"
 }

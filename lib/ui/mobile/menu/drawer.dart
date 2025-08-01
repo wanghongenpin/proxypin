@@ -23,6 +23,7 @@ import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -54,12 +55,9 @@ class DrawerWidget extends StatelessWidget {
     return Drawer(
         backgroundColor: Theme.of(context).cardColor,
         child: ListView(
-          padding: EdgeInsets.zero,
+          // padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
-              child: const Text(''),
-            ),
+            SizedBox(height: 15),
             ListTile(
                 leading: const Icon(Icons.favorite),
                 title: Text(localizations.favorites),
@@ -108,6 +106,10 @@ class DrawerWidget extends StatelessWidget {
                     navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
                   }
                 }),
+            ListTile(
+                title: Text(localizations.requestMap),
+                leading: Icon(Icons.swap_horiz_outlined),
+                onTap: () => navigator(context, MobileRequestMapPage())),
             ListTile(
                 title: Text(localizations.script),
                 leading: const Icon(Icons.code),

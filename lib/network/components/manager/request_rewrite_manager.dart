@@ -59,62 +59,12 @@ class RequestRewriteManager {
     enabled = map['enabled'] == true;
     List list = map['rules'] ?? [];
     rules.clear();
-    bool flush = false;
     for (var element in list) {
       try {
-        bool oldVersion = false;
-        // body("重写消息体"), 兼容旧版本
-        if (element['requestBody']?.isNotEmpty == true || element['queryParam']?.isNotEmpty == true) {
-          element['type'] = RuleType.requestReplace.name;
-
-          List<RewriteItem> items = [];
-          if (element['requestBody']?.isNotEmpty == true) {
-            RewriteItem item = RewriteItem(RewriteType.replaceRequestBody, true);
-            item.body = element['requestBody'];
-            items.add(item);
-          }
-          if (element['queryParam']?.isNotEmpty == true) {
-            RewriteItem item = RewriteItem(RewriteType.replaceRequestLine, true);
-            item.queryParam = element['queryParam'];
-            items.add(item);
-          }
-          var rule = RequestRewriteRule.formJson(element);
-          await addRule(rule, items);
-          oldVersion = true;
-        }
-
-        if (element['responseBody']?.isNotEmpty == true) {
-          element['type'] = RuleType.responseReplace.name;
-          RewriteItem item = RewriteItem(RewriteType.replaceResponseBody, true);
-          item.body = element['responseBody'];
-          var rule = RequestRewriteRule.formJson(element);
-          await addRule(rule, [item]);
-
-          oldVersion = true;
-          continue;
-        }
-
-        if (element['redirectUrl']?.isNotEmpty == true) {
-          RewriteItem item = RewriteItem(RewriteType.redirect, true);
-          item.redirectUrl = element['redirectUrl'];
-          var rule = RequestRewriteRule.formJson(element);
-          await addRule(rule, [item]);
-          oldVersion = true;
-          continue;
-        }
-
-        if (oldVersion) {
-          flush = true;
-          continue;
-        }
         rules.add(RequestRewriteRule.formJson(element));
       } catch (e) {
         logger.e('加载请求重写配置失败 $element', error: e);
       }
-    }
-
-    if (flush) {
-      await flushRequestRewriteConfig();
     }
   }
 
@@ -274,7 +224,7 @@ class RequestRewriteManager {
     return items;
   }
 
-  toJson() {
+  Map<String, Object> toJson() {
     return {
       'enabled': enabled,
       'rules': rules.map((e) => e.toJson()).toList(),

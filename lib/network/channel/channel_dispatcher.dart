@@ -168,7 +168,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     }
   }
 
-  onError(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
+  void onError(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
     logger.e(
         "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} client: ${channelContext.clientChannel?.selectedProtocol} server: ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
         error: error,

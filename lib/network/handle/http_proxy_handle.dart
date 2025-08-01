@@ -109,6 +109,14 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
       listener?.onRequest(channel, request!);
 
+      for (var interceptor in interceptors) {
+        var response = await interceptor.execute(request!);
+        if (response != null) {
+          channel.writeAndClose(channelContext, response);
+          return;
+        }
+      }
+
       //重定向
       var uri = request!.domainPath;
       String? redirectUrl = await (RequestRewriteInterceptor.instance).getRedirectRule(uri);

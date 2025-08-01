@@ -35,6 +35,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/request_map.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
 import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
@@ -150,7 +151,7 @@ class _RequestWidgetState extends State<RequestWidget> {
     setState(() {});
   }
 
-  contextualMenu() {
+  void contextualMenu() {
     Menu menu = Menu(items: [
       MenuItem(
           label: localizations.copyUrl,
@@ -202,6 +203,14 @@ class _RequestWidgetState extends State<RequestWidget> {
       MenuItem.separator(),
       MenuItem(label: localizations.requestRewrite, onClick: (_) => showRequestRewriteDialog(context, widget.request)),
       MenuItem(
+          label: localizations.requestMap,
+          onClick: (_) async {
+            showDialog(
+                context: context,
+                builder: (context) =>
+                    RequestMapEdit(url: widget.request.domainPath, title: widget.request.hostAndPort?.host));
+          }),
+      MenuItem(
           label: localizations.script,
           onClick: (_) async {
             var scriptManager = await ScriptManager.instance;
@@ -211,7 +220,9 @@ class _RequestWidgetState extends State<RequestWidget> {
             String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
             if (!mounted) return;
             showDialog(
-                context: context, builder: (context) => ScriptEdit(scriptItem: scriptItem, script: script, url: url));
+                context: context,
+                builder: (context) => ScriptEdit(
+                    scriptItem: scriptItem, script: script, url: url, title: widget.request.hostAndPort?.host));
           }),
       MenuItem.separator(),
       MenuItem(
@@ -360,7 +371,6 @@ class _RequestWidgetState extends State<RequestWidget> {
     if (AppConfiguration.current?.autoReadEnabled == true) {
       autoReadRequests.add(widget.request.requestId);
     }
-
 
     //切换选中的节点
     if (selectedState?.mounted == true && selectedState != this) {

@@ -150,12 +150,12 @@ class _ScriptWidgetState extends State<ScriptWidget> {
                         ]))));
   }
 
-  consoleLog() {
+  void consoleLog() {
     openScriptConsoleWindow();
   }
 
   //导入js
-  import() async {
+  Future<void> import() async {
     String? path;
     if (Platform.isMacOS) {
       path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
@@ -315,8 +315,9 @@ class ScriptEdit extends StatefulWidget {
   final ScriptItem? scriptItem;
   final String? script;
   final String? url;
+  final String? title;
 
-  const ScriptEdit({super.key, this.scriptItem, this.script, this.url});
+  const ScriptEdit({super.key, this.scriptItem, this.script, this.url, this.title});
 
   @override
   State<StatefulWidget> createState() => _ScriptEditState();
@@ -333,7 +334,7 @@ class _ScriptEditState extends State<ScriptEdit> {
   void initState() {
     super.initState();
     script = CodeController(language: javascript, text: widget.script ?? ScriptManager.template);
-    nameController = TextEditingController(text: widget.scriptItem?.name);
+    nameController = TextEditingController(text: widget.scriptItem?.name ?? widget.title);
     urlController = TextEditingController(text: widget.scriptItem?.url ?? widget.url);
   }
 
@@ -464,7 +465,12 @@ class _ScriptListState extends State<ScriptList> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        onSecondaryTapDown: (details) => showGlobalMenu(details.globalPosition),
+        onSecondaryTap: () {
+          if (lastPressPosition == null) {
+            return;
+          }
+          showGlobalMenu(lastPressPosition!);
+        },
         onTapDown: (details) {
           if (selected.isEmpty) {
             return;
@@ -641,7 +647,7 @@ class _ScriptListState extends State<ScriptList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-       path = await FilePicker.platform.saveFile(fileName: fileName);
+      path = await FilePicker.platform.saveFile(fileName: fileName);
     }
     if (path == null) {
       return;
@@ -668,7 +674,7 @@ class _ScriptListState extends State<ScriptList> {
     _refreshScript();
   }
 
-  removeScripts(List<int> indexes) async {
+  Future<void> removeScripts(List<int> indexes) async {
     if (indexes.isEmpty) return;
     showConfirmDialog(context, content: localizations.confirmContent, onConfirm: () async {
       var scriptManager = await ScriptManager.instance;

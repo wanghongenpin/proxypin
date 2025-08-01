@@ -231,7 +231,7 @@ class Http2ClientHandler {
     await channel.writeBytes(buffer);
   }
 
-  onData(ChannelContext channelContext, Channel channel, Uint8List data) {
+  void onData(ChannelContext channelContext, Channel channel, Uint8List data) {
     byteBuf.add(data);
     var decodeResult = decoder.decode(channelContext, byteBuf);
 

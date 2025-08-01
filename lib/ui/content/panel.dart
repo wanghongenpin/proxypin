@@ -29,7 +29,9 @@ import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/python.dart';
@@ -145,6 +147,17 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
                                 Navigator.of(context).push(MaterialPageRoute(
                                     builder: (context) => MobileRequestEditor(
                                         request: widget.request.get(), proxyServer: widget.proxyServer)));
+                              });
+                            }),
+                        PopupMenuItem(
+                            child: Text(localizations.requestMap),
+                            onTap: () {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                navigator(
+                                    context,
+                                    MobileRequestMapEdit(
+                                        url: widget.request.get()?.domainPath,
+                                        title: widget.request.get()?.hostAndPort?.host));
                               });
                             }),
                         CustomPopupMenuItem(

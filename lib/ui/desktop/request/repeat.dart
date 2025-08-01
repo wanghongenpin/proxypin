@@ -97,7 +97,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                         //Checkbox样式 固定和随机
                         Row(children: [
                           SizedBox(
-                              width: isEN ? 100 : 82,
+                              width: isEN ? 107 : 84,
                               height: 35,
                               child: Transform.scale(
                                   scale: 0.83,
@@ -116,7 +116,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                         ]),
                         Row(children: [
                           SizedBox(
-                              width: isEN ? 100 : 82,
+                              width: isEN ? 107 : 84,
                               height: 35,
                               child: Transform.scale(
                                   scale: 0.83,

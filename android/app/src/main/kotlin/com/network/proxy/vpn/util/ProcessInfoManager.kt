@@ -124,6 +124,11 @@ class ProcessInfoManager private constructor() {
             }
         }
 
+        if (host == null || localPort <= 0 || ProxyVpnService.host == null || ProxyVpnService.port <= 0) {
+            Log.w("ProcessInfoManager", "Invalid host or local port: $host:$localPort or ProxyVpnService not initialized")
+            return null
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return withContext(Dispatchers.IO) {
                 val localAddress = InetSocketAddress(host, localPort)

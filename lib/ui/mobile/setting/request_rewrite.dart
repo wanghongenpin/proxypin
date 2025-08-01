@@ -96,7 +96,7 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
   }
 
   //导入
-  import() async {
+  Future<void> import() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
@@ -194,7 +194,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
             ))));
   }
 
-  globalMenu() {
+  Stack globalMenu() {
     return Stack(children: [
       Container(
           height: 50,
@@ -238,7 +238,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   List<Widget> rows(List<RequestRewriteRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
     return List.generate(list.length, (index) {
       return InkWell(
           highlightColor: Colors.transparent,
@@ -284,14 +284,14 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   const SizedBox(width: 3),
                   SizedBox(
                       width: 60,
-                      child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
+                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
   }
 
-  showEdit(int index) async {
+  Future<void> showEdit(int index) async {
     var rule = widget.requestRewrites.rules[index];
     var rewriteItems = await widget.requestRewrites.getRewriteItems(rule);
     if (!mounted) return;
@@ -306,7 +306,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
   }
 
   //点击菜单
-  showMenus(int index) {
+  void showMenus(int index) {
     setState(() {
       selected.add(index);
     });
@@ -382,7 +382,8 @@ class _RequestRuleListState extends State<RequestRuleList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'config');
-    await Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
+    await SharePlus.instance
+        .share(ShareParams(files: [file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds));
   }
 
   //删除

@@ -14,7 +14,7 @@ String copyAsPythonRequests(HttpRequest request) {
       .toList();
   String method = request.method.name.toLowerCase();
 
-  sb.write('url = "${escapeQuotes(url)}"\n');
+  sb.write('url = "${escapeCharacter(url)}"\n');
   bool cookiesExist = processCookies(sb, headers);
   sb.write('headers = {');
   processHeaders(sb, headers);
@@ -38,9 +38,9 @@ String copyAsPythonRequests(HttpRequest request) {
   return sb.toString();
 }
 
-// 转义引号
-String escapeQuotes(String input) {
-  return input.replaceAll('"', r'\"');
+// 特殊字符转义
+String escapeCharacter(String input) {
+  return input.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll("'", "\\'");
 }
 
 // 处理 cookie
@@ -53,7 +53,7 @@ bool processCookies(StringBuffer py, List<String> headers) {
       for (var cookie in cookies) {
         var parts = cookie.splitFirst('='.codeUnitAt(0));
         if (parts.length == 2) {
-          py.writeln('  "${parts[0].trim()}": "${escapeQuotes(parts[1].trim())}",');
+          py.writeln('  "${parts[0].trim()}": "${escapeCharacter(parts[1].trim())}",');
         }
       }
       py.writeln('}\n');
@@ -76,7 +76,7 @@ void processHeaders(StringBuffer py, List<String> headers) {
         first = false;
       }
       var parts = header.splitFirst(HttpConstants.colon);
-      py.write('"${parts[0].trim()}": "${escapeQuotes(parts[1].substring(1, parts[1].length - 1).trim())}"');
+      py.write('"${parts[0].trim()}": "${escapeCharacter(parts[1].substring(1, parts[1].length - 1).trim())}"');
     }
   }
   if (!first) {
@@ -87,7 +87,7 @@ void processHeaders(StringBuffer py, List<String> headers) {
 // 处理body
 String? processBody(HttpRequest request) {
   if (request.body!.isNotEmpty) {
-    return 'data = """${escapeQuotes(request.bodyAsString)}"""';
+    return 'data = """${escapeCharacter(request.bodyAsString)}"""';
   }
   return null;
 }

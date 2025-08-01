@@ -27,6 +27,7 @@ import 'package:proxypin/network/handle/http_proxy_handle.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/utils/platform.dart';
 
+import '../components/request_map.dart';
 import '../http/codec.dart';
 import '../channel/network.dart';
 import '../util/logger.dart';
@@ -80,6 +81,7 @@ class ProxyServer {
 
     List<Interceptor> interceptors = [
       Hosts(),
+      RequestMapInterceptor.instance,
       RequestRewriteInterceptor.instance,
       ScriptInterceptor(),
       RequestBlockInterceptor(),

@@ -46,8 +46,8 @@ class MobileScript extends StatefulWidget {
 bool _refresh = false;
 
 /// 刷新脚本
-void _refreshScript() {
-  if (_refresh) {
+void _refreshScript({bool force = false}) {
+  if (_refresh && !force) {
     return;
   }
   _refresh = true;
@@ -377,8 +377,9 @@ class ScriptEdit extends StatefulWidget {
   final ScriptItem? scriptItem;
   final String? script;
   final String? url;
+  final String? title;
 
-  const ScriptEdit({super.key, this.scriptItem, this.script, this.url});
+  const ScriptEdit({super.key, this.scriptItem, this.script, this.url, this.title});
 
   @override
   State<StatefulWidget> createState() => _ScriptEditState();
@@ -395,7 +396,7 @@ class _ScriptEditState extends State<ScriptEdit> {
   void initState() {
     super.initState();
     script = CodeController(language: javascript, text: widget.script ?? ScriptManager.template);
-    nameController = TextEditingController(text: widget.scriptItem?.name);
+    nameController = TextEditingController(text: widget.scriptItem?.name ?? widget.title);
     urlController = TextEditingController(text: widget.scriptItem?.url ?? widget.url);
   }
 
@@ -447,7 +448,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                       await scriptManager.updateScript(widget.scriptItem!, script.text);
                     }
 
-                    _refreshScript();
+                    _refreshScript(force: true);
                     if (context.mounted) {
                       FlutterToastr.show(localizations.saveSuccess, context);
                       Navigator.of(context).maybePop(true);
@@ -671,7 +672,7 @@ class _ScriptListState extends State<ScriptList> {
                   text: localizations.delete,
                   onPressed: () async {
                     await (await ScriptManager.instance).removeScript(index);
-                    _refreshScript();
+                    _refreshScript(force: true);
                     if (context.mounted) FlutterToastr.show(localizations.importSuccess, context);
                   }),
               Container(color: Theme.of(context).hoverColor, height: 8),
@@ -755,7 +756,7 @@ class _ScriptListState extends State<ScriptList> {
       setState(() {
         selected.clear();
       });
-      _refreshScript();
+      _refreshScript(force: true);
 
       if (mounted) FlutterToastr.show(localizations.deleteSuccess, context);
     });

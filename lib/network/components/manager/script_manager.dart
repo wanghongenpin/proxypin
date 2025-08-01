@@ -19,18 +19,13 @@ import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/flutter_js.dart';
-import 'package:proxypin/network/components/js/file.dart';
-import 'package:proxypin/network/components/js/md5.dart';
-import 'package:proxypin/network/components/js/xhr.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/http.dart' as http;
-import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/network/util/lang.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
-import 'package:proxypin/network/util/uri.dart';
 import 'package:proxypin/ui/component/device.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../js/script_engine.dart';
 
 /// @author wanghongen
 /// 2023/10/06
@@ -71,7 +66,7 @@ async function onResponse(context, request, response) {
 
   final Map<ScriptItem, String> _scriptMap = {};
 
-  static JavascriptRuntime flutterJs = getJavascriptRuntime(xhr: false);
+  static late JavascriptRuntime flutterJs;
 
   static String? deviceId;
 
@@ -84,15 +79,8 @@ async function onResponse(context, request, response) {
     if (_instance == null) {
       _instance = ScriptManager._();
       await _instance?.reloadScript();
-
-      // register channel callback
-      final channelCallbacks = JavascriptRuntime.channelFunctionsRegistered[flutterJs.getEngineInstanceId()];
-      channelCallbacks!["ConsoleLog"] = _instance!.consoleLog;
+      flutterJs = await JavaScriptEngine.getJavaScript(consoleLog: consoleLog);
       deviceId = await DeviceUtils.deviceId();
-      Md5Bridge.registerMd5(flutterJs);
-      FileBridge.registerFile(flutterJs);
-
-      flutterJs.enableFetch2();
 
       logger.d('init script manager $deviceId');
     }
@@ -119,7 +107,7 @@ async function onResponse(context, request, response) {
     _logHandlers.removeWhere((element) => channelId == element.channelId);
   }
 
-  dynamic consoleLog(dynamic args) async {
+  static dynamic consoleLog(dynamic args) async {
     if (_logHandlers.isEmpty) {
       return;
     }
@@ -247,17 +235,17 @@ async function onResponse(context, request, response) {
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(scriptContext(item));
-        var jsRequest = jsonEncode(await convertJsRequest(request));
+        var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
         String script = await getScript(item);
         var jsResult = await flutterJs.evaluateAsync(
             """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
-        var result = await jsResultResolve(jsResult);
+        var result = await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
         if (result == null) {
           return null;
         }
         request.attributes['scriptContext'] = result['scriptContext'];
         scriptSession = result['scriptContext']['session'] ?? {};
-        request = convertHttpRequest(request, result);
+        request = JavaScriptEngine.convertHttpRequest(request, result);
       }
     }
     return request;
@@ -274,146 +262,21 @@ async function onResponse(context, request, response) {
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(request.attributes['scriptContext'] ?? scriptContext(item));
-        var jsRequest = jsonEncode(await convertJsRequest(request));
-        var jsResponse = jsonEncode(await convertJsResponse(response));
+        var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
+        var jsResponse = jsonEncode(await JavaScriptEngine.convertJsResponse(response));
         String script = await getScript(item);
         var jsResult = await flutterJs.evaluateAsync(
             """var response = $jsResponse, context = $context;  response['scriptContext'] = context; $script
             \n  onResponse(context, $jsRequest, response);""");
         // print("response: ${jsResult.isPromise} ${jsResult.isError} ${jsResult.rawResult}");
-        var result = await jsResultResolve(jsResult);
+        var result = await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
         if (result == null) {
           return null;
         }
         scriptSession = result['scriptContext']['session'] ?? {};
-        response = convertHttpResponse(response, result);
+        response = JavaScriptEngine.convertHttpResponse(response, result);
       }
     }
-    return response;
-  }
-
-  /// js结果转换
-  static Future<dynamic> jsResultResolve(JsEvalResult jsResult) async {
-    try {
-      if (jsResult.isPromise || jsResult.rawResult is Future) {
-        jsResult = await flutterJs.handlePromise(jsResult);
-      }
-
-      if (jsResult.isPromise || jsResult.rawResult is Future) {
-        jsResult = await flutterJs.handlePromise(jsResult);
-      }
-    } catch (e) {
-      throw SignalException(jsResult.stringResult);
-    }
-
-    var result = jsResult.rawResult;
-    if (Platform.isMacOS || Platform.isIOS) {
-      result = flutterJs.convertValue(jsResult);
-    }
-    if (result is String) {
-      result = jsonDecode(result);
-    }
-    if (jsResult.isError) {
-      logger.e('jsResultResolve error: ${jsResult.stringResult}');
-      throw SignalException(jsResult.stringResult);
-    }
-    return result;
-  }
-
-  //转换js request
-  Future<Map<String, dynamic>> convertJsRequest(HttpRequest request) async {
-    var requestUri = request.requestUri;
-    return {
-      'host': requestUri?.host,
-      'url': request.requestUrl,
-      'path': requestUri?.path,
-      'queries': requestUri?.queryParameters,
-      'headers': request.headers.toMap(),
-      'method': request.method.name,
-      'body': await request.decodeBodyString(),
-      'rawBody': request.body
-    };
-  }
-
-  //转换js response
-  Future<Map<String, dynamic>> convertJsResponse(HttpResponse response) async {
-    dynamic body = await response.decodeBodyString();
-    if (response.contentType.isBinary) {
-      body = response.body;
-    }
-
-    return {
-      'headers': response.headers.toMap(),
-      'statusCode': response.status.code,
-      'body': body,
-      'rawBody': response.body
-    };
-  }
-
-  //http request
-  HttpRequest convertHttpRequest(HttpRequest request, Map<dynamic, dynamic> map) {
-    request.headers.clear();
-    request.method = http.HttpMethod.values.firstWhere((element) => element.name == map['method']);
-    String query = UriUtils.mapToQuery(map['queries']);
-
-    var requestUri = request.requestUri!.replace(path: map['path'], query: query);
-    if (requestUri.isScheme('https')) {
-      var query = requestUri.query;
-      request.uri = requestUri.path + (query.isNotEmpty ? '?${requestUri.query}' : '');
-    } else {
-      request.uri = requestUri.toString();
-    }
-
-    map['headers'].forEach((key, value) {
-      if (value is List) {
-        request.headers.addValues(key, value.map((e) => e.toString()).toList());
-        return;
-      }
-      request.headers.set(key, value);
-    });
-
-    request.headers.remove(HttpHeaders.CONTENT_ENCODING);
-
-    //判断是否是二进制
-    if (Lists.getElementType(map['body']) == int) {
-      request.body = Lists.convertList<int>(map['body']);
-      return request;
-    }
-
-    request.body = map['body']?.toString().codeUnits;
-
-    if (request.body != null && (request.charset == 'utf-8' || request.charset == 'utf8')) {
-      request.body = utf8.encode(map['body'].toString());
-    }
-    return request;
-  }
-
-  //http response
-  HttpResponse convertHttpResponse(HttpResponse response, Map<dynamic, dynamic> map) {
-    response.headers.clear();
-    response.status = HttpStatus.valueOf(map['statusCode']);
-    map['headers'].forEach((key, value) {
-      if (value is List) {
-        response.headers.addValues(key, value.map((e) => e.toString()).toList());
-        return;
-      }
-
-      response.headers.set(key, value);
-    });
-
-    response.headers.remove(HttpHeaders.CONTENT_ENCODING);
-
-    //判断是否是二进制
-    if (Lists.getElementType(map['body']) == int) {
-      response.body = Lists.convertList<int>(map['body']);
-      return response;
-    }
-
-    response.body = map['body']?.toString().codeUnits;
-    if (response.body != null && (response.charset == 'utf-8' || response.charset == 'utf8')) {
-      response.body = utf8.encode(map['body'].toString());
-    }
-
     return response;
   }
 }

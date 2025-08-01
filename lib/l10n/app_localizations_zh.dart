@@ -957,6 +957,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get appUpdateIgnoreBtnTxt => '忽略';
+
+  @override
+  String get requestMap => '请求映射';
+
+  @override
+  String get requestMapDescribe => '不请求远程服务，使用本地配置或脚本进行响应';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1913,4 +1919,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get appUpdateIgnoreBtnTxt => '忽略';
+
+  @override
+  String get requestMap => '請求映射';
+
+  @override
+  String get requestMapDescribe => '不請求遠端服務，使用本地配置或腳本進行回應';
 }

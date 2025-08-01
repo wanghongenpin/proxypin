@@ -539,7 +539,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
                       _headers.remove(key);
                     });
                   },
-                  child: const Icon(Icons.remove_circle, size: 16)))));
+                  child: const Icon(Icons.remove_circle_outline, size: 16)))));
     });
 
     return list;
