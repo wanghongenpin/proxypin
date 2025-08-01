@@ -77,6 +77,13 @@ jobs:
         with:
           channel: stable
 
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt update && sudo apt upgrade
+          sudo apt install -y clang cmake ninja-build pkg-config
+          sudo apt install -y libgtk-3-dev
+          sudo apt install -y liblzma-dev
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -87,4 +94,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ProxyPin-Linux
-          path: build/linux/x64/runner/Release/
+          path: build/linux/x64/runner/Release/bundle/
