@@ -352,7 +352,11 @@ class _BodyState extends State<_Body> {
     }
 
     if (viewType == ViewType.hex) {
-      return message!.body!.map(intToHex).join(" ");
+      return (await message!.decodeBody()).map(intToHex).join(" ");
+    }
+
+    if (viewType == ViewType.base64) {
+      return base64.encode(await message!.decodeBody());
     }
 
     try {
@@ -408,13 +412,38 @@ class _BodyState extends State<_Body> {
     if (type == ViewType.video) {
       return const Center(child: Text("video not support preview"));
     }
-    if (type == ViewType.hex) {
-      return SelectableText(showCursor: true, message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
+    if (type == ViewType.formUrl) {
+      return SelectableText(Uri.decodeFull(message!.getBodyString()), contextMenuBuilder: contextMenu);
     }
 
-    if (type == ViewType.formUrl) {
-      return SelectableText(
-          showCursor: true, Uri.decodeFull(message!.getBodyString()), contextMenuBuilder: contextMenu);
+    if (type == ViewType.hex) {
+      return futureWidget(
+        message!.decodeBody(),
+        initialData: message!.body!,
+        (body) {
+          try {
+            return SelectableText(body.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
+          } catch (e, stackTrace) {
+            logger.e(e, stackTrace: stackTrace);
+            return SelectableText(message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
+          }
+        },
+     );
+    }
+
+    if (type == ViewType.base64) {
+      return futureWidget(
+        message!.decodeBody(),
+        initialData: message!.body!,
+        (body) {
+          try {
+            return SelectableText(base64.encode(body), contextMenuBuilder: contextMenu);
+          } catch (e, stackTrace) {
+            logger.e(e, stackTrace: stackTrace);
+            return SelectableText("Unsupported body type: ${body.runtimeType}", contextMenuBuilder: contextMenu);
+          }
+        },
+     );
     }
 
     return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
@@ -472,6 +501,7 @@ class Tabs {
     }
 
     tabs.list.add(ViewType.hex);
+    tabs.list.add(ViewType.base64);
     return tabs;
   }
 
@@ -491,6 +521,7 @@ enum ViewType {
   css("CSS"),
   js("JavaScript"),
   hex("Hex"),
+  base64("Base64"),
   ;
 
   final String title;

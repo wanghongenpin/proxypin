@@ -57,6 +57,7 @@ abstract class HttpMessage {
 
   List<int>? _body;
   String? _bodyString;
+  List<int>? _decodedBody;
 
   String? remoteHost;
   int? remotePort;
@@ -89,6 +90,7 @@ abstract class HttpMessage {
   set body(List<int>? body) {
     _body = body;
     _bodyString = null;
+    _decodedBody = null;
     packageSize = body?.length ?? 0;
   }
 
@@ -159,6 +161,28 @@ abstract class HttpMessage {
     }
 
     return getBodyString();
+  }
+
+  Future<List<int>> decodeBody() async {
+    if (body == null || body?.isEmpty == true) {
+      return [];
+    }
+
+    if (_decodedBody != null) {
+      return _decodedBody!;
+    }
+
+    if (headers.contentEncoding == 'zstd') {
+      _decodedBody = await zstdDecode(body!) ?? [];
+    } else if (headers.contentEncoding == 'br') {
+      _decodedBody = brDecode(body!);
+    } else if (headers.isGzip && isGzip(body!)) {
+      _decodedBody = gzipDecode(body!);
+    }
+
+    _decodedBody ??= utf8.encode(await decodeBodyString());
+
+    return _decodedBody!;
   }
 
   List<String> get cookies => headers.cookies;
