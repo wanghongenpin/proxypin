@@ -124,7 +124,7 @@ abstract class HttpMessage {
         rawBody = brDecode(body!);
       }
 
-      if (headers.isGzip) {
+      if (headers.isGzip && isGzip(body!)) {
         rawBody = gzipDecode(body!);
       }
 
