@@ -382,8 +382,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'config');
-    await SharePlus.instance
-        .share(ShareParams(files: [file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds));
+    await Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
   }
 
   //删除

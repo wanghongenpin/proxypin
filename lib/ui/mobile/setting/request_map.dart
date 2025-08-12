@@ -367,12 +367,7 @@ class _RequestMapListState extends State<RequestMapList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(json)), mimeType: 'config');
-    ShareParams shareParams = ShareParams(
-      files: [file],
-      fileNameOverrides: [fileName],
-      sharePositionOrigin: box?.paintBounds,
-    );
-    await SharePlus.instance.share(shareParams);
+    await Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
   }
 
   void enableStatus(bool enable) {

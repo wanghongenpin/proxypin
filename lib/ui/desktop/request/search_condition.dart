@@ -67,7 +67,7 @@ class SearchConditionsState extends State<SearchConditions> {
   Widget build(BuildContext context) {
     requestContentMap[localizations.all] = null;
     responseContentMap[localizations.all] = null;
-    Color primaryColor = ColorScheme.of(context).primary;
+    Color primaryColor = Theme.of(context).colorScheme.primary;
     return Container(
         padding: widget.padding,
         child: Column(

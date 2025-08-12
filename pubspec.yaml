@@ -15,9 +15,9 @@ dependencies:
   intl: any
   cupertino_icons: ^1.0.8
   pointycastle: ^4.0.0
-  logger: ^2.6.1
+  logger: ^2.5.0
   date_format: ^2.0.9
-  window_manager: ^0.5.1
+  window_manager: ^0.4.3
   windows_single_instance: ^1.0.1
   desktop_multi_window:
     git:
@@ -48,6 +48,7 @@ dependencies:
 
   win32audio: ^1.3.1
   vclibs: ^0.1.3
+  get: ^4.7.2
 
 dev_dependencies:
   flutter_test:

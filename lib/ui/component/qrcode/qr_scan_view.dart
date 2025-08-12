@@ -1,8 +1,8 @@
 import 'package:easy_permission/easy_permission.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_qr_reader/flutter_qr_reader.dart';
 import 'package:image_pickers/image_pickers.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 
 ///@Author: Hongen Wang
 /// qr code scanner
