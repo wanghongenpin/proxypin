@@ -21,6 +21,11 @@ List<int> gzipEncode(List<int> input) {
   return GZipCodec().encode(input);
 }
 
+///GZIP magic check
+bool isGzip(List<int> input) {
+  return input.length >= 2 && input[0] == 0x1F && input[1] == 0x8B;
+}
+
 ///br 解压缩
 List<int> brDecode(List<int> byteBuffer) {
   try {
