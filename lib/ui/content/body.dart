@@ -20,7 +20,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
@@ -409,11 +409,12 @@ class _BodyState extends State<_Body> {
       return const Center(child: Text("video not support preview"));
     }
     if (type == ViewType.hex) {
-      return SelectableText(message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
+      return SelectableText(showCursor: true, message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
     }
 
     if (type == ViewType.formUrl) {
-      return SelectableText(Uri.decodeFull(message!.getBodyString()), contextMenuBuilder: contextMenu);
+      return SelectableText(
+          showCursor: true, Uri.decodeFull(message!.getBodyString()), contextMenuBuilder: contextMenu);
     }
 
     return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
@@ -434,7 +435,7 @@ class _BodyState extends State<_Body> {
         logger.e(e, stackTrace: StackTrace.current);
       }
 
-      return SelectableText.rich(TextSpan(text: body), contextMenuBuilder: contextMenu);
+      return SelectableText.rich(showCursor: true, TextSpan(text: body), contextMenuBuilder: contextMenu);
     });
   }
 }

@@ -11,13 +11,13 @@ import Network
 import os.log
 
 class ProxyVpnService {
-    private let queue: DispatchQueue = DispatchQueue(label: "ProxyPin.ProxyVpnService")
 
     private var packetFlow: NEPacketTunnelFlow
     private var connectionHandler: ConnectionHandler
     private var socketIOService: SocketIOService
+    private var isRunning = true;
     
-    init(packetFlow: NEPacketTunnelFlow, proxyAddress:  Network.NWEndpoint?) {
+    init(packetFlow: NEPacketTunnelFlow, proxyAddress: Network.NWEndpoint?) {
         self.packetFlow = packetFlow
         self.socketIOService = SocketIOService(clientPacketWriter: packetFlow)
         let manager = ConnectionManager()
@@ -32,20 +32,25 @@ class ProxyVpnService {
      A stopped interface should never start again. Create a new interface instead.
      */
     func start() {
+        isRunning = true;
         self.readPackets()
     }
 
     func stop() {
+        isRunning = false;
         self.socketIOService.stop()
-        queue.suspend()
     }
     
     func readPackets() -> Void {
+        if (!isRunning) {
+            return
+        }
+
         self.packetFlow.readPackets { (packets, protocols) in
-          
+            
 //             os_log("Read %d packets", packets.count)
             for (i, packet) in packets.enumerated() {
-                self.connectionHandler.handlePacket(packet: packet, version: protocols[i])
+                 self.connectionHandler.handlePacket(packet: packet, version: protocols[i])
             }
             self.readPackets()
         }

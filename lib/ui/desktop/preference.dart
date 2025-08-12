@@ -15,7 +15,7 @@
  */
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/widgets.dart';
@@ -81,7 +81,8 @@ class _PreferenceState extends State<Preference> {
                     focusColor: Colors.transparent,
                     items: [
                       DropdownMenuItem(value: null, child: Text(localizations.followSystem)),
-                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh"), child: Text("中文")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh"), child: Text("简体中文")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh", scriptCode: "Hant"), child: Text("繁體中文")),
                       const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "en"), child: Text("English")),
                     ]),
               ]),

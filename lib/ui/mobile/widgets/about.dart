@@ -17,7 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 
 import '../../app_update/app_update_repository.dart';
 
@@ -51,7 +51,7 @@ class _AboutState extends State<About> {
                 padding: const EdgeInsets.only(left: 10, right: 10),
                 child: Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software")),
             const SizedBox(height: 10),
-            Text("v${AppConfiguration.version}"),
+            Text("Version ${AppConfiguration.version}"),
             ListTile(
                 title: const Text("GitHub"),
                 trailing: const Icon(Icons.open_in_new, size: 22),

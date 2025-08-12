@@ -9,7 +9,6 @@ import NetworkExtension
 
 class ClientPacketWriter: NSObject {
     private var packetFlow: NEPacketTunnelFlow
-    private let packetQueue = DispatchQueue(label: "packetQueue", attributes: .concurrent)
     private var isShutdown = false
 
     init(packetFlow: NEPacketTunnelFlow) {
@@ -17,17 +16,11 @@ class ClientPacketWriter: NSObject {
     }
 
     func write(data: Data) {
-        if !self.isShutdown {
-             packetQueue.async {
-                self.packetFlow.writePackets([data], withProtocols: [NSNumber(value: AF_INET)])
-            }
-        }
+        self.packetFlow.writePackets([data], withProtocols: [NSNumber(value: AF_INET)])
     }
 
     func shutdown() {
-        packetQueue.async(flags: .barrier) {
-            self.isShutdown = true
-        }
+        self.isShutdown = true
     }
 }
 

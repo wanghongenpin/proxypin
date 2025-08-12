@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/app_update/app_update_repository.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -43,7 +43,7 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
                   child:
                       Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software")),
               const SizedBox(height: 10),
-              Text("v${AppConfiguration.version}"),
+              Text("Version ${AppConfiguration.version}"),
               const SizedBox(height: 10),
               ListTile(
                   title: Text('GitHub'),

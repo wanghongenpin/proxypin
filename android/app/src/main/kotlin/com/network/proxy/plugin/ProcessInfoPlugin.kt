@@ -4,6 +4,10 @@ import com.network.proxy.vpn.util.ProcessInfoManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * 进程信息插件
@@ -27,13 +31,28 @@ class ProcessInfoPlugin : AndroidFlutterPlugin() {
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getProcessByPort" -> {
-//                    val host = call.argument<String>("host")
+                    val host = call.argument<String>("host")
                     val port = call.argument<Int>("port")
-                    val appInfo = processInfoManager.getProcessInfoByPort(port!!)
-                    result.success(appInfo)
+                    if (port != null) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            val appInfo = processInfoManager.getProcessInfoByPort(host, port)
+                            withContext(Dispatchers.Main) {
+                                result.success(appInfo)
+                            }
+                        }
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Port is null", null)
+                    }
                 }
 
-                else -> result.notImplemented()
+                "getRemoteAddressByPort" -> {
+                    val port = call.argument<Int>("port")
+                    result.success(processInfoManager.getRemoteAddressByPort(port!!))
+                }
+
+                else -> {
+                    result.notImplemented()
+                }
             }
         }
     }

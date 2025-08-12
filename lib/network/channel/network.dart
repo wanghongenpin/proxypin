@@ -18,6 +18,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:proxypin/native/process_info.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
@@ -141,17 +142,24 @@ class Server extends Network {
     var hostAndPort = channelContext.host;
     try {
       String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
+      bool isHttp = true;
 
       if (hostAndPort == null) {
         var domain = serviceName;
         var port = 443;
+
         if (domain == null) {
-          var process = await ProcessInfoUtils.getProcessByPort(
-              channel.remoteSocketAddress, channel.remoteSocketAddress.toString());
-          domain = process?.remoteHost;
-          port = process?.remotePost ?? port;
+          var remote = await ProcessInfoPlugin.getRemoteAddressByPort(channel.remoteSocketAddress.port);
+          domain = remote?.host;
+          port = remote?.port ?? port;
           serviceName = domain;
+
+          // DNS over HTTPS
+          if (remote?.port == 853 && TLS.supportProtocols(data)?.contains("http/1.1") == false) {
+            isHttp = false;
+          }
         }
+
         hostAndPort = HostAndPort.host(domain!, port, scheme: HostAndPort.httpsScheme);
       }
 
@@ -168,7 +176,7 @@ class Server extends Network {
       }
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
-        var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : null;
+        var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : ['http/1.1'];
         await remoteChannel.startSecureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
@@ -185,10 +193,12 @@ class Server extends Network {
           bufferedData: data, supportedProtocols: supportedProtocols);
 
       channel.serverSecureSocket(secureSocket, channelContext);
-      // logger.d(
-      //     '[${channelContext.clientChannel?.id}] $hostAndPort ssl handshake done, selectedProtocol: ${secureSocket.selectedProtocol}');
-
       remoteChannel?.listen(channelContext);
+
+      if (selectedProtocol != secureSocket.selectedProtocol) {
+        logger.i(
+            '[${channelContext.clientChannel?.id}] $hostAndPort ssl handshake done, clientSelectedProtocol: ${secureSocket.selectedProtocol}, serverSelectedProtocols: $supportedProtocols');
+      }
     } catch (error, trace) {
       logger.e('[${channelContext.clientChannel?.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
       try {

@@ -134,6 +134,7 @@
   "copy": "Copy",
   "copyHost": "Copy Host",
   "copyUrl": "Copy URL",
+  "copyRawRequest": "Copy Raw Request",
   "copyRequestResponse": "Copy Request and Response",
   "copyCurl": "Copy cURL",
   "copyAsPythonRequests": "Copy as Python Requests",
@@ -252,7 +253,7 @@
   "pullConfigFail": "Failed to pull configuration, please check the network connection",
   "sync": "Sync",
   "invalidQRCode": "Unrecognized QR code",
-  "remoteConnectFail": "connection failed，Please check if it is allowed on the same LAN and firewall",
+  "remoteConnectFail": "Connection failed，Please check if it is allowed on the same LAN and firewall, iOS needs to enable local network permissions",
   "remoteConnectSuccessTips": "Your phone needs to enable packet capture in order to capture requests",
 
   "windowMode": "Window Mode",
@@ -331,5 +332,8 @@
   "appUpdateNewVersionLbl": "New Version",
   "appUpdateUpdateNowBtnTxt": "Update Now",
   "appUpdateLaterBtnTxt": "Later",
-  "appUpdateIgnoreBtnTxt": "Ignore"
+  "appUpdateIgnoreBtnTxt": "Ignore",
+
+  "requestMap": "Request Map",
+  "requestMapDescribe": "Do not request remote services, use local configuration or script for response"
 }

@@ -15,7 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -90,7 +90,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
-    if (widget.appConfiguration.upgradeNoticeV19) {
+    if (widget.appConfiguration.upgradeNoticeV20) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -134,7 +134,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   }
 
   //更新引导
-  showUpgradeNotice() {
+  void showUpgradeNotice() {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     showDialog(
@@ -146,7 +146,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.appConfiguration.upgradeNoticeV19 = false;
+                      widget.appConfiguration.upgradeNoticeV20 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
@@ -160,21 +160,24 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                       isCN
                           ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
                               '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                              '1. 支持HTTP2协议,可在设置中开启；\n'
-                              '2. 支持zstd解码；\n'
-                              '3. 增加自动已读标记；\n'
-                              '4. 工具箱支持AES加解密；\n'
-                              '5. 修复WebSocket解析错误, 以及二进制支持下载；\n'
-                              '6. 修复部分代理转发失败问题；\n'
+                              '1. 增加请求映射功能，无需请求远程服务即可返回结果；\n'
+                              '2. 请求列表支持图片预览；\n'
+                              '3. 增加复制原始请求；\n'
+                              '4. 搜索增加区分大小写；\n'
+                              '5. 语言本地化新增繁体中文；\n'
+                              '6. 优化Android VPN性能；\n'
+                              '7. 修复HTTP2 Host；\n'
+                              '8. 修复复制Python requests问题；\n'
                           : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
                               'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-                              '1. Support for HTTP2 protocol, which can be enabled in settings.\n'
-                              '2. Support for zstd decode.'
-                              '3. Added auto read marking.'
-                              '4. Toolbox now supports AES encryption and decryption.'
-                              '5. Fixed WebSocket parsing errors.'
-                              '6. Fix some proxy forwarding failure issues.'
-                              '',
+                              '1. Added request mapping feature, allowing results to be returned without requesting a remote service;\n'
+                              '2. Request list supports image preview;\n'
+                              '3. Added copy original request;\n'
+                              '4. Search now distinguishes between uppercase and lowercase letters;\n'
+                              '5. Added Traditional Chinese localization;\n'
+                              '6. Optimized Android VPN performance;\n'
+                              '7. Fixed HTTP2 Host issue;\n'
+                              '8. Fixed Python requests copy issue.',
                       style: const TextStyle(fontSize: 14))));
         });
   }

@@ -105,13 +105,13 @@ class CustomToast extends StatelessWidget {
     );
   }
 
-  void show(BuildContext context) {
+  void show(BuildContext context, {Alignment alignment = Alignment.bottomLeft}) {
     toastification.show(
       context: context,
       title: Text(message),
       icon: icon == null ? null : Icon(icon),
       type: type._toastificationType,
-      alignment: Alignment.bottomLeft,
+      alignment: alignment,
       autoCloseDuration: duration,
       style: ToastificationStyle.flat,
       pauseOnHover: true,

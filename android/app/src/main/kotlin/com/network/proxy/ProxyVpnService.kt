@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -232,9 +233,9 @@ class ProxyVpnService : VpnService(), ProtectSocket {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 setMetered(false)
             }
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//                setHttpProxy(ProxyInfo.buildDirectProxy(proxyHost, proxyPort))
-//            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                setHttpProxy(ProxyInfo.buildDirectProxy(proxyHost, proxyPort))
+            }
         }.establish()
     }
 

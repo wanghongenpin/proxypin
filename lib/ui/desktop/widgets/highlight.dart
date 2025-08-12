@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/ui/component/state_component.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
 
 ///配置关键词高亮

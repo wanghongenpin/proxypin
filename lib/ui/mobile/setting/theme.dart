@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/configuration.dart';
 
 class MobileThemeSetting extends StatelessWidget {

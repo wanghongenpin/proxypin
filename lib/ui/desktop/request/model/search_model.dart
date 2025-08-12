@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'package:get/get.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 
@@ -20,6 +21,9 @@ import 'package:proxypin/network/http/http.dart';
 /// 2023/8/4
 class SearchModel {
   String? keyword;
+
+  //是否区分大小写
+  RxBool caseSensitive = RxBool(false);
 
   //搜索范围
   Set<Option> searchOptions = {Option.url};
@@ -50,6 +54,23 @@ class SearchModel {
     return !isNotEmpty;
   }
 
+  ///复制对象
+  SearchModel clone() {
+    var searchModel = SearchModel(keyword);
+    searchModel.searchOptions = Set.from(searchOptions);
+    searchModel.requestMethod = requestMethod;
+    searchModel.requestContentType = requestContentType;
+    searchModel.responseContentType = responseContentType;
+    searchModel.statusCode = statusCode;
+    searchModel.caseSensitive = RxBool(caseSensitive.value);
+    return searchModel;
+  }
+
+  @override
+  String toString() {
+    return 'SearchModel{keyword: $keyword, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusCode: $statusCode}';
+  }
+
   ///是否匹配
   bool filter(HttpRequest request, HttpResponse? response) {
     if (isEmpty) {
@@ -75,7 +96,7 @@ class SearchModel {
     }
 
     for (var option in searchOptions) {
-      if (keywordFilter(keyword!, option, request, response)) {
+      if (keywordFilter(keyword!, caseSensitive.value, option, request, response)) {
         return true;
       }
     }
@@ -84,8 +105,20 @@ class SearchModel {
   }
 
   ///关键字过滤
-  bool keywordFilter(String keyword, Option option, HttpRequest request, HttpResponse? response) {
-    if (option == Option.url && request.requestUrl.toLowerCase().contains(keyword.toLowerCase())) {
+  bool keywordFilter(String keyword, bool caseSensitive, Option option, HttpRequest request, HttpResponse? response) {
+    if (option == Option.url) {
+      if (caseSensitive) {
+        return request.requestUrl.contains(keyword);
+      }
+      return request.requestUrl.toLowerCase().contains(keyword.toLowerCase());
+    }
+
+    if (option == Option.method) {
+      return caseSensitive
+          ? request.method.name.contains(keyword)
+          : request.method.name.toLowerCase().contains(keyword.toLowerCase());
+    }
+    if (option == Option.responseContentType && response?.headers.contentType.contains(keyword) == true) {
       return true;
     }
 
@@ -95,40 +128,24 @@ class SearchModel {
     if (option == Option.responseBody && response?.bodyAsString.contains(keyword) == true) {
       return true;
     }
-    if (option == Option.method && request.method.name.toLowerCase() == keyword.toLowerCase()) {
-      return true;
-    }
-    if (option == Option.responseContentType && response?.headers.contentType.contains(keyword) == true) {
-      return true;
-    }
 
     if (option == Option.requestHeader || option == Option.responseHeader) {
       var entries = option == Option.requestHeader ? request.headers.entries : response?.headers.entries ?? [];
 
       for (var entry in entries) {
-        if (entry.key.toLowerCase() == keyword.toLowerCase() ||
-            entry.value.any((element) => element.contains(keyword))) {
-          return true;
+        if (caseSensitive) {
+          if (entry.key.contains(keyword) || entry.value.any((element) => element.contains(keyword))) {
+            return true;
+          }
+        } else {
+          if (entry.key.toLowerCase() == keyword.toLowerCase() ||
+              entry.value.any((element) => element.toLowerCase().contains(keyword.toLowerCase()))) {
+            return true;
+          }
         }
       }
     }
     return false;
-  }
-
-  ///复制对象
-  SearchModel clone() {
-    var searchModel = SearchModel(keyword);
-    searchModel.searchOptions = searchOptions;
-    searchModel.requestMethod = requestMethod;
-    searchModel.requestContentType = requestContentType;
-    searchModel.responseContentType = responseContentType;
-    searchModel.statusCode = statusCode;
-    return searchModel;
-  }
-
-  @override
-  String toString() {
-    return 'SearchModel{keyword: $keyword, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusCode: $statusCode}';
   }
 }
 

@@ -19,11 +19,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
+
+import '../../utils/platform.dart';
 
 const contentMap = {
   ContentType.json: Icons.data_object,
@@ -36,16 +38,24 @@ const contentMap = {
   ContentType.font: Icons.font_download,
 };
 
-Icon getIcon(HttpResponse? response, {Color? color}) {
+Widget getIcon(HttpResponse? response, {Color? color}) {
   if (response == null) {
-    return Icon(Icons.question_mark, size: 16, color: color ?? Colors.green);
+    return SizedBox(width: 18, child: Icon(Icons.question_mark, size: 16, color: color ?? Colors.green));
   }
   if (response.status.code < 0) {
-    return Icon(Icons.error, size: 16, color: color ?? Colors.red);
+    return SizedBox(width: 18, child: Icon(Icons.error, size: 16, color: color ?? Colors.red));
   }
 
   var contentType = response.contentType;
-  return Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green);
+  if (contentType.isImage && response.body != null) {
+    return Image.memory(
+      Uint8List.fromList(response.body!),
+      width: Platforms.isDesktop() ? 19 : 26,
+      errorBuilder: (context, error, stackTrace) => Icon(Icons.image, size: 16, color: color ?? Colors.green),
+    );
+  }
+  return SizedBox(
+      width: 18, child: Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green));
 }
 
 //展示报文大小
@@ -70,6 +80,20 @@ String getPackage(int? size) {
     return "${(size / 1024 / 1024).toStringAsFixed(2)} MB";
   }
   return "${(size / 1024).toStringAsFixed(2)} KB";
+}
+
+String copyRawRequest(HttpRequest request) {
+  var sb = StringBuffer();
+  var uri = request.requestUri!;
+  var pathAndQuery = uri.path + (uri.query.isNotEmpty ? '?${uri.query}' : '');
+
+  sb.writeln("${request.method.name} $pathAndQuery ${request.protocolVersion}");
+  sb.write(request.headers.headerLines());
+  if (request.bodyAsString.isNotEmpty) {
+    sb.writeln();
+    sb.write(request.bodyAsString);
+  }
+  return sb.toString();
 }
 
 String copyRequest(HttpRequest request, HttpResponse? response) {

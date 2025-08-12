@@ -71,37 +71,34 @@ class Connection{
     func closeConnection() {
         connectionCloser.closeConnection(connection: self)
     }
-
+    
     func addSendData(data: Data) {
+       self.sendBuffer.append(data)
 
-        QueueFactory.instance.getQueue().async(flags: .barrier) {
-           self.sendBuffer.append(data)
+        if (self.channel?.state != .ready) {
+           os_log("Connection %{public}@ is not ready, cannot send data", log: OSLog.default, type: .debug, self.description)
+           return
+       }
 
-            if (self.nwProtocol == .TCP && self.channel?.state != .ready) {
-               return
-           }
-            self.sendToDestination()
-        }
+        self.sendToDestination()
     }
     
     //发送到目标服务器的数据
     func sendToDestination() {
-       QueueFactory.instance.getQueue().async(flags: .barrier) {
-            os_log("Sending data to destination key %{public}@", log: OSLog.default, type: .debug, self.description)
-            if (self.sendBuffer.count == 0) {
-                return
+//         os_log("Sending data to destination key %{public}@", log: OSLog.default, type: .debug, self.description)
+        if (self.sendBuffer.count == 0) {
+            return
+        }
+
+        let data = self.sendBuffer
+        self.sendBuffer.removeAll()
+
+        self.channel?.send(content: data, completion: .contentProcessed({ error in
+            if let error = error {
+                os_log("Failed to send data to destination key %{public}@ error: %{public}@", log: OSLog.default, type: .error, self.description, error.localizedDescription)
+                self.closeConnection()
             }
-
-            let data = self.sendBuffer
-            self.sendBuffer.removeAll()
-
-            self.channel?.send(content: data, completion: .contentProcessed({ error in
-                if let error = error {
-                    os_log("Failed to send data to destination key %{public}@ error: %{public}@", log: OSLog.default, type: .error, self.description, error.localizedDescription)
-                    self.closeConnection()
-                }
-            }))
-       }
+        }))
     }
 
     var description: String {

@@ -19,7 +19,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 ///高级重放
@@ -48,7 +48,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
-  bool get isCN => Localizations.localeOf(context).languageCode == "zh";
+  bool get isEN => Localizations.localeOf(context).languageCode == "en";
 
   @override
   void initState() {
@@ -91,13 +91,13 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                   Row(
                     //间隔
                     children: [
-                      SizedBox(width: isCN ? 90 : 100, child: Text(localizations.repeatInterval)),
+                      SizedBox(width: isEN ? 100 : 90, child: Text(localizations.repeatInterval)),
                       const SizedBox(height: 5),
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         //Checkbox样式 固定和随机
                         Row(children: [
                           SizedBox(
-                              width: isCN ? 78 : 100,
+                              width: isEN ? 107 : 84,
                               height: 35,
                               child: Transform.scale(
                                   scale: 0.83,
@@ -116,7 +116,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                         ]),
                         Row(children: [
                           SizedBox(
-                              width: isCN ? 78 : 100,
+                              width: isEN ? 107 : 84,
                               height: 35,
                               child: Transform.scale(
                                   scale: 0.83,
@@ -152,7 +152,9 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                         Text(time?.format(context) ?? ''),
                         TextButton(
                             onPressed: () {
-                              showTimePicker(context: context, initialTime: time ?? TimeOfDay.now()).then((value) {
+                              showTimePicker(
+                                      context: context, initialTime: time ?? TimeOfDay.now(), initialEntryMode: TimePickerEntryMode.input)
+                                  .then((value) {
                                 if (value != null) {
                                   setState(() {
                                     time = value;
@@ -247,7 +249,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
   Widget field(String label, Widget child) {
     return Row(
       children: [
-        SizedBox(width: isCN ? 95 : 110, child: Text(label)),
+        SizedBox(width: isEN ? 110 : 95, child: Text(label)),
         Expanded(child: child),
       ],
     );

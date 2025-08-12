@@ -48,8 +48,14 @@ class VpnManager{
             if let manager = manager {
                 self.observerAdded = true
                 NotificationCenter.default.addObserver(forName: NSNotification.Name.NEVPNStatusDidChange, object: manager.connection, queue: OperationQueue.main, using: { [unowned self] (notification) -> Void in
+                    
                     self.updateVPNStatus(manager)
-                    })
+                    
+                    if (manager.connection.status == .invalid || manager.connection.status == .disconnected){
+                       
+                        print("VPN断开: \(String(describing: manager.debugDescription))")
+                    }
+                })
             }
         }
     }

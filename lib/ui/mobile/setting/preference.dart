@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -205,6 +205,13 @@ class _PreferenceState extends State<Preference> {
                       Navigator.of(context).pop();
                     },
                     child: const Text("简体中文")),
+                const Divider(thickness: 0.5, height: 0),
+                TextButton(
+                    onPressed: () {
+                      appConfiguration.language = const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant');
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text("繁體中文")),
                 const Divider(thickness: 0.5, height: 0),
                 TextButton(
                     child: const Text("English"),

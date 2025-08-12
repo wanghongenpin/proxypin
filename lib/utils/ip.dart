@@ -36,8 +36,8 @@ Future<InternetAddress> localAddress() async {
 List<String>? ipList;
 
 /// 获取本机所有ip
-Future<List<String>> localIps() async {
-  if (ipList != null) {
+Future<List<String>> localIps({bool readCache = true}) async {
+  if (readCache && ipList != null) {
     return ipList!;
   }
 

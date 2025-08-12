@@ -17,8 +17,9 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -107,8 +108,16 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+
       if (widget.proxyServer.isRunning) {
         widget.proxyServer.retryBind();
+      }
+
+      if (Platforms.isMobile()) {
+        Vpn.isRunning().then((value) {
+          Vpn.isVpnStarted = value;
+          SocketLaunch.startStatus.value = ValueWrap.of(value);
+        });
       }
     }
 

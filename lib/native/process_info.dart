@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/util/process_info.dart';
 
 class ProcessInfoPlugin {
@@ -14,7 +15,14 @@ class ProcessInfoPlugin {
           os: Platform.operatingSystem,
           icon: process['icon'],
           remoteHost: process['remoteHost'],
-          remotePost: process['remotePost']);
+          remotePost: process['remotePort']);
+    });
+  }
+
+  static Future<HostAndPort?> getRemoteAddressByPort(int port) {
+    return _methodChannel.invokeMethod<Map>('getRemoteAddressByPort', {"port": port}).then((process) {
+      if (process == null) return null;
+      return HostAndPort.host(process['remoteHost'], process['remotePort']);
     });
   }
 }

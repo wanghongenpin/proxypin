@@ -17,7 +17,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -62,7 +62,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
   }
 
   ///初始化重写项
-  initItems(RuleType ruleType, List<RewriteItem>? items) {
+  void initItems(RuleType ruleType, List<RewriteItem>? items) {
     this.items.clear();
     this.ruleType = ruleType;
     if (ruleType == RuleType.redirect) {
@@ -85,7 +85,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
     }
   }
 
-  _initRewriteItem(List<RewriteItem>? items, RewriteType type, {bool enabled = false}) {
+  void _initRewriteItem(List<RewriteItem>? items, RewriteType type, {bool enabled = false}) {
     var item = items?.firstWhereOrNull((it) => it.type == type);
     RewriteItem rewriteItem = RewriteItem(type, item?.enabled ?? enabled, values: item?.values);
     this.items.add(rewriteItem);
@@ -450,7 +450,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     setHeaders(widget.headers);
   }
 
-  setHeaders(Map<String, String>? headers) {
+  void setHeaders(Map<String, String>? headers) {
     _clear();
     headers?.forEach((name, value) {
       _headers[TextEditingController(text: name)] = TextEditingController(text: value);

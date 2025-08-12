@@ -23,7 +23,6 @@ struct UDPHeader {
     }
 }
 
-
 class UDPPacketFactory {
     static let UDP_HEADER_LENGTH = 8
     
@@ -40,15 +39,17 @@ class UDPPacketFactory {
         return UDPHeader(sourcePort: srcPort, destinationPort: destPort, length: length, checksum: checksum)
     }
     
-    
+
+    //
     static func createResponsePacket(ip: IP4Header, udp: UDPHeader, packetData: Data?) -> Data {
         var udpLen = 8
         if let packetData = packetData {
             udpLen += packetData.count
         }
+        
         let srcPort = udp.destinationPort
         let destPort = udp.sourcePort
-    
+
         let ipHeader = ip.copy()
         let srcIp = ip.destinationIP
         let destIp = ip.sourceIP
@@ -63,14 +64,12 @@ class UDPPacketFactory {
         ipHeader.totalLength = UInt16(totalLength)
 
         var ipData = ipHeader.toBytes()
-
+        
         // clear IP checksum
         ipData.withUnsafeMutableBytes { (bytes: UnsafeMutablePointer<UInt8>) in
             bytes[10] = 0
             bytes[11] = 0
         }
-
-        //os_log("Create UDP response packet from %{public}@:%{public}d to %{public}@:%{public}d totalLength:%{public}d", log: OSLog.default, type: .default, PacketUtil.intToIPAddress(srcIp), srcPort, PacketUtil.intToIPAddress(destIp), destPort, totalLength)
 
         // calculate checksum for IP header
         let ipChecksum = PacketUtil.calculateChecksum(data: ipData, offset: 0, length: ipData.count)
@@ -89,24 +88,16 @@ class UDPPacketFactory {
         // copy UDP header to buffer
         buffer.append(contentsOf: srcPort.bytes)
         buffer.append(contentsOf: destPort.bytes)
-
         buffer.append(contentsOf: UInt16(udpLen).bytes)
 
-        let checksum: UInt16 = 0
-        buffer.append(contentsOf: checksum.bytes)
+        // 计算UDP校验和
+        let udpChecksum: UInt16 = 0
+        buffer.append(contentsOf: udpChecksum.bytes)
 
         if let packetData = packetData {
-         buffer.append(packetData)
+            buffer.append(packetData)
         }
         return buffer
     }
 
-    //打印数据包
-    public static func printPacket(data: Data) {
-        guard let udpHeader = createUDPHeader(from: data) else {
-            return
-        }
-        os_log("UDP Header: sourcePort: %{public}d, destinationPort: %{public}d, length: %{public}d, checksum: %{public}d", log: OSLog.default, type: .default, udpHeader.sourcePort, udpHeader.destinationPort, udpHeader.length, udpHeader.checksum)
-    }
-    
 }

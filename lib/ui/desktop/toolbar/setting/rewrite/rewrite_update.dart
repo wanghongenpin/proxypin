@@ -22,7 +22,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/utils/lang.dart';
 
 /// @author wanghongen

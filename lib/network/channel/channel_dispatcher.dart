@@ -26,13 +26,13 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   //h2 stream dependency Sequential exec
   SequentialTaskQueue taskQueue = SequentialTaskQueue();
 
-  handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
+  void handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
     this.encoder = encoder;
     this.decoder = decoder;
     this.handler = handler;
   }
 
-  channelHandle(Codec codec, ChannelHandler handler) {
+  void channelHandle(Codec codec, ChannelHandler handler) {
     handle(codec, codec, handler);
   }
 
@@ -50,7 +50,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   }
 
   ///远程转发请求
-  remoteForward(ChannelContext channelContext, HostAndPort remote) async {
+  Future<void> remoteForward(ChannelContext channelContext, HostAndPort remote) async {
     var clientChannel = channelContext.clientChannel!;
     Channel? remoteChannel =
         channelContext.serverChannel ?? await channelContext.connectServerChannel(remote, RelayHandler(clientChannel));
@@ -80,11 +80,11 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
 
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
-    try {
-      //手机扫码连接转发远程
-      HostAndPort? remote = channelContext.getAttribute(AttributeKeys.remote);
-      buffer.add(msg);
+    //手机扫码连接转发远程
+    HostAndPort? remote = channelContext.getAttribute(AttributeKeys.remote);
+    buffer.add(msg);
 
+    try {
       if (remote != null) {
         await remoteForward(channelContext, remote);
         return;
@@ -137,7 +137,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
 
       if (data is HttpRequest) {
         channelContext.currentRequest = data;
-        data.hostAndPort = channelContext.host ?? getHostAndPort(data, ssl: channel.isSsl);
+        data.hostAndPort ??= channelContext.host ?? getHostAndPort(data, ssl: channel.isSsl);
         if (data.headers.host != null && data.headers.host?.contains(":") == false) {
           data.hostAndPort?.host = data.headers.host!;
         }
@@ -168,7 +168,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     }
   }
 
-  onError(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
+  void onError(ChannelContext channelContext, Channel channel, dynamic error, {StackTrace? trace}) {
     logger.e(
         "[${channelContext.clientChannel?.id}] channelRead error isSsl:${channel.isSsl} client: ${channelContext.clientChannel?.selectedProtocol} server: ${channelContext.serverChannel?.selectedProtocol} ${String.fromCharCodes(buffer.bytes)}",
         error: error,
@@ -178,7 +178,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   }
 
   /// websocket 处理
-  onWebSocketHandle(ChannelContext channelContext, Channel channel, HttpResponse data) {
+  void onWebSocketHandle(ChannelContext channelContext, Channel channel, HttpResponse data) {
     Channel remoteChannel = channelContext.getAttribute(channel.id);
 
     data.request?.response = data;
@@ -196,7 +196,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     remoteChannel.dispatcher.channelHandle(rawCodec, WebSocketChannelHandler(channel, data.request!));
   }
 
-  notSupportedForward(ChannelContext channelContext, Channel channel, DecoderResult decodeResult) {
+  void notSupportedForward(ChannelContext channelContext, Channel channel, DecoderResult decodeResult) {
     Channel? remoteChannel = channelContext.getAttribute(channel.id);
     buffer.add(decodeResult.forward ?? []);
     relay(channelContext, channel, remoteChannel!);

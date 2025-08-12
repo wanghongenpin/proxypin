@@ -17,7 +17,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -29,7 +29,9 @@ import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
+import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/python.dart';
@@ -147,6 +149,28 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
                                         request: widget.request.get(), proxyServer: widget.proxyServer)));
                               });
                             }),
+                        PopupMenuItem(
+                            child: Text(localizations.requestMap),
+                            onTap: () {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                navigator(
+                                    context,
+                                    MobileRequestMapEdit(
+                                        url: widget.request.get()?.domainPath,
+                                        title: widget.request.get()?.hostAndPort?.host));
+                              });
+                            }),
+                        CustomPopupMenuItem(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Text(localizations.copyRawRequest),
+                            onTap: () {
+                              var request = widget.request.get();
+                              if (request == null) return;
+
+                              var text = copyRawRequest(request);
+                              Clipboard.setData(ClipboardData(text: text));
+                              FlutterToastr.show(localizations.copied, context);
+                            }),
                         CustomPopupMenuItem(
                             padding: const EdgeInsets.only(left: 10),
                             child: Text(localizations.copyAsPythonRequests),
@@ -173,23 +197,187 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
             physics: Platforms.isDesktop() ? const NeverScrollableScrollPhysics() : null, //桌面禁止滑动
             controller: _tabController,
             children: [
-              SelectionArea(child: general()),
+              SelectionArea(child: General(widget.request, widget.response)),
               KeepAliveWrapper(child: request()),
               KeepAliveWrapper(child: response()),
-              SelectionArea(child: isWebSocket ? websocket() : cookies()),
+              SelectionArea(
+                  child: isWebSocket
+                      ? Websocket(widget.request, widget.response)
+                      : Cookies(widget.request, widget.response)),
             ],
           )),
     );
   }
 
-  ///以聊天对话框样式展示websocket消息
-  Widget websocket() {
-    var request = widget.request.get();
+  Widget request() {
+    if (widget.request.get() == null) {
+      return const SizedBox();
+    }
+
+    var scrollController = ScrollController(); //处理body也有滚动条问题
+    var path = widget.request.get()?.path ?? '';
+    try {
+      path = Uri.decodeFull(path);
+    } catch (_) {}
+
+    return ListView(
+        controller: scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [RowWidget("Path", path), ...message(widget.request.get(), "Request", scrollController)]);
+  }
+
+  Widget response() {
+    if (widget.response.get() == null) {
+      return const SizedBox();
+    }
+
+    var scrollController = ScrollController();
+    return ListView(controller: scrollController, physics: const AlwaysScrollableScrollPhysics(), children: [
+      RowWidget("StatusCode", widget.response.get()?.status.toString()),
+      ...message(widget.response.get(), "Response", scrollController)
+    ]);
+  }
+
+  List<Widget> message(HttpMessage? message, String type, ScrollController scrollController) {
+    var headers = <Widget>[];
+    message?.headers.forEach((name, values) {
+      for (var v in values) {
+        const nameStyle = TextStyle(fontWeight: FontWeight.w500, color: Colors.deepOrangeAccent, fontSize: 14);
+        headers.add(Row(children: [
+          SelectableText(name, contextMenuBuilder: contextMenu, style: nameStyle),
+          const Text(": ", style: nameStyle),
+          if (Platforms.isDesktop()) SizedBox(width: 5),
+          Expanded(
+              child: SelectableText(v, style: textStyle, contextMenuBuilder: contextMenu, maxLines: 8, minLines: 1)),
+        ]));
+        headers.add(const Divider(thickness: 0.1));
+      }
+    });
+
+    Widget bodyWidgets = HttpBodyWidget(httpMessage: message, scrollController: scrollController);
+
+    Widget headerWidget = ExpansionTile(
+        tilePadding: const EdgeInsets.only(left: 0),
+        title: Text("$type Headers", style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+        initiallyExpanded: AppConfiguration.current?.headerExpanded ?? true,
+        shape: const Border(),
+        children: headers);
+
+    return [headerWidget, bodyWidgets];
+  }
+}
+
+Widget expansionTile(String title, List<Widget> content) {
+  return ExpansionTile(
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+      tilePadding: const EdgeInsets.only(left: 0),
+      expandedAlignment: Alignment.topLeft,
+      initiallyExpanded: true,
+      shape: const Border(),
+      children: content);
+}
+
+class General extends StatelessWidget {
+  final ValueWrap<HttpRequest> request;
+
+  final ValueWrap<HttpResponse> response;
+
+  const General(this.request, this.response, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var request = this.request.get();
+    if (request == null) {
+      return const SizedBox();
+    }
+    var response = this.response.get();
+    String requestUrl = request.requestUrl;
+    try {
+      requestUrl = Uri.decodeFull(request.requestUrl);
+    } catch (_) {}
+    var content = [
+      const SizedBox(height: 10),
+      RowWidget("Request URL", requestUrl),
+      const SizedBox(height: 20),
+      RowWidget("Request Method", request.method.name),
+      const SizedBox(height: 20),
+      RowWidget("Protocol", request.protocolVersion),
+      const SizedBox(height: 20),
+      RowWidget("Status Code", response?.status.toString()),
+      const SizedBox(height: 20),
+      RowWidget("Remote Address",
+          '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
+      const SizedBox(height: 20),
+      RowWidget("Request Time", request.requestTime.formatMillisecond()),
+      const SizedBox(height: 20),
+      RowWidget("Duration", response?.costTime()),
+      const SizedBox(height: 20),
+      RowWidget("Request Content-Type", request.headers.contentType),
+      const SizedBox(height: 20),
+      RowWidget("Response Content-Type", response?.headers.contentType),
+      const SizedBox(height: 20),
+      RowWidget("Request Package", getPackage(request.packageSize)),
+      const SizedBox(height: 20),
+      RowWidget("Response Package", getPackage(response?.packageSize)),
+      const SizedBox(height: 20),
+    ];
+    if (request.processInfo != null) {
+      content.add(RowWidget("App", request.processInfo!.name));
+      content.add(const SizedBox(height: 20));
+    }
+
+    return ListView(children: [expansionTile("General", content)]);
+  }
+}
+
+class Cookies extends StatelessWidget {
+  final ValueWrap<HttpRequest> request;
+
+  final ValueWrap<HttpResponse> response;
+
+  const Cookies(this.request, this.response, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var requestCookie = request.get()?.cookies.expand((cookie) => _cookieWidget(cookie)!);
+
+    var responseCookie = response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(e)!);
+    return ListView(children: [
+      requestCookie == null ? const SizedBox() : expansionTile("Request Cookies", requestCookie.toList()),
+      const SizedBox(height: 20),
+      responseCookie == null ? const SizedBox() : expansionTile("Response Cookies", responseCookie.toList()),
+    ]);
+  }
+
+  Iterable<Widget>? _cookieWidget(String? cookie) {
+    var headers = <Widget>[];
+
+    cookie?.split(";").map((e) => Strings.splitFirst(e, "=")).where((element) => element != null).forEach((e) {
+      headers.add(RowWidget(e!.key.trim(), e.value));
+      headers.add(const Divider(thickness: 0.1));
+    });
+
+    return headers;
+  }
+}
+
+///以聊天对话框样式展示websocket消息
+class Websocket extends StatelessWidget {
+  final ValueWrap<HttpRequest> request;
+  final ValueWrap<HttpResponse> response;
+
+  const Websocket(this.request, this.response, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    AppLocalizations localizations = AppLocalizations.of(context)!;
+
+    var request = this.request.get();
     if (request == null) {
       return const SizedBox();
     }
     List<WebSocketFrame> messages = List.from(request.messages);
-    var response = widget.response.get();
+    var response = this.response.get();
     if (response != null) {
       messages.addAll(response.messages);
     }
@@ -234,10 +422,10 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
                                       customItem: ContextMenuButtonItem(
                                         label: localizations.download,
                                         onPressed: () async {
-                                          String? path =
-                                              (await FilePicker.platform.saveFile(bytes: message.payloadData));
-                                          if (path != null && mounted) {
-                                            CustomToast.success(localizations.saveSuccess).show(this.context);
+                                          String? path = (await FilePicker.platform
+                                              .saveFile(fileName: "websocket.txt", bytes: message.payloadData));
+                                          if (path != null && context.mounted) {
+                                            CustomToast.success(localizations.saveSuccess).show(context);
                                           }
                                         },
                                         type: ContextMenuButtonType.custom,
@@ -252,141 +440,17 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
       },
     );
   }
+}
 
-  Widget general() {
-    var request = widget.request.get();
-    if (request == null) {
-      return const SizedBox();
-    }
-    var response = widget.response.get();
-    String requestUrl = request.requestUrl;
-    try {
-      requestUrl = Uri.decodeFull(request.requestUrl);
-    } catch (_) {}
-    var content = [
-      const SizedBox(height: 10),
-      rowWidget("Request URL", requestUrl),
-      const SizedBox(height: 20),
-      rowWidget("Request Method", request.method.name),
-      const SizedBox(height: 20),
-      rowWidget("Protocol", request.protocolVersion),
-      const SizedBox(height: 20),
-      rowWidget("Status Code", response?.status.toString()),
-      const SizedBox(height: 20),
-      rowWidget("Remote Address",
-          '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
-      const SizedBox(height: 20),
-      rowWidget("Request Time", request.requestTime.formatMillisecond()),
-      const SizedBox(height: 20),
-      rowWidget("Duration", response?.costTime()),
-      const SizedBox(height: 20),
-      rowWidget("Request Content-Type", request.headers.contentType),
-      const SizedBox(height: 20),
-      rowWidget("Response Content-Type", response?.headers.contentType),
-      const SizedBox(height: 20),
-      rowWidget("Request Package", getPackage(request.packageSize)),
-      const SizedBox(height: 20),
-      rowWidget("Response Package", getPackage(response?.packageSize)),
-      const SizedBox(height: 20),
-    ];
-    if (request.processInfo != null) {
-      content.add(rowWidget("App", request.processInfo!.name));
-      content.add(const SizedBox(height: 20));
-    }
+class RowWidget extends StatelessWidget {
+  final String name;
+  final String? value;
+  final TextStyle textStyle = const TextStyle(fontSize: 14);
 
-    return ListView(children: [expansionTile("General", content)]);
-  }
+  const RowWidget(this.name, this.value, {super.key});
 
-  Widget request() {
-    if (widget.request.get() == null) {
-      return const SizedBox();
-    }
-
-    var scrollController = ScrollController(); //处理body也有滚动条问题
-    var path = widget.request.get()?.path ?? '';
-    try {
-      path = Uri.decodeFull(path);
-    } catch (_) {}
-
-    return ListView(
-        controller: scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [rowWidget("Path", path), ...message(widget.request.get(), "Request", scrollController)]);
-  }
-
-  Widget response() {
-    if (widget.response.get() == null) {
-      return const SizedBox();
-    }
-
-    var scrollController = ScrollController();
-    return ListView(controller: scrollController, physics: const AlwaysScrollableScrollPhysics(), children: [
-      rowWidget("StatusCode", widget.response.get()?.status.toString()),
-      ...message(widget.response.get(), "Response", scrollController)
-    ]);
-  }
-
-  Widget cookies() {
-    var requestCookie = widget.request.get()?.cookies.expand((cookie) => _cookieWidget(cookie)!);
-
-    var responseCookie = widget.response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(e)!);
-    return ListView(children: [
-      requestCookie == null ? const SizedBox() : expansionTile("Request Cookies", requestCookie.toList()),
-      const SizedBox(height: 20),
-      responseCookie == null ? const SizedBox() : expansionTile("Response Cookies", responseCookie.toList()),
-    ]);
-  }
-
-  List<Widget> message(HttpMessage? message, String type, ScrollController scrollController) {
-    var headers = <Widget>[];
-    message?.headers.forEach((name, values) {
-      for (var v in values) {
-        const nameStyle = TextStyle(fontWeight: FontWeight.w500, color: Colors.deepOrangeAccent, fontSize: 14);
-        headers.add(Row(children: [
-          SelectableText(name, contextMenuBuilder: contextMenu, style: nameStyle),
-          const Text(": ", style: nameStyle),
-          if (Platforms.isDesktop()) SizedBox(width: 5),
-          Expanded(
-              child: SelectableText(v, style: textStyle, contextMenuBuilder: contextMenu, maxLines: 8, minLines: 1)),
-        ]));
-        headers.add(const Divider(thickness: 0.1));
-      }
-    });
-
-    Widget bodyWidgets = HttpBodyWidget(httpMessage: message, scrollController: scrollController);
-
-    Widget headerWidget = ExpansionTile(
-        tilePadding: const EdgeInsets.only(left: 0),
-        title: Text("$type Headers", style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        initiallyExpanded: AppConfiguration.current?.headerExpanded ?? true,
-        shape: const Border(),
-        children: headers);
-
-    return [headerWidget, bodyWidgets];
-  }
-
-  Widget expansionTile(String title, List<Widget> content) {
-    return ExpansionTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        tilePadding: const EdgeInsets.only(left: 0),
-        expandedAlignment: Alignment.topLeft,
-        initiallyExpanded: true,
-        shape: const Border(),
-        children: content);
-  }
-
-  Iterable<Widget>? _cookieWidget(String? cookie) {
-    var headers = <Widget>[];
-
-    cookie?.split(";").map((e) => Strings.splitFirst(e, "=")).where((element) => element != null).forEach((e) {
-      headers.add(rowWidget(e!.key.trim(), e.value));
-      headers.add(const Divider(thickness: 0.1));
-    });
-
-    return headers;
-  }
-
-  Widget rowWidget(final String name, String? value) {
+  @override
+  Widget build(BuildContext context) {
     return Row(children: [
       Expanded(
           flex: 2,

@@ -7,7 +7,7 @@ import 'package:proxypin/network/util/logger.dart';
 import '../component/buttons.dart';
 import '../component/text_field.dart';
 import '../../utils/aes.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 
 class AesPage extends StatefulWidget {
   const AesPage({super.key});

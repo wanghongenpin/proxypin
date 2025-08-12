@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 55;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -25,6 +25,9 @@
 		9B70772D2A5718FB00F184A9 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B70772C2A5718FB00F184A9 /* AudioManager.swift */; };
 		9B7077362A5728B900F184A9 /* silence.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 9B7077352A5728B900F184A9 /* silence.mp3 */; };
 		9B90F5802C183CDE007D7A81 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9B90F5822C183CDE007D7A81 /* InfoPlist.strings */; };
+		9BAB4FC02DE75CFE0093BFBA /* GBPing.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BAB4FBC2DE75CFE0093BFBA /* GBPing.m */; };
+		9BAB4FC12DE75CFE0093BFBA /* GBPingSummary.m in Sources */ = {isa = PBXBuildFile; fileRef = 9BAB4FBE2DE75CFE0093BFBA /* GBPingSummary.m */; };
+		9BAB4FC32DE75D220093BFBA /* GBPingHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BAB4FC22DE75D220093BFBA /* GBPingHelper.swift */; };
 		9BC4B8CC2B4B48710047DBDD /* PictureInPictureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC4B8CB2B4B48710047DBDD /* PictureInPictureManager.swift */; };
 		9BCA28662C9772DD00C2B46C /* ConnectionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCA28652C9772DD00C2B46C /* ConnectionHandler.swift */; };
 		9BCA286A2C97748100C2B46C /* IP4Header.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCA28692C97748100C2B46C /* IP4Header.swift */; };
@@ -42,6 +45,8 @@
 		9BCA28852C98C6B300C2B46C /* QueueFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCA28842C98C6B300C2B46C /* QueueFactory.swift */; };
 		9BCA288A2C98C82000C2B46C /* SocketIOService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCA28892C98C82000C2B46C /* SocketIOService.swift */; };
 		9BCA288C2C995B3700C2B46C /* UDPHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCA288B2C995B3700C2B46C /* UDPHeader.swift */; };
+		9BE87B5C2DEA480000F4FCEF /* MethodHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE87B5B2DEA47FA00F4FCEF /* MethodHandler.swift */; };
+		9BE87B5E2DEA6BAE00F4FCEF /* TLS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE87B5D2DEA6BAB00F4FCEF /* TLS.swift */; };
 		B375908E625E0AED772FA2C0 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D37E307095F2B3E689A68827 /* Pods_RunnerTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -124,6 +129,13 @@
 		9B90F57D2C183C7E007D7A81 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/LaunchScreen.strings"; sourceTree = "<group>"; };
 		9B90F5812C183CDE007D7A81 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		9B90F5832C183CE0007D7A81 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		9BAB4FBB2DE75CFE0093BFBA /* GBPing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GBPing.h; sourceTree = "<group>"; };
+		9BAB4FBC2DE75CFE0093BFBA /* GBPing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GBPing.m; sourceTree = "<group>"; };
+		9BAB4FBD2DE75CFE0093BFBA /* GBPingSummary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GBPingSummary.h; sourceTree = "<group>"; };
+		9BAB4FBE2DE75CFE0093BFBA /* GBPingSummary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GBPingSummary.m; sourceTree = "<group>"; };
+		9BAB4FBF2DE75CFE0093BFBA /* ICMPHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ICMPHeader.h; sourceTree = "<group>"; };
+		9BAB4FC22DE75D220093BFBA /* GBPingHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBPingHelper.swift; sourceTree = "<group>"; };
+		9BAB4FC42DE75E9A0093BFBA /* ProxyPin-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ProxyPin-Bridging-Header.h"; sourceTree = "<group>"; };
 		9BC4B8CB2B4B48710047DBDD /* PictureInPictureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PictureInPictureManager.swift; sourceTree = "<group>"; };
 		9BCA28652C9772DD00C2B46C /* ConnectionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionHandler.swift; sourceTree = "<group>"; };
 		9BCA28692C97748100C2B46C /* IP4Header.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IP4Header.swift; sourceTree = "<group>"; };
@@ -141,6 +153,8 @@
 		9BCA28842C98C6B300C2B46C /* QueueFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueFactory.swift; sourceTree = "<group>"; };
 		9BCA28892C98C82000C2B46C /* SocketIOService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketIOService.swift; sourceTree = "<group>"; };
 		9BCA288B2C995B3700C2B46C /* UDPHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UDPHeader.swift; sourceTree = "<group>"; };
+		9BE87B5B2DEA47FA00F4FCEF /* MethodHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MethodHandler.swift; sourceTree = "<group>"; };
+		9BE87B5D2DEA6BAB00F4FCEF /* TLS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TLS.swift; sourceTree = "<group>"; };
 		D37E307095F2B3E689A68827 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E328C7F89A365CDC0EAD15C6 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -241,6 +255,7 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
+				9BE87B5A2DEA47DE00F4FCEF /* Handlers */,
 				9BC4B8D12B4C19ED0047DBDD /* pip */,
 				9B7077352A5728B900F184A9 /* silence.mp3 */,
 				9B09121A2A5457B3001108B7 /* VpnManager.swift */,
@@ -266,8 +281,22 @@
 				9B0912242A54593A001108B7 /* PacketTunnelProvider.swift */,
 				9B0912262A54593A001108B7 /* Info.plist */,
 				9B0912272A54593A001108B7 /* ProxyPin.entitlements */,
+				9BAB4FC42DE75E9A0093BFBA /* ProxyPin-Bridging-Header.h */,
 			);
 			path = ProxyPin;
+			sourceTree = "<group>";
+		};
+		9BAB4FB12DE74F570093BFBA /* ping */ = {
+			isa = PBXGroup;
+			children = (
+				9BAB4FC22DE75D220093BFBA /* GBPingHelper.swift */,
+				9BAB4FBB2DE75CFE0093BFBA /* GBPing.h */,
+				9BAB4FBC2DE75CFE0093BFBA /* GBPing.m */,
+				9BAB4FBD2DE75CFE0093BFBA /* GBPingSummary.h */,
+				9BAB4FBE2DE75CFE0093BFBA /* GBPingSummary.m */,
+				9BAB4FBF2DE75CFE0093BFBA /* ICMPHeader.h */,
+			);
+			path = ping;
 			sourceTree = "<group>";
 		};
 		9BC4B8D12B4C19ED0047DBDD /* pip */ = {
@@ -283,6 +312,7 @@
 		9BCA28642C97729000C2B46C /* vpn */ = {
 			isa = PBXGroup;
 			children = (
+				9BAB4FB12DE74F570093BFBA /* ping */,
 				9BCA287B2C989A8700C2B46C /* socket */,
 				9BCA28762C98901800C2B46C /* utils */,
 				9BCA28672C97746200C2B46C /* transport */,
@@ -321,6 +351,7 @@
 		9BCA28762C98901800C2B46C /* utils */ = {
 			isa = PBXGroup;
 			children = (
+				9BE87B5D2DEA6BAB00F4FCEF /* TLS.swift */,
 				9BCA28772C98902900C2B46C /* PacketUtil.swift */,
 			);
 			path = utils;
@@ -334,6 +365,14 @@
 				9BCA28892C98C82000C2B46C /* SocketIOService.swift */,
 			);
 			path = socket;
+			sourceTree = "<group>";
+		};
+		9BE87B5A2DEA47DE00F4FCEF /* Handlers */ = {
+			isa = PBXGroup;
+			children = (
+				9BE87B5B2DEA47FA00F4FCEF /* MethodHandler.swift */,
+			);
+			path = Handlers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -420,6 +459,7 @@
 					};
 					9B09121F2A54593A001108B7 = {
 						CreatedOnToolsVersion = 14.2;
+						LastSwiftMigration = 1630;
 					};
 				};
 			};
@@ -604,6 +644,7 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				9B70772D2A5718FB00F184A9 /* AudioManager.swift in Sources */,
+				9BE87B5C2DEA480000F4FCEF /* MethodHandler.swift in Sources */,
 				9B09121B2A5457B3001108B7 /* VpnManager.swift in Sources */,
 				9BC4B8CC2B4B48710047DBDD /* PictureInPictureManager.swift in Sources */,
 			);
@@ -625,12 +666,16 @@
 				9BCA288C2C995B3700C2B46C /* UDPHeader.swift in Sources */,
 				9BCA28732C988E9D00C2B46C /* Packet.swift in Sources */,
 				9BCA288A2C98C82000C2B46C /* SocketIOService.swift in Sources */,
+				9BAB4FC02DE75CFE0093BFBA /* GBPing.m in Sources */,
+				9BAB4FC12DE75CFE0093BFBA /* GBPingSummary.m in Sources */,
 				9BCA28852C98C6B300C2B46C /* QueueFactory.swift in Sources */,
 				9BCA286A2C97748100C2B46C /* IP4Header.swift in Sources */,
 				9BCA287A2C989A7200C2B46C /* Connection.swift in Sources */,
+				9BAB4FC32DE75D220093BFBA /* GBPingHelper.swift in Sources */,
 				9BCA28752C988EC400C2B46C /* TransportHeader.swift in Sources */,
 				9BCA287F2C989AF300C2B46C /* NWProtocol.swift in Sources */,
 				9BCA286F2C977E4C00C2B46C /* TCPPacketFactory.swift in Sources */,
+				9BE87B5E2DEA6BAE00F4FCEF /* TLS.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -971,6 +1016,7 @@
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
@@ -998,6 +1044,7 @@
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ProxyPin/ProxyPin-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1009,6 +1056,7 @@
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
@@ -1034,6 +1082,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ProxyPin/ProxyPin-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1044,6 +1093,7 @@
 			buildSettings = {
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
@@ -1069,6 +1119,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ProxyPin/ProxyPin-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -12,6 +12,7 @@ and easy to use.
 * Search: Search requests according to keywords, response types and other conditions
 * Script: Support writing JavaScript scripts to process requests or responses.
 * Request rewrite: Support redirection, support replacement of request or response message, and can also modify request or response according to the increase.
+* Request mapping: Do not request remote services, use local configuration or scripts for response
 * Request blocking: Support blocking requests according to URL, and do not send requests to the server.
 * History: Automatically save the captured traffic data for easy backtracking and viewing. Support HAR format export and import.
 * Others: Favorites, toolbox, common encoding tools, as well as QR codes, regular expressions, etc.

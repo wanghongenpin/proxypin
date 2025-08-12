@@ -30,12 +30,12 @@ class AppLifecycleBinding {
     return AppLifecycleBinding.instance;
   }
 
-  addListener(LifecycleListener listener) {
+  void addListener(LifecycleListener listener) {
     if (_listeners.contains(listener)) return;
     _listeners.add(listener);
   }
 
-  removeListener(LifecycleListener listener) {
+  void removeListener(LifecycleListener listener) {
     _listeners.remove(listener);
   }
 

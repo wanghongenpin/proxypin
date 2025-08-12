@@ -18,6 +18,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel_context.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/http/h2/setting.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -379,8 +380,27 @@ class Http2RequestDecoder extends Http2Codec<HttpRequest> {
   @override
   HttpRequest createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, List<String>> headers) {
     HttpMethod httpMethod = HttpMethod.valueOf(headers[":method"]!.first);
+
     var httpRequest =
         HttpRequest(httpMethod, headers[":path"]!.first, protocolVersion: headers[":version"]?.firstOrNull ?? "HTTP/2");
+
+    String? authority = headers[":authority"]?.firstOrNull;
+    String? scheme = headers[":scheme"]?.firstOrNull;
+
+    if (authority == null || scheme == null) {
+      logger.e("Invalid HTTP/2 request headers: $headers");
+    } else {
+      // 解析 authority，提取主机和端口
+      String host = authority;
+      int port = (scheme == 'https' ? 443 : 80);
+      if (authority.contains(':')) {
+        var parts = authority.split(':');
+        host = parts[0];
+        port = int.tryParse(parts[1]) ?? (scheme == 'https' ? 443 : 80);
+      }
+      httpRequest.hostAndPort = HostAndPort("$scheme://", host, port);
+    }
+
     var old = channelContext.putStreamRequest(frameHeader.streamIdentifier, httpRequest);
     assert(old == null, "old request is not null");
     return httpRequest;

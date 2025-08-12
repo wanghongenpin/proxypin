@@ -21,7 +21,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
@@ -35,6 +35,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
+import 'package:proxypin/ui/desktop/toolbar/setting/request_map.dart';
 import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
 import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
@@ -150,7 +151,7 @@ class _RequestWidgetState extends State<RequestWidget> {
     setState(() {});
   }
 
-  contextualMenu() {
+  void contextualMenu() {
     Menu menu = Menu(items: [
       MenuItem(
           label: localizations.copyUrl,
@@ -167,6 +168,12 @@ class _RequestWidgetState extends State<RequestWidget> {
                 label: localizations.copyCurl,
                 onClick: (_) {
                   Clipboard.setData(ClipboardData(text: curlRequest(widget.request)))
+                      .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
+                }),
+            MenuItem(
+                label: localizations.copyRawRequest,
+                onClick: (_) {
+                  Clipboard.setData(ClipboardData(text: copyRawRequest(widget.request)))
                       .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
                 }),
             MenuItem(
@@ -196,6 +203,14 @@ class _RequestWidgetState extends State<RequestWidget> {
       MenuItem.separator(),
       MenuItem(label: localizations.requestRewrite, onClick: (_) => showRequestRewriteDialog(context, widget.request)),
       MenuItem(
+          label: localizations.requestMap,
+          onClick: (_) async {
+            showDialog(
+                context: context,
+                builder: (context) =>
+                    RequestMapEdit(url: widget.request.domainPath, title: widget.request.hostAndPort?.host));
+          }),
+      MenuItem(
           label: localizations.script,
           onClick: (_) async {
             var scriptManager = await ScriptManager.instance;
@@ -205,7 +220,9 @@ class _RequestWidgetState extends State<RequestWidget> {
             String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
             if (!mounted) return;
             showDialog(
-                context: context, builder: (context) => ScriptEdit(scriptItem: scriptItem, script: script, url: url));
+                context: context,
+                builder: (context) => ScriptEdit(
+                    scriptItem: scriptItem, script: script, url: url, title: widget.request.hostAndPort?.host));
           }),
       MenuItem.separator(),
       MenuItem(
@@ -354,7 +371,6 @@ class _RequestWidgetState extends State<RequestWidget> {
     if (AppConfiguration.current?.autoReadEnabled == true) {
       autoReadRequests.add(widget.request.requestId);
     }
-
 
     //切换选中的节点
     if (selectedState?.mounted == true && selectedState != this) {

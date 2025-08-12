@@ -24,7 +24,7 @@ import 'package:proxypin/ui/desktop/toolbar/ssl/ssl.dart';
 import 'package:proxypin/ui/launch/launch.dart';
 import 'package:proxypin/utils/ip.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 
 import '../request/list.dart';
 
@@ -102,7 +102,7 @@ class _ToolbarState extends State<Toolbar> {
             tooltip: localizations.mobileConnect,
             icon: const Icon(Icons.phone_iphone, size: 22),
             onPressed: () async {
-              final ips = await localIps();
+              final ips = await localIps(readCache: false);
               phoneConnect(ips, widget.proxyServer.port);
             }),
         const Expanded(child: SizedBox()), //自动扩展挤压

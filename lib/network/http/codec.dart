@@ -93,7 +93,8 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf data) {
-    var protocol = channelContext.serverChannel?.selectedProtocol;
+    var protocol = channelContext.clientChannel?.selectedProtocol;
+
     if (protocol == HttpConstants.h2 || protocol == HttpConstants.h2_14) {
       return getH2Codec().decode(channelContext, data);
     }

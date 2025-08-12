@@ -74,5 +74,7 @@
       <key>NSAllowsArbitraryLoads</key>
       <true/>
     </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Remote Device Connect</string>
 </dict>
 </plist>

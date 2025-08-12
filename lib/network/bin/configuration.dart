@@ -110,7 +110,7 @@ class Configuration {
   }
 
   /// 刷新配置文件
-  flushConfig() async {
+  Future<void> flushConfig() async {
     var file = await configFile();
     var exists = await file.exists();
     if (!exists) {

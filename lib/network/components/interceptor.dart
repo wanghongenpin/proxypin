@@ -12,6 +12,11 @@ abstract class Interceptor {
   }
 
   /// Called before the request is sent to the server.
+  Future<HttpResponse?> execute(HttpRequest request) async {
+    return null;
+  }
+
+  /// Called before the request is sent to the server.
   Future<HttpRequest?> onRequest(HttpRequest request) async {
     return request;
   }

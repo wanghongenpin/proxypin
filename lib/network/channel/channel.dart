@@ -77,7 +77,7 @@ class Channel {
 
   Socket get socket => _socket;
 
-  serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
+  void serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
     _socket = secureSocket;
     _socket.done.then((value) => isOpen = false);
     dispatcher.listen(this, channelContext);
@@ -106,7 +106,7 @@ class Channel {
     return secureSocket;
   }
 
-  listen(ChannelContext channelContext) {
+  void listen(ChannelContext channelContext) {
     dispatcher.listen(this, channelContext);
   }
 

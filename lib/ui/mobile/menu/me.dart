@@ -15,7 +15,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
@@ -34,6 +34,8 @@ import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
+
+import '../setting/request_map.dart';
 
 /// @author wanghongen
 /// 2024/9/30
@@ -124,6 +126,11 @@ class _MePageState extends State<MePage> {
                     navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
                   }
                 }),
+            ListTile(
+                title: Text(localizations.requestMap),
+                leading: Icon(Icons.swap_horiz_outlined, color: color),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => navigator(context, MobileRequestMapPage())),
             ListTile(
                 title: Text(localizations.script),
                 leading: Icon(Icons.javascript_outlined, color: color),

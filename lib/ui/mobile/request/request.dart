@@ -18,7 +18,7 @@ import 'dart:io';
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
@@ -278,8 +278,11 @@ class RequestRowState extends State<RequestRow> {
                       String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
 
                       var pageRoute = MaterialPageRoute(
-                          builder: (context) =>
-                              ScriptEdit(scriptItem: scriptItem, script: script, url: scriptItem?.url ?? url));
+                          builder: (context) => ScriptEdit(
+                              scriptItem: scriptItem,
+                              script: script,
+                              url: scriptItem?.url ?? url,
+                              title: request.hostAndPort?.host));
 
                       Navigator.push(getContext(), pageRoute);
                     },
@@ -344,7 +347,7 @@ class RequestRowState extends State<RequestRow> {
   }
 
   //显示高级重发
-  showCustomRepeat(HttpRequest request) async {
+  Future<void> showCustomRepeat(HttpRequest request) async {
     await Navigator.maybePop(availableContext);
     var pageRoute = MaterialPageRoute(
         builder: (context) => futureWidget(SharedPreferences.getInstance(),
@@ -353,7 +356,7 @@ class RequestRowState extends State<RequestRow> {
     Navigator.push(getContext(), pageRoute);
   }
 
-  onRepeat(HttpRequest request) {
+  void onRepeat(HttpRequest request) {
     var httpRequest = request.copy(uri: request.requestUrl);
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);

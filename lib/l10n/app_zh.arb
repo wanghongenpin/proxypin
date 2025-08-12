@@ -134,6 +134,7 @@
   "copy": "复制",
   "copyHost": "复制域名",
   "copyUrl": "复制URL",
+  "copyRawRequest": "复制 原始请求",
   "copyRequestResponse": "复制 请求和响应",
   "copyCurl": "复制 cURL",
   "copyAsPythonRequests": "复制 Python Requests",
@@ -252,7 +253,7 @@
   "pullConfigFail": "拉取配置失败, 请检查网络连接",
   "sync": "同步",
   "invalidQRCode": "无法识别的二维码",
-  "remoteConnectFail": "连接失败，请检查是否在同一局域网和防火墙是否允许",
+  "remoteConnectFail": "连接失败，请检查是否在同一局域网和防火墙是否允许, ios需要开启本地网络权限",
   "remoteConnectSuccessTips": "手机需要开启抓包才可以抓取请求哦",
 
   "windowMode": "窗口模式",
@@ -330,5 +331,8 @@
   "appUpdateNewVersionLbl": "新版本",
   "appUpdateUpdateNowBtnTxt": "现在更新",
   "appUpdateLaterBtnTxt": "以后再说",
-  "appUpdateIgnoreBtnTxt": "忽略"
+  "appUpdateIgnoreBtnTxt": "忽略",
+
+  "requestMap": "请求映射",
+  "requestMapDescribe": "不请求远程服务，使用本地配置或脚本进行响应"
 }

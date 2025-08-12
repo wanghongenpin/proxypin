@@ -88,7 +88,7 @@ class CertificateManager {
 
     var rsaPrivateKey = _serverKeyPair.privateKey as RSAPrivateKey;
 
-    return SecurityContext.defaultContext
+    return SecurityContext(withTrustedRoots: true)
       ..useCertificateChainBytes(cer.codeUnits)
       ..allowLegacyUnsafeRenegotiation = true
       ..usePrivateKeyBytes(CryptoUtils.encodeRSAPrivateKeyToPemPkcs1(rsaPrivateKey).codeUnits);
