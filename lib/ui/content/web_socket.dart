@@ -54,7 +54,7 @@ class Websocket extends StatelessWidget {
           onPressed: () {
             showDialog(context: context, builder: (context) => _PreviewDialog(bytes: message.payloadData));
           },
-          icon: Icon(Icons.expand_more, color: ColorScheme.of(context).primary),
+          icon: Icon(Icons.expand_more, color: Theme.of(context).colorScheme.primary),
         );
 
         return Padding(

@@ -42,7 +42,7 @@ class HighlightTextWidget extends StatelessWidget {
     int start = 0;
     var allMatches = regex.allMatches(text).toList();
     final currentIndex = searchController.currentMatchIndex.value;
-    ColorScheme colorScheme = ColorScheme.of(context);
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
     List<GlobalKey> matchKeys = [];
     for (int i = 0; i < allMatches.length; i++) {
       final match = allMatches[i];

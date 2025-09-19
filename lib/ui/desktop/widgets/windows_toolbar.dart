@@ -41,7 +41,7 @@ class _WindowsToolbarState extends State<WindowsToolbar> with WindowListener {
         widget.title ?? SizedBox(),
         Expanded(child: DragToMoveArea(child: Container())),
         WindowCaptionButton.minimize(
-            brightness: Theme.brightnessOf(context),
+            brightness: Theme.of(context).brightness,
             onPressed: () async {
               bool isMinimized = await windowManager.isMinimized();
               if (isMinimized) {
@@ -55,21 +55,21 @@ class _WindowsToolbarState extends State<WindowsToolbar> with WindowListener {
             builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
               if (snapshot.data == true) {
                 return WindowCaptionButton.unmaximize(
-                  brightness: Theme.brightnessOf(context),
+                  brightness: Theme.of(context).brightness,
                   onPressed: () {
                     windowManager.unmaximize();
                   },
                 );
               }
               return WindowCaptionButton.maximize(
-                brightness: Theme.brightnessOf(context),
+                brightness: Theme.of(context).brightness,
                 onPressed: () {
                   windowManager.maximize();
                 },
               );
             }),
         WindowCaptionButton.close(
-            brightness: Theme.brightnessOf(context),
+            brightness: Theme.of(context).brightness,
             onPressed: () {
               windowManager.close();
             }),

@@ -16,7 +16,6 @@
 #include <vclibs/vclibs_plugin_c_api.h>
 #include <win32audio/win32audio_plugin_c_api.h>
 #include <window_manager/window_manager_plugin.h>
-#include <windows_single_instance/windows_single_instance_plugin.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
   DesktopMultiWindowPluginRegisterWithRegistrar(
@@ -39,6 +38,4 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("Win32audioPluginCApi"));
   WindowManagerPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WindowManagerPlugin"));
-  WindowsSingleInstancePluginRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("WindowsSingleInstancePlugin"));
 }

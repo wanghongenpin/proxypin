@@ -45,7 +45,7 @@ dependencies:
 
   brotli: ^0.6.0
 
-  macos_window_utils: ^1.9.0
+  macos_window_utils: ^1.8.3
   win32audio: ^1.3.1
   vclibs: ^0.1.3
   get: ^4.7.2
