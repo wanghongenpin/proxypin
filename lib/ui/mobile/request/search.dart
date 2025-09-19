@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
-import 'package:proxypin/ui/desktop/request/model/search_model.dart';
-import 'package:proxypin/ui/desktop/request/search_condition.dart';
+import 'package:proxypin/ui/component/search_condition.dart';
+
+import '../../component/model/search_model.dart';
 
 class MobileSearch extends StatefulWidget {
   final Function(SearchModel searchModel)? onSearch;

@@ -250,14 +250,13 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
     logger.d('Eval Fetch Result: $evalFetchResult');
   }
 
-  Future<http.Client> createClient(enabledProxy) async {
+  Future<http.Client> createClient(bool enabledProxy) async {
     if (!enabledProxy) {
       return http.Client();
     }
 
     // ProxyServer.current.isRunning
     var httpClient = HttpClient();
-    print(ProxyServer.current?.isRunning);
     String proxy;
     if (Platforms.isDesktop()) {
       Map? proxyResult = await DesktopMultiWindow.invokeMethod(0, 'getProxyInfo');
@@ -354,20 +353,28 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
           body = response.bodyBytes;
         }
 
-        // logger.d('RESPONSE TEXT: $responseText');
         final xhrResult = XmlHttpRequestResponse(
           responseText: responseText,
           responseInfo: XhtmlHttpResponseInfo(statusCode: 200, statusText: "OK", body: body),
         );
 
+        response.headers.forEach((key, value) {
+          xhrResult.responseInfo?.addResponseHeaders(key, value);
+        });
+
         final responseInfo = jsonEncode(xhrResult.responseInfo);
-        //final responseText = xhrResult.responseText; //.replaceAll("\\n", "\\\n");
+        final safeResponseText = responseText != null ? jsonEncode(responseText) : null;
         final error = xhrResult.error;
+        // logger.d('XHR response for url: ${pendingCall.url}, status: ${xhrResult.responseInfo?.statusCode}');
+
         // send back to the javascript environment the
         // response for the http pending callback
-        this.evaluate(
-          "globalThis.xhrRequests[${pendingCall.idRequest}].callback($responseInfo, `$responseText`, $error);",
+        var jsResult = evaluate(
+          "globalThis.xhrRequests[${pendingCall.idRequest}].callback($responseInfo, $safeResponseText, $error);",
         );
+        if (jsResult.isError) {
+          logger.e('jsResult error url:${pendingCall.url}, ${jsResult.stringResult}');
+        }
       });
     });
 
@@ -455,7 +462,7 @@ class XhtmlHttpResponseInfo {
       "statusCode": statusCode,
       "statusText": statusText,
       "body": body,
-      "responseHeaders": jsonEncode(responseHeaders)
+      "responseHeaders": responseHeaders
     };
   }
 }

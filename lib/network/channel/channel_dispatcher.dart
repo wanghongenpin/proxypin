@@ -39,6 +39,11 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   /// 监听
   void listen(Channel channel, ChannelContext channelContext) {
     buffer.clear();
+    channel.socket.done.onError((error, StackTrace trace) {
+      logger.e('[${channelContext.clientChannel?.id}] secureSocket done error', error: error, stackTrace: trace);
+      channel.dispatcher.exceptionCaught(channelContext, channel, error, trace: trace);
+      return null;
+    });
     channel.socket.listen((data) => channel.dispatcher.channelRead(channelContext, channel, data),
         onError: (error, trace) => channel.dispatcher.exceptionCaught(channelContext, channel, error, trace: trace),
         onDone: () => channel.dispatcher.channelInactive(channelContext, channel));
@@ -130,7 +135,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
 
       var data = decodeResult.data;
       if (data is HttpMessage) {
-        data.packageSize = length;
+        data.packageSize ??= length;
         data.remoteHost = channel.remoteSocketAddress.host;
         data.remotePort = channel.remoteSocketAddress.port;
       }
@@ -217,6 +222,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   @override
   channelInactive(ChannelContext channelContext, Channel channel) async {
     await taskQueue.waitForAll();
+    channel.isOpen = false;
     handler.channelInactive(channelContext, channel);
   }
 }

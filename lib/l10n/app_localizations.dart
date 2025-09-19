@@ -118,12 +118,6 @@ abstract class AppLocalizations {
   /// **'Toolbox'**
   String get toolbox;
 
-  /// No description provided for @me.
-  ///
-  /// In en, this message translates to:
-  /// **'Me'**
-  String get me;
-
   /// No description provided for @preference.
   ///
   /// In en, this message translates to:
@@ -219,6 +213,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Download'**
   String get download;
+
+  /// No description provided for @config.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration'**
+  String get config;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
 
   /// No description provided for @start.
   ///

@@ -15,6 +15,7 @@
  */
 
 import 'package:proxypin/network/util/cache.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 ///content type
 ///@author WangHongEn
@@ -72,7 +73,7 @@ class MediaType {
     }
   }
 
-  factory MediaType.valueOf(String mediaType) {
+  static MediaType? valueOf(String mediaType) {
     if (mediaType.isEmpty) {
       throw InvalidMediaTypeException(mediaType, "'mediaType' must not be empty");
     }
@@ -81,7 +82,13 @@ class MediaType {
       return _parseMediaTypeInternal(mediaType);
     }
 
-    return cachedMediaTypes.pubIfAbsent(mediaType, () => _parseMediaTypeInternal(mediaType));
+    var parseMediaType = _parseMediaTypeInternal(mediaType);
+    if (parseMediaType == null) {
+      return null;
+    }
+
+    cachedMediaTypes.set(mediaType, parseMediaType);
+    return parseMediaType;
   }
 
   ///编码
@@ -99,11 +106,12 @@ class MediaType {
     return null;
   }
 
-  static MediaType _parseMediaTypeInternal(String mediaType) {
+  static MediaType? _parseMediaTypeInternal(String mediaType) {
     int index = mediaType.indexOf(';');
     String fullType = (index >= 0 ? mediaType.substring(0, index) : mediaType).trim();
     if (fullType.isEmpty) {
-      throw InvalidMediaTypeException(mediaType, "'mediaType' must not be empty");
+      logger.d("Invalid media type: '$mediaType'");
+      return null;
     }
 
     if (MediaType.wildcardType == fullType) {
@@ -111,15 +119,20 @@ class MediaType {
     }
     int subIndex = fullType.indexOf('/');
     if (subIndex == -1) {
-      throw InvalidMediaTypeException(mediaType, "does not contain '/'");
+      logger.d("Invalid media type: '$mediaType'");
+      return null;
     }
+
     if (subIndex == fullType.length - 1) {
-      throw InvalidMediaTypeException(mediaType, "does not contain subtype after '/'");
+      logger.d("Invalid media type: '$mediaType'");
+      return null;
     }
+
     String type = fullType.substring(0, subIndex);
     String subtype = fullType.substring(subIndex + 1);
     if (MediaType.wildcardType == type && MediaType.wildcardType != subtype) {
-      throw InvalidMediaTypeException(mediaType, "wildcard type is legal only in '*/*' (all mime types)");
+      logger.d("Invalid media type: '$mediaType'");
+      return null;
     }
 
     Map<String, String> parameters = {};
@@ -153,7 +166,8 @@ class MediaType {
     try {
       return MediaType(type, subtype, parameters: parameters);
     } catch (e) {
-      throw InvalidMediaTypeException(mediaType, e.toString());
+      logger.d("Invalid media type: '$mediaType'", error: e);
+      return null;
     }
   }
 

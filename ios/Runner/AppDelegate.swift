@@ -11,7 +11,7 @@ import NetworkExtension
                               didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         GeneratedPluginRegistrant.register(with: self)
 
-        let controller: FlutterViewController = window.rootViewController as! FlutterViewController ;
+        let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
         let vpnChannel = FlutterMethodChannel.init(name: "com.proxy/proxyVpn", binaryMessenger: controller as! FlutterBinaryMessenger);
             vpnChannel.setMethodCallHandler({(call: FlutterMethodCall, result: FlutterResult) -> Void in
                 if ("stopVpn" == call.method) {
@@ -33,6 +33,10 @@ import NetworkExtension
             MethodHandler.register(with: self.registrar(forPlugin: MethodHandler.name)!)
         }
         
+        if let window = self.window {
+            window.rootViewController = controller
+        }
+
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
    }
 

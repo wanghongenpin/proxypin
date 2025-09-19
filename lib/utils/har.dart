@@ -186,13 +186,13 @@ class Har {
     if (request.contentType == ContentType.formData || request.contentType == ContentType.formUrl) {
       return {
         "mimeType": request.headers.contentType, // 请求体类型
-        "text": request.bodyAsString, // 请求体内容
+        "text": request.body == null ? null : String.fromCharCodes(request.body!), // 请求体内容
         "params": [], // 请求体内容
       };
     }
     return {
       "mimeType": request.headers.contentType, // 请求体类型
-      "text": request.bodyAsString, // 请求体内容
+      "text": request.body == null ? null : String.fromCharCodes(request.body!), // 请求体内容
     };
   }
 

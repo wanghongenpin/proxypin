@@ -33,10 +33,11 @@ import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/transition.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/panel.dart';
-import 'package:proxypin/ui/desktop/request/model/search_model.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
+
+import '../../component/model/search_model.dart';
 
 /// 左侧域名
 /// @author wanghongen
@@ -78,7 +79,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 
   bool sortDesc = true;
 
-  changeState() {
+  void changeState() {
     if (!changing) {
       changing = true;
       Future.delayed(const Duration(milliseconds: 500), () {

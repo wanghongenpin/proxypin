@@ -30,8 +30,8 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/rewrite/rewrite_replace.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/rewrite/rewrite_update.dart';
+import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_replace.dart';
+import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
 
 /// @author wanghongen

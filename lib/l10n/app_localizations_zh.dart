@@ -17,9 +17,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get toolbox => '工具箱';
 
   @override
-  String get me => '我的';
-
-  @override
   String get preference => '偏好设置';
 
   @override
@@ -66,6 +63,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get download => '下载';
+
+  @override
+  String get config => '配置';
+
+  @override
+  String get version => '版本';
 
   @override
   String get start => '开始';
@@ -977,9 +980,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get toolbox => '工具箱';
 
   @override
-  String get me => '我的';
-
-  @override
   String get preference => '偏好設定';
 
   @override
@@ -1026,6 +1026,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get download => '下載';
+
+  @override
+  String get config => '設定';
+
+  @override
+  String get version => '版本';
 
   @override
   String get start => '開始';

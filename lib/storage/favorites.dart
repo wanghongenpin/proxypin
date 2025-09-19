@@ -96,7 +96,7 @@ class Favorite {
         name: json['name'], response: json['response'] == null ? null : HttpResponse.fromJson(json['response']));
   }
 
-  toJson() {
+  Map<String, dynamic> toJson() {
     return {
       'name': name,
       'request': request.toJson(),

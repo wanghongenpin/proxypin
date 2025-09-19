@@ -16,8 +16,9 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
-import 'package:proxypin/ui/desktop/request/model/search_model.dart';
-import 'package:proxypin/ui/desktop/request/search_condition.dart';
+import 'package:proxypin/ui/component/search_condition.dart';
+
+import '../../component/model/search_model.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -85,16 +86,16 @@ class _SearchState extends State<Search> {
     );
   }
 
-  searchDialog(TapDownDetails details) {
+  void searchDialog(TapDownDetails details) {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
-    bool isCN = AppLocalizations.of(context)!.localeName == 'zh';
+    bool isEN = AppLocalizations.of(context)!.localeName == 'en';
     var height = MediaQuery.of(context).size.height;
-    height = isCN ? height - 400 : height - 485;
+    height = isEN ? height - 485 : height - 400;
     showMenu(
         context: context,
-        position: RelativeRect.fromLTRB(10, height, 10, height),
+        position: RelativeRect.fromLTRB(60, height, 60, height),
         constraints: const BoxConstraints(minWidth: 260, maxWidth: 330),
         items: [
           PopupMenuItem(

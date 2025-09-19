@@ -21,7 +21,7 @@ import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/storage/histories.dart';
-import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/proxy_port_setting.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/setting/hosts.dart';
@@ -35,21 +35,30 @@ import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
 
+import '../../component/widgets.dart';
+import '../setting/proxy.dart';
 import '../setting/request_map.dart';
 
 /// @author wanghongen
 /// 2024/9/30
-class MePage extends StatefulWidget {
+class ConfigPage extends StatefulWidget {
   final ProxyServer proxyServer;
 
-  const MePage({super.key, required this.proxyServer});
+  const ConfigPage({super.key, required this.proxyServer});
 
   @override
-  State<StatefulWidget> createState() => _MePageState();
+  State<StatefulWidget> createState() => _ConfigPageState();
 }
 
-class _MePageState extends State<MePage> {
+class _ConfigPageState extends State<ConfigPage> {
   late ProxyServer proxyServer = widget.proxyServer;
+  late HistoryTask historyTask;
+
+  @override
+  void initState() {
+    super.initState();
+    historyTask = HistoryTask.ensureInstance(proxyServer.configuration, MobileApp.container);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,19 +70,12 @@ class _MePageState extends State<MePage> {
         appBar: PreferredSize(
             preferredSize: const Size.fromHeight(42),
             child: AppBar(
-              title: Text(localizations.me, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+              title: Text(localizations.config, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
               centerTitle: true,
             )),
         body: ListView(
           padding: const EdgeInsets.only(top: 5, left: 5),
           children: [
-            const SizedBox(height: 10),
-            ListTile(
-                title: Text(localizations.httpsProxy),
-                leading: Icon(proxyServer.enableSsl ? Icons.lock_open : Icons.https, color: color),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => navigator(context, MobileSslWidget(proxyServer: proxyServer))),
-            const Divider(thickness: 0.35),
             ListTile(
                 leading: Icon(Icons.favorite_outline, color: color),
                 title: Text(localizations.favorites),
@@ -83,19 +85,10 @@ class _MePageState extends State<MePage> {
               leading: Icon(Icons.history, color: color),
               title: Text(localizations.history),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => navigator(
-                  context,
-                  MobileHistory(
-                      proxyServer: proxyServer,
-                      container: MobileApp.container,
-                      historyTask: HistoryTask.ensureInstance(proxyServer.configuration, MobileApp.container))),
+              onTap: () => navigator(context,
+                  MobileHistory(proxyServer: proxyServer, container: MobileApp.container, historyTask: historyTask)),
             ),
             const Divider(thickness: 0.35),
-            ListTile(
-                title: Text(localizations.filter),
-                leading: Icon(Icons.filter_alt_outlined, color: color),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
             ListTile(
                 title: Text(localizations.hosts),
                 leading: Icon(Icons.domain, color: color),
@@ -136,31 +129,90 @@ class _MePageState extends State<MePage> {
                 leading: Icon(Icons.javascript_outlined, color: color),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => navigator(context, const MobileScript())),
-            ListTile(
-                title: Text(localizations.setting),
-                leading: Icon(Icons.settings_outlined, color: color),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => navigator(
-                    context,
-                    futureWidget(
-                        AppConfiguration.instance,
-                        (appConfiguration) =>
-                            Preference(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
-            ListTile(
-                title: Text(localizations.about),
-                leading: Icon(Icons.info_outline, color: color),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => navigator(context, const About())),
             const SizedBox(height: 20)
           ],
         ));
   }
+}
 
-  void navigator(BuildContext context, Widget widget) async {
-    if (context.mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (BuildContext context) => widget),
-      );
-    }
+void navigator(BuildContext context, Widget widget) async {
+  if (context.mounted) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (BuildContext context) => widget),
+    );
+  }
+}
+
+class SettingPage extends StatelessWidget {
+  final ProxyServer proxyServer;
+  final AppConfiguration appConfiguration;
+
+  const SettingPage({super.key, required this.proxyServer, required this.appConfiguration});
+
+  @override
+  Widget build(BuildContext context) {
+    final configuration = proxyServer.configuration;
+
+    AppLocalizations localizations = AppLocalizations.of(context)!;
+    bool isEn = appConfiguration.language?.languageCode == 'en';
+
+    return Scaffold(
+        appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(42),
+            child: AppBar(
+              title: Text(localizations.setting, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+              centerTitle: true,
+            )),
+        body: ListView(padding: const EdgeInsets.only(top: 5, left: 5), children: [
+          const SizedBox(height: 5),
+          ListTile(
+              title: Text(localizations.httpsProxy),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () => navigator(context, MobileSslWidget(proxyServer: proxyServer))),
+          ListTile(
+              title: Text(localizations.filter),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
+          const Divider(thickness: 0.15),
+          PortWidget(
+              proxyServer: proxyServer,
+              title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
+              textStyle: const TextStyle(fontSize: 16)),
+          ListTile(
+              title: Text("SOCKS5"),
+              trailing: SwitchWidget(
+                  value: configuration.enableSocks5,
+                  scale: 0.8,
+                  onChanged: (value) {
+                    configuration.enableSocks5 = value;
+                    proxyServer.configuration.flushConfig();
+                  })),
+          ListTile(
+              title: Text(localizations.enabledHTTP2),
+              trailing: SwitchWidget(
+                  value: configuration.enabledHttp2,
+                  scale: 0.8,
+                  onChanged: (value) {
+                    configuration.enabledHttp2 = value;
+                    proxyServer.configuration.flushConfig();
+                  })),
+          ListTile(
+              title: Text(localizations.externalProxy),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () {
+                showDialog(
+                    context: context, builder: (_) => ExternalProxyDialog(configuration: proxyServer.configuration));
+              }),
+          ListTile(
+              title: Text(localizations.setting),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () =>
+                  navigator(context, Preference(proxyServer: proxyServer, appConfiguration: appConfiguration))),
+          ListTile(
+              title: Text(localizations.about),
+              trailing: const Icon(Icons.keyboard_arrow_right),
+              onTap: () => navigator(context, const About())),
+          SizedBox(height: 5),
+        ]));
   }
 }

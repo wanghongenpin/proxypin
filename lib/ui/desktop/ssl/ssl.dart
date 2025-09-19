@@ -29,8 +29,8 @@ class _SslState extends State<SslWidget> {
         builder: (context, controller, child) {
           return IconButton(
               icon: widget.proxyServer.enableSsl
-                  ? Icon(Icons.lock_open, size: 22)
-                  : Icon(Icons.https_outlined, color: Colors.red, size: 22),
+                  ? Icon(Icons.lock_open, size: 21)
+                  : Icon(Icons.https_outlined, color: Colors.red, size: 21),
               tooltip: localizations.httpsProxy,
               onPressed: () {
                 if (controller.isOpen) {

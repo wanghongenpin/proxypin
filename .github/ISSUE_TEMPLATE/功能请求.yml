@@ -1,0 +1,36 @@
+name: 功能请求
+description: 为这个项目提出一个想法
+labels: enhancement
+body:
+  - type: dropdown
+    attributes:
+      label: Operating system
+      description: Operating system type
+      options:
+        - iOS
+        - macOS
+        - Android
+        - Windows
+        - Linux
+        - All
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 您的功能请求是否与某个问题相关？请描述.
+      description: 对问题所在的清晰简洁的描述.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 描述您想要的解决方案
+      description: 对您想要的解决方案的清晰简洁的描述.
+
+  - type: checkboxes
+    id: supporter
+    attributes:
+      label: 支持我们
+      options:
+        - label: 我已经 [赞助](https://afdian.com/a/proxypin)

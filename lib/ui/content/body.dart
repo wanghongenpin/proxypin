@@ -15,6 +15,7 @@
  */
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
@@ -32,7 +33,7 @@ import 'package:proxypin/ui/component/json/json_viewer.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/request_rewrite.dart';
+import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/num.dart';
@@ -40,6 +41,8 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../component/json/json_text.dart';
+import '../component/search/highlight_text.dart';
+import '../component/search/search_controller.dart';
 import '../toolbox/encoder.dart';
 
 ///请求响应的body部分
@@ -68,6 +71,8 @@ class HttpBodyWidget extends StatefulWidget {
 class HttpBodyState extends State<HttpBodyWidget> {
   var bodyKey = GlobalKey<_BodyState>();
   int tabIndex = 0;
+  final searchIconKey = GlobalKey();
+  final SearchTextController searchController = SearchTextController();
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -94,6 +99,8 @@ class HttpBodyState extends State<HttpBodyWidget> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(onKeyEvent);
+    searchController.dispose();
+    widget.scrollController?.dispose();
     super.dispose();
   }
 
@@ -133,15 +140,45 @@ class HttpBodyState extends State<HttpBodyWidget> {
               key: bodyKey,
               message: widget.httpMessage,
               viewType: tabs.list[tabIndex],
-              scrollController: widget.scrollController)) //body
+              scrollController: widget.scrollController,
+              searchController: searchController)) //body
     ];
 
-    var tabController = DefaultTabController(
-        initialIndex: tabIndex,
-        length: tabs.list.length,
-        child: widget.inNewWindow
-            ? ListView(children: list)
-            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: list));
+    var tabController = FocusableActionDetector(
+        shortcuts: {
+          LogicalKeySet(
+                  Platform.isMacOS ? LogicalKeyboardKey.meta : LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
+              ActivateIntent(),
+          LogicalKeySet(LogicalKeyboardKey.escape): DismissIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (intent) {
+              if (searchController.isSearchOverlayVisible) {
+                hideSearchOverlay();
+              } else {
+                RenderBox renderBox = searchIconKey.currentContext?.findRenderObject() as RenderBox;
+                Offset position = renderBox.localToGlobal(Offset.zero); // 获取搜索图标的位置
+
+                searchController.showSearchOverlay(context,
+                    top: max(position.dy + renderBox.size.height + 50, 100), right: 10);
+              }
+              return null;
+            },
+          ),
+          DismissIntent: CallbackAction<DismissIntent>(
+            onInvoke: (intent) {
+              hideSearchOverlay();
+              return null;
+            },
+          ),
+        },
+        child: DefaultTabController(
+            initialIndex: tabIndex,
+            length: tabs.list.length,
+            child: widget.inNewWindow
+                ? ListView(children: list)
+                : Column(crossAxisAlignment: CrossAxisAlignment.start, children: list)));
 
     //在新窗口打开
     if (widget.inNewWindow) {
@@ -150,6 +187,10 @@ class HttpBodyState extends State<HttpBodyWidget> {
           body: tabController);
     }
     return tabController;
+  }
+
+  void hideSearchOverlay() {
+    searchController.removeSearchOverlay();
   }
 
   //判断是否是json格式
@@ -161,18 +202,36 @@ class HttpBodyState extends State<HttpBodyWidget> {
   }
 
   /// 标题
-  Widget titleWidget({inNewWindow = false}) {
+  Widget titleWidget({bool inNewWindow = false}) {
     var type = widget.httpMessage is HttpRequest ? "Request" : "Response";
 
     bool isImage = widget.httpMessage?.contentType == ContentType.image;
+    VisualDensity visualDensity = Platforms.isMobile() ? VisualDensity.compact : VisualDensity.standard;
 
     var list = [
       Text('$type Body', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      const SizedBox(width: 10),
+      const SizedBox(width: 18),
+      InkWell(
+        key: searchIconKey,
+        child: Icon(Icons.search, size: 20),
+        // tooltip: localizations.search,
+        onTap: () {
+          if (searchController.isSearchOverlayVisible) {
+            searchController.removeSearchOverlay();
+          } else {
+            RenderBox renderBox = searchIconKey.currentContext?.findRenderObject() as RenderBox;
+            Offset position = renderBox.localToGlobal(Offset.zero); // 获取搜索图标的位置
+            searchController.showSearchOverlay(context, top: position.dy + renderBox.size.height + 50, right: 10);
+          }
+        },
+      ),
+      const SizedBox(width: 5),
       isImage
           ? downloadImageButton()
           : IconButton(
-              icon: Icon(Icons.copy, size: 18),
+              visualDensity: visualDensity,
+              iconSize: 16,
+              icon: Icon(Icons.copy),
               tooltip: localizations.copy,
               onPressed: () async {
                 var body = await bodyKey.currentState?.getBody();
@@ -186,16 +245,18 @@ class HttpBodyState extends State<HttpBodyWidget> {
     ];
 
     if (!widget.hideRequestRewrite) {
-      list.add(const SizedBox(width: 3));
       list.add(IconButton(
-          icon: const Icon(Icons.edit_document, size: 18),
+          visualDensity: visualDensity,
+          iconSize: 16,
+          icon: const Icon(Icons.edit_document),
           tooltip: localizations.requestRewrite,
           onPressed: showRequestRewrite));
     }
 
-    list.add(const SizedBox(width: 3));
     list.add(IconButton(
-        icon: const Icon(Icons.text_format, size: 21),
+        visualDensity: visualDensity,
+        iconSize: 20,
+        icon: const Icon(Icons.text_format),
         tooltip: localizations.encode,
         onPressed: () async {
           var body = await bodyKey.currentState?.getBody();
@@ -204,18 +265,26 @@ class HttpBodyState extends State<HttpBodyWidget> {
           }
         }));
     if (!inNewWindow) {
-      list.add(const SizedBox(width: 3));
       list.add(IconButton(
-          icon: const Icon(Icons.open_in_new, size: 18), tooltip: localizations.newWindow, onPressed: () => openNew()));
+          visualDensity: visualDensity,
+          iconSize: 16,
+          icon: const Icon(Icons.open_in_new),
+          tooltip: localizations.newWindow,
+          onPressed: () => openNew()));
     }
 
-    return Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: list);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(children: list),
+    );
   }
 
   ///下载图片
   Widget downloadImageButton() {
     return IconButton(
-        icon: Icon(Icons.download, size: 20),
+        iconSize: 19,
+        visualDensity: VisualDensity.comfortable,
+        icon: Icon(Icons.download),
         tooltip: localizations.saveImage,
         onPressed: () async {
           var body = bodyKey.currentState?.message?.body;
@@ -245,7 +314,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
   }
 
   ///展示请求重写
-  showRequestRewrite() async {
+  Future<void> showRequestRewrite() async {
     HttpRequest? request;
     if (widget.httpMessage == null) {
       return;
@@ -310,8 +379,15 @@ class _Body extends StatefulWidget {
   final HttpMessage? message;
   final ViewType viewType;
   final ScrollController? scrollController;
+  final SearchTextController searchController; // 添加搜索设置控制器
 
-  const _Body({super.key, this.message, required this.viewType, this.scrollController});
+  const _Body({
+    super.key,
+    this.message,
+    required this.viewType,
+    this.scrollController,
+    required this.searchController, // 添加必需参数
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -330,7 +406,7 @@ class _BodyState extends State<_Body> {
     message = widget.message;
   }
 
-  changeState(HttpMessage? message, ViewType viewType) {
+  void changeState(HttpMessage? message, ViewType viewType) {
     setState(() {
       this.message = message;
       this.viewType = viewType;
@@ -409,12 +485,14 @@ class _BodyState extends State<_Body> {
       return const Center(child: Text("video not support preview"));
     }
     if (type == ViewType.hex) {
-      return SelectableText(showCursor: true, message!.body!.map(intToHex).join(" "), contextMenuBuilder: contextMenu);
+      return HexViewer(data: Uint8List.fromList(message!.body!), searchController: widget.searchController);
     }
 
     if (type == ViewType.formUrl) {
-      return SelectableText(
-          showCursor: true, Uri.decodeFull(message!.getBodyString()), contextMenuBuilder: contextMenu);
+      return HighlightTextWidget(
+          text: Uri.decodeFull(message!.getBodyString()),
+          searchController: widget.searchController,
+          contextMenuBuilder: contextMenu);
     }
 
     return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
@@ -424,18 +502,24 @@ class _BodyState extends State<_Body> {
           return JsonText(
               json: jsonObject,
               indent: Platforms.isDesktop() ? '    ' : '  ',
-              colorTheme: ColorTheme.of(Theme.of(context).brightness),
+              colorTheme: ColorTheme.of(context),
+              searchController: widget.searchController,
               scrollController: widget.scrollController);
         }
 
         if (type == ViewType.json) {
-          return JsonViewer(json.decode(body), colorTheme: ColorTheme.of(Theme.of(context).brightness));
+          return JsonViewer(json.decode(body),
+              colorTheme: ColorTheme.of(context), searchController: widget.searchController);
         }
+
+        return HighlightTextWidget(
+            text: body, searchController: widget.searchController, contextMenuBuilder: contextMenu);
       } catch (e) {
         logger.e(e, stackTrace: StackTrace.current);
       }
 
-      return SelectableText.rich(showCursor: true, TextSpan(text: body), contextMenuBuilder: contextMenu);
+      return HighlightTextWidget(
+          text: body, searchController: widget.searchController, contextMenuBuilder: contextMenu);
     });
   }
 }
@@ -504,5 +588,58 @@ enum ViewType {
       }
     }
     return null;
+  }
+}
+
+class HexViewer extends StatelessWidget {
+  final Uint8List data;
+  final int bytesPerRow;
+  final SearchTextController searchController;
+
+  const HexViewer({super.key, required this.data, this.bytesPerRow = 16, required this.searchController});
+
+  @override
+  Widget build(BuildContext context) {
+    return HighlightTextWidget(
+        style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
+        text: _formatHex(data, bytesPerRow),
+        searchController: searchController,
+        contextMenuBuilder: contextMenu);
+  }
+
+  String _formatHex(Uint8List data, int bytesPerRow) {
+    final StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < data.length; i += bytesPerRow) {
+      // Address
+      // buffer.write(i.toRadixString(16).padLeft(8, '0'));
+      // buffer.write('  ');
+
+      // Hex values
+      for (int j = 0; j < bytesPerRow; j++) {
+        if (i + j < data.length) {
+          buffer.write(data[i + j].toRadixString(16).padLeft(2, '0'));
+        } else {
+          buffer.write('  ');
+        }
+        buffer.write(' ');
+      }
+
+      buffer.write('    ');
+
+      // ASCII representation
+      for (int j = 0; j < bytesPerRow; j++) {
+        if (i + j < data.length) {
+          final byte = data[i + j];
+          if (byte >= 32 && byte <= 126) {
+            buffer.write(String.fromCharCode(byte));
+          } else {
+            buffer.write('.');
+          }
+        }
+      }
+
+      buffer.writeln();
+    }
+    return buffer.toString();
   }
 }

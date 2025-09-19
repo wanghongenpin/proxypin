@@ -197,6 +197,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
   final ListenableList<HttpRequest> sourceList;
 
   HistoryTask(this.configuration, this.sourceList) {
+    logger.d("start history task");
     if (configuration.historyCacheTime != 0) {
       sourceList.addListener(this);
       Future.delayed(const Duration(seconds: 3), () => cleanHistory());
@@ -208,7 +209,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
   }
 
   //清理历史数据
-  cleanHistory() async {
+  Future<void> cleanHistory() async {
     if (configuration.historyCacheTime == 0) {
       return;
     }

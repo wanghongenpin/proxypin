@@ -37,12 +37,17 @@ import 'package:proxypin/utils/lang.dart';
 bool _refresh = false;
 
 /// 刷新脚本
-void _refreshScript() {
+Future<void> _refreshScript({bool force = false}) async {
+  if (force) {
+    _refresh = false;
+    await ScriptManager.instance.then((manager) => manager.flushConfig());
+    await DesktopMultiWindow.invokeMethod(0, "refreshScript");
+  }
   if (_refresh) {
     return;
   }
   _refresh = true;
-  Future.delayed(const Duration(milliseconds: 1500), () async {
+  Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await ScriptManager.instance.then((manager) => manager.flushConfig());
     await DesktopMultiWindow.invokeMethod(0, "refreshScript");
@@ -84,6 +89,10 @@ class _ScriptWidgetState extends State<ScriptWidget> {
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
+      if (_refresh) {
+        _refreshScript(force: true).whenComplete(() => WindowController.fromWindowId(widget.windowId).close());
+        return true;
+      }
       WindowController.fromWindowId(widget.windowId).close();
       return true;
     }

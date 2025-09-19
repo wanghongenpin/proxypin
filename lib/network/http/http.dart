@@ -89,7 +89,6 @@ abstract class HttpMessage {
   set body(List<int>? body) {
     _body = body;
     _bodyString = null;
-    packageSize = body?.length ?? 0;
   }
 
   ///获取消息体编码
@@ -99,7 +98,10 @@ abstract class HttpMessage {
       return 'utf-8';
     }
 
-    MediaType mediaType = MediaType.valueOf(contentType);
+    MediaType? mediaType = MediaType.valueOf(contentType);
+    if (mediaType == null) {
+      return 'utf-8';
+    }
     return mediaType.charset ?? MediaType.defaultCharset(mediaType);
   }
 

@@ -35,8 +35,8 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/request_map.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
+import 'package:proxypin/ui/desktop/setting/request_map.dart';
+import 'package:proxypin/ui/desktop/setting/script.dart';
 import 'package:proxypin/ui/desktop/widgets/highlight.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
@@ -318,7 +318,7 @@ class _RequestWidgetState extends State<RequestWidget> {
   }
 
   //显示高级重发
-  showCustomRepeat(HttpRequest request) async {
+  Future<void> showCustomRepeat(HttpRequest request) async {
     var prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
 
@@ -329,7 +329,7 @@ class _RequestWidgetState extends State<RequestWidget> {
         });
   }
 
-  onRepeat(HttpRequest httpRequest) {
+  void onRepeat(HttpRequest httpRequest) {
     var request = httpRequest.copy(uri: httpRequest.requestUrl);
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo);

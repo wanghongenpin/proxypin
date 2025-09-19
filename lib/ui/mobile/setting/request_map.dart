@@ -334,10 +334,10 @@ class _RequestMapListState extends State<RequestMapList> {
       return;
     }
 
-    showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (_) => MobileRequestMapEdit(rule: index == null ? null : widget.list[index], item: item))
+    Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => MobileRequestMapEdit(rule: index == null ? null : widget.list[index], item: item)))
         .then((value) {
       if (value != null) {
         setState(() {});

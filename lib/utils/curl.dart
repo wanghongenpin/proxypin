@@ -127,9 +127,9 @@ class Curl {
         if (i + 1 < parts.length) {
           data = parts[++i];
         }
-      } else if (!part.startsWith('-') && part.startsWith("http")) {
+      } else if (url == null && !part.startsWith('-') && part.contains("http")) {
         // 解析请求 URL
-        url = part;
+        url = part.replaceAll("'", "").replaceAll('"', '');
       } else if ("--http2" == part) {
         // protocolVersion = "HTTP2";
       }

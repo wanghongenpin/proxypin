@@ -267,7 +267,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
             onTap: () => toRequestsView(item)));
   }
 
-  toRequestsView(HistoryItem item) {
+  void toRequestsView(HistoryItem item) {
     Navigator.pushNamed(context, "/request_list", arguments: {'item': item}).whenComplete(() async {
       if (item != widget.historyTask.history && item.requests != null && item.requestLength != item.requests?.length) {
         await widget.storage.flushRequests(item, item.requests!);
@@ -278,7 +278,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
   }
 
   //重命名
-  renameHistory(HistoryStorage storage, HistoryItem item) {
+  void renameHistory(HistoryStorage storage, HistoryItem item) {
     String name = item.name;
     showDialog(
         context: context,
@@ -311,7 +311,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
   }
 
   //导出har
-  export(HistoryItem item) async {
+  Future<void> export(HistoryItem item) async {
     //文件名称
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");

@@ -26,7 +26,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 class MobileSslWidget extends StatefulWidget {
   final ProxyServer proxyServer;
@@ -99,9 +99,9 @@ class _MobileSslState extends State<MobileSslWidget> {
               onTap: () async {
                 showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,
                     onConfirm: () async {
-                  await CertificateManager.generateNewRootCA();
-                  if (context.mounted) FlutterToastr.show(localizations.success, context);
-                });
+                      await CertificateManager.generateNewRootCA();
+                      if (context.mounted) FlutterToastr.show(localizations.success, context);
+                    });
               }),
           const Divider(indent: 0.2, height: 1),
           ListTile(
@@ -110,16 +110,16 @@ class _MobileSslState extends State<MobileSslWidget> {
                 showConfirmDialog(context,
                     title: localizations.resetDefaultCA,
                     content: localizations.resetDefaultCADescribe, onConfirm: () async {
-                  await CertificateManager.resetDefaultRootCA();
-                  if (context.mounted) FlutterToastr.show(localizations.success, context);
-                });
+                      await CertificateManager.resetDefaultRootCA();
+                      if (context.mounted) FlutterToastr.show(localizations.success, context);
+                    });
               }),
         ]));
   }
 
   void importPk12() async {
     FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
+    await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
     if (result == null || !mounted) return;
     //entry password
     showDialog(
@@ -183,7 +183,7 @@ class _MobileSslState extends State<MobileSslWidget> {
               TextButton(
                 onPressed: () async {
                   var p12Bytes =
-                      await CertificateManager.generatePkcs12(password?.isNotEmpty == true ? password : null);
+                  await CertificateManager.generatePkcs12(password?.isNotEmpty == true ? password : null);
                   _exportFile("ProxyPinPkcs12.p12", bytes: p12Bytes);
 
                   if (context.mounted) Navigator.pop(context);
@@ -289,7 +289,7 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
         body: TabBarView(controller: _tabController, children: [rootCA(), userCA()]));
   }
 
-  rootCA() {
+  ListView rootCA() {
     bool isCN = localizations.localeName == 'zh';
     return ListView(padding: const EdgeInsets.all(10), children: [
       Text(localizations.androidRootMagisk),
@@ -301,12 +301,21 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
       const SizedBox(height: 15),
       futureWidget(
           CertificateManager.systemCertificateName(),
-          (name) => SelectableText(localizations.androidRootRename(name),
+              (name) => SelectableText(localizations.androidRootRename(name),
               style: const TextStyle(fontWeight: FontWeight.w500))),
       const SizedBox(height: 10),
       FilledButton(
           onPressed: () async => _downloadCert(await CertificateManager.systemCertificateName()),
           child: Text(localizations.androidRootCADownload)),
+      const SizedBox(height: 10),
+      Text(
+        isCN ? "自动安装（需Root和system写权限，重启生效）" : "Auto install (Root & /system write, reboot required)",
+        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+      ),
+      FilledButton(
+        onPressed: _autoInstallCert,
+        child: Text(isCN ? "一键自动安装到系统" : "Auto install to system"),
+      ),
       const SizedBox(height: 10),
       Text(
           "Android 13: ${isCN ? "将证书挂载到" : "Mount the certificate to"} '/system/etc/security/cacerts' ${isCN ? "目录" : "Directory"}"
@@ -368,5 +377,63 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
       AppLocalizations localizations = AppLocalizations.of(context)!;
       FlutterToastr.show(localizations.success, context);
     }
+  }
+
+  Future<void> _autoInstallCert() async {
+    bool isEN = localizations.localeName == 'en';
+
+    try {
+      final caFile = await CertificateManager.certificateFile();
+      final hash = await CertificateManager.systemCertificateName();
+      String? destPath;
+      final androidVersion = int.tryParse((await _getAndroidVersion()) ?? "");
+      if (androidVersion != null && androidVersion >= 14) {
+        destPath = '/apex/com.android.conscrypt/cacerts/$hash';
+      } else {
+        destPath = '/system/etc/security/cacerts/$hash';
+      }
+      final caPath = caFile.path;
+      final shellCmd = 'cp $caPath $destPath && chmod 644 $destPath && chown root:root $destPath';
+      final result = await Process.run('su', ['-c', shellCmd]);
+      logger.d('Auto install cert result: ${result.stdout}, ${result.stderr}');
+      if (!mounted) return;
+      if (result.exitCode != 0) {
+        FlutterToastr.show(
+            isEN
+                ? 'Certificate install failed. Please check root and /system write permission, or use Magisk module.'
+                : '证书安装失败，请确认Root权限和system写权限，或参考Magisk模块安装。',
+            context,
+            rootNavigator: true,
+            duration: 5);
+        return;
+      }
+      FlutterToastr.show(
+        isEN ? 'Certificate installed, reboot required' : '证书已安装，重启手机后生效',
+        context,
+        rootNavigator: true,
+        duration: 5,
+      );
+    } catch (e) {
+      logger.d('auto install cert error：$e');
+      FlutterToastr.show(
+          isEN
+              ? 'Auto install failed: $e. Please check root and /system write permission, or use Magisk module.'
+              : '自动安装失败：$e，请确认Root和system写权限，或参考Magisk模块安装。',
+          context,
+          rootNavigator: true,
+          duration: 5);
+    }
+  }
+
+  Future<String?> _getAndroidVersion() async {
+    try {
+      final result = await Process.run('getprop', ['ro.build.version.release']);
+      if (result.exitCode == 0) {
+        return result.stdout.toString().trim().split(".")[0];
+      }
+    } catch (e) {
+      logger.d('获取Android版本失败：$e');
+    }
+    return null;
   }
 }

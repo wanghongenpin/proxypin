@@ -38,7 +38,7 @@ import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/launch/launch.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
-import 'package:proxypin/ui/mobile/menu/me.dart';
+import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
 import 'package:proxypin/ui/mobile/menu/menu.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
@@ -117,7 +117,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV20) {
+    if (widget.appConfiguration.upgradeNoticeV21) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -136,7 +136,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
   var requestPageNavigatorKey = GlobalKey<NavigatorState>();
   var toolboxNavigatorKey = GlobalKey<NavigatorState>();
-  var mePageNavigatorKey = GlobalKey<NavigatorState>();
+  var configNavigatorKey = GlobalKey<NavigatorState>();
+  var settingNavigatorKey = GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +155,10 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
                       centerTitle: true)),
               body: Toolbox(proxyServer: proxyServer))),
-      NavigatorPage(navigatorKey: mePageNavigatorKey, child: MePage(proxyServer: proxyServer)),
+      NavigatorPage(navigatorKey: configNavigatorKey, child: ConfigPage(proxyServer: proxyServer)),
+      NavigatorPage(
+          navigatorKey: settingNavigatorKey,
+          child: SettingPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
     ];
 
     if (!widget.appConfiguration.bottomNavigation) _selectIndex.value = 0;
@@ -191,19 +195,32 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                 body: IndexedStack(index: index, children: navigationView),
                 bottomNavigationBar: widget.appConfiguration.bottomNavigation
                     ? Container(
-                        constraints: const BoxConstraints(maxHeight: 80),
+                        constraints: const BoxConstraints(maxHeight: 85),
                         child: Theme(
                           data: Theme.of(context).copyWith(splashColor: Colors.transparent),
                           child: BottomNavigationBar(
-                            selectedIconTheme: const IconThemeData(size: 27),
-                            unselectedIconTheme: const IconThemeData(size: 27),
+                            type: BottomNavigationBarType.fixed,
+                            selectedIconTheme: const IconThemeData(size: 26),
+                            unselectedIconTheme: const IconThemeData(size: 26),
                             selectedFontSize: 0,
+                            elevation: 0,
                             items: [
                               BottomNavigationBarItem(
-                                  icon: const Icon(Icons.workspaces), label: localizations.requests),
+                                  tooltip: localizations.requests,
+                                  icon: const Icon(Icons.workspaces_outlined),
+                                  label: localizations.requests),
                               BottomNavigationBarItem(
-                                  icon: const Icon(Icons.construction), label: localizations.toolbox),
-                              BottomNavigationBarItem(icon: const Icon(Icons.person), label: localizations.me),
+                                  tooltip: localizations.toolbox,
+                                  icon: const Icon(Icons.hardware_outlined),
+                                  label: localizations.toolbox),
+                              BottomNavigationBarItem(
+                                  tooltip: localizations.config,
+                                  icon: const Icon(Icons.description_outlined),
+                                  label: localizations.config),
+                              BottomNavigationBarItem(
+                                  tooltip: localizations.setting,
+                                  icon: const Icon(Icons.settings_outlined),
+                                  label: localizations.setting),
                             ],
                             currentIndex: _selectIndex.value,
                             onTap: (index) => _selectIndex.value = index,
@@ -265,32 +282,35 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 增加请求映射功能，无需请求远程服务即可返回结果；\n'
-            '2. 请求列表支持图片预览；\n'
-            '3. 增加复制原始请求；\n'
-            '4. 搜索增加区分大小写；\n'
-            '5. 语言本地化新增繁体中文；\n'
-            '6. 优化Android VPN性能；\n'
-            '7. 修复HTTP2 Host；\n'
-            '8. 修复复制Python requests问题；\n'
-        : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n\n'
-            'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-            '1. Added request mapping feature, allowing results to be returned without requesting a remote service;\n'
-            '2. Request list supports image preview;\n'
-            '3. Added copy original request;\n'
-            '4. Search now distinguishes between uppercase and lowercase letters;\n'
-            '5. Added Traditional Chinese localization;\n'
-            '6. Optimized Android VPN performance;\n'
-            '7. Fixed HTTP2 Host issue;\n'
-            '8. Fixed Python requests copy issue.';
+            '1. 消息体增加搜索高亮；\n'
+            '2. WebSocket 消息体增加预览；\n'
+            '3. 安卓ROOT系统支持自动安装系统证书；\n'
+            '4. Socket自动清理，防止退出时资源占用问题；\n'
+            '5. 调整UI菜单；\n'
+            '6. 修复脚本fetch API部分请求bug；\n'
+            '7. 修复HTTP2包大小不正确；\n'
+            '8. 修复请求映射Bug；\n'
+            '9. 修复手机端历史未自动保存bug；\n'
+            '10. 修复安卓部分闪退情况；\n'
+        : 'Tips: HTTPS packet capture is disabled by default. Please install the certificate before enabling HTTPS packet capture.\n\n'
+            '1. Add search highlight for message body;\n'
+            '2. Add preview for WebSocket message body;\n'
+            '3. Android ROOT system supports automatic installation of system certificates;\n'
+            '4. Socket auto cleanup to prevent resource occupation when exiting;\n'
+            '5. Adjust UI menu;\n'
+            '5. Fix script fetch API part request bug;\n'
+            '7. Fix incorrect HTTP2 packet size;\n'
+            '8. Fix request map bug;\n'
+            '9. Fix the bug that the history on the mobile side is not saved automatically;\n'
+            '10. Fix some Android crash issues;\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "Update content V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV20 = false;
+      widget.appConfiguration.upgradeNoticeV21 = false;
       widget.appConfiguration.flushConfig();
     });
   }
 
-  showAlertDialog(String title, String content, Function onClose) {
+  void showAlertDialog(String title, String content, Function onClose) {
     showDialog(
         context: context,
         barrierDismissible: false,

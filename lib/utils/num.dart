@@ -21,5 +21,5 @@ int hexToInt(String hex) {
 
 //int ---> hex
 String intToHex(int i) {
-  return i.toRadixString(16).toUpperCase();
+  return i.toRadixString(16).padLeft(2, '0');
 }

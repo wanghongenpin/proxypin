@@ -33,14 +33,14 @@ import 'package:proxypin/ui/component/device.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/ui/desktop/request/request_editor.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/request_rewrite.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/script.dart';
+import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
+import 'package:proxypin/ui/desktop/setting/script.dart';
 import 'package:proxypin/ui/toolbox/aes_page.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../desktop/toolbar/setting/request_map.dart';
+import '../desktop/setting/request_map.dart';
 import '../toolbox/cert_hash.dart';
 import '../toolbox/encoder.dart';
 import '../toolbox/js_run.dart';
@@ -233,7 +233,7 @@ void registerMethodHandler() {
     }
 
     if (call.method == 'pickFiles') {
-      var extensions = call.arguments['allowedExtensions'];
+      var extensions = call.arguments != null ? call.arguments['allowedExtensions'] : null;
       FilePickerResult? result = await FilePicker.platform.pickFiles(
           type: extensions == null ? FileType.any : FileType.custom,
           allowedExtensions: extensions == null ? null : List.from(extensions),

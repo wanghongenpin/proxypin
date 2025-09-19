@@ -12,8 +12,8 @@ import 'package:proxypin/network/components/manager/request_map_manager.dart';
 import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/request_map/map_local.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/request_map/map_scipt.dart';
+import 'package:proxypin/ui/desktop/setting/request_map/map_local.dart';
+import 'package:proxypin/ui/desktop/setting/request_map/map_scipt.dart';
 import 'package:proxypin/utils/lang.dart';
 
 import '../../../../network/util/logger.dart';
@@ -21,12 +21,19 @@ import '../../../../network/util/logger.dart';
 bool _refresh = false;
 
 /// 刷新配置
-void _refreshConfig({bool force = false}) {
-  if (_refresh && !force) {
+Future<void> _refreshConfig({bool force = false}) async {
+  if (force) {
+    _refresh = false;
+    await RequestMapManager.instance.then((manager) => manager.flushConfig());
+    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+    return;
+  }
+
+  if (_refresh) {
     return;
   }
   _refresh = true;
-  Future.delayed(const Duration(milliseconds: 1500), () async {
+  Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
     await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
@@ -66,6 +73,10 @@ class _RequestMapPageState extends State<RequestMapPage> {
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
+      if (_refresh) {
+        _refreshConfig(force: true).whenComplete(() => WindowController.fromWindowId(widget.windowId!).close());
+        return true;
+      }
       WindowController.fromWindowId(widget.windowId!).close();
       return true;
     }
@@ -169,7 +180,8 @@ class _RequestMapPageState extends State<RequestMapPage> {
 
   /// 添加脚本
   Future<void> showEdit() async {
-    showDialog(barrierDismissible: false, context: context, builder: (_) => const RequestMapEdit()).then((value) {
+    showDialog(barrierDismissible: false, context: context, builder: (_) => RequestMapEdit(windowId: widget.windowId))
+        .then((value) {
       if (value != null) {
         setState(() {});
       }
@@ -367,9 +379,11 @@ class _RequestMapListState extends State<RequestMapList> {
     }
 
     showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (_) => RequestMapEdit(rule: index == null ? null : widget.list[index], item: item)).then((value) {
+            barrierDismissible: false,
+            context: context,
+            builder: (_) =>
+                RequestMapEdit(windowId: widget.windowId, rule: index == null ? null : widget.list[index], item: item))
+        .then((value) {
       if (value != null) {
         setState(() {});
       }

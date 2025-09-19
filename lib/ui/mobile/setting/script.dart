@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
@@ -151,7 +152,7 @@ class _MobileScriptState extends State<MobileScript> {
   }
 
   /// 添加脚本
-  scriptEdit() async {
+  Future<void> scriptEdit() async {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ScriptEdit())).then((value) {
       if (value != null) {
         setState(() {});
@@ -468,7 +469,19 @@ class _ScriptEditState extends State<ScriptEdit> {
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: textField("URL:", urlController, "github.com/api/*", keyboardType: TextInputType.url)),
                 const SizedBox(height: 10),
-                Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text("${localizations.script}:")),
+                Row(children: [
+                  SizedBox(width: 10),
+                  Text("${localizations.script}:"),
+                  SizedBox(width: 10),
+                  IconButton(
+                      tooltip: localizations.copy,
+                      onPressed: () {
+                        //复制
+                        Clipboard.setData(ClipboardData(text: script.text));
+                        FlutterToastr.show(localizations.copied, context, position: FlutterToastr.top);
+                      },
+                      icon: Icon(Icons.copy_all_outlined, size: 22))
+                ]),
                 const SizedBox(height: 5),
                 CodeTheme(
                     data: CodeThemeData(styles: monokaiSublimeTheme),

@@ -65,7 +65,11 @@ class RequestMapInterceptor extends Interceptor {
       response = await executeScript(request, mapRule, item.script!);
     }
 
-    response?.request = request;
+    if (response == null) {
+      return null;
+    }
+
+    response.request = request;
     request.response = response;
     return response;
   }

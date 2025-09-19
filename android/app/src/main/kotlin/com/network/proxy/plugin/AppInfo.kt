@@ -17,6 +17,16 @@ class ProcessInfo(name: CharSequence, packageName: String, icon: ByteArray?, ver
         put("versionName", versionName)
     }
 
+    fun copy(): ProcessInfo {
+        val name = this["name"] as? CharSequence ?: ""
+        val packageName = this["packageName"] as? String ?: ""
+        val icon = this["icon"] as? ByteArray
+        val versionName = this["versionName"] as? String
+        val newInfo = ProcessInfo(name, packageName, icon, versionName)
+        newInfo.putAll(this)
+        return newInfo
+    }
+
     companion object {
         fun create(
             packageManager: PackageManager,

@@ -77,9 +77,9 @@ String getPackage(int? size) {
   }
 
   if (size > 1024 * 1024) {
-    return "${(size / 1024 / 1024).toStringAsFixed(2)} MB";
+    return "${(size / 1024 / 1024).toStringAsFixed(2)} M";
   }
-  return "${(size / 1024).toStringAsFixed(2)} KB";
+  return "${(size / 1024).toStringAsFixed(2)} K";
 }
 
 String copyRawRequest(HttpRequest request) {

@@ -61,7 +61,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
-        activity.startService(ProxyVpnService.stopVpnIntent(activity))
+//        activity.startService(ProxyVpnService.stopVpnIntent(activity))
         super.onDestroy()
     }
 

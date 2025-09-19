@@ -140,7 +140,6 @@ class Channel {
       if (!isClosed) {
         _socket.add(bytes);
       }
-
     } catch (e, t) {
       if (e is StateError && e.message == "StreamSink is closed") {
         logger.w("[$id] $remoteSocketAddress write error channel is closed $e", stackTrace: t);
@@ -170,9 +169,9 @@ class Channel {
       await Future.delayed(const Duration(milliseconds: 150));
     }
     isOpen = false;
-    if (!isWriting) {
-      await _socket.flush();
-    }
+    // if (!isWriting) {
+    //   await _socket.flush();
+    // }
     await _socket.close();
     _socket.destroy();
   }

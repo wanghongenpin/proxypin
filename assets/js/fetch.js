@@ -27,10 +27,11 @@ function fetch(url, options) {
             blob: () => Promise.resolve(request.response.body),
             clone: response,
             headers: {
+                ...headers,
                 keys: () => keys,
                 entries: () => all,
                 get: n => headers[n.toLowerCase()],
-                has: n => n.toLowerCase() in headers
+                has: n => n.toLowerCase() in headers,
             }
         });
 

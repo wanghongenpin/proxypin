@@ -127,7 +127,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
         Map<String, List<String>> headers = _parseHeaders(channelContext, framePayload);
         headers.forEach((key, values) => message.headers.addValues(key, values));
-
+        message.packageSize = (message.packageSize ?? 0) + frameHeader.length;
         if (frameHeader.hasEndHeadersFlag &&
             channelContext.getStreamRequest(frameHeader.streamIdentifier)?.method == HttpMethod.head) {
           result.isDone = true;
@@ -304,6 +304,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     } else {
       message.body = List.from(message.body!)..addAll(data);
     }
+    message.packageSize = (message.packageSize ?? 0) + frameHeader.length;
     return DataFrame(frameHeader, padLength, data);
   }
 
@@ -352,6 +353,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       }
     });
 
+    message.packageSize = frameHeader.length;
     return HeadersFrame(frameHeader, padLength, exclusiveDependency, streamDependency, weight, blockFragment);
   }
 

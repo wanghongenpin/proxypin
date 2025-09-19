@@ -52,7 +52,7 @@ class ProcessInfoManager private constructor() {
 
             val uid = getProcessInfoUid(sourceAddress, destinationAddress)
             val channel = connection.channel
-            if (uid != null && uid != Process.INVALID_UID && channel is SocketChannel) {
+            if (uid != null && uid != Process.INVALID_UID && channel is SocketChannel && channel.isOpen) {
                 val localAddress = channel.localAddress as InetSocketAddress
                 val networkInfo =
                     NetworkInfo(uid, destinationAddress.hostString, destinationAddress.port)
@@ -67,7 +67,7 @@ class ProcessInfoManager private constructor() {
         }
 
         val channel = connection.channel
-        if (channel is SocketChannel) {
+        if (channel is SocketChannel && channel.isOpen) {
             val localAddress = channel.localAddress as InetSocketAddress
             localPortCache.remove(localAddress.port)
         }
@@ -83,27 +83,32 @@ class ProcessInfoManager private constructor() {
             return null
         }
 
-        val connectivityManager: ConnectivityManager =
-            activity!!.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        try {
+            val connectivityManager: ConnectivityManager =
+                activity!!.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-        val uid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            return connectivityManager.getConnectionOwnerUid(
-                OsConstants.IPPROTO_TCP, localAddress, remoteAddress
-            )
-        } else {
-            val method = ConnectivityManager::class.java.getMethod(
-                "getConnectionOwnerUid",
-                Int::class.javaPrimitiveType,
-                InetSocketAddress::class.java,
-                InetSocketAddress::class.java
-            )
-            return method.invoke(
-                connectivityManager, OsConstants.IPPROTO_TCP, localAddress, remoteAddress
-            ) as Int
-        }
+            val uid = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                connectivityManager.getConnectionOwnerUid(
+                    OsConstants.IPPROTO_TCP, localAddress, remoteAddress
+                )
+            } else {
+                val method = ConnectivityManager::class.java.getMethod(
+                    "getConnectionOwnerUid",
+                    Int::class.javaPrimitiveType,
+                    InetSocketAddress::class.java,
+                    InetSocketAddress::class.java
+                )
+                method.invoke(
+                    connectivityManager, OsConstants.IPPROTO_TCP, localAddress, remoteAddress
+                ) as Int
+            }
 
-        if (uid != Process.INVALID_UID) {
-            return uid
+            if (uid != Process.INVALID_UID) {
+                return uid
+            }
+        } catch (e: Exception) {
+            Log.w("ProcessInfoManager", "Exception in getProcessInfoUid", e)
+            return null
         }
 
         Log.w(
@@ -117,11 +122,13 @@ class ProcessInfoManager private constructor() {
         val networkInfo = localPortCache.get(localPort)
         if (networkInfo != null) {
             val processInfo = getProcessInfo(networkInfo.uid)
-
-            return processInfo?.apply {
-                put("remoteHost", networkInfo.remoteHost)
-                put("remotePort", networkInfo.remotePort)
+            if (processInfo != null) {
+                val result = processInfo.copy()
+                result["remoteHost"] = networkInfo.remoteHost
+                result["remotePort"] = networkInfo.remotePort
+                return result
             }
+            return null
         }
 
         if (host == null || localPort <= 0 || ProxyVpnService.host == null || ProxyVpnService.port <= 0) {
@@ -147,7 +154,10 @@ class ProcessInfoManager private constructor() {
                         localPort, NetworkInfo(uid, remoteAddress.hostString, remoteAddress.port)
                     )
 
-                    return@withContext processInfo
+                    val result = processInfo.copy()
+                    result["remoteHost"] = remoteAddress.hostString
+                    result["remotePort"] = remoteAddress.port
+                    return@withContext result
                 } else {
                     Log.w("ProcessInfoManager", "No process info found for UID: $uid")
                     null
@@ -174,13 +184,24 @@ class ProcessInfoManager private constructor() {
         var appInfo = appInfoCache.get(uid)
         if (appInfo != null) return appInfo
 
-        val packageManager = activity?.packageManager
-        val pkgNames = packageManager?.getPackagesForUid(uid) ?: return null
+        val packageManager = activity?.packageManager ?: return null
+        val pkgNames: Array<String>? = try {
+            packageManager.getPackagesForUid(uid)
+        } catch (e: Exception) {
+            Log.w("ProcessInfoManager", "getPackagesForUid SecurityException: $uid", e)
+            null
+        }
+        if (pkgNames == null) return null
+
         for (pkgName in pkgNames) {
-            val applicationInfo = packageManager.getApplicationInfo(pkgName, 0)
-            appInfo = ProcessInfo.create(packageManager, applicationInfo)
-            appInfoCache.put(uid, appInfo)
-            return appInfo
+            try {
+                val applicationInfo = packageManager.getApplicationInfo(pkgName, 0)
+                appInfo = ProcessInfo.create(packageManager, applicationInfo)
+                appInfoCache.put(uid, appInfo)
+                return appInfo
+            } catch (e: Exception) {
+                // Ignore packages that can't be found
+            }
         }
         return null
     }

@@ -3,7 +3,6 @@
   "favorites": "收藏",
   "history": "历史",
   "toolbox": "工具箱",
-  "me": "我的",
   "preference": "偏好设置",
   "feedback": "反馈",
   "about": "关于",
@@ -20,6 +19,8 @@
   "enabledHTTP2": "启用HTTP2",
   "serverNotStart": "未开启抓包",
   "download": "下载",
+  "config": "配置",
+  "version": "版本",
 
   "start": "开始",
   "stop": "停止",

@@ -33,6 +33,8 @@ class ExpiringCache<K, V> {
     _expirationTimes[key] = Timer(duration, () => remove(key));
   }
 
+  void operator []=(K key, V value) => set(key, value);
+
   V? putIfAbsent(K key, V Function() ifAbsent) {
     if (_cache.containsKey(key)) {
       return _cache[key];
@@ -46,12 +48,21 @@ class ExpiringCache<K, V> {
     return _cache[key];
   }
 
-  remove(K key) {
+  V? operator [](K key) => get(key);
+
+  void remove(K key) {
     _expirationTimes[key]?.cancel();
     _expirationTimes.remove(key);
     _cache.remove(key);
   }
 
+  void clear() {
+    for (var timer in _expirationTimes.values) {
+      timer.cancel();
+    }
+    _expirationTimes.clear();
+    _cache.clear();
+  }
 }
 
 class LruCache<K, V> {
@@ -79,8 +90,8 @@ class LruCache<K, V> {
     final value = ifAbsent();
     set(key, value);
     return value;
-
   }
+
   void set(K key, V value) {
     if (_cache.containsKey(key)) {
       // Remove the old value

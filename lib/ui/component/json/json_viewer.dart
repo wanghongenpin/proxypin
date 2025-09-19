@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-library flutter_json_widget;
 
 import 'dart:convert';
 
@@ -22,40 +21,94 @@ import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/json/toast.dart';
+import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
+
+import '../search/search_controller.dart';
 
 class JsonViewer extends StatelessWidget {
   final dynamic jsonObj;
   final ColorTheme colorTheme;
+  final SearchTextController? searchController;
 
-  const JsonViewer(this.jsonObj, {super.key, required this.colorTheme});
+  const JsonViewer(this.jsonObj, {super.key, required this.colorTheme, this.searchController});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTextStyle.merge(
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
-        child: getContentWidget(jsonObj));
+    final matchKeys = <GlobalKey>[];
+    if (searchController == null) {
+      return DefaultTextStyle.merge(
+          style: const TextStyle(fontWeight: FontWeight.w600),
+          child: getContentWidget(jsonObj, matchTotalCount: ValueWrap.of(0), matchKeys: matchKeys));
+    }
+    return AnimatedBuilder(
+        animation: searchController ?? ValueNotifier(0),
+        builder: (context, child) {
+          final matchTotalCount = ValueWrap.of(0);
+          matchKeys.clear();
+          final contentWidget = DefaultTextStyle.merge(
+              style: const TextStyle(fontWeight: FontWeight.w600),
+              child: getContentWidget(jsonObj, matchTotalCount: matchTotalCount, matchKeys: matchKeys));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            searchController?.updateMatchCount(matchTotalCount.get()!);
+            scrollToMatch(matchKeys);
+          });
+          return contentWidget;
+        });
   }
 
-  Widget getContentWidget(dynamic content) {
+  Widget getContentWidget(dynamic content,
+      {required ValueWrap<int> matchTotalCount, required List<GlobalKey> matchKeys}) {
     if (content is List) {
-      return JsonArrayViewer(content, notRoot: false, colorTheme: colorTheme);
+      return JsonArrayViewer(content,
+          colorTheme: colorTheme,
+          searchController: searchController,
+          matchTotalCount: matchTotalCount,
+          matchKeys: matchKeys);
     } else if (content is Map<String, dynamic>) {
-      return JsonObjectViewer(content, notRoot: false, colorTheme: colorTheme);
+      return JsonObjectViewer(content,
+          colorTheme: colorTheme,
+          searchController: searchController,
+          matchTotalCount: matchTotalCount,
+          matchKeys: matchKeys);
     } else {
-      return Text(content?.toString() ?? '');
+      return SelectableText(showCursor: true, content?.toString() ?? '');
+    }
+  }
+
+  void scrollToMatch(List<GlobalKey> matchKeys) {
+    if (searchController != null && matchKeys.isNotEmpty) {
+      final currentIndex = searchController!.currentMatchIndex.value;
+      if (currentIndex >= 0 && currentIndex < matchKeys.length) {
+        final key = matchKeys[currentIndex];
+        final context = key.currentContext;
+        if (context != null) {
+          Scrollable.ensureVisible(
+            context,
+            duration: const Duration(milliseconds: 300),
+            alignment: 0.5, // 高亮项在视图中的位置
+          );
+        }
+      }
     }
   }
 }
 
 class JsonObjectViewer extends StatefulWidget {
   final ColorTheme colorTheme;
-
   final Map<String, dynamic> jsonObj;
   final bool notRoot;
+  final SearchTextController? searchController;
+  final ValueWrap<int> matchTotalCount;
+  final List<GlobalKey> matchKeys;
 
-  const JsonObjectViewer(this.jsonObj, {super.key, this.notRoot = false, required this.colorTheme});
+  const JsonObjectViewer(this.jsonObj,
+      {super.key,
+      this.notRoot = false,
+      required this.colorTheme,
+      this.searchController,
+      required this.matchTotalCount,
+      required this.matchKeys});
 
   @override
   JsonObjectViewerState createState() => JsonObjectViewerState();
@@ -81,7 +134,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: _getList());
   }
 
-  _getList() {
+  List<Widget> _getList() {
     List<Widget> list = [];
     for (MapEntry entry in widget.jsonObj.entries) {
       if (openFlag[entry.key] == null) {
@@ -93,13 +146,22 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
           getKeyWidget(entry),
           Text(':', style: TextStyle(color: widget.colorTheme.colon)),
           const SizedBox(width: 3),
-          _copyValue(context, _getValueWidget(entry.value, widget.colorTheme), entry.value),
+          _copyValue(
+              context,
+              _getValueWidget(entry.value, widget.colorTheme,
+                  searchController: widget.searchController,
+                  matchTotalCount: widget.matchTotalCount,
+                  matchKeys: widget.matchKeys),
+              entry.value),
         ],
       ));
       list.add(const SizedBox(height: 4));
 
       if ((openFlag[entry.key] ?? false) && entry.value != null) {
-        list.add(getContentWidget(entry.value, widget.colorTheme));
+        list.add(getContentWidget(entry.value, widget.colorTheme,
+            searchController: widget.searchController,
+            matchTotalCount: widget.matchTotalCount,
+            matchKeys: widget.matchKeys));
       }
     }
     return list;
@@ -107,6 +169,19 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
 
   // key
   Widget getKeyWidget(MapEntry entry) {
+    final keyText = entry.key;
+
+    final keyWidget = Container(
+        constraints: BoxConstraints(maxWidth: 350),
+        child: SelectableText.rich(
+            showCursor: true,
+            TextSpan(
+                children: _highlightText(keyText, TextStyle(color: widget.colorTheme.propertyKey),
+                    searchController: widget.searchController,
+                    colorTheme: widget.colorTheme,
+                    matchTotalCount: widget.matchTotalCount,
+                    matchKeys: widget.matchKeys))));
+
     //是否有子层级
     if (_isExtensible(entry.value)) {
       return InkWell(
@@ -121,22 +196,35 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
               (openFlag[entry.key] ?? false)
                   ? const Icon(Icons.keyboard_arrow_down, size: 18)
                   : const Icon(Icons.keyboard_arrow_right, size: 18),
-              Text(entry.key, style: TextStyle(color: widget.colorTheme.propertyKey)),
+              keyWidget,
             ],
           ));
     }
 
     return Row(children: [
       const Icon(Icons.keyboard_arrow_right, color: Color.fromARGB(0, 0, 0, 0), size: 18),
-      Text(entry.key, style: TextStyle(color: widget.colorTheme.propertyKey)),
+      keyWidget,
     ]);
   }
 
-  static getContentWidget(dynamic content, ColorTheme colorTheme) {
+  static Widget getContentWidget(dynamic content, ColorTheme colorTheme,
+      {SearchTextController? searchController,
+      required ValueWrap<int> matchTotalCount,
+      required List<GlobalKey> matchKeys}) {
     if (content is List) {
-      return JsonArrayViewer(content, notRoot: true, colorTheme: colorTheme);
+      return JsonArrayViewer(content,
+          notRoot: true,
+          colorTheme: colorTheme,
+          searchController: searchController,
+          matchTotalCount: matchTotalCount,
+          matchKeys: matchKeys);
     } else {
-      return JsonObjectViewer(content, notRoot: true, colorTheme: colorTheme);
+      return JsonObjectViewer(content,
+          notRoot: true,
+          colorTheme: colorTheme,
+          searchController: searchController,
+          matchTotalCount: matchTotalCount,
+          matchKeys: matchKeys);
     }
   }
 }
@@ -145,8 +233,17 @@ class JsonArrayViewer extends StatefulWidget {
   final ColorTheme colorTheme;
   final List<dynamic> jsonArray;
   final bool notRoot;
+  final SearchTextController? searchController;
+  final ValueWrap<int> matchTotalCount;
+  final List<GlobalKey> matchKeys;
 
-  const JsonArrayViewer(this.jsonArray, {super.key, this.notRoot = false, required this.colorTheme});
+  const JsonArrayViewer(this.jsonArray,
+      {super.key,
+      this.notRoot = false,
+      required this.colorTheme,
+      this.searchController,
+      required this.matchTotalCount,
+      required this.matchKeys});
 
   @override
   State<JsonArrayViewer> createState() => _JsonArrayViewerState();
@@ -171,7 +268,7 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
     openFlag = List.filled(widget.jsonArray.length, false);
   }
 
-  _getList() {
+  List<Widget> _getList() {
     List<Widget> list = [];
     int i = 0;
     for (dynamic content in widget.jsonArray) {
@@ -181,12 +278,21 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
           getKeyWidget(content, i),
           Text(':', style: TextStyle(color: widget.colorTheme.colon)),
           const SizedBox(width: 3),
-          _copyValue(context, _getValueWidget(content, widget.colorTheme), content)
+          _copyValue(
+              context,
+              _getValueWidget(content, widget.colorTheme,
+                  searchController: widget.searchController,
+                  matchTotalCount: widget.matchTotalCount,
+                  matchKeys: widget.matchKeys),
+              content)
         ],
       ));
       list.add(const SizedBox(height: 4));
       if (openFlag[i]) {
-        list.add(JsonObjectViewerState.getContentWidget(content, widget.colorTheme));
+        list.add(JsonObjectViewerState.getContentWidget(content, widget.colorTheme,
+            searchController: widget.searchController,
+            matchTotalCount: widget.matchTotalCount,
+            matchKeys: widget.matchKeys));
       }
       i++;
     }
@@ -222,23 +328,99 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
   }
 }
 
-Widget _getValueWidget(dynamic value, ColorTheme colorTheme) {
+Widget _getValueWidget(dynamic value, ColorTheme colorTheme,
+    {SearchTextController? searchController,
+    required ValueWrap<int> matchTotalCount,
+    required List<GlobalKey> matchKeys}) {
+  String valueStr;
+  TextStyle style;
   if (value == null) {
-    return Text('null', style: TextStyle(color: colorTheme.keyword));
+    valueStr = 'null';
+    style = TextStyle(color: colorTheme.keyword);
   } else if (value is num) {
-    return Text(value.toString(), style: TextStyle(color: colorTheme.keyword));
+    valueStr = value.toString();
+    style = TextStyle(color: colorTheme.keyword);
   } else if (value is String) {
-    return Text('"$value"', style: TextStyle(color: colorTheme.string));
+    valueStr = '"$value"';
+    style = TextStyle(color: colorTheme.string);
   } else if (value is bool) {
-    return Text(value.toString(), style: TextStyle(color: colorTheme.keyword));
+    valueStr = value.toString();
+    style = TextStyle(color: colorTheme.keyword);
   } else if (value is List) {
     if (value.isEmpty) {
-      return const Text('Array[0]');
+      valueStr = 'Array[0]';
+      style = const TextStyle();
     } else {
-      return Text('Array<${_getTypeName(value[0])}>[${value.length}]');
+      valueStr = 'Array<${_getTypeName(value[0])}>[${value.length}]';
+      style = const TextStyle();
     }
+  } else {
+    valueStr = 'Object';
+    style = const TextStyle(fontSize: 13);
   }
-  return const Text('Object', style: TextStyle(fontSize: 13));
+
+  if (searchController?.shouldSearch() == true) {
+    return SelectableText.rich(
+      showCursor: true,
+      TextSpan(
+          children: _highlightText(valueStr, style,
+              searchController: searchController,
+              colorTheme: colorTheme,
+              matchTotalCount: matchTotalCount,
+              matchKeys: matchKeys)),
+    );
+  }
+
+  return SelectableText(showCursor: true, valueStr, style: style);
+}
+
+List<InlineSpan> _highlightText(String text, TextStyle textStyle,
+    {SearchTextController? searchController,
+    required ColorTheme colorTheme,
+    required ValueWrap<int> matchTotalCount,
+    required List<GlobalKey> matchKeys}) {
+  if (searchController == null || searchController.shouldSearch() == false) {
+    return [TextSpan(text: text, style: textStyle)];
+  }
+
+  final pattern = searchController.value.pattern;
+  final regex = searchController.value.isRegExp
+      ? RegExp(pattern, caseSensitive: searchController.value.isCaseSensitive)
+      : RegExp(RegExp.escape(pattern), caseSensitive: searchController.value.isCaseSensitive);
+
+  final spans = <InlineSpan>[];
+  int start = 0;
+  var allMatches = regex.allMatches(text).toList();
+  final currentIndex = searchController.currentMatchIndex.value;
+  for (int i = 0; i < allMatches.length; i++) {
+    final match = allMatches[i];
+    if (match.start > start) {
+      spans.add(TextSpan(text: text.substring(start, match.start), style: textStyle));
+    }
+    // 为每个高亮项分配一个 GlobalKey
+    final key = GlobalKey();
+    matchKeys.add(key);
+    spans.add(WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      baseline: TextBaseline.ideographic,
+      child: Text(
+          key: key,
+          text.substring(match.start, match.end),
+          style: textStyle.copyWith(
+            backgroundColor: matchTotalCount.get() == currentIndex
+                ? colorTheme.searchMatchCurrentColor
+                : colorTheme.searchMatchColor,
+          )),
+    ));
+    start = match.end;
+
+    matchTotalCount.set(matchTotalCount.get()! + 1);
+  }
+
+  if (start < text.length) {
+    spans.add(TextSpan(text: text.substring(start), style: textStyle));
+  }
+  return spans;
 }
 
 ///获取值的类型
@@ -259,35 +441,33 @@ String _getTypeName(dynamic content) {
 
 /// 复制值
 Widget _copyValue(BuildContext context, Widget child, Object? value) {
+  return Flexible(
+      child: GestureDetector(
+          onSecondaryTapDown: (details) => showJsonCopyMenu(context, details.globalPosition, value),
+          onTapDown:
+              Platforms.isDesktop() ? null : (details) => showJsonCopyMenu(context, details.globalPosition, value),
+          child: child));
+}
+
+void showJsonCopyMenu(BuildContext context, Offset position, Object? value) {
   AppLocalizations localizations = AppLocalizations.of(context)!;
 
-  return Flexible(
-      child: InkWell(
-          child: child,
-          onSecondaryTapDown: (details) {
-            //显示复制菜单
-            showMenu(
-                context: context,
-                position: RelativeRect.fromLTRB(
-                  details.globalPosition.dx,
-                  details.globalPosition.dy,
-                  details.globalPosition.dx,
-                  details.globalPosition.dy,
-                ),
-                items: [
-                  PopupMenuItem(
-                      height: 30,
-                      child: Text(localizations.copy),
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: value is String ? value : jsonEncode(value)))
-                            .then((value) => Toast.show(localizations.copied, context));
-                      })
-                ]);
-          },
-          onTap: () {
-            Clipboard.setData(ClipboardData(text: value is String ? value : jsonEncode(value)))
-                .then((value) => Toast.show(localizations.copied, context));
-          }));
+  //显示复制菜单
+  showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx, position.dy),
+      items: [
+        PopupMenuItem(
+            height: 30,
+            child: Text(localizations.copy),
+            onTap: () {
+              if (value == null) {
+                return;
+              }
+              Clipboard.setData(ClipboardData(text: value is String ? value : jsonEncode(value)))
+                  .then((value) => Toast.show(localizations.copied, context));
+            })
+      ]);
 }
 
 /// 是否可展开

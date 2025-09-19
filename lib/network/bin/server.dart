@@ -149,6 +149,7 @@ class ProxyServer {
     try {
       await Socket.connect('127.0.0.1', port, timeout: const Duration(milliseconds: 350));
     } catch (e) {
+      logger.d('端口未被占用，尝试重新绑定 $port');
       await restart();
     }
   }

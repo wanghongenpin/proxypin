@@ -3,10 +3,10 @@ import 'package:proxypin/network/components/manager/request_rewrite_manager.dart
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 
-import 'toolbar/setting/request_rewrite.dart';
+import 'setting/request_rewrite.dart';
 
 /// 显示请求重写对话框
-showRequestRewriteDialog(BuildContext context, HttpRequest request) async {
+Future<void> showRequestRewriteDialog(BuildContext context, HttpRequest request) async {
   bool isRequest = request.response == null;
   var requestRewrites = await RequestRewriteManager.instance;
 

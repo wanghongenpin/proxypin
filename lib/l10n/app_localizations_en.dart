@@ -17,9 +17,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolbox => 'Toolbox';
 
   @override
-  String get me => 'Me';
-
-  @override
   String get preference => 'Preferences';
 
   @override
@@ -66,6 +63,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get download => 'Download';
+
+  @override
+  String get config => 'Configuration';
+
+  @override
+  String get version => 'Version';
 
   @override
   String get start => 'Start';

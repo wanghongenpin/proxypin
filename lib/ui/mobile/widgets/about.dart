@@ -51,7 +51,7 @@ class _AboutState extends State<About> {
                 padding: const EdgeInsets.only(left: 10, right: 10),
                 child: Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software")),
             const SizedBox(height: 10),
-            Text("Version ${AppConfiguration.version}"),
+            Text("${localizations.version} ${AppConfiguration.version}"),
             ListTile(
                 title: const Text("GitHub"),
                 trailing: const Icon(Icons.open_in_new, size: 22),

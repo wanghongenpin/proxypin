@@ -30,6 +30,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/utils/lang.dart';
 
+import 'cache.dart';
 import 'cert/cert_data.dart';
 import 'cert/extension.dart';
 import 'cert/key_usage.dart';
@@ -39,16 +40,14 @@ import 'file_read.dart';
 Future<void> main() async {
   await CertificateManager.getCertificateContext('www.jianshu.com');
   CertificateManager.caCert.tbsCertificateSeqAsString;
-
-  String cer = CertificateManager.get('www.jianshu.com')!;
-  print(cer);
 }
 
 enum StartState { uninitialized, initializing, initialized }
 
 class CertificateManager {
   /// 证书缓存
-  static final Map<String, String> _certificateMap = {};
+  static final ExpiringCache<String, SecurityContext> _certificateMap =
+      ExpiringCache<String, SecurityContext>(const Duration(minutes: 15));
 
   /// 服务端密钥
   static AsymmetricKeyPair _serverKeyPair = CryptoUtils.generateRSAKeyPair();
@@ -63,7 +62,7 @@ class CertificateManager {
   static StartState _state = StartState.uninitialized;
   static Completer<void> _initializationCompleter = Completer<void>();
 
-  static String? get(String host) {
+  static SecurityContext? get(String host) {
     return _certificateMap[host];
   }
 
@@ -76,22 +75,27 @@ class CertificateManager {
 
   /// 获取域名自签名证书
   static Future<SecurityContext> getCertificateContext(String host) async {
-    var cer = _certificateMap[host];
-
-    if (cer == null) {
-      if (_state != StartState.initialized) {
-        await initCAConfig();
-      }
-      cer = generate(_caCert, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host);
-      _certificateMap[host] = cer;
+    SecurityContext? securityContext = _certificateMap[host];
+    if (securityContext != null) {
+      return securityContext;
     }
+
+    if (_state != StartState.initialized) {
+      await initCAConfig();
+    }
+
+    String cer = generate(_caCert, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host);
 
     var rsaPrivateKey = _serverKeyPair.privateKey as RSAPrivateKey;
 
-    return SecurityContext(withTrustedRoots: true)
+    securityContext = SecurityContext(withTrustedRoots: true)
       ..useCertificateChainBytes(cer.codeUnits)
       ..allowLegacyUnsafeRenegotiation = true
       ..usePrivateKeyBytes(CryptoUtils.encodeRSAPrivateKeyToPemPkcs1(rsaPrivateKey).codeUnits);
+
+    _certificateMap[host] = securityContext;
+
+    return securityContext;
   }
 
   /// 生成证书

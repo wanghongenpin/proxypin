@@ -3,7 +3,6 @@
   "favorites": "Favorites",
   "history": "History",
   "toolbox": "Toolbox",
-  "me": "Me",
   "preference": "Preferences",
   "feedback": "Feedback",
   "about": "About",
@@ -20,6 +19,8 @@
   "enabledHTTP2": "Enable HTTP2",
   "serverNotStart": "Proxy server not started",
   "download": "Download",
+  "config": "Configuration",
+  "version": "Version",
 
   "start": "Start",
   "stop": "Stop",

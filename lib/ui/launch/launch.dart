@@ -17,8 +17,9 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -60,15 +61,17 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   @override
   void initState() {
     super.initState();
-    windowManager.addListener(this);
+    if (Platforms.isDesktop()) {
+      windowManager.addListener(this);
+      windowManager.setPreventClose(true);
+    }
+
     WidgetsBinding.instance.addObserver(this);
     //启动代理服务器
     if (widget.startup) {
       start();
     }
-    if (Platforms.isDesktop()) {
-      windowManager.setPreventClose(true);
-    }
+
     SocketLaunch.startStatus.addListener(() {
       if (SocketLaunch.startStatus.value.get() == started) {
         return;
@@ -93,9 +96,19 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   }
 
   Future<void> appExit() async {
+    logger.d("appExit");
     await widget.proxyServer.stop();
     started = false;
-    await windowManager.destroy();
+    if (Platforms.isDesktop()) {
+      windowManager.setPreventClose(false);
+      await windowManager.destroy();
+    }
+
+    try {
+      await SystemNavigator.pop(animated: true).timeout(const Duration(milliseconds: 150));
+    } catch (_) {
+      //
+    }
     exit(0);
   }
 
@@ -108,12 +121,11 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-
       if (widget.proxyServer.isRunning) {
         widget.proxyServer.retryBind();
       }
 
-      if (Platforms.isMobile()) {
+      if (Platforms.isMobile() && started == false) {
         Vpn.isRunning().then((value) {
           Vpn.isVpnStarted = value;
           SocketLaunch.startStatus.value = ValueWrap.of(value);
@@ -159,7 +171,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   }
 
   ///启动代理服务器
-  start() async {
+  Future<void> start() async {
     if (!widget.serverLaunch) {
       await widget.onStart?.call();
       setState(() {

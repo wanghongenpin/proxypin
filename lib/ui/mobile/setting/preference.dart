@@ -8,8 +8,6 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
-import 'package:proxypin/ui/desktop/toolbar/setting/setting.dart';
-import 'package:proxypin/ui/mobile/setting/proxy.dart';
 import 'package:proxypin/ui/mobile/setting/theme.dart';
 
 ///设置
@@ -53,43 +51,12 @@ class _PreferenceState extends State<Preference> {
   @override
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
-    bool isEn = appConfiguration.language?.languageCode == 'en';
 
     return Scaffold(
-        appBar: AppBar(title: Text(localizations.setting, style: const TextStyle(fontSize: 16)), centerTitle: true),
+        appBar: AppBar(title: Text(localizations.preference, style: const TextStyle(fontSize: 16)), centerTitle: true),
         body: Padding(
             padding: const EdgeInsets.all(5),
             child: ListView(children: [
-              PortWidget(
-                  proxyServer: proxyServer,
-                  title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
-                  textStyle: const TextStyle(fontSize: 16)),
-              ListTile(
-                  title: Text("SOCKS5"),
-                  trailing: SwitchWidget(
-                      value: configuration.enableSocks5,
-                      scale: 0.8,
-                      onChanged: (value) {
-                        configuration.enableSocks5 = value;
-                        proxyServer.configuration.flushConfig();
-                      })),
-              ListTile(
-                  title: Text(localizations.enabledHTTP2),
-                  trailing: SwitchWidget(
-                      value: configuration.enabledHttp2,
-                      scale: 0.8,
-                      onChanged: (value) {
-                        configuration.enabledHttp2 = value;
-                        proxyServer.configuration.flushConfig();
-                      })),
-              ListTile(
-                  title: Text(localizations.externalProxy),
-                  trailing: const Icon(Icons.keyboard_arrow_right),
-                  onTap: () {
-                    showDialog(
-                        context: context,
-                        builder: (_) => ExternalProxyDialog(configuration: proxyServer.configuration));
-                  }),
               ListTile(
                 title: Text(localizations.language),
                 trailing: const Icon(Icons.arrow_right),

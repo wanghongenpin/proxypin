@@ -1,0 +1,30 @@
+name: Bug report
+description: Create reports to help us improve
+labels: bug
+body:
+  - type: dropdown
+    attributes:
+      label: Operating system
+      description: Operating system type
+      options:
+        - iOS
+        - macOS
+        - Android
+        - Windows
+        - Linux
+        - All
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: 描述错误(Describe the bug)
+      description: Please provide a detailed description of the error.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: To Reproduce
+      description: "重现行为的步骤: 如具体应用抓包失败，请说明软件名称以及具体操作页面."
+

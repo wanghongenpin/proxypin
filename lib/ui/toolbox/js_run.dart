@@ -158,8 +158,8 @@ class _JavaScriptState extends State<JavaScript> {
                             onTapOutside: (event) => FocusScope.of(context).unfocus(),
                             gutterStyle: const GutterStyle(width: 50, margin: 0),
                           ))))),
-          const SizedBox(height: 10),
           Row(children: [
+            const SizedBox(width: 10),
             Text("${localizations.output}:",
                 style: TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500)),
             const SizedBox(width: 15),

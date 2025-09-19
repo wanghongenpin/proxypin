@@ -150,7 +150,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   ///右键菜单
-  menu(LongPressDownDetails details, HttpRequest request) {
+  void menu(LongPressDownDetails details, HttpRequest request) {
     showContextMenu(
       context,
       details.globalPosition,
@@ -191,7 +191,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   //显示高级重发
-  showCustomRepeat(HttpRequest request) async {
+  Future<void> showCustomRepeat(HttpRequest request) async {
     var prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
 
@@ -202,8 +202,9 @@ class _FavoriteItemState extends State<_FavoriteItem> {
         });
   }
 
-  onRepeat(HttpRequest request) {
+  void onRepeat(HttpRequest request) {
     var httpRequest = request.copy(uri: request.requestUrl);
+
     var proxyInfo =
         widget.panel.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.panel.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
@@ -218,7 +219,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   //重命名
-  rename(Favorite item) {
+  void rename(Favorite item) {
     String? name = item.name;
     showDialog(
         context: context,
@@ -247,7 +248,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   ///请求编辑
-  requestEdit(HttpRequest request) async {
+  Future<void> requestEdit(HttpRequest request) async {
     var size = MediaQuery.of(context).size;
     var ratio = 1.0;
     if (Platform.isWindows) {

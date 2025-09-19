@@ -24,6 +24,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/uri.dart';
 import 'package:proxypin/utils/lang.dart';
 
 import 'manager/rewrite_rule.dart';
@@ -134,7 +135,7 @@ class RequestRewriteInterceptor extends Interceptor {
     }
   }
 
-  _updateRequest(HttpRequest request, RewriteItem item) {
+  Future<void> _updateRequest(HttpRequest request, RewriteItem item) async {
     var paramTypes = [RewriteType.addQueryParam, RewriteType.removeQueryParam, RewriteType.updateQueryParam];
 
     if (paramTypes.contains(item.type)) {
@@ -177,8 +178,7 @@ class RequestRewriteInterceptor extends Interceptor {
         default:
           break;
       }
-      requestUri = requestUri.replace(queryParameters: queryParameters);
-
+      requestUri = requestUri.replace(query: UriUtils.mapToQuery(queryParameters));
       if (requestUri.isScheme('https')) {
         request.uri = requestUri.path + (requestUri.hasQuery ? "?${requestUri.query}" : "");
       } else {
@@ -187,7 +187,7 @@ class RequestRewriteInterceptor extends Interceptor {
       return;
     }
 
-    _updateMessage(request, item);
+    await _updateMessage(request, item);
   }
 
   //修改消息

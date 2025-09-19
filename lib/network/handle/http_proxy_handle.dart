@@ -112,6 +112,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       for (var interceptor in interceptors) {
         var response = await interceptor.execute(request!);
         if (response != null) {
+          listener?.onResponse(channelContext, response);
           channel.writeAndClose(channelContext, response);
           return;
         }
