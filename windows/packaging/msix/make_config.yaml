@@ -1,0 +1,10 @@
+display_name: ProxyPin
+publisher_display_name: ProxyPin
+publisher: CN=8EC6F6C3-E66C-4189-8421-A6F2A451F552
+identity_name: ProxyPin.ProxyPin
+publisher_url: https://github.com/wanghongenpin/proxypin
+msix_version: 1.2.1.0
+logo_path: D:\IdeaProjects\proxypin\assets\icon.png
+capabilities: internetClient
+store: "true"
+languages: en-US,zh-CN

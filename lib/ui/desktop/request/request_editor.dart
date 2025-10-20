@@ -170,7 +170,7 @@ class RequestEditorState extends State<RequestEditor> {
   }
 
   ///发送请求
-  sendRequest() async {
+  Future<void> sendRequest() async {
     var currentState = requestLineKey.currentState!;
     var headers = requestKey.currentState?.getHeaders();
     var requestBody = requestKey.currentState?.getBody();
@@ -198,13 +198,18 @@ class RequestEditorState extends State<RequestEditor> {
     });
   }
 
-  curlParse() async {
+  Future<void> curlParse() async {
     var data = await Clipboard.getData('text/plain');
     if (data == null || data.text == null) {
       return;
     }
 
     var text = data.text;
+    if (text?.startsWith("http://") == true || text?.startsWith("https://") == true) {
+      requestLineKey.currentState?.requestUrl.text = text!;
+      return;
+    }
+
     if (text?.trimLeft().startsWith('curl') == true && mounted && !showCURLDialog) {
       showCURLDialog = true;
       showDialog(
@@ -242,13 +247,13 @@ class UrlQueryNotifier {
   ParamCallback? _urlNotifier;
   ParamCallback? _paramNotifier;
 
-  urlListener(ParamCallback listener) => _urlNotifier = listener;
+  ParamCallback urlListener(ParamCallback listener) => _urlNotifier = listener;
 
-  paramListener(ParamCallback listener) => _paramNotifier = listener;
+  ParamCallback paramListener(ParamCallback listener) => _paramNotifier = listener;
 
-  onUrlChange(String url) => _urlNotifier?.call(url);
+  void onUrlChange(String url) => _urlNotifier?.call(url);
 
-  onParamChange(String param) => _paramNotifier?.call(param);
+  void onParamChange(String param) => _paramNotifier?.call(param);
 }
 
 class _HttpWidget extends StatefulWidget {

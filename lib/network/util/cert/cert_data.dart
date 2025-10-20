@@ -21,7 +21,6 @@ class X509CertificateData {
   Map<String, String?> issuer;
 
   /// The validity of the certificate
-  @Deprecated('Use tbsCertificate.validity instead')
   X509CertificateValidity validity;
 
   /// The sha1 thumbprint for the certificate

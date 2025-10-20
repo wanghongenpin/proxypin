@@ -502,6 +502,12 @@ abstract class AppLocalizations {
   /// **'Status code'**
   String get statusCode;
 
+  /// No description provided for @duration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration;
+
   /// No description provided for @done.
   ///
   /// In en, this message translates to:
@@ -1977,6 +1983,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Do not request remote services, use local configuration or script for response'**
   String get requestMapDescribe;
+
+  /// No description provided for @automatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get automatic;
+
+  /// No description provided for @manual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get manual;
+
+  /// No description provided for @certNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate not installed'**
+  String get certNotInstalled;
+
+  /// No description provided for @openNewWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Open New Window'**
+  String get openNewWindow;
+
+  /// No description provided for @sponsorDonate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsor / Donate'**
+  String get sponsorDonate;
+
+  /// No description provided for @sponsorSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Support ongoing development'**
+  String get sponsorSupport;
+
+  /// No description provided for @sponsorThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.'**
+  String get sponsorThanks;
+
+  /// No description provided for @sponsorAfdian.
+  ///
+  /// In en, this message translates to:
+  /// **'AFDIAN'**
+  String get sponsorAfdian;
+
+  /// No description provided for @sponsorBuyMeCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy Me a Coffee'**
+  String get sponsorBuyMeCoffee;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -20,6 +20,8 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
+import 'package:proxypin/utils/font.dart';
+import 'package:scrollable_positioned_list_nic/scrollable_positioned_list_nic.dart';
 
 import '../../../utils/platform.dart';
 
@@ -46,6 +48,7 @@ class JsonText extends StatefulWidget {
 class _JsonTextState extends State<JsonText> {
   ScrollController? trackingScrollController;
   SearchTextController? searchController;
+  final ItemScrollController itemScrollController = ItemScrollController();
 
   @override
   void initState() {
@@ -76,42 +79,149 @@ class _JsonTextState extends State<JsonText> {
   Widget jsonTextWidget(BuildContext context) {
     var jsonParser = JsonParser(widget.json, widget.colorTheme, widget.indent, searchController);
     var textList = jsonParser.getJsonTree();
+    List<List<TextSpan>>? chunks;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       searchController?.updateMatchCount(jsonParser.searchMatchTotal);
       // 自动滚动到当前高亮项
-      scrollToMatch(jsonParser);
+      scrollToMatch(jsonParser, chunks);
     });
-    if (textList.length < 1500) {
+
+    if (textList.length < 1000) {
       return SelectableText.rich(TextSpan(children: textList), showCursor: true);
     } else {
+      chunks = chunks ?? splitTextSpans(textList, 500);
       return SizedBox(
           width: double.infinity,
           height: MediaQuery.of(context).size.height - 160,
-          child: SingleChildScrollView(
-              physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
-              controller: Platforms.isDesktop() ? null : trackingScroll(),
-              child: SelectableText.rich(TextSpan(children: textList), showCursor: true)));
+          child: SelectionArea(
+              child: ScrollablePositionedList.builder(
+            physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
+            scrollController: Platforms.isDesktop() ? null : trackingScroll(),
+            itemCount: chunks.length,
+            minCacheExtent: 1500,
+            itemScrollController: itemScrollController,
+            itemBuilder: (BuildContext context, int index) {
+              return Text.rich(
+                TextSpan(children: chunks![index]),
+                textHeightBehavior:
+                    const TextHeightBehavior(applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
+                strutStyle: const StrutStyle(forceStrutHeight: true, height: 1.393),
+                style: TextStyle(fontFamily: fonts.regular),
+              );
+            },
+          )));
     }
   }
 
-  void scrollToMatch(JsonParser jsonParser) {
-    if (searchController != null && jsonParser.matchKeys.isNotEmpty) {
-      final currentIndex = searchController!.currentMatchIndex.value;
-      if (currentIndex >= 0 && currentIndex < jsonParser.matchKeys.length) {
-        final key = jsonParser.matchKeys[currentIndex];
-        final context = key.currentContext;
-        if (context != null) {
-          Scrollable.ensureVisible(
-            context,
-            duration: const Duration(milliseconds: 300),
-            alignment: 0.5, // 高亮项在视图中的位置
+  Future<void> scrollToMatch(JsonParser jsonParser, [List<List<TextSpan>>? chunks]) async {
+    if (searchController == null || jsonParser.matchKeys.isEmpty) return;
+    final index = searchController!.currentMatchIndex.value;
+    if (index < 0 || index >= jsonParser.matchKeys.length) return;
+
+    final key = jsonParser.matchKeys[index];
+
+    if (key.currentContext != null) {
+      await _ensureVisibleCenter(key, const Duration(milliseconds: 260));
+      return;
+    }
+
+    // Chunk-first path for large documents
+    if (chunks != null && chunks.isNotEmpty) {
+      final chunkIndex = _findChunkIndexForKey(chunks, key);
+      if (chunkIndex != -1) {
+        /// 滚动到对应 chunk
+        try {
+          await itemScrollController.scrollTo(
+            index: chunkIndex,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            alignment: 0.0,
           );
+        } catch (_) {
+          logger.w('Scroll to chunk $chunkIndex failed');
         }
+
+        for (int i = 0; i < 10 && key.currentContext == null; i++) {
+          await Future.delayed(Duration(milliseconds: 40));
+        }
+
+        await _ensureVisibleCenter(key, const Duration(milliseconds: 130));
+        return;
       }
     }
   }
 
-  ///滚动条
+  Future<void> _ensureVisibleCenter(GlobalKey key, Duration duration) async {
+    final ctx = key.currentContext;
+    if (ctx != null) {
+      await Scrollable.ensureVisible(ctx, duration: duration, alignment: 0.5);
+    }
+  }
+
+  // 在分块数据中定位包含目标 key 的 chunk 下标
+  int _findChunkIndexForKey(List<List<TextSpan>> chunks, GlobalKey key) {
+    for (int i = 0; i < chunks.length; i++) {
+      for (final span in chunks[i]) {
+        if (_textSpanContainsKey(span, key)) return i;
+      }
+    }
+    return -1;
+  }
+
+  // 递归检查 TextSpan 树是否包含对应 key 的 WidgetSpan
+  bool _textSpanContainsKey(TextSpan span, GlobalKey key) {
+    final children = span.children;
+    if (children == null || children.isEmpty) return false;
+    for (final child in children) {
+      if (child is WidgetSpan) {
+        final w = child.child;
+        if (w is Text && w.key == key) return true;
+      } else if (child is TextSpan) {
+        if (_textSpanContainsKey(child, key)) return true;
+      }
+    }
+    return false;
+  }
+
+  // 优化分块：避免因为 Text 组件分隔导致额外空行
+  List<List<TextSpan>> splitTextSpans(List<TextSpan> spans, int chunkSize) {
+    if (spans.length <= chunkSize) {
+      return [spans];
+    }
+
+    List<List<TextSpan>> chunks = [];
+
+    bool endsWithNewline(TextSpan s) => s.text != null && s.text!.endsWith('\n');
+    bool startsWithNewline(TextSpan s) => s.text != null && s.text!.startsWith('\n');
+
+    for (int i = 0; i < spans.length; i += chunkSize) {
+      final chunk = spans.sublist(i, (i + chunkSize < spans.length) ? i + chunkSize : spans.length);
+
+      if (chunk.isEmpty) continue;
+
+      if (i > 0) {
+        // 对非首块：去掉首 span 的一个前导换行抵消组件分隔换行
+        final first = chunk.first;
+        if (startsWithNewline(first)) {
+          final newText = first.text!.substring(1);
+          chunk[0] = TextSpan(text: newText, style: first.style, children: first.children);
+        }
+      }
+
+      if (chunk.length > 1 && endsWithNewline(chunk.last)) {
+        // 除最后一块外，块尾不保留以 \n 结尾的 span（把它挪到下一块）
+        final last = chunk.last;
+        final newText = last.text!.substring(0, last.text!.length - 1);
+        chunk[chunk.length - 1] = TextSpan(text: newText, style: last.style, children: last.children);
+      }
+
+      chunks.add(chunk);
+    }
+    return chunks;
+  }
+
+  /// 滚动条控制：保证 ListView/SingleChildScrollView 使用同一个控制器，便于动画
   ScrollController trackingScroll() {
     if (trackingScrollController != null) {
       return trackingScrollController!;
@@ -120,14 +230,15 @@ class _JsonTextState extends State<JsonText> {
     var trackingScroll = TrackingScrollController();
     ScrollController? scrollController = widget.scrollController;
 
-    double offset = 0;
+    double prevOffset = 0;
     trackingScroll.addListener(() {
-      if (trackingScroll.offset < -10 || (trackingScroll.offset < 30 && trackingScroll.offset < offset)) {
-        if (scrollController != null && scrollController.offset >= 0) {
-          scrollController.jumpTo(scrollController.offset - max((offset - trackingScroll.offset), 15));
+      // iOS 回弹或向上轻微滑动时，驱动外部滚动条联动
+      if (trackingScroll.offset < -10 || (trackingScroll.offset < 30 && trackingScroll.offset < prevOffset)) {
+        if (scrollController != null && scrollController.offset >= 50) {
+          scrollController.jumpTo(scrollController.offset - max((prevOffset - trackingScroll.offset), 10));
         }
       }
-      offset = trackingScroll.offset;
+      prevOffset = trackingScroll.offset;
     });
 
     if (Platform.isIOS && scrollController != null) {
@@ -176,7 +287,7 @@ class JsonParser {
       textList.addAll(getArrayText(json));
     } else {
       textList.add(TextSpan(text: json == null ? '' : json.toString()));
-      textList.add(TextSpan(text: '\n'));
+      textList.add(const TextSpan(text: '\n'));
     }
     return textList;
   }
@@ -197,7 +308,7 @@ class JsonParser {
         getBasicValue(entry.value, postfix),
       ]);
       result.add(textSpan);
-      result.add(TextSpan(text: '\n'));
+      result.add(const TextSpan(text: '\n'));
 
       if (entry.value is Map<String, dynamic>) {
         result.addAll(getMapText(entry.value, openPrefix: prefix, prefix: '$prefix$indent', suffix: postfix));
@@ -220,7 +331,7 @@ class JsonParser {
       String postfix = i == list.length - 1 ? '' : ',';
 
       result.add(getBasicValue(value, postfix, prefix: prefix));
-      result.add(TextSpan(text: '\n'));
+      result.add(const TextSpan(text: '\n'));
 
       if (value is Map<String, dynamic>) {
         result.addAll(getMapText(value, openPrefix: '$openPrefix ', prefix: '$prefix$indent', suffix: postfix));

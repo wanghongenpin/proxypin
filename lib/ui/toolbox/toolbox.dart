@@ -35,26 +35,28 @@ class _ToolboxState extends State<Toolbox> {
   @override
   Widget build(BuildContext context) {
     return IconTheme(
-        data: IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withOpacity(0.55), size: 22),
-        child: Container(
+        data: IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.65), size: 22),
+        child: SingleChildScrollView(
+            child: Container(
           padding: const EdgeInsets.all(10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Divider(thickness: 0.3),
-              Row(children: [
-                InkWell(
+              // Top quick actions
+              Wrap(
+                spacing: 6,
+                children: [
+                  IconText(
+                    icon: Icons.http,
+                    text: "HTTP",
                     onTap: httpRequest,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(children: [
-                        const Icon(Icons.http),
-                        Text(localizations.httpRequest, style: const TextStyle(fontSize: 14)),
-                      ]),
-                    )),
-                const SizedBox(width: 10),
-                InkWell(
+                    tooltip: localizations.httpRequest,
+                  ),
+                  IconText(
+                    icon: Icons.javascript,
+                    text: 'JavaScript',
+                    tooltip: 'JavaScript',
                     onTap: () async {
                       if (Platforms.isMobile()) {
                         Navigator.of(context).push(MaterialPageRoute(builder: (context) => const JavaScript()));
@@ -76,50 +78,46 @@ class _ToolboxState extends State<Toolbox> {
                         ..center()
                         ..show();
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: const Column(children: [Icon(Icons.javascript), SizedBox(height: 3), Text("JavaScript")]),
-                    )),
-              ]),
+                  ),
+                ],
+              ),
               const Divider(thickness: 0.3),
               Text(localizations.encode, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               Wrap(
+                spacing: 6,
                 children: [
-                  InkWell(
-                      onTap: () => encodeWindow(EncoderType.url, context),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        child: const Column(children: [Icon(Icons.link), SizedBox(height: 3), Text(' URL')]),
-                      )),
-                  const SizedBox(width: 10),
-                  InkWell(
-                      onTap: () => encodeWindow(EncoderType.base64, context),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        child: const Column(
-                            children: [Icon(Icons.format_bold_outlined), SizedBox(height: 3), Text('Base64')]),
-                      )),
-                  const SizedBox(width: 10),
-                  InkWell(
-                      onTap: () => encodeWindow(EncoderType.unicode, context),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        child: const Column(
-                            children: [Icon(Icons.format_underline_outlined), SizedBox(height: 3), Text('Unicode')]),
-                      )),
-                  const SizedBox(width: 10),
-                  InkWell(
-                      onTap: () => encodeWindow(EncoderType.md5, context),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        child: const Column(children: [Icon(Icons.tag_outlined), SizedBox(height: 3), Text('MD5')]),
-                      )),
+                  IconText(
+                    onTap: () => encodeWindow(EncoderType.url, context),
+                    icon: Icons.link,
+                    text: 'URL',
+                    tooltip: 'URL Encode/Decode',
+                  ),
+                  IconText(
+                    onTap: () => encodeWindow(EncoderType.base64, context),
+                    icon: Icons.format_bold_outlined,
+                    text: 'Base64',
+                    tooltip: 'Base64 Encode/Decode',
+                  ),
+                  IconText(
+                    onTap: () => encodeWindow(EncoderType.unicode, context),
+                    icon: Icons.format_underline_outlined,
+                    text: 'Unicode',
+                    tooltip: 'Unicode Encode/Decode',
+                  ),
+                  IconText(
+                    onTap: () => encodeWindow(EncoderType.md5, context),
+                    icon: Icons.tag_outlined,
+                    text: 'MD5',
+                    tooltip: 'MD5 Hash',
+                  ),
                 ],
               ),
               const Divider(thickness: 0.3),
               Text(localizations.cipher, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              Wrap(children: [
-                InkWell(
+              Wrap(
+                spacing: 6,
+                children: [
+                  IconText(
                     onTap: () {
                       if (Platforms.isMobile()) {
                         Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AesPage()));
@@ -127,15 +125,16 @@ class _ToolboxState extends State<Toolbox> {
                       }
                       MultiWindow.openWindow("AES", "AesPage", size: const Size(700, 672));
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                          children: [Icon(Icons.enhanced_encryption_outlined), SizedBox(height: 3), Text('AES')]),
-                    )),
-              ]),
+                    icon: Icons.enhanced_encryption_outlined,
+                    text: 'AES',
+                    tooltip: 'AES Encrypt/Decrypt',
+                  ),
+                ],
+              ),
               const Divider(thickness: 0.3),
               Text(localizations.other, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               Wrap(
+                spacing: 6,
                 children: [
                   IconText(
                       onTap: () async {
@@ -147,8 +146,8 @@ class _ToolboxState extends State<Toolbox> {
                         MultiWindow.openWindow(localizations.timestamp, 'TimestampPage', size: const Size(700, 350));
                       },
                       icon: Icons.av_timer,
-                      text: localizations.timestamp),
-                  const SizedBox(width: 10),
+                      text: localizations.timestamp,
+                      tooltip: localizations.timestamp),
                   IconText(
                       onTap: () async {
                         if (Platforms.isMobile()) {
@@ -158,8 +157,8 @@ class _ToolboxState extends State<Toolbox> {
                         MultiWindow.openWindow(localizations.certHashName, 'CertHashPage');
                       },
                       icon: Icons.key_outlined,
-                      text: localizations.certHashName),
-                  const SizedBox(width: 10),
+                      text: localizations.certHashName,
+                      tooltip: localizations.certHashName),
                   IconText(
                       onTap: () async {
                         if (Platforms.isMobile()) {
@@ -169,8 +168,8 @@ class _ToolboxState extends State<Toolbox> {
                         MultiWindow.openWindow(localizations.regExp, 'RegExpPage', size: const Size(800, 720));
                       },
                       icon: Icons.code,
-                      text: localizations.regExp),
-                  const SizedBox(width: 10),
+                      text: localizations.regExp,
+                      tooltip: localizations.regExp),
                   IconText(
                       onTap: () async {
                         if (Platforms.isMobile()) {
@@ -180,12 +179,13 @@ class _ToolboxState extends State<Toolbox> {
                         MultiWindow.openWindow(localizations.qrCode, 'QrCodePage');
                       },
                       icon: Icons.qr_code_2,
-                      text: localizations.qrCode),
+                      text: localizations.qrCode,
+                      tooltip: localizations.qrCode),
                 ],
               ),
             ],
           ),
-        ));
+        )));
   }
 
   Future<void> httpRequest() async {
@@ -215,19 +215,41 @@ class _ToolboxState extends State<Toolbox> {
 class IconText extends StatelessWidget {
   final IconData icon;
   final String text;
+  final String? tooltip;
 
   /// Called when the user taps this part of the material.
   final GestureTapCallback? onTap;
 
-  const IconText({super.key, required this.icon, required this.text, this.onTap});
+  const IconText({super.key, required this.icon, required this.text, this.onTap, this.tooltip});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          child: Column(children: [Icon(icon), SizedBox(height: 3), Text(text)]),
-        ));
+    final theme = Theme.of(context);
+    final label = text;
+    return Tooltip(
+      message: tooltip ?? label,
+      waitDuration: const Duration(milliseconds: 500),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
+          splashColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            constraints: const BoxConstraints(minWidth: 92),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon),
+                const SizedBox(height: 6),
+                Text(label, style: const TextStyle(fontSize: 14)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

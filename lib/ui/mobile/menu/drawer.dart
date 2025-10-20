@@ -51,13 +51,35 @@ class DrawerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Drawer(
         backgroundColor: Theme.of(context).cardColor,
         child: ListView(
-          // padding: EdgeInsets.zero,
           children: [
-            SizedBox(height: 15),
+            DrawerHeader(
+                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                  CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.white,
+                      child: Center(
+                          child: Image.asset(
+                        'assets/icon_foreground.png',
+                        width: 52,
+                      ))),
+                  const SizedBox(width: 12),
+                  Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('ProxyPin', style: Theme.of(context).textTheme.titleLarge),
+                        const SizedBox(height: 4),
+                        Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software",
+                            style: Theme.of(context).textTheme.bodySmall)
+                      ])
+                ])),
+            // Favorites & History
             ListTile(
                 leading: const Icon(Icons.favorite),
                 title: Text(localizations.favorites),
@@ -134,7 +156,7 @@ class DrawerWidget extends StatelessWidget {
 }
 
 ///跳转页面
-navigator(BuildContext context, Widget widget) {
+void navigator(BuildContext context, Widget widget) {
   Navigator.of(context).push(
     MaterialPageRoute(builder: (BuildContext context) {
       return widget;
@@ -155,30 +177,45 @@ class FilterMenu extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(title: Text(localizations.filter, style: const TextStyle(fontSize: 16)), centerTitle: true),
         body: Padding(
-            padding: const EdgeInsets.all(5),
-            child: ListView(children: [
-              ListTile(
-                  title: Text(localizations.domainWhitelist),
-                  trailing: const Icon(Icons.arrow_right),
-                  onTap: () => navigator(context,
-                      MobileFilterWidget(configuration: proxyServer.configuration, hostList: HostFilter.whitelist))),
-              ListTile(
-                  title: Text(localizations.domainBlacklist),
-                  trailing: const Icon(Icons.arrow_right),
-                  onTap: () => navigator(context,
-                      MobileFilterWidget(configuration: proxyServer.configuration, hostList: HostFilter.blacklist))),
-              Platform.isIOS
-                  ? const SizedBox()
-                  : ListTile(
-                      title: Text(localizations.appWhitelist),
+            padding: const EdgeInsets.all(12),
+            child: Card(
+                color: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  ListTile(
+                      title: Text(localizations.domainWhitelist),
                       trailing: const Icon(Icons.arrow_right),
-                      onTap: () => navigator(context, AppWhitelist(proxyServer: proxyServer))),
-              Platform.isIOS
-                  ? const SizedBox()
-                  : ListTile(
-                      title: Text(localizations.appBlacklist),
+                      onTap: () => navigator(
+                          context,
+                          MobileFilterWidget(
+                              configuration: proxyServer.configuration, hostList: HostFilter.whitelist))),
+                  Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                  ListTile(
+                      title: Text(localizations.domainBlacklist),
                       trailing: const Icon(Icons.arrow_right),
-                      onTap: () => navigator(context, AppBlacklist(proxyServer: proxyServer))),
-            ])));
+                      onTap: () => navigator(
+                          context,
+                          MobileFilterWidget(
+                              configuration: proxyServer.configuration, hostList: HostFilter.blacklist))),
+                  Platform.isIOS
+                      ? const SizedBox()
+                      : Column(mainAxisSize: MainAxisSize.min, children: [
+                          Divider(
+                              height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                          ListTile(
+                              title: Text(localizations.appWhitelist),
+                              trailing: const Icon(Icons.arrow_right),
+                              onTap: () => navigator(context, AppWhitelist(proxyServer: proxyServer))),
+                          Divider(
+                              height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                          ListTile(
+                              title: Text(localizations.appBlacklist),
+                              trailing: const Icon(Icons.arrow_right),
+                              onTap: () => navigator(context, AppBlacklist(proxyServer: proxyServer)))
+                        ])
+                ]))));
   }
 }

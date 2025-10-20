@@ -53,6 +53,7 @@ class DesktopRequestListWidget extends StatefulWidget {
 class DesktopRequestListState extends State<DesktopRequestListWidget> with AutomaticKeepAliveClientMixin {
   final GlobalKey<RequestSequenceState> requestSequenceKey = GlobalKey<RequestSequenceState>();
   final GlobalKey<DomainWidgetState> domainListKey = GlobalKey<DomainWidgetState>();
+  final GlobalKey<SearchState> searchKey = GlobalKey<SearchState>();
 
   //请求列表容器
   ListenableList<HttpRequest> container = ListenableList();
@@ -95,7 +96,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
               automaticallyImplyLeading: false,
               actions: [popupMenus()],
             ),
-            bottomNavigationBar: Search(onSearch: search),
+            bottomNavigationBar: Search(key: searchKey, onSearch: search),
             body: Padding(
                 padding: const EdgeInsets.only(right: 5),
                 child: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -119,6 +120,13 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
         icon: const Icon(Icons.more_vert_outlined, size: 20),
         itemBuilder: (BuildContext context) {
           return <PopupMenuEntry>[
+            CustomPopupMenuItem(
+                height: 35,
+                onTap: () =>  searchKey.currentState?.searchDialog(),
+                child: IconText(
+                    icon: const Icon(Icons.search, size: 17),
+                    text: localizations.search,
+                    textStyle: const TextStyle(fontSize: 13))),
             CustomPopupMenuItem(
                 height: 35,
                 onTap: () => export('ProxyPin_${DateTime.now().dateFormat()}.har'),
@@ -149,31 +157,31 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   }
 
   ///添加请求
-  add(Channel channel, HttpRequest request) {
+  void add(Channel channel, HttpRequest request) {
     container.add(request);
     domainListKey.currentState?.add(channel, request);
     requestSequenceKey.currentState?.add(request);
   }
 
   ///添加响应
-  addResponse(ChannelContext channelContext, HttpResponse response) {
+  void addResponse(ChannelContext channelContext, HttpResponse response) {
     domainListKey.currentState?.addResponse(channelContext, response);
     requestSequenceKey.currentState?.addResponse(response);
   }
 
   ///移除
-  domainListRemove(List<HttpRequest> list) {
+  void domainListRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     requestSequenceKey.currentState?.remove(list);
   }
 
   ///全部请求删除
-  sequenceRemove(List<HttpRequest> list) {
+  void sequenceRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     domainListKey.currentState?.remove(list);
   }
 
-  search(SearchModel searchModel) {
+  void search(SearchModel searchModel) {
     domainListKey.currentState?.search(searchModel);
     requestSequenceKey.currentState?.search(searchModel);
   }
@@ -183,7 +191,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   }
 
   ///清理
-  clean() {
+  void clean() {
     setState(() {
       container.clear();
       domainListKey.currentState?.clean();
@@ -192,7 +200,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     });
   }
 
-  cleanupEarlyData(int retain) {
+  void cleanupEarlyData(int retain) {
     var list = container.source;
     if (list.length <= retain) {
       return;
@@ -205,7 +213,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   }
 
   ///导出
-  export(String fileName) async {
+  Future<void> export(String fileName) async {
     var path = await FilePicker.platform.saveFile(fileName: fileName);
     if (path == null) {
       return;

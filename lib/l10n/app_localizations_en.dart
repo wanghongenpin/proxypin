@@ -209,6 +209,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusCode => 'Status code';
 
   @override
+  String get duration => 'Duration';
+
+  @override
   String get done => 'Done';
 
   @override
@@ -961,4 +964,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requestMapDescribe => 'Do not request remote services, use local configuration or script for response';
+
+  @override
+  String get automatic => 'Automatic';
+
+  @override
+  String get manual => 'Manual';
+
+  @override
+  String get certNotInstalled => 'Certificate not installed';
+
+  @override
+  String get openNewWindow => 'Open New Window';
+
+  @override
+  String get sponsorDonate => 'Sponsor / Donate';
+
+  @override
+  String get sponsorSupport => 'Support ongoing development';
+
+  @override
+  String get sponsorThanks =>
+      'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
+
+  @override
+  String get sponsorAfdian => 'AFDIAN';
+
+  @override
+  String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
 }

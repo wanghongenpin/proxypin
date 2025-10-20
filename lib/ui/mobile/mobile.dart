@@ -117,7 +117,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV21) {
+    if (widget.appConfiguration.upgradeNoticeV22) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -196,13 +196,18 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                 bottomNavigationBar: widget.appConfiguration.bottomNavigation
                     ? Container(
                         constraints: const BoxConstraints(maxHeight: 85),
-                        child: Theme(
+                        // padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                        child: ClipRRect(
+                            // borderRadius: BorderRadius.circular(16),
+                            child: Theme(
                           data: Theme.of(context).copyWith(splashColor: Colors.transparent),
                           child: BottomNavigationBar(
                             type: BottomNavigationBarType.fixed,
-                            selectedIconTheme: const IconThemeData(size: 26),
-                            unselectedIconTheme: const IconThemeData(size: 26),
-                            selectedFontSize: 0,
+                            iconSize: 23,
+                            showSelectedLabels: false,
+                            showUnselectedLabels: false,
+                            selectedFontSize: 2,
+                            unselectedFontSize: 2,
                             elevation: 0,
                             items: [
                               BottomNavigationBarItem(
@@ -225,7 +230,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                             currentIndex: _selectIndex.value,
                             onTap: (index) => _selectIndex.value = index,
                           ),
-                        ))
+                        )))
                     : null)));
   }
 
@@ -282,30 +287,24 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 消息体增加搜索高亮；\n'
-            '2. WebSocket 消息体增加预览；\n'
-            '3. 安卓ROOT系统支持自动安装系统证书；\n'
-            '4. Socket自动清理，防止退出时资源占用问题；\n'
-            '5. 调整UI菜单；\n'
-            '6. 修复脚本fetch API部分请求bug；\n'
-            '7. 修复HTTP2包大小不正确；\n'
-            '8. 修复请求映射Bug；\n'
-            '9. 修复手机端历史未自动保存bug；\n'
-            '10. 修复安卓部分闪退情况；\n'
+            '1. 脚本支持多 URL 匹配；\n'
+            '2. 证书安装检测引导和自动安装证书；\n'
+            '3. 优化菜单 UI；\n'
+            '4. 搜索支持协议选择和耗时范围筛选；\n'
+            '5. 历史记录支持图片持久化；\n'
+            '6. 关于增加赞助；\n'
+            '7. 修复较大响应体 JSON Text 预览卡顿；\n'
         : 'Tips: HTTPS packet capture is disabled by default. Please install the certificate before enabling HTTPS packet capture.\n\n'
-            '1. Add search highlight for message body;\n'
-            '2. Add preview for WebSocket message body;\n'
-            '3. Android ROOT system supports automatic installation of system certificates;\n'
-            '4. Socket auto cleanup to prevent resource occupation when exiting;\n'
-            '5. Adjust UI menu;\n'
-            '5. Fix script fetch API part request bug;\n'
-            '7. Fix incorrect HTTP2 packet size;\n'
-            '8. Fix request map bug;\n'
-            '9. Fix the bug that the history on the mobile side is not saved automatically;\n'
-            '10. Fix some Android crash issues;\n';
+            '1. Script supports multiple URL matching;\n'
+            '2. Certificate installation detection guidance and automatic certificate installation;\n'
+            '3. Optimize menu UI;\n'
+            '4. Search supports protocol selection and filtering of time consumption range;\n'
+            '5. History records support image persistence;\n'
+            '6. About increasing sponsorship;\n'
+            '7. Fix large response body JSON Text preview lag;\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "Update content V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV21 = false;
+      widget.appConfiguration.upgradeNoticeV22 = false;
       widget.appConfiguration.flushConfig();
     });
   }

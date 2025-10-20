@@ -82,13 +82,17 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     }
   }
 
-  curlParse() async {
+  Future<void> curlParse() async {
     //获取剪切板内容
     var data = await Clipboard.getData('text/plain');
     if (data == null || data.text == null) {
       return;
     }
     var text = data.text;
+    if (text?.startsWith("http://") == true || text?.startsWith("https://") == true) {
+      requestLineKey.currentState?.requestUrl.text = text!;
+      return;
+    }
     if (text?.trimLeft().startsWith('curl') == true && mounted) {
       showDialog(
         context: context,
@@ -167,8 +171,8 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                             Text("${localizations.statusCode}: ", style: const TextStyle(fontWeight: FontWeight.w500)),
                             const SizedBox(width: 10),
                             Text(response?.status.toString() ?? "",
-                                style:
-                                    TextStyle(color: response?.status.isSuccessful() == true ? Colors.blue : Colors.red))
+                                style: TextStyle(
+                                    color: response?.status.isSuccessful() == true ? Colors.blue : Colors.red))
                           ]),
                           readOnly: true,
                           message: response);

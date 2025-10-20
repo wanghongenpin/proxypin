@@ -12,11 +12,11 @@ import 'package:share_plus/share_plus.dart';
 
 ///分享按钮
 class ShareWidget extends StatelessWidget {
-  final ProxyServer proxyServer;
+  final ProxyServer? proxyServer;
   final HttpRequest? request;
   final HttpResponse? response;
 
-  const ShareWidget({super.key, required this.proxyServer, this.request, this.response});
+const ShareWidget({super.key, required this.proxyServer, this.request, this.response});
 
   @override
   Widget build(BuildContext context) {

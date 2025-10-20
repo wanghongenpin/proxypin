@@ -209,6 +209,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statusCode => '状态码';
 
   @override
+  String get duration => '耗时';
+
+  @override
   String get done => '完成';
 
   @override
@@ -961,6 +964,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get requestMapDescribe => '不请求远程服务，使用本地配置或脚本进行响应';
+
+  @override
+  String get automatic => '自动安装';
+
+  @override
+  String get manual => '手动安装';
+
+  @override
+  String get certNotInstalled => '证书未安装';
+
+  @override
+  String get openNewWindow => '新窗口打开';
+
+  @override
+  String get sponsorDonate => '赞助 / 捐赠';
+
+  @override
+  String get sponsorSupport => '支持项目持续开发';
+
+  @override
+  String get sponsorThanks => '感谢支持开源项目，可选择以下任意方式，帮助项目长期发展';
+
+  @override
+  String get sponsorAfdian => '爱发电赞助';
+
+  @override
+  String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1170,6 +1200,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get statusCode => '狀態碼';
+
+  @override
+  String get duration => '耗時';
 
   @override
   String get done => '完成';
@@ -1924,4 +1957,31 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get requestMapDescribe => '不請求遠端服務，使用本地配置或腳本進行回應';
+
+  @override
+  String get automatic => '自動';
+
+  @override
+  String get manual => '手動';
+
+  @override
+  String get certNotInstalled => '未安裝憑證';
+
+  @override
+  String get openNewWindow => '新視窗開啟';
+
+  @override
+  String get sponsorDonate => '贊助 / 捐贈';
+
+  @override
+  String get sponsorSupport => '支持項目持續開發';
+
+  @override
+  String get sponsorThanks => '感謝支持開源項目，可選擇以下任意方式，幫助項目長期發展';
+
+  @override
+  String get sponsorAfdian => '愛發電贊助';
+
+  @override
+  String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
 }

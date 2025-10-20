@@ -40,6 +40,9 @@ class MoreMenu extends StatelessWidget {
 
     return PopupMenuButton(
       offset: const Offset(0, 30),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      elevation: 8,
+      color: Theme.of(context).colorScheme.surface,
       child: const SizedBox(height: 38, width: 38, child: Icon(Icons.more_vert, size: 26)),
       itemBuilder: (BuildContext context) {
         return <PopupMenuEntry>[

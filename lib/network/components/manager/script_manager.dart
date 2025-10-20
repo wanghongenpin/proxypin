@@ -36,8 +36,6 @@ class ScriptManager {
 // e.g. Add/Update/Remove：Queries、Headers、Body
 async function onRequest(context, request) {
   console.log(request.url);
-  //URL queries
-  //request.queries["name"] = "value";
   //Update or add Header
   //request.headers["X-New-Headers"] = "My-Value";
   
@@ -312,28 +310,48 @@ class LogInfo {
 class ScriptItem {
   bool enabled = true;
   String? name;
-  String url;
+  List<String> urls;
   String? scriptPath;
-  RegExp? urlReg;
+  List<RegExp?>? urlRegs;
 
-  ScriptItem(this.enabled, this.name, this.url, {this.scriptPath});
+  ScriptItem(this.enabled, this.name, dynamic urls, {this.scriptPath})
+      : urls = urls is String
+            ? (urls.contains(',') ? urls.split(',').map((e) => e.trim()).toList() : [urls])
+            : (urls is List<String> ? urls : <String>[]);
 
-  //匹配url
+  // 匹配url，任意一个规则匹配即可
   bool match(String url) {
-    urlReg ??= RegExp(this.url.replaceAll("*", ".*"));
-    return urlReg!.hasMatch(url);
+    urlRegs ??= urls.map((u) => RegExp(u.replaceAll("*", ".*"))).toList();
+    for (final reg in urlRegs!) {
+      if (reg!.hasMatch(url)) return true;
+    }
+    return false;
   }
 
   factory ScriptItem.fromJson(Map<dynamic, dynamic> json) {
-    return ScriptItem(json['enabled'], json['name'], json['url'], scriptPath: json['scriptPath']);
+    final urlField = json['url'];
+    List<String> urls;
+    if (urlField is List) {
+      urls = urlField.cast<String>();
+    } else if (urlField is String) {
+      urls = urlField.contains(',') ? urlField.split(',').map((e) => e.trim()).toList() : [urlField];
+    } else {
+      urls = <String>[];
+    }
+    return ScriptItem(json['enabled'], json['name'], urls, scriptPath: json['scriptPath']);
   }
 
   Map<String, dynamic> toJson() {
-    return {'enabled': enabled, 'name': name, 'url': url, 'scriptPath': scriptPath};
+    return {
+      'enabled': enabled,
+      'name': name,
+      'url': urls.length == 1 ? urls[0] : urls,
+      'scriptPath': scriptPath
+    };
   }
 
   @override
   String toString() {
-    return 'ScriptItem{enabled: $enabled, name: $name, url: $url, scriptPath: $scriptPath}';
+    return 'ScriptItem{enabled: $enabled, name: $name, url: $urls, scriptPath: $scriptPath}';
   }
 }

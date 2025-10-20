@@ -260,12 +260,12 @@ class _FavoriteItemState extends State<_FavoriteItem> {
                       Navigator.maybePop(context);
                       var scriptManager = await ScriptManager.instance;
                       var url = request.domainPath;
-                      var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.url == url);
+                      var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.urls.contains(url));
                       String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
 
                       var pageRoute = MaterialPageRoute(
                           builder: (context) =>
-                              ScriptEdit(scriptItem: scriptItem, script: script, url: scriptItem?.url ?? url));
+                              ScriptEdit(scriptItem: scriptItem, script: script, urls: scriptItem?.urls ?? [url]));
                       if (mounted) Navigator.push(context, pageRoute);
                     },
                     label: localizations.script,

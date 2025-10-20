@@ -19,11 +19,8 @@ import 'dart:core';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-
 import 'package:path_provider/path_provider.dart';
-import 'package:pointycastle/api.dart';
-import 'package:pointycastle/asymmetric/api.dart';
-import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:pointycastle/export.dart';
 import 'package:proxypin/network/util/cert/pkcs12.dart';
 import 'package:proxypin/network/util/cert/x509.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -31,6 +28,7 @@ import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/utils/lang.dart';
 
 import 'cache.dart';
+import 'cert/basic_constraints.dart';
 import 'cert/cert_data.dart';
 import 'cert/extension.dart';
 import 'cert/key_usage.dart';
@@ -39,7 +37,6 @@ import 'file_read.dart';
 
 Future<void> main() async {
   await CertificateManager.getCertificateContext('www.jianshu.com');
-  CertificateManager.caCert.tbsCertificateSeqAsString;
 }
 
 enum StartState { uninitialized, initializing, initialized }
@@ -53,7 +50,7 @@ class CertificateManager {
   static AsymmetricKeyPair _serverKeyPair = CryptoUtils.generateRSAKeyPair();
 
   /// ca证书
-  static late X509CertificateData _caCert;
+  static X509CertificateData? _caCert;
 
   /// ca私钥
   static late RSAPrivateKey _caPriKey;
@@ -66,7 +63,7 @@ class CertificateManager {
     return _certificateMap[host];
   }
 
-  static X509CertificateData get caCert => _caCert;
+  static X509CertificateData? get caCert => _caCert;
 
   /// 清除缓存
   static void cleanCache() {
@@ -84,7 +81,7 @@ class CertificateManager {
       await initCAConfig();
     }
 
-    String cer = generate(_caCert, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host);
+    String cer = generate(_caCert!, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host);
 
     var rsaPrivateKey = _serverKeyPair.privateKey as RSAPrivateKey;
 
@@ -96,6 +93,14 @@ class CertificateManager {
     _certificateMap[host] = securityContext;
 
     return securityContext;
+  }
+
+  /// 生成域名证书 PEM（仅证书，不含私钥）
+  static Future<String> generateLeafCertificatePem(String host) async {
+    if (_state != StartState.initialized) {
+      await initCAConfig();
+    }
+    return generate(_caCert!, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host);
   }
 
   /// 生成证书
@@ -122,7 +127,7 @@ class CertificateManager {
       await initCAConfig();
     }
 
-    var subject = caCert.subject;
+    var subject = caCert!.subject;
     return '${X509Utils.getSubjectHashName(subject)}.0';
   }
 
@@ -147,7 +152,7 @@ class CertificateManager {
     x509Subject['CN'] = 'ProxyPin CA (${DateTime.now().dateFormat()},${RandomUtil.randomString(6).toUpperCase()})';
 
     var csrPem = X509Utils.generateSelfSignedCertificate(
-      _caCert,
+      _caCert!,
       serverPubKey,
       serverPriKey,
       825,
@@ -181,6 +186,7 @@ class CertificateManager {
     await keyFile.delete();
     cleanCache();
     _state = StartState.uninitialized;
+    initCAConfig();
   }
 
   static Future<void> initCAConfig() async {
@@ -230,6 +236,12 @@ class CertificateManager {
     return caFile;
   }
 
+  ///证书pem格式内容
+  static Future<String> certificatePem() async {
+    var caFile = await certificateFile();
+    return caFile.readAsString();
+  }
+
   /// 私钥文件
   static Future<File> privateKeyFile() async {
     final String appPath = await getApplicationSupportDirectory().then((value) => value.path);
@@ -264,5 +276,14 @@ class CertificateManager {
 
     cleanCache();
     _state = StartState.uninitialized;
+    initCAConfig();
+  }
+
+  /// 获取证书详细信息
+  static Future<X509CertificateData> getCertificateDetails() async {
+    if (_state != StartState.initialized) {
+      await initCAConfig();
+    }
+    return caCert!;
   }
 }

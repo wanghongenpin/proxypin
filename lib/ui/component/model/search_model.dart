@@ -37,8 +37,16 @@ class SearchModel {
   //响应类型
   ContentType? responseContentType;
 
-  //状态码
-  int? statusCode;
+  // 状态码范围（包含两端）
+  int? statusCodeFrom;
+  int? statusCodeTo;
+
+  // 耗时范围，单位毫秒（包含两端）
+  int? durationFromMs;
+  int? durationToMs;
+
+  // 协议过滤，可选：HTTP (any), WS, HTTP1, H2. 如果为空则不过滤
+  Set<Protocol> protocols = {};
 
   SearchModel([this.keyword]);
 
@@ -47,7 +55,11 @@ class SearchModel {
         requestMethod != null ||
         requestContentType != null ||
         responseContentType != null ||
-        statusCode != null;
+        statusCodeFrom != null ||
+        statusCodeTo != null ||
+        durationFromMs != null ||
+        durationToMs != null ||
+        protocols.isNotEmpty;
   }
 
   bool get isEmpty {
@@ -61,14 +73,18 @@ class SearchModel {
     searchModel.requestMethod = requestMethod;
     searchModel.requestContentType = requestContentType;
     searchModel.responseContentType = responseContentType;
-    searchModel.statusCode = statusCode;
+    searchModel.statusCodeFrom = statusCodeFrom;
+    searchModel.statusCodeTo = statusCodeTo;
+    searchModel.durationFromMs = durationFromMs;
+    searchModel.durationToMs = durationToMs;
+    searchModel.protocols = Set.from(protocols);
     searchModel.caseSensitive = RxBool(caseSensitive.value);
     return searchModel;
   }
 
   @override
   String toString() {
-    return 'SearchModel{keyword: $keyword, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusCode: $statusCode}';
+    return 'SearchModel{keyword: $keyword, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusRange: [$statusCodeFrom-$statusCodeTo], durationRangeMs: [$durationFromMs-$durationToMs], protocols: $protocols}';
   }
 
   ///是否匹配
@@ -87,8 +103,41 @@ class SearchModel {
     if (responseContentType != null && response?.contentType != responseContentType) {
       return false;
     }
-    if (statusCode != null && response?.status.code != statusCode) {
-      return false;
+
+    // status range
+    if ((statusCodeFrom != null || statusCodeTo != null) && response != null) {
+      var code = response.status.code;
+      if (statusCodeFrom != null && code < statusCodeFrom!) {
+        return false;
+      }
+      if (statusCodeTo != null && code > statusCodeTo!) {
+        return false;
+      }
+    }
+
+    // duration range
+    if ((durationFromMs != null || durationToMs != null) && response != null) {
+      var cost = response.responseTime.difference(request.requestTime).inMilliseconds;
+      if (durationFromMs != null && cost < durationFromMs!) {
+        return false;
+      }
+      if (durationToMs != null && cost > durationToMs!) {
+        return false;
+      }
+    }
+
+    // protocol filters
+    if (protocols.isNotEmpty) {
+      bool matched = false;
+      for (var p in protocols) {
+        if (_matchProtocol(p, request, response)) {
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        return false;
+      }
     }
 
     if (keyword == null || keyword?.isEmpty == true || searchOptions.isEmpty) {
@@ -102,6 +151,21 @@ class SearchModel {
     }
 
     return false;
+  }
+
+  bool _matchProtocol(Protocol p, HttpRequest request, HttpResponse? response) {
+    switch (p) {
+      case Protocol.https:
+        return request.hostAndPort?.scheme == 'https://';
+      case Protocol.http:
+        return request.requestUrl.startsWith('http://');
+      case Protocol.ws:
+        return request.isWebSocket || (response != null && response.isWebSocket == true);
+      case Protocol.http1:
+        return request.protocolVersion == 'HTTP/1.1';
+      case Protocol.h2:
+        return request.protocolVersion == 'HTTP/2' || request.protocolVersion == 'h2';
+    }
   }
 
   ///关键字过滤
@@ -158,3 +222,6 @@ enum Option {
   responseHeader,
   responseBody,
 }
+
+/// 协议快速筛选
+enum Protocol { http, https, ws, http1, h2 }

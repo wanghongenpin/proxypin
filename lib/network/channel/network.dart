@@ -268,7 +268,7 @@ class Client extends Network {
     //   host = host.substring(1, host.length - 1);
     // }
 
-    logger.d('Connecting to $host:${hostAndPort.port}');
+    // logger.d('Connecting to $host:${hostAndPort.port}');
     return Socket.connect(host, hostAndPort.port, timeout: timeout).then((socket) {
       if (socket.address.type != InternetAddressType.unix) {
         socket.setOption(SocketOption.tcpNoDelay, true);

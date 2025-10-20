@@ -19,7 +19,9 @@ class ProcessInfoPlugin {
     });
   }
 
-  static Future<HostAndPort?> getRemoteAddressByPort(int port) {
+  static Future<HostAndPort?> getRemoteAddressByPort(int port) async {
+    if (!Platform.isAndroid) return null;
+
     return _methodChannel.invokeMethod<Map>('getRemoteAddressByPort', {"port": port}).then((process) {
       if (process == null) return null;
       return HostAndPort.host(process['remoteHost'], process['remotePort']);

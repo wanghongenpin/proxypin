@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -40,15 +41,20 @@ import 'body.dart';
 ///@Author: wanghongen
 class NetworkTabController extends StatefulWidget {
   static GlobalKey<NetworkTabState>? currentKey;
-
-  final ProxyServer proxyServer;
+  final int? windowId;
+  final ProxyServer? proxyServer;
   final ValueWrap<HttpRequest> request = ValueWrap();
   final ValueWrap<HttpResponse> response = ValueWrap();
   final Widget? title;
   final TextStyle? tabStyle;
 
   NetworkTabController(
-      {HttpRequest? httpRequest, HttpResponse? httpResponse, this.title, this.tabStyle, required this.proxyServer})
+      {HttpRequest? httpRequest,
+      HttpResponse? httpResponse,
+      this.title,
+      this.tabStyle,
+      this.proxyServer,
+      this.windowId})
       : super(key: GlobalKey<NetworkTabState>()) {
     currentKey = key as GlobalKey<NetworkTabState>;
     request.set(httpRequest);
@@ -107,12 +113,28 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
         responseHttpBodyKey.currentState?.hideSearchOverlay();
       }
     });
+
+    if (widget.windowId != null) {
+      HardwareKeyboard.instance.addHandler(onKeyEvent);
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    HardwareKeyboard.instance.removeHandler(onKeyEvent);
     super.dispose();
+  }
+
+  bool onKeyEvent(KeyEvent event) {
+    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+        event.logicalKey == LogicalKeyboardKey.keyW) {
+      HardwareKeyboard.instance.removeHandler(onKeyEvent);
+      WindowController.fromWindowId(widget.windowId!).close();
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -268,6 +290,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
 
     Widget bodyWidgets = HttpBodyWidget(
         key: type == "Request" ? requestHttpBodyKey : responseHttpBodyKey,
+        hideRequestRewrite: widget.windowId != null,
         httpMessage: message,
         scrollController: scrollController);
 

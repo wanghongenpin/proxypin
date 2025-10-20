@@ -195,7 +195,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     if (domainRequests == null) {
       domainRequests = DomainRequests(
         host,
-        proxyServer: widget.panel.proxyServer,
+        proxyServer: widget.proxyServer,
         trailing: appIcon(request),
         onDelete: deleteHost,
         onRequestRemove: (req) {

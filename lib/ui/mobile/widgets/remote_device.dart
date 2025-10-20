@@ -120,6 +120,9 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
         title: Text(localizations.remoteDevice, style: const TextStyle(fontSize: 16)),
         actions: [
           PopupMenuButton(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            elevation: 8,
+            color: Theme.of(context).colorScheme.surface,
             icon: const Icon(Icons.add_outlined),
             itemBuilder: (BuildContext context) {
               return <PopupMenuEntry>[

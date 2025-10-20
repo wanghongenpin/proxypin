@@ -30,6 +30,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/app_dialog.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -191,6 +192,11 @@ class _RequestWidgetState extends State<RequestWidget> {
             ),
           ])),
       MenuItem.separator(),
+      MenuItem(
+          label: localizations.openNewWindow,
+          onClick: (_) {
+            openDetailInNewWindow();
+          }),
       MenuItem(label: localizations.repeat, onClick: (_) => onRepeat(widget.request)),
       MenuItem(label: localizations.customRepeat, onClick: (_) => showCustomRepeat(widget.request)),
       MenuItem(
@@ -215,7 +221,7 @@ class _RequestWidgetState extends State<RequestWidget> {
           onClick: (_) async {
             var scriptManager = await ScriptManager.instance;
             var url = widget.request.domainPath;
-            var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.url == url);
+            var scriptItem = (scriptManager).list.firstWhereOrNull((it) => it.urls.contains(url));
 
             String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
             if (!mounted) return;
@@ -358,6 +364,19 @@ class _RequestWidgetState extends State<RequestWidget> {
       ..setFrame(const Offset(100, 100) & Size(960 * ratio, size.height * ratio))
       ..center()
       ..show();
+  }
+
+  // 新窗口打开详情
+  void openDetailInNewWindow() async {
+    MultiWindow.openWindow(
+      localizations.captureDetail,
+      'RequestDetailPage',
+      args: {
+        'request': widget.request,
+        'response': widget.request.response ?? widget.response.get(),
+      },
+      size: Size(850, 900),
+    );
   }
 
   //点击事件

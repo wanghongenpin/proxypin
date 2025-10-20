@@ -70,117 +70,242 @@ class SearchConditionsState extends State<SearchConditions> {
     responseContentMap[localizations.all] = null;
     Color primaryColor = Theme.of(context).colorScheme.primary;
     return Container(
-        padding: widget.padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-                initialValue: searchModel.keyword,
-                onChanged: (val) => searchModel.keyword = val,
-                onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  contentPadding: const EdgeInsets.all(10),
-                  border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
-                  hintText: localizations.keyword,
-                  suffixIcon: Obx(() => IconButton(
-                        tooltip: "Case Sensitive",
-                        icon: Text('Aa',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: searchModel.caseSensitive.value ? primaryColor : null)),
-                        onPressed: () {
-                          searchModel.caseSensitive.value = !searchModel.caseSensitive.value;
-                        },
-                      )),
-                )),
-            const SizedBox(height: 15),
-            Text(localizations.keywordSearchScope),
-            const SizedBox(height: 10),
-            Wrap(
-              children: [
-                options('URL', Option.url),
-                options(localizations.requestHeader, Option.requestHeader),
-                options(localizations.requestBody, Option.requestBody),
-                options(localizations.responseHeader, Option.responseHeader),
-                options(localizations.responseBody, Option.responseBody)
-              ],
+      padding: widget.padding,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // keyword
+          TextFormField(
+            initialValue: searchModel.keyword,
+            onChanged: (val) => searchModel.keyword = val,
+            onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
+            decoration: InputDecoration(
+              isCollapsed: true,
+              contentPadding: const EdgeInsets.all(10),
+              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+              hintText: localizations.keyword,
+              suffixIcon: Obx(() => IconButton(
+                    tooltip: "Case Sensitive",
+                    icon: Text('Aa',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500, color: searchModel.caseSensitive.value ? primaryColor : null)),
+                    onPressed: () {
+                      searchModel.caseSensitive.value = !searchModel.caseSensitive.value;
+                    },
+                  )),
             ),
-            const SizedBox(height: 15),
-            row(
-                Text('${localizations.requestMethod}:'),
-                DropdownMenu(
-                    initialValue: searchModel.requestMethod?.name ?? localizations.all,
-                    items: HttpMethod.methods().map((e) => e.name).toList()..insert(0, localizations.all),
-                    onSelected: (String value) {
-                      searchModel.requestMethod = value == localizations.all ? null : HttpMethod.valueOf(value);
-                    })),
-            const SizedBox(height: 15),
-            row(
-                Text('${localizations.requestType}:'),
-                DropdownMenu(
-                    initialValue: Maps.getKey(requestContentMap, searchModel.requestContentType) ?? localizations.all,
-                    items: requestContentMap.keys,
-                    onSelected: (String value) {
-                      searchModel.requestContentType = requestContentMap[value];
-                    })),
-            const SizedBox(height: 15),
-            row(
-                Text('${localizations.responseType}:'),
-                DropdownMenu(
-                    initialValue: Maps.getKey(responseContentMap, searchModel.responseContentType) ?? localizations.all,
-                    items: responseContentMap.keys,
-                    onSelected: (String value) {
-                      searchModel.responseContentType = responseContentMap[value];
-                    })),
-            row(
-              Text("${localizations.statusCode}: "),
-              TextFormField(
-                initialValue: searchModel.statusCode?.toString(),
-                onChanged: (val) => searchModel.statusCode = int.tryParse(val),
-                onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
-                inputFormatters: <TextInputFormatter>[
-                  LengthLimitingTextInputFormatter(5),
-                  FilteringTextInputFormatter.allow(RegExp('[-0-9]'))
-                ],
-                decoration: const InputDecoration(
-                  isCollapsed: true,
-                  contentPadding: EdgeInsets.all(10),
-                ),
+          ),
+          const SizedBox(height: 10),
+          // protocol quick selectors placed under the keyword input (very compact)
+          protocolsWidget(),
+          const SizedBox(height: 10),
+          // keyword scope
+          Text(localizations.keywordSearchScope),
+          const SizedBox(height: 10),
+          Wrap(
+            children: [
+              options('URL', Option.url),
+              options(localizations.requestHeader, Option.requestHeader),
+              options(localizations.requestBody, Option.requestBody),
+              options(localizations.responseHeader, Option.responseHeader),
+              options(localizations.responseBody, Option.responseBody),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // request method
+          row(
+            Text('${localizations.requestMethod}:'),
+            DropdownMenu(
+              initialValue: searchModel.requestMethod?.name ?? localizations.all,
+              items: HttpMethod.methods().map((e) => e.name).toList()..insert(0, localizations.all),
+              onSelected: (String value) {
+                searchModel.requestMethod = value == localizations.all ? null : HttpMethod.valueOf(value);
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+          // request type
+          row(
+            Text('${localizations.requestType}:'),
+            DropdownMenu(
+              initialValue: Maps.getKey(requestContentMap, searchModel.requestContentType) ?? localizations.all,
+              items: requestContentMap.keys,
+              onSelected: (String value) {
+                searchModel.requestContentType = requestContentMap[value];
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // response type
+          row(
+            Text('${localizations.responseType}:'),
+            DropdownMenu(
+              initialValue: Maps.getKey(responseContentMap, searchModel.responseContentType) ?? localizations.all,
+              items: responseContentMap.keys,
+              onSelected: (String value) {
+                searchModel.responseContentType = responseContentMap[value];
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // status code range
+          row(
+            Text('${localizations.statusCode}: '),
+            Row(children: [
+              SizedBox(
+                  width: 55,
+                  height: 32,
+                  child: textField(
+                      initialValue: searchModel.statusCodeFrom?.toString(),
+                      onChanged: (val) => searchModel.statusCodeFrom = int.tryParse(val))),
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 5), child: Text(" - ")),
+              SizedBox(
+                  width: 55,
+                  height: 32,
+                  child: textField(
+                      initialValue: searchModel.statusCodeTo?.toString(),
+                      onChanged: (val) => searchModel.statusCodeTo = int.tryParse(val))),
+            ]),
+          ),
+          const SizedBox(height: 10),
+
+          // duration range (ms)
+          row(
+            Text('${localizations.duration} (ms): '),
+            Row(children: [
+              SizedBox(
+                  width: 55,
+                  height: 32,
+                  child: textField(
+                      initialValue: searchModel.durationFromMs?.toString(),
+                      onChanged: (val) => searchModel.durationFromMs = int.tryParse(val))),
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 5), child: Text(" - ")),
+              SizedBox(
+                  width: 55,
+                  height: 32,
+                  child: textField(
+                      initialValue: searchModel.durationToMs?.toString(),
+                      onChanged: (val) => searchModel.durationToMs = int.tryParse(val))),
+            ]),
+          ),
+          const SizedBox(height: 15),
+
+          // action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(localizations.cancel, style: const TextStyle(fontSize: 14)),
               ),
-            ),
-            const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(localizations.cancel, style: const TextStyle(fontSize: 14))),
-                TextButton(
-                    onPressed: () {
-                      widget.onSearch?.call(SearchModel());
-                      Navigator.pop(context);
-                    },
-                    child: Text(localizations.clearSearch, style: const TextStyle(fontSize: 14))),
-                TextButton(
-                    onPressed: () {
-                      widget.onSearch?.call(searchModel);
-                      Navigator.pop(context);
-                    },
-                    child: Text(localizations.confirm, style: const TextStyle(fontSize: 14))),
-              ],
-            )
-          ],
-        ));
+              TextButton(
+                onPressed: () {
+                  widget.onSearch?.call(SearchModel());
+                  Navigator.pop(context);
+                },
+                child: Text(localizations.clearSearch, style: const TextStyle(fontSize: 14)),
+              ),
+              TextButton(
+                onPressed: () {
+                  widget.onSearch?.call(searchModel);
+                  Navigator.pop(context);
+                },
+                child: Text(localizations.confirm, style: const TextStyle(fontSize: 14)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget protocolsWidget() {
+    Color primaryColor = ColorScheme.of(context).primary;
+    return Wrap(
+      spacing: 5,
+      runSpacing: 2,
+      children: <Widget>[
+        FilterChip(
+          label: const Text('HTTP'),
+          selected: searchModel.protocols.contains(Protocol.http),
+          showCheckmark: false,
+          selectedColor: primaryColor.withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          labelStyle: const TextStyle(fontSize: 12),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+          onSelected: (sel) => setState(() {
+            sel ? searchModel.protocols.add(Protocol.http) : searchModel.protocols.remove(Protocol.http);
+          }),
+        ),
+        FilterChip(
+          label: const Text('HTTPS'),
+          selected: searchModel.protocols.contains(Protocol.https),
+          showCheckmark: false,
+          selectedColor: primaryColor.withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          labelStyle: const TextStyle(fontSize: 12),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+          onSelected: (sel) => setState(() {
+            sel ? searchModel.protocols.add(Protocol.https) : searchModel.protocols.remove(Protocol.https);
+          }),
+        ),
+        FilterChip(
+          label: const Text('WS'),
+          selected: searchModel.protocols.contains(Protocol.ws),
+          showCheckmark: false,
+          selectedColor: primaryColor.withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          labelStyle: const TextStyle(fontSize: 12),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+          onSelected: (sel) => setState(() {
+            sel ? searchModel.protocols.add(Protocol.ws) : searchModel.protocols.remove(Protocol.ws);
+          }),
+        ),
+        FilterChip(
+          label: const Text('HTTP/1'),
+          selected: searchModel.protocols.contains(Protocol.http1),
+          showCheckmark: false,
+          selectedColor: primaryColor.withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          labelStyle: const TextStyle(fontSize: 12),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+          onSelected: (sel) => setState(() {
+            sel ? searchModel.protocols.add(Protocol.http1) : searchModel.protocols.remove(Protocol.http1);
+          }),
+        ),
+        FilterChip(
+          label: const Text('H2'),
+          selected: searchModel.protocols.contains(Protocol.h2),
+          showCheckmark: false,
+          selectedColor: primaryColor.withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          labelStyle: const TextStyle(fontSize: 12),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+          onSelected: (sel) => setState(() {
+            sel ? searchModel.protocols.add(Protocol.h2) : searchModel.protocols.remove(Protocol.h2);
+          }),
+        ),
+      ],
+    );
   }
 
   Widget options(String title, Option option) {
     bool isCN = localizations.localeName == 'zh';
     return Container(
-        constraints: BoxConstraints(maxWidth: isCN ? 100 : 152, minWidth: 100, maxHeight: 33),
+        constraints: BoxConstraints(maxWidth: isCN ? 100 : 132, minWidth: 100, maxHeight: 33),
         child: Row(children: [
           Text(title, style: const TextStyle(fontSize: 12)),
           Checkbox(
+              visualDensity: VisualDensity.compact,
               value: searchModel.searchOptions.contains(option),
               onChanged: (val) {
                 setState(() {
@@ -193,8 +318,27 @@ class SearchConditionsState extends State<SearchConditions> {
   Widget row(Widget child, Widget child2) {
     return Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [Expanded(flex: 5, child: child), Expanded(flex: 6, child: child2)]);
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [Expanded(flex: 4, child: child), Expanded(flex: 6, child: child2)]);
+  }
+
+  Widget textField({String? initialValue, final ValueChanged<String>? onChanged, TextStyle? style}) {
+    Color color = Theme.of(context).colorScheme.primary;
+
+    return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 32),
+        child: TextFormField(
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
+          initialValue: initialValue,
+          onChanged: onChanged,
+          style: style,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.only(left: 10, right: 10, top: 2, bottom: 2),
+            border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withOpacity(0.3))),
+          ),
+        ));
   }
 }
 

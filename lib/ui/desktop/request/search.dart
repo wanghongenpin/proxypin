@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
@@ -29,11 +31,11 @@ class Search extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return _SearchState();
+    return SearchState();
   }
 }
 
-class _SearchState extends State<Search> {
+class SearchState extends State<Search> {
   SearchModel searchModel = SearchModel();
   bool searched = false;
   TextEditingController keywordController = TextEditingController();
@@ -47,6 +49,13 @@ class _SearchState extends State<Search> {
       decoration: BoxDecoration(
         color: Theme.of(context).hoverColor,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+          )
+        ],
       ),
       child: TextField(
         cursorHeight: 22,
@@ -86,16 +95,19 @@ class _SearchState extends State<Search> {
     );
   }
 
-  void searchDialog(TapDownDetails details) {
+  void searchDialog([TapDownDetails? details]) {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
     bool isEN = AppLocalizations.of(context)!.localeName == 'en';
     var height = MediaQuery.of(context).size.height;
-    height = isEN ? height - 485 : height - 400;
+    height = isEN ? height - 501 : height - 468;
+    if (Platform.isMacOS) {
+      height -= 30;
+    }
     showMenu(
         context: context,
-        position: RelativeRect.fromLTRB(60, height, 60, height),
+        position: RelativeRect.fromLTRB(65, height, 65, height),
         constraints: const BoxConstraints(minWidth: 260, maxWidth: 330),
         items: [
           PopupMenuItem(

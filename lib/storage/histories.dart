@@ -102,7 +102,7 @@ class HistoryStorage {
   }
 
   //更新
-  updateHistory(int index, HistoryItem item) async {
+  Future<void> updateHistory(int index, HistoryItem item) async {
     _histories.update(index, item);
     refresh();
   }
@@ -242,7 +242,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
   @override
   clear() => resetList();
 
-  resetList() async {
+  Future<void> resetList() async {
     locked = true;
     await open?.lock().timeout(Duration(seconds: 3), onTimeout: () => open!.unlock());
     open = await open?.truncate(0);
@@ -255,7 +255,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
     open?.unlock();
   }
 
-  cancelTask() {
+  void cancelTask() {
     timer?.cancel();
     timer = null;
     open?.close();
@@ -283,7 +283,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
   }
 
   //写入任务
-  writeTask() async {
+  Future<void> writeTask() async {
     if (writeList.isEmpty) {
       return;
     }

@@ -51,31 +51,51 @@ class _PreferenceState extends State<Preference> {
   @override
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
+    final borderColor = Theme.of(context).dividerColor.withValues(alpha: 0.13);
+    final dividerColor = Theme.of(context).dividerColor.withValues(alpha: 0.22);
+
+    Widget section(List<Widget> tiles) => Card(
+          color: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+              side: BorderSide(color: borderColor),
+              borderRadius: BorderRadius.circular(10)),
+          child: Column(children: tiles),
+        );
 
     return Scaffold(
         appBar: AppBar(title: Text(localizations.preference, style: const TextStyle(fontSize: 16)), centerTitle: true),
-        body: Padding(
-            padding: const EdgeInsets.all(5),
-            child: ListView(children: [
+        body: ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            section([
               ListTile(
                 title: Text(localizations.language),
-                trailing: const Icon(Icons.arrow_right),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _language(context),
               ),
+              Divider(height: 0, thickness: 0.3, color: dividerColor),
               MobileThemeSetting(appConfiguration: appConfiguration),
+              Divider(height: 0, thickness: 0.3, color: dividerColor),
               ListTile(title: Text(localizations.themeColor)),
-              Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: themeColor(context)),
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                  child: themeColor(context)),
+            ]),
+            const SizedBox(height: 12),
+            section([
               ListTile(
-                  title: Text(localizations.autoStartup), //默认是否启动
+                  title: Text(localizations.autoStartup),
                   subtitle: Text(localizations.autoStartupDescribe, style: const TextStyle(fontSize: 12)),
                   trailing: SwitchWidget(
                       value: proxyServer.configuration.startup,
                       scale: 0.8,
                       onChanged: (value) {
-                        proxyServer.configuration.startup = value;
-                        proxyServer.configuration.flushConfig();
+                        configuration.startup = value;
+                        configuration.flushConfig();
                       })),
-              if (Platform.isAndroid)
+              Divider(height: 0, thickness: 0.3, color: dividerColor),
+              if (Platform.isAndroid) ...[
                 ListTile(
                     title: Text(localizations.windowMode),
                     subtitle: Text(localizations.windowModeSubTitle, style: const TextStyle(fontSize: 12)),
@@ -86,6 +106,8 @@ class _PreferenceState extends State<Preference> {
                           appConfiguration.pipEnabled.value = value;
                           appConfiguration.flushConfig();
                         })),
+                Divider(height: 0, thickness: 0.3, color: dividerColor),
+              ],
               ListTile(
                   title: Text(localizations.pipIcon),
                   subtitle: Text(localizations.pipIconDescribe, style: const TextStyle(fontSize: 12)),
@@ -96,6 +118,7 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.pipIcon.value = value;
                         appConfiguration.flushConfig();
                       })),
+              Divider(height: 0, thickness: 0.3, color: dividerColor),
               ListTile(
                   title: Text(localizations.headerExpanded),
                   subtitle: Text(localizations.headerExpandedSubtitle, style: const TextStyle(fontSize: 12)),
@@ -106,6 +129,7 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.headerExpanded = value;
                         appConfiguration.flushConfig();
                       })),
+              Divider(height: 0, thickness: 0.3, color: dividerColor),
               ListTile(
                   title: Text(localizations.bottomNavigation),
                   subtitle: Text(localizations.bottomNavigationSubtitle, style: const TextStyle(fontSize: 12)),
@@ -116,12 +140,17 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.bottomNavigation = value;
                         appConfiguration.flushConfig();
                       })),
+            ]),
+            const SizedBox(height: 12),
+            section([
               ListTile(
                   title: Text(localizations.memoryCleanup),
                   subtitle: Text(localizations.memoryCleanupSubtitle, style: const TextStyle(fontSize: 12)),
                   trailing: memoryCleanup(context, localizations)),
-              SizedBox(height: 15)
-            ])));
+            ]),
+            const SizedBox(height: 15),
+          ],
+        ));
   }
 
   Widget themeColor(BuildContext context) {

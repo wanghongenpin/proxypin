@@ -23,9 +23,12 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
+
+import '../mobile/setting/ssl.dart';
 
 ///启动按钮
 ///@author wanghongen
@@ -104,11 +107,14 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
       await windowManager.destroy();
     }
 
-    try {
-      await SystemNavigator.pop(animated: true).timeout(const Duration(milliseconds: 150));
-    } catch (_) {
-      //
+    if (!Platform.isWindows && !Platform.isLinux) {
+      try {
+        await SystemNavigator.pop(animated: true).timeout(const Duration(milliseconds: 150));
+      } catch (_) {
+        //
+      }
     }
+
     exit(0);
   }
 
@@ -172,22 +178,35 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
   ///启动代理服务器
   Future<void> start() async {
-    if (!widget.serverLaunch) {
-      await widget.onStart?.call();
-      setState(() {
-        started = true;
-      });
-      return;
-    }
+    try {
+      if (!widget.serverLaunch) {
+        await widget.onStart?.call();
+        setState(() {
+          started = true;
+        });
+        return;
+      }
 
-    widget.proxyServer.start().then((value) {
-      setState(() {
-        started = true;
+      widget.proxyServer.start().then((value) {
+        setState(() {
+          started = true;
+        });
+        widget.onStart?.call();
+      }).catchError((e) {
+        String message = localizations.proxyPortRepeat(widget.proxyServer.port);
+        FlutterToastr.show(message, context, duration: 3);
       });
-      widget.onStart?.call();
-    }).catchError((e) {
-      String message = localizations.proxyPortRepeat(widget.proxyServer.port);
-      FlutterToastr.show(message, context, duration: 3);
-    });
+    } finally {
+      Future.delayed(const Duration(seconds: 5)).then((value) {
+        if (!mounted) {
+          return;
+        }
+        if (Platforms.isDesktop()) {
+          PCCertChecker.check(context);
+        } else if (Platform.isIOS) {
+          IOSCertChecker.check(context);
+        }
+      });
+    }
   }
 }

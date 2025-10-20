@@ -1,7 +1,7 @@
 output: dist/
 
 releases:
-  - name: dev
+  - name: release
     jobs:
       - name: macos-dmg
         package:
@@ -16,3 +16,13 @@ releases:
           target: exe
           build_args:
             profile: true
+
+      - name: windows-msix
+        package:
+          platform: windows
+          target: msix
+
+      - name: windows-zip
+        package:
+          platform: windows
+          target: zip

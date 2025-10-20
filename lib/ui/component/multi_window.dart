@@ -32,6 +32,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/device.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/body.dart';
+import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/request_editor.dart';
 import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/desktop/setting/script.dart';
@@ -59,6 +60,16 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
         windowController: WindowController.fromWindowId(windowId),
         request: argument['request'] == null ? null : HttpRequest.fromJson(argument['request']));
   }
+
+  //请求详情
+  if (argument['name'] == 'RequestDetailPage') {
+    return NetworkTabController(
+      windowId: windowId,
+      httpRequest: argument['request'] == null ? null : HttpRequest.fromJson(argument['request']),
+      httpResponse: argument['response'] == null ? null : HttpResponse.fromJson(argument['response']),
+    );
+  }
+
   //请求体
   if (argument['name'] == 'HttpBodyWidget') {
     return HttpBodyWidget(
@@ -114,6 +125,7 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   if (argument['name'] == 'ScriptConsoleWidget') {
     return ScriptConsoleWidget(windowId: windowId);
   }
+
   return const SizedBox();
 }
 
@@ -143,14 +155,14 @@ class MultiWindow {
   }
 
   static Future<WindowController> openWindow(String title, String widgetName,
-      {Size size = const Size(800, 680)}) async {
+      {Size size = const Size(800, 680), Map<String, dynamic>? args}) async {
     var ratio = 1.0;
     if (Platform.isWindows) {
       ratio = WindowManager.instance.getDevicePixelRatio();
     }
     registerMethodHandler();
     final window = await DesktopMultiWindow.createWindow(jsonEncode(
-      {'name': widgetName},
+      {'name': widgetName, ...?args},
     ));
     window.setTitle(title);
     window

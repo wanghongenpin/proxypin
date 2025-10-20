@@ -8,6 +8,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/utils/ip.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -42,7 +43,8 @@ class _SslState extends State<SslWidget> {
         },
         menuChildren: [
           _Switch(proxyServer: widget.proxyServer, onEnableChange: (val) => setState(() {})),
-          item(localizations.installCaLocal, onPressed: pcCer),
+          item(localizations.installCaLocal,
+              onPressed: () => showDialog(context: context, builder: (context) => PCCert())),
           item("${localizations.installRootCa} iOS", onPressed: () async => iosCer(await localIp())),
           item("${localizations.installRootCa} Android", onPressed: () async => androidCer(await localIp())),
           const Divider(thickness: 0.3, height: 3),
@@ -202,64 +204,6 @@ class _SslState extends State<SslWidget> {
             child: Text(text, style: const TextStyle(fontSize: 14))));
   }
 
-  void pcCer() async {
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-
-    List<Widget> list = [];
-    if (Platform.isMacOS || Platform.isWindows) {
-      list = [
-        isCN
-            ? Text(" 安装证书到本系统，${Platform.isMacOS ? "安装完双击选择“始终信任此证书”。 如安装打开失败，请导出证书拖拽到系统证书里" : "选择“受信任的根证书颁发机构”"}")
-            : Text(" Install certificate to this system，${Platform.isMacOS ? "After installation, double-click to select “Always Trust”。\n"
-                " If installation and opening fail，Please export the certificate and drag it to the system certificate" : "choice“Trusted Root Certificate Authority”"}"),
-        const SizedBox(height: 10),
-        FilledButton(onPressed: _installCert, child: Text(localizations.installRootCa)),
-        const SizedBox(height: 10),
-        Platform.isMacOS
-            ? Image.network("https://foruda.gitee.com/images/1689323260158189316/c2d881a4_1073801.png",
-                width: 800, height: 500)
-            : Row(children: [
-                Image.network("https://foruda.gitee.com/images/1689335589122168223/c904a543_1073801.png",
-                    width: 400, height: 400),
-                const SizedBox(width: 10),
-                Image.network("https://foruda.gitee.com/images/1689335334688878324/f6aa3a3a_1073801.png",
-                    width: 400, height: 400)
-              ])
-      ];
-    } else {
-      list.add(const Text("安装证书到本系统，以Ubuntu为例 下载证书：\n"
-          "先把证书复制到 /usr/local/share/ca-certificates/，然后执行 update-ca-certificates 即可。\n"
-          "其他系统请网上搜索安装根证书"));
-      list.add(const SizedBox(height: 5));
-      list.add(const Text("提示：FireFox有自己的信任证书库，所以要手动在设置中导入需要导入的证书。", style: TextStyle(fontSize: 12)));
-      list.add(const SizedBox(height: 10));
-      list.add(const SelectableText.rich(
-          textAlign: TextAlign.justify,
-          TextSpan(style: TextStyle(color: Color(0xff6a8759)), children: [
-            TextSpan(text: "  sudo cp ProxyPinCA.crt /usr/local/share/ca-certificates/ \n"),
-            TextSpan(text: "  sudo update-ca-certificates")
-          ])));
-      list.add(const SizedBox(height: 10));
-    }
-
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-              contentPadding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
-              title: Row(children: [
-                const Expanded(child: SizedBox()),
-                Text(isCN ? "电脑HTTPS抓包配置" : "Computer HTTPS Packet Capture Configuration",
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                const Expanded(child: SizedBox()),
-                Align(alignment: Alignment.topRight, child: CloseButton())
-              ]),
-              alignment: Alignment.center,
-              children: list);
-        });
-  }
-
   void iosCer(String host) {
     showDialog(
         context: context,
@@ -401,11 +345,6 @@ class _SslState extends State<SslWidget> {
                             ])),
                       ))));
         });
-  }
-
-  void _installCert() async {
-    var caFile = await CertificateManager.certificateFile();
-    launchUrl(Uri.file(caFile.path)).then((value) => CertificateManager.cleanCache());
   }
 }
 

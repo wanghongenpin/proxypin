@@ -31,7 +31,6 @@ class Har {
   }
 
   static Map toHar(HttpRequest request) {
-    bool isImage = request.response?.contentType == ContentType.image;
     Map har = {
       "startedDateTime": request.requestTime.toUtc().toIso8601String(), // 请求发出的时间(ISO 8601)
       "time": request.response?.responseTime.difference(request.requestTime).inMilliseconds,
@@ -65,13 +64,13 @@ class Har {
       "cookies": [], // 响应携带的cookie
       "headers": _headers(request.response), // 响应头
       "content": {
-        "size": isImage ? 0 : request.response?.body?.length ?? -1, // 响应体大小
+        "size": request.response?.body?.length ?? -1, // 响应体大小
         "mimeType": _getContentType(request.response?.headers.contentType), // 响应体类型
-        "text": isImage ? '' : request.response?.bodyAsString, // 响应体内容
+        "text": request.response?.bodyAsString, // 响应体内容
       },
       "redirectURL": '', // 重定向地址
       "headersSize": -1, // 响应头大小
-      "bodySize": isImage ? -1 : request.response?.body?.length ?? -1, // 响应体大小
+      "bodySize": request.response?.body?.length ?? -1, // 响应体大小
     };
     return har;
   }

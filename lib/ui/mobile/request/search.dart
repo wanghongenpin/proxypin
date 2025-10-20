@@ -84,7 +84,7 @@ class MobileSearchState extends State<MobileSearch> {
                 hintText: 'Search')));
   }
 
-  showSearch() {
+  void showSearch() {
     showModalBottomSheet(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(10))),
         isScrollControlled: true,
@@ -95,8 +95,8 @@ class MobileSearchState extends State<MobileSearch> {
           }
           return Padding(
               padding: MediaQuery.of(context).viewInsets,
-              child: SizedBox(
-                  height: 430,
+              child: Container(
+                  constraints: BoxConstraints(minHeight: 450,maxHeight:  480),
                   child: SearchConditions(
                     padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
                     searchModel: searchModel,

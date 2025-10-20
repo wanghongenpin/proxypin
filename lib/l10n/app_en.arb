@@ -70,6 +70,7 @@
   "request": "Request",
   "response": "Response",
   "statusCode": "Status code",
+  "duration": "Duration",
 
   "done": "Done",
   "type": "Type",
@@ -336,5 +337,15 @@
   "appUpdateIgnoreBtnTxt": "Ignore",
 
   "requestMap": "Request Map",
-  "requestMapDescribe": "Do not request remote services, use local configuration or script for response"
+  "requestMapDescribe": "Do not request remote services, use local configuration or script for response",
+
+  "automatic": "Automatic",
+  "manual": "Manual",
+  "certNotInstalled": "Certificate not installed",
+  "openNewWindow": "Open New Window",
+  "sponsorDonate": "Sponsor / Donate",
+  "sponsorSupport": "Support ongoing development",
+  "sponsorThanks": "Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.",
+  "sponsorAfdian": "AFDIAN",
+  "sponsorBuyMeCoffee": "Buy Me a Coffee"
 }
