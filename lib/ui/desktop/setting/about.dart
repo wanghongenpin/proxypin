@@ -46,7 +46,7 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
               const SizedBox(height: 10),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Padding(
@@ -59,7 +59,7 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
                 ),
               ),
               const SizedBox(height: 12),
-              Divider(height: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
+              Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.4)),
               ListTile(
                   dense: true,
                   title: const Text('GitHub'),

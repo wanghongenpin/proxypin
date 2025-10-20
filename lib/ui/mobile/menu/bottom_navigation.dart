@@ -64,13 +64,13 @@ class _ConfigPageState extends State<ConfigPage> {
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
 
-    Color color = Theme.of(context).colorScheme.primary.withValues(alpha: 0.85);
+    Color color = Theme.of(context).colorScheme.primary.withOpacity(0.85);
 
     Widget section(List<Widget> tiles) => Card(
           color: Colors.transparent,
           elevation: 0,
           shape: RoundedRectangleBorder(
-              side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+              side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.13)),
               borderRadius: BorderRadius.circular(10)),
           child: Column(children: tiles),
         );
@@ -93,7 +93,7 @@ class _ConfigPageState extends State<ConfigPage> {
                   title: Text(localizations.favorites),
                   trailing: arrow,
                   onTap: () => navigator(context, MobileFavorites(proxyServer: proxyServer))),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                 leading: Icon(Icons.history, color: color),
                 title: Text(localizations.history),
@@ -114,7 +114,7 @@ class _ConfigPageState extends State<ConfigPage> {
                       navigator(context, HostsPage(hostsManager: hostsManager));
                     }
                   }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                   title: Text(localizations.requestBlock),
                   leading: Icon(Icons.block_flipped, color: color),
@@ -125,7 +125,7 @@ class _ConfigPageState extends State<ConfigPage> {
                       navigator(context, MobileRequestBlock(requestBlockManager: requestBlockManager));
                     }
                   }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                   title: Text(localizations.requestRewrite),
                   leading: Icon(Icons.edit_outlined, color: color),
@@ -136,13 +136,13 @@ class _ConfigPageState extends State<ConfigPage> {
                       navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
                     }
                   }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                   title: Text(localizations.requestMap),
                   leading: Icon(Icons.swap_horiz_outlined, color: color),
                   trailing: arrow,
                   onTap: () => navigator(context, MobileRequestMapPage())),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                   title: Text(localizations.script),
                   leading: Icon(Icons.javascript_outlined, color: color),
@@ -180,7 +180,7 @@ class SettingPage extends StatelessWidget {
           color: Colors.transparent,
           elevation: 0,
           shape: RoundedRectangleBorder(
-              side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+              side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.13)),
               borderRadius: BorderRadius.circular(10)),
           child: Column(children: tiles),
         );
@@ -198,7 +198,7 @@ class SettingPage extends StatelessWidget {
                 title: Text(localizations.httpsProxy),
                 trailing: const Icon(Icons.keyboard_arrow_right),
                 onTap: () => navigator(context, MobileSslWidget(proxyServer: proxyServer))),
-            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
             ListTile(
                 title: Text(localizations.filter),
                 trailing: const Icon(Icons.keyboard_arrow_right),
@@ -210,14 +210,14 @@ class SettingPage extends StatelessWidget {
               color: Colors.transparent,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+                  side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.13)),
                   borderRadius: BorderRadius.circular(10)),
               child: Column(children: [
                 PortWidget(
                     proxyServer: proxyServer,
                     title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
                     textStyle: const TextStyle(fontSize: 16)),
-                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: const Text("SOCKS5"),
                     trailing: SwitchWidget(
@@ -227,7 +227,7 @@ class SettingPage extends StatelessWidget {
                           configuration.enableSocks5 = value;
                           proxyServer.configuration.flushConfig();
                         })),
-                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: Text(localizations.enabledHTTP2),
                     trailing: SwitchWidget(
@@ -237,7 +237,7 @@ class SettingPage extends StatelessWidget {
                           configuration.enabledHttp2 = value;
                           proxyServer.configuration.flushConfig();
                         })),
-                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: Text(localizations.externalProxy),
                     trailing: const Icon(Icons.keyboard_arrow_right),
@@ -254,7 +254,7 @@ class SettingPage extends StatelessWidget {
                 trailing: const Icon(Icons.keyboard_arrow_right),
                 onTap: () =>
                     navigator(context, Preference(proxyServer: proxyServer, appConfiguration: appConfiguration))),
-            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
             ListTile(
                 title: Text(localizations.about),
                 trailing: const Icon(Icons.keyboard_arrow_right),

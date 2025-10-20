@@ -58,7 +58,7 @@ class _AboutState extends State<About> {
               color: Colors.transparent,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+                  side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.13)),
                   borderRadius: BorderRadius.circular(10)),
               child: Column(children: [
                 ListTile(
@@ -67,14 +67,14 @@ class _AboutState extends State<About> {
                     onTap: () {
                       _safeLaunch(Uri.parse(gitHub));
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: Text(localizations.feedback),
                     trailing: const Icon(Icons.open_in_new, size: 22),
                     onTap: () {
                       _safeLaunch(Uri.parse("$gitHub/issues"));
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: Text(localizations.appUpdateCheckVersion),
                     trailing: checkUpdating
@@ -86,7 +86,7 @@ class _AboutState extends State<About> {
                       await AppUpdateRepository.checkUpdate(context, canIgnore: false, showToast: true);
                       if (mounted) setState(() => checkUpdating = false);
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: Text(localizations.download),
                     trailing: const Icon(Icons.open_in_new, size: 22),
@@ -94,7 +94,7 @@ class _AboutState extends State<About> {
                       final url = "$gitHub/releases";
                       _safeLaunch(Uri.parse(url));
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 // Sponsor / Donate entry
                 ListTile(
                   title: Text(localizations.sponsorDonate),

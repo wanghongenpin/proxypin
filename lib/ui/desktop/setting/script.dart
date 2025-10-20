@@ -421,7 +421,7 @@ class _ScriptEditState extends State<ScriptEdit> {
             children: [
               // Name section
               Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
@@ -433,7 +433,7 @@ class _ScriptEditState extends State<ScriptEdit> {
 
               // URLs section
               Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
@@ -492,7 +492,7 @@ class _ScriptEditState extends State<ScriptEdit> {
 
               // Script section
               Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),

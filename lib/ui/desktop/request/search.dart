@@ -51,7 +51,7 @@ class SearchState extends State<Search> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 6,
             offset: const Offset(0, 1),
           )

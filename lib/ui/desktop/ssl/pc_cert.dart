@@ -278,7 +278,7 @@ class _AutomaticInstallState extends State<_AutomaticInstall> {
     } else if (isCertInstalled.value == true) {
       children.add(Card(
         elevation: 2,
-        color: Theme.brightnessOf(context) == Brightness.light ? Colors.grey[50] : Colors.grey[800],
+        color: Theme.of(context).brightness == Brightness.light ? Colors.grey[50] : Colors.grey[800],
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),

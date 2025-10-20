@@ -93,8 +93,8 @@ class _MobileSslState extends State<MobileSslWidget> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    final borderColor = Theme.of(context).dividerColor.withValues(alpha: 0.13);
-    final dividerColor = Theme.of(context).dividerColor.withValues(alpha: 0.22);
+    final borderColor = Theme.of(context).dividerColor.withOpacity(0.13);
+    final dividerColor = Theme.of(context).dividerColor.withOpacity(0.22);
 
     Widget section(List<Widget> tiles) => Card(
           color: Colors.transparent,

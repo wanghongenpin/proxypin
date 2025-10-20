@@ -984,8 +984,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sponsorSupport => 'Support ongoing development';
 
   @override
-  String get sponsorThanks =>
-      'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
+  String get sponsorThanks => 'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
 
   @override
   String get sponsorAfdian => 'AFDIAN';

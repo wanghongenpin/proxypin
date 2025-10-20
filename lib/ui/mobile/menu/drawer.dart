@@ -182,7 +182,7 @@ class FilterMenu extends StatelessWidget {
                 color: Colors.transparent,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+                    side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.13)),
                     borderRadius: BorderRadius.circular(10)),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   ListTile(
@@ -192,7 +192,7 @@ class FilterMenu extends StatelessWidget {
                           context,
                           MobileFilterWidget(
                               configuration: proxyServer.configuration, hostList: HostFilter.whitelist))),
-                  Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                  Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                   ListTile(
                       title: Text(localizations.domainBlacklist),
                       trailing: const Icon(Icons.arrow_right),
@@ -204,13 +204,13 @@ class FilterMenu extends StatelessWidget {
                       ? const SizedBox()
                       : Column(mainAxisSize: MainAxisSize.min, children: [
                           Divider(
-                              height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                              height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                           ListTile(
                               title: Text(localizations.appWhitelist),
                               trailing: const Icon(Icons.arrow_right),
                               onTap: () => navigator(context, AppWhitelist(proxyServer: proxyServer))),
                           Divider(
-                              height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                              height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                           ListTile(
                               title: Text(localizations.appBlacklist),
                               trailing: const Icon(Icons.arrow_right),

@@ -35,7 +35,7 @@ class _ToolboxState extends State<Toolbox> {
   @override
   Widget build(BuildContext context) {
     return IconTheme(
-        data: IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.65), size: 22),
+        data: IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withOpacity(0.65), size: 22),
         child: SingleChildScrollView(
             child: Container(
           padding: const EdgeInsets.all(10),
@@ -234,8 +234,8 @@ class IconText extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          hoverColor: theme.colorScheme.primary.withValues(alpha: 0.06),
-          splashColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+          hoverColor: theme.colorScheme.primary.withOpacity(0.06),
+          splashColor: theme.colorScheme.primary.withOpacity(0.12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             constraints: const BoxConstraints(minWidth: 92),

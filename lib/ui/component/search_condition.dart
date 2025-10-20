@@ -224,7 +224,7 @@ class SearchConditionsState extends State<SearchConditions> {
   }
 
   Widget protocolsWidget() {
-    Color primaryColor = ColorScheme.of(context).primary;
+    Color primaryColor = Theme.of(context).colorScheme.primary;
     return Wrap(
       spacing: 5,
       runSpacing: 2,
@@ -233,7 +233,7 @@ class SearchConditionsState extends State<SearchConditions> {
           label: const Text('HTTP'),
           selected: searchModel.protocols.contains(Protocol.http),
           showCheckmark: false,
-          selectedColor: primaryColor.withValues(alpha: 0.12),
+          selectedColor: primaryColor.withOpacity(0.12),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           labelStyle: const TextStyle(fontSize: 12),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -246,7 +246,7 @@ class SearchConditionsState extends State<SearchConditions> {
           label: const Text('HTTPS'),
           selected: searchModel.protocols.contains(Protocol.https),
           showCheckmark: false,
-          selectedColor: primaryColor.withValues(alpha: 0.12),
+          selectedColor: primaryColor.withOpacity(0.12),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           labelStyle: const TextStyle(fontSize: 12),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -259,7 +259,7 @@ class SearchConditionsState extends State<SearchConditions> {
           label: const Text('WS'),
           selected: searchModel.protocols.contains(Protocol.ws),
           showCheckmark: false,
-          selectedColor: primaryColor.withValues(alpha: 0.12),
+          selectedColor: primaryColor.withOpacity(0.12),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           labelStyle: const TextStyle(fontSize: 12),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -272,7 +272,7 @@ class SearchConditionsState extends State<SearchConditions> {
           label: const Text('HTTP/1'),
           selected: searchModel.protocols.contains(Protocol.http1),
           showCheckmark: false,
-          selectedColor: primaryColor.withValues(alpha: 0.12),
+          selectedColor: primaryColor.withOpacity(0.12),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           labelStyle: const TextStyle(fontSize: 12),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -285,7 +285,7 @@ class SearchConditionsState extends State<SearchConditions> {
           label: const Text('H2'),
           selected: searchModel.protocols.contains(Protocol.h2),
           showCheckmark: false,
-          selectedColor: primaryColor.withValues(alpha: 0.12),
+          selectedColor: primaryColor.withOpacity(0.12),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           labelStyle: const TextStyle(fontSize: 12),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
