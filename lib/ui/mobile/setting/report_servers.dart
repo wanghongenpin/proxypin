@@ -8,6 +8,7 @@ import 'package:proxypin/network/components/manager/report_server_manager.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import '../../../l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ReportServersPageMobile extends StatefulWidget {
   const ReportServersPageMobile({super.key});
@@ -21,6 +22,21 @@ class _ReportServersPageMobileState extends State<ReportServersPageMobile> {
   bool _loading = true;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  Future<void> _openGuide() async {
+    final locale = AppLocalizations.of(context)?.localeName ?? '';
+    final cn = 'https://gitee.com/wanghongenpin/proxypin/wikis/%E4%B8%8A%E6%8A%A5%E6%9C%8D%E5%8A%A1%E5%99%A8';
+    final en = 'https://github.com/wanghongenpin/proxypin/wiki/Report-Server';
+    final url = (locale.startsWith('zh')) ? cn : en;
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        FlutterToastr.show('Open guide failed', context);
+      }
+    } catch (e) {
+      FlutterToastr.show('Open guide failed: $e', context);
+    }
+  }
 
   @override
   void initState() {
@@ -81,11 +97,17 @@ class _ReportServersPageMobileState extends State<ReportServersPageMobile> {
         title: Text(localizations.reportServers, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         centerTitle: true,
         actions: [
-          TextButton.icon(
-            label: Text(localizations.add),
-            onPressed: _addServer,
-            icon: const Icon(Icons.add),
+          IconButton(
+            tooltip: localizations.useGuide,
+            onPressed: _openGuide,
+            icon: const Icon(Icons.help_outline, size: 22),
           ),
+          IconButton(
+            tooltip: localizations.add,
+            onPressed: _addServer,
+            icon: const Icon(Icons.add, size: 26),
+          ),
+          SizedBox(width: 5)
         ],
       ),
       body: _loading

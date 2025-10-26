@@ -15,7 +15,7 @@ dependencies:
   intl: any
   cupertino_icons: ^1.0.8
   pointycastle: ^4.0.0
-  logger: ^2.6.1
+  logger: ^2.6.2
   date_format: ^2.0.9
   window_manager: ^0.5.1
   desktop_multi_window:

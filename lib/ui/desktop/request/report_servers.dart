@@ -8,6 +8,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 
 import '../../../l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // 以弹框的方式展示上报服务器管理
 Future<void> showReportServersDialog(BuildContext context) {
@@ -37,6 +38,21 @@ class _ReportServersPageState extends State<ReportServersPage> {
   bool _loading = true;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  Future<void> _openGuide() async {
+    final locale = AppLocalizations.of(context)?.localeName ?? '';
+    final cn = 'https://gitee.com/wanghongenpin/proxypin/wikis/%E4%B8%8A%E6%8A%A5%E6%9C%8D%E5%8A%A1%E5%99%A8';
+    final en = 'https://github.com/wanghongenpin/proxypin/wiki/Report-Server';
+    final url = (locale.startsWith('zh')) ? cn : en;
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        FlutterToastr.show('Open guide failed', context);
+      }
+    } catch (e) {
+      FlutterToastr.show('Open guide failed: $e', context);
+    }
+  }
 
   @override
   void initState() {
@@ -225,12 +241,18 @@ class _ReportServersPageState extends State<ReportServersPage> {
         title: Text(localizations.reportServers),
         centerTitle: true,
         actions: [
+
           TextButton.icon(
             label: Text(localizations.newBuilt),
             onPressed: _addServerDialog,
             icon: const Icon(Icons.add),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
+          IconButton(
+            tooltip: localizations.useGuide,
+            onPressed: _openGuide,
+            icon: const Icon(Icons.help_outline,size: 21),
+          ),
           IconButton(
             tooltip: localizations.close,
             onPressed: () => Navigator.of(context).maybePop(),
