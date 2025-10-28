@@ -503,7 +503,7 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
         actions: [
           IconButton(
               tooltip: localizations.clear,
-              icon: const Icon(Icons.cleaning_services_outlined),
+              icon: const Icon(Icons.delete_outline),
               onPressed: () => MobileApp.requestStateKey.currentState?.clean()),
           const SizedBox(width: 2),
           MoreMenu(proxyServer: proxyServer, remoteDevice: remoteDevice),

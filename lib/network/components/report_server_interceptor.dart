@@ -92,6 +92,11 @@ class ReportServerInterceptor extends Interceptor {
       final ioReq = await httpClient.postUrl(uri).timeout(const Duration(seconds: 5));
 
       // Set headers
+      final matchedRule = server.name;
+      if (matchedRule.isNotEmpty) {
+        ioReq.headers.set('X-Report-Name', matchedRule);
+      }
+
       ioReq.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
       if (compression == 'gzip') {
         ioReq.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');

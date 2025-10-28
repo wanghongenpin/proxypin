@@ -53,10 +53,14 @@ class ProcessInfoManager private constructor() {
             val uid = getProcessInfoUid(sourceAddress, destinationAddress)
             val channel = connection.channel
             if (uid != null && uid != Process.INVALID_UID && channel is SocketChannel && channel.isOpen) {
-                val localAddress = channel.localAddress as InetSocketAddress
-                val networkInfo =
-                    NetworkInfo(uid, destinationAddress.hostString, destinationAddress.port)
-                localPortCache.put(localAddress.port, networkInfo)
+                try {
+                    val localAddress = channel.localAddress as InetSocketAddress
+                    val networkInfo =
+                        NetworkInfo(uid, destinationAddress.hostString, destinationAddress.port)
+                    localPortCache.put(localAddress.port, networkInfo)
+                } catch (e: java.nio.channels.ClosedChannelException) {
+                    Log.w("ProcessInfoManager", "setConnectionOwnerUid", e)
+                }
             }
         }
     }
@@ -68,8 +72,12 @@ class ProcessInfoManager private constructor() {
 
         val channel = connection.channel
         if (channel is SocketChannel && channel.isOpen) {
-            val localAddress = channel.localAddress as InetSocketAddress
-            localPortCache.remove(localAddress.port)
+            try {
+                val localAddress = channel.localAddress as InetSocketAddress
+                localPortCache.remove(localAddress.port)
+            } catch (e: java.nio.channels.ClosedChannelException) {
+                Log.w("ProcessInfoManager", "removeConnection", e)
+            }
         }
     }
 
