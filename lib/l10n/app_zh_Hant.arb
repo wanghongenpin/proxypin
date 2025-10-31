@@ -332,5 +332,8 @@
   "sponsorSupport": "支持項目持續開發",
   "sponsorThanks": "感謝支持開源項目，可選擇以下任意方式，幫助項目長期發展",
   "sponsorAfdian": "愛發電贊助",
-  "sponsorBuyMeCoffee": "Buy Me a Coffee"
+  "sponsorBuyMeCoffee": "Buy Me a Coffee",
+
+  "privacyPolicy": "隱私協議",
+  "privacyContent": "本專案為開源抓包工具，所有功能均在本機裝置上運行；無任何後端伺服器，不會蒐集、儲存或上傳任何使用者資訊。擷取的網路資料僅在本機處理，除非您主動使用遠端轉發功能。所需權限（如網路、儲存、相機用於掃碼）僅用於實現相應功能。您可在公開的原始碼中稽核其行為。"
 }

@@ -1014,6 +1014,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
+
+  @override
+  String get privacyPolicy => '隐私协议';
+
+  @override
+  String get privacyContent =>
+      '本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2027,4 +2034,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
+
+  @override
+  String get privacyPolicy => '隱私協議';
+
+  @override
+  String get privacyContent =>
+      '本專案為開源抓包工具，所有功能均在本機裝置上運行；無任何後端伺服器，不會蒐集、儲存或上傳任何使用者資訊。擷取的網路資料僅在本機處理，除非您主動使用遠端轉發功能。所需權限（如網路、儲存、相機用於掃碼）僅用於實現相應功能。您可在公開的原始碼中稽核其行為。';
 }

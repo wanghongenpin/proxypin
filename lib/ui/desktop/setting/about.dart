@@ -89,6 +89,23 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
                   onTap: () => _safeLaunch(
                       Uri.parse(isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases"))),
               ListTile(
+                  dense: true,
+                  title: Text(localizations.privacyPolicy),
+                  trailing: const Icon(Icons.privacy_tip_outlined, size: 21),
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                              constraints: const BoxConstraints(maxWidth: 385),
+                              title: Text(localizations.privacyPolicy),
+                              content: SingleChildScrollView(
+                                  child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35))),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                              ],
+                            ));
+                  }),
+              ListTile(
                 dense: true,
                 title: Text(localizations.sponsorDonate),
                 subtitle: Text(localizations.sponsorSupport, style: const TextStyle(fontSize: 11)),

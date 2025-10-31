@@ -1027,4 +1027,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get privacyContent =>
+      'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.';
 }

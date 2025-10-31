@@ -95,6 +95,22 @@ class _AboutState extends State<About> {
                       _safeLaunch(Uri.parse(url));
                     }),
                 Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                ListTile(
+                    title: Text(localizations.privacyPolicy),
+                    trailing: const Icon(Icons.privacy_tip_outlined, size: 22),
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                                constraints: const BoxConstraints(maxWidth: 385),
+                                title: Text(localizations.privacyPolicy),
+                                content: SingleChildScrollView(child: Text(localizations.privacyContent)),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                                ],
+                              ));
+                    }),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 // Sponsor / Donate entry
                 ListTile(
                   title: Text(localizations.sponsorDonate),

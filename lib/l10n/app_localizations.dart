@@ -2075,6 +2075,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Buy Me a Coffee'**
   String get sponsorBuyMeCoffee;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @privacyContent.
+  ///
+  /// In en, this message translates to:
+  /// **'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.'**
+  String get privacyContent;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
