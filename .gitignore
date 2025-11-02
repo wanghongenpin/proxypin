@@ -19,7 +19,7 @@ Podfile.lock
 .idea/
 .claude/
 .specify/
-.claude.md
+CLAUDE.md
 windows/flutter/
 linux/flutter/
 macos/flutter/
