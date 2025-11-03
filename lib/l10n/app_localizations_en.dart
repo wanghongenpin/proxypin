@@ -1060,10 +1060,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refreshSuccess => 'Refresh successful';
 
   @override
-  String get extractInMainWindow =>
-      'Stream code extraction is performed in the main window. Click the toolbox icon to extract, then this window will display the results.';
-
-  @override
   String get accountInfo => 'Account';
 
   @override

@@ -58,9 +58,9 @@ class StreamCodeInterceptor extends Interceptor {
         return; // Not target API
       }
 
-      // Read response body
-      final body = response.body;
-      if (body == null || body.isEmpty) {
+      // Read response body (bodyAsString handles decompression automatically)
+      final bodyAsString = response.bodyAsString;
+      if (bodyAsString.isEmpty) {
         logger.w('Stream code extraction skipped: empty response body');
         return;
       }
@@ -68,7 +68,7 @@ class StreamCodeInterceptor extends Interceptor {
       // Parse JSON
       Map<String, dynamic> jsonData;
       try {
-        jsonData = jsonDecode(utf8.decode(body)) as Map<String, dynamic>;
+        jsonData = jsonDecode(bodyAsString) as Map<String, dynamic>;
       } on FormatException catch (e) {
         logger.w('Stream code extraction failed: JSON parse error - $e');
         return;

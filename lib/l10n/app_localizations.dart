@@ -2136,12 +2136,6 @@ abstract class AppLocalizations {
   /// **'Refresh successful'**
   String get refreshSuccess;
 
-  /// No description provided for @extractInMainWindow.
-  ///
-  /// In en, this message translates to:
-  /// **'Stream code extraction is performed in the main window. Click the toolbox icon to extract, then this window will display the results.'**
-  String get extractInMainWindow;
-
   /// No description provided for @accountInfo.
   ///
   /// In en, this message translates to:

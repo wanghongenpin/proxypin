@@ -1047,9 +1047,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get refreshSuccess => '刷新成功';
 
   @override
-  String get extractInMainWindow => '推流码提取在主窗口进行。请在工具箱中点击「获取推流码」进行提取，此窗口将显示结果。';
-
-  @override
   String get accountInfo => '账号信息';
 
   @override

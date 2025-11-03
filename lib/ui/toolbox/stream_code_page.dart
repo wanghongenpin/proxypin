@@ -222,18 +222,18 @@ class _StreamCodePageState extends State<StreamCodePage> {
     );
   }
 
-  Widget _buildImageWithFallback(String? imageUrl, IconData fallbackIcon) {
+  Widget _buildImageWithFallback(String? imageUrl, IconData fallbackIcon, {double size = 60}) {
     if (imageUrl == null || imageUrl.isEmpty) {
       return Container(
-        width: 60,
-        height: 60,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           fallbackIcon,
-          size: 32,
+          size: size * 0.5,
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
       );
@@ -243,14 +243,14 @@ class _StreamCodePageState extends State<StreamCodePage> {
       borderRadius: BorderRadius.circular(8),
       child: Image.network(
         imageUrl,
-        width: 60,
-        height: 60,
+        width: size,
+        height: size,
         fit: BoxFit.cover,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
-            width: 60,
-            height: 60,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
@@ -271,15 +271,15 @@ class _StreamCodePageState extends State<StreamCodePage> {
         },
         errorBuilder: (context, error, stackTrace) {
           return Container(
-            width: 60,
-            height: 60,
+            width: size,
+            height: size,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               fallbackIcon,
-              size: 32,
+              size: size * 0.5,
               color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             ),
           );
@@ -306,63 +306,22 @@ class _StreamCodePageState extends State<StreamCodePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    localizations.accountInfo,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
                     data.accountNickname ?? localizations.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLiveRoomSection(StreamCodeData data) {
-    if (data.roomTitle == null && data.coverImageUrl == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            _buildImageWithFallback(data.coverImageUrl, Icons.live_tv),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    localizations.liveRoomInfo,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  if (data.accountShortId != null && data.accountShortId!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '抖音号: ${data.accountShortId}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data.roomTitle ?? localizations.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -402,6 +361,7 @@ class _StreamCodePageState extends State<StreamCodePage> {
   Widget _buildStreamCodeDisplay(StreamCodeData data) {
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     final formattedDate = dateFormat.format(data.capturedAt);
+    final hasRoomInfo = data.roomTitle != null || data.coverImageUrl != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -411,22 +371,7 @@ class _StreamCodePageState extends State<StreamCodePage> {
         if (data.accountNickname != null || data.accountAvatarUrl != null)
           const SizedBox(height: 16),
 
-        // Live room section (if available)
-        _buildLiveRoomSection(data),
-        if (data.roomTitle != null || data.coverImageUrl != null)
-          const SizedBox(height: 16),
-
-        // Timestamp
-        Text(
-          '${localizations.lastUpdateTime}: $formattedDate',
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Stream code card
+        // Unified stream code card with optional live room header
         Card(
           elevation: 0,
           child: Padding(
@@ -434,6 +379,49 @@ class _StreamCodePageState extends State<StreamCodePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Live room header (if available)
+                if (hasRoomInfo) ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildImageWithFallback(data.coverImageUrl, Icons.live_tv, size: 80),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              localizations.liveRoomInfo,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              data.roomTitle ?? localizations.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Stream code section
                 _buildStreamCodeRow(
                   localizations.pushAddress,
                   data.pushAddress,
@@ -443,28 +431,39 @@ class _StreamCodePageState extends State<StreamCodePage> {
                   localizations.streamKey,
                   data.streamKey,
                 ),
+                const SizedBox(height: 12),
+
+                // Footer with timestamp and refresh button
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${localizations.lastUpdateTime}: $formattedDate',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _isRefreshing ? null : _handleRefresh,
+                      icon: _isRefreshing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh, size: 16),
+                      label: Text(localizations.refresh),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-
-        // Refresh button
-        Row(
-          children: [
-            ElevatedButton.icon(
-              onPressed: _isRefreshing ? null : _handleRefresh,
-              icon: _isRefreshing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh, size: 18),
-              label: Text(localizations.refresh),
-            ),
-            const Spacer(),
-          ],
         ),
       ],
     );

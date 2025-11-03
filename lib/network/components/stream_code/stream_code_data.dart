@@ -42,6 +42,9 @@ class StreamCodeData {
   /// Account avatar URL (first URL from owner.avatar_thumb.url_list)
   final String? accountAvatarUrl;
 
+  /// Account Douyin ID from owner.short_id
+  final String? accountShortId;
+
   StreamCodeData({
     required this.rtmpPushUrl,
     required this.pushAddress,
@@ -53,6 +56,7 @@ class StreamCodeData {
     this.coverImageUrl,
     this.accountNickname,
     this.accountAvatarUrl,
+    this.accountShortId,
   });
 
   /// Deserialize from JSON (for persistence)
@@ -70,6 +74,7 @@ class StreamCodeData {
       coverImageUrl: json['coverImageUrl'] as String?,
       accountNickname: json['accountNickname'] as String?,
       accountAvatarUrl: json['accountAvatarUrl'] as String?,
+      accountShortId: json['accountShortId'] as String?,
     );
   }
 
@@ -86,6 +91,7 @@ class StreamCodeData {
       'coverImageUrl': coverImageUrl,
       'accountNickname': accountNickname,
       'accountAvatarUrl': accountAvatarUrl,
+      'accountShortId': accountShortId,
     };
   }
 
@@ -97,6 +103,7 @@ class StreamCodeData {
   /// - cover.url_list (optional)
   /// - owner.nickname (optional)
   /// - owner.avatar_thumb.url_list (optional)
+  /// - owner.short_id (optional)
   ///
   /// Throws FormatException if URL format is invalid (missing "stream-" separator)
   factory StreamCodeData.fromApiResponse(
@@ -127,6 +134,7 @@ class StreamCodeData {
     // Owner info
     final ownerMap = dataMap['owner'] as Map<String, dynamic>?;
     final accountNickname = ownerMap?['nickname'] as String?;
+    final accountShortId = ownerMap?['short_id']?.toString();
 
     // Avatar: get first URL from url_list array
     final avatarList = (ownerMap?['avatar_thumb']?['url_list'] as List<dynamic>?)
@@ -146,6 +154,7 @@ class StreamCodeData {
       coverImageUrl: coverImageUrl,
       accountNickname: accountNickname,
       accountAvatarUrl: accountAvatarUrl,
+      accountShortId: accountShortId,
     );
   }
 
