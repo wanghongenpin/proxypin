@@ -2091,7 +2091,7 @@ abstract class AppLocalizations {
   /// No description provided for @streamCodeExtractor.
   ///
   /// In en, this message translates to:
-  /// **'Stream Code Extractor'**
+  /// **'Douyin Stream Code'**
   String get streamCodeExtractor;
 
   /// No description provided for @getStreamCode.
