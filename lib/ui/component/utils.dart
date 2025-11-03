@@ -135,6 +135,7 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
 
         FlutterToastr.show(AppLocalizations.of(context)!.copied, context);
         unSelect(editableTextState);
+
         editableTextState.hideToolbar();
       },
       type: ContextMenuButtonType.copy,
@@ -179,7 +180,8 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
 
 void unSelect(EditableTextState editableTextState) {
   editableTextState.userUpdateTextEditingValue(
-    editableTextState.textEditingValue.copyWith(selection: const TextSelection(baseOffset: 0, extentOffset: 0)),
+    editableTextState.textEditingValue
+        .copyWith(selection: TextSelection.collapsed(offset: editableTextState.textEditingValue.selection.baseOffset)),
     SelectionChangedCause.tap,
   );
 }
