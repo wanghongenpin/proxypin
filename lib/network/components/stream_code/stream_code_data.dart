@@ -1,9 +1,11 @@
+import '../../http/http.dart';
+
 /// Data entity representing a captured Douyin live streaming push code.
 ///
 /// This class holds the complete stream code information extracted from
 /// `get_latest_room` API responses, including the original URL, parsed
 /// components (push address and stream key), capture timestamp, and the
-/// original request URL for refresh functionality.
+/// original request for replay functionality.
 class StreamCodeData {
   /// Original complete URL extracted from API response
   /// Example: "rtmp://push-rtmp-l3.douyincdn.com/stage/stream-xxx?auth_key=..."
@@ -20,9 +22,25 @@ class StreamCodeData {
   /// Timestamp when this stream code was captured
   final DateTime capturedAt;
 
-  /// Original request URL (with query parameters) for refresh functionality
+  /// Original request URL (with query parameters) for backward compatibility
   /// Example: "https://webcast5-mate-lf.amemv.com/webcast/room/get_latest_room/?room_id=xxx"
   final String requestUrl;
+
+  /// Original HTTP request with all headers, cookies, and parameters
+  /// Used for accurate request replay to refresh stream code
+  final HttpRequest? originalRequest;
+
+  /// Live room title from API response
+  final String? roomTitle;
+
+  /// Live room cover image URL (first URL from cover.url_list)
+  final String? coverImageUrl;
+
+  /// Account nickname from owner.nickname
+  final String? accountNickname;
+
+  /// Account avatar URL (first URL from owner.avatar_thumb.url_list)
+  final String? accountAvatarUrl;
 
   StreamCodeData({
     required this.rtmpPushUrl,
@@ -30,6 +48,11 @@ class StreamCodeData {
     required this.streamKey,
     required this.capturedAt,
     required this.requestUrl,
+    this.originalRequest,
+    this.roomTitle,
+    this.coverImageUrl,
+    this.accountNickname,
+    this.accountAvatarUrl,
   });
 
   /// Deserialize from JSON (for persistence)
@@ -40,6 +63,13 @@ class StreamCodeData {
       streamKey: json['streamKey'] as String,
       capturedAt: DateTime.parse(json['capturedAt'] as String),
       requestUrl: json['requestUrl'] as String,
+      originalRequest: json['originalRequest'] != null
+          ? HttpRequest.fromJson(json['originalRequest'] as Map<String, dynamic>)
+          : null,
+      roomTitle: json['roomTitle'] as String?,
+      coverImageUrl: json['coverImageUrl'] as String?,
+      accountNickname: json['accountNickname'] as String?,
+      accountAvatarUrl: json['accountAvatarUrl'] as String?,
     );
   }
 
@@ -51,23 +81,71 @@ class StreamCodeData {
       'streamKey': streamKey,
       'capturedAt': capturedAt.toIso8601String(),
       'requestUrl': requestUrl,
+      'originalRequest': originalRequest?.toJson(),
+      'roomTitle': roomTitle,
+      'coverImageUrl': coverImageUrl,
+      'accountNickname': accountNickname,
+      'accountAvatarUrl': accountAvatarUrl,
     };
   }
 
   /// Factory method to parse from API response
+  ///
+  /// Expects the `data` object from API response containing:
+  /// - stream_url.rtmp_push_url (required)
+  /// - title (optional)
+  /// - cover.url_list (optional)
+  /// - owner.nickname (optional)
+  /// - owner.avatar_thumb.url_list (optional)
+  ///
   /// Throws FormatException if URL format is invalid (missing "stream-" separator)
-  factory StreamCodeData.fromApiResponse(String rtmpPushUrl, String requestUrl) {
+  factory StreamCodeData.fromApiResponse(
+    Map<String, dynamic> dataMap,
+    HttpRequest request,
+  ) {
+    // Extract rtmp_push_url (required)
+    final rtmpPushUrl = dataMap['stream_url']?['rtmp_push_url'] as String?;
+    if (rtmpPushUrl == null || rtmpPushUrl.isEmpty) {
+      throw FormatException('Missing rtmp_push_url in API response');
+    }
+
     final streamIndex = rtmpPushUrl.indexOf('stream-');
     if (streamIndex == -1) {
       throw FormatException('Invalid rtmpPushUrl: missing "stream-" separator');
     }
+
+    // Extract optional fields with safe navigation
+    final roomTitle = dataMap['title'] as String?;
+
+    // Cover image: get first URL from url_list array
+    final coverList = (dataMap['cover']?['url_list'] as List<dynamic>?)
+        ?.map((e) => e as String?)
+        .where((url) => url != null && url.isNotEmpty)
+        .toList();
+    final coverImageUrl = coverList?.isNotEmpty == true ? coverList!.first : null;
+
+    // Owner info
+    final ownerMap = dataMap['owner'] as Map<String, dynamic>?;
+    final accountNickname = ownerMap?['nickname'] as String?;
+
+    // Avatar: get first URL from url_list array
+    final avatarList = (ownerMap?['avatar_thumb']?['url_list'] as List<dynamic>?)
+        ?.map((e) => e as String?)
+        .where((url) => url != null && url.isNotEmpty)
+        .toList();
+    final accountAvatarUrl = avatarList?.isNotEmpty == true ? avatarList!.first : null;
 
     return StreamCodeData(
       rtmpPushUrl: rtmpPushUrl,
       pushAddress: rtmpPushUrl.substring(0, streamIndex),
       streamKey: rtmpPushUrl.substring(streamIndex),
       capturedAt: DateTime.now(),
-      requestUrl: requestUrl,
+      requestUrl: request.requestUrl,
+      originalRequest: request,
+      roomTitle: roomTitle,
+      coverImageUrl: coverImageUrl,
+      accountNickname: accountNickname,
+      accountAvatarUrl: accountAvatarUrl,
     );
   }
 

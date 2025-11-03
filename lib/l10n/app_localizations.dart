@@ -2141,6 +2141,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stream code extraction is performed in the main window. Click the toolbox icon to extract, then this window will display the results.'**
   String get extractInMainWindow;
+
+  /// No description provided for @accountInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get accountInfo;
+
+  /// No description provided for @liveRoomInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Room'**
+  String get liveRoomInfo;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

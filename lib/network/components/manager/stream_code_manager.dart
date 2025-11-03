@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../storage/path.dart';
 import '../../http/http.dart';
+import '../../http/http_client.dart';
 import '../../util/logger.dart';
 import '../stream_code/stream_code_data.dart';
 
@@ -17,7 +18,6 @@ import '../stream_code/stream_code_data.dart';
 /// ValueNotifier and handles JSON persistence.
 class StreamCodeManager {
   static StreamCodeManager? _instance;
-  static final HttpClient _httpClient = HttpClient();
 
   // Reactive state
   final ValueNotifier<bool> _autoExtractEnabledNotifier = ValueNotifier(false);
@@ -107,49 +107,58 @@ class StreamCodeManager {
 
   /// Refresh stream code by replaying last captured request
   ///
+  /// Uses ProxyPin's request replay mechanism to resend the original request
+  /// with all headers, cookies, and parameters preserved. This ensures the
+  /// request passes anti-bot protection and authentication checks.
+  ///
   /// Throws Exception with localized message on failure.
   /// Old data is preserved if refresh fails.
   Future<StreamCodeData> refreshStreamCode() async {
     final lastData = _lastStreamCodeNotifier.value;
 
-    if (lastData == null || lastData.requestUrl.isEmpty) {
-      throw Exception('No previous request to replay');
+    if (lastData == null) {
+      throw Exception('No previous stream code to refresh');
+    }
+
+    if (lastData.originalRequest == null) {
+      logger.w('Stream code refresh failed: originalRequest not stored (legacy data)');
+      throw Exception('刷新失败：旧版本数据不支持刷新\n请重新抓取推流码');
     }
 
     try {
-      final uri = Uri.parse(lastData.requestUrl);
-      final request = await _httpClient
-          .postUrl(uri)
-          .timeout(const Duration(seconds: 8));
+      // Replay the original request with all headers, cookies, and parameters
+      logger.i('Refreshing stream code by replaying request: ${lastData.originalRequest!.requestUrl}');
 
-      request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
-      request.headers.set(HttpHeaders.userAgentHeader, 'ProxyPin/1.0');
-      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-      request.write('{}');
+      final response = await HttpClients.proxyRequest(
+        lastData.originalRequest!,
+        timeout: const Duration(seconds: 10),
+      );
 
-      final response = await request
-          .close()
-          .timeout(const Duration(seconds: 8));
-
-      if (response.statusCode != 200) {
-        throw Exception('刷新失败：服务器返回 ${response.statusCode}');
+      if (response.status.code != 200) {
+        throw Exception('刷新失败：服务器返回 ${response.status.code}');
       }
 
-      final responseBody = await response.transform(utf8.decoder).join();
+      // Use bodyAsString to handle decompression automatically
+      final responseBody = response.bodyAsString;
+      if (responseBody.isEmpty) {
+        throw Exception('刷新失败：响应内容为空');
+      }
+
       final jsonData = jsonDecode(responseBody) as Map<String, dynamic>;
 
-      // Safe navigation with null-aware operators
-      final rtmpPushUrl = jsonData['data']?['stream_url']?['rtmp_push_url'] as String?;
+      // Extract data map with safe navigation
+      final dataMap = jsonData['data'] as Map<String, dynamic>?;
 
-      if (rtmpPushUrl == null || rtmpPushUrl.isEmpty) {
-        logger.w('rtmp_push_url field not found in refresh response');
-        throw Exception('刷新失败:房间信息不可用');
+      if (dataMap == null) {
+        logger.w('data field not found in refresh response');
+        throw Exception('刷新失败：房间信息不可用');
       }
 
-      // Parse new stream code
-      final newData = StreamCodeData.fromApiResponse(rtmpPushUrl, lastData.requestUrl);
+      // Parse new stream code with the original request
+      final newData = StreamCodeData.fromApiResponse(dataMap, lastData.originalRequest!);
       await updateStreamCode(newData);
 
+      logger.i('Stream code refreshed successfully: ${newData.pushAddress}');
       return newData;
     } on TimeoutException {
       logger.w('Stream code refresh timeout');
@@ -221,20 +230,20 @@ class StreamCodeManager {
       throw Exception('解析失败：响应格式异常');
     }
 
-    // Extract rtmp_push_url with safe navigation
-    final rtmpPushUrl = jsonData['data']?['stream_url']?['rtmp_push_url'] as String?;
+    // Extract data map with safe navigation
+    final dataMap = jsonData['data'] as Map<String, dynamic>?;
 
-    if (rtmpPushUrl == null || rtmpPushUrl.isEmpty) {
-      logger.w('Stream code extraction skipped: rtmp_push_url field not found or empty');
+    if (dataMap == null) {
+      logger.w('Stream code extraction skipped: data field not found');
       throw Exception('未找到推流码\n可能是房间未开播');
     }
 
     // Parse stream code data
     StreamCodeData newData;
     try {
-      newData = StreamCodeData.fromApiResponse(rtmpPushUrl, latestRequest.requestUrl);
+      newData = StreamCodeData.fromApiResponse(dataMap, latestRequest);
     } on FormatException catch (e) {
-      logger.w('Stream code extraction failed: Invalid URL format - $e');
+      logger.w('Stream code extraction failed: $e');
       throw Exception('推流码格式异常：$e');
     }
 

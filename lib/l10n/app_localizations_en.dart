@@ -1062,4 +1062,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get extractInMainWindow =>
       'Stream code extraction is performed in the main window. Click the toolbox icon to extract, then this window will display the results.';
+
+  @override
+  String get accountInfo => 'Account';
+
+  @override
+  String get liveRoomInfo => 'Live Room';
 }

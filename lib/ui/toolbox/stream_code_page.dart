@@ -136,25 +136,6 @@ class _StreamCodePageState extends State<StreamCodePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (Platforms.isDesktop()) ...[
-                    Row(
-                      children: [
-                        Text(
-                          localizations.streamCodeExtractor,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const Spacer(),
-                        if (widget.windowId != null)
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              WindowController.fromWindowId(widget.windowId!).close();
-                            },
-                          ),
-                      ],
-                    ),
-                    const Divider(),
-                  ],
                   _buildManualExtractButton(),
                   const SizedBox(height: 24),
                   ValueListenableBuilder<StreamCodeData?>(
@@ -217,39 +198,9 @@ class _StreamCodePageState extends State<StreamCodePage> {
 
   Widget _buildManualExtractButton() {
     // In desktop multi-window mode, extraction happens in main window
-    // Show instruction text instead of extract button
-    final bool isMultiWindow = widget.windowId != null && Platforms.isDesktop();
-
-    if (isMultiWindow) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card(
-            elevation: 0,
-            color: Colors.blue.withValues(alpha: 0.1),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.info_outline, color: Colors.blue[700]),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      localizations.extractInMainWindow,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
+    // Don't show button in multi-window mode
+    if (widget.windowId != null && Platforms.isDesktop()) {
+      return const SizedBox.shrink();
     }
 
     // Normal mode: show extract button
@@ -266,6 +217,156 @@ class _StreamCodePageState extends State<StreamCodePage> {
         label: Text(localizations.getStreamCode),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageWithFallback(String? imageUrl, IconData fallbackIcon) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          fallbackIcon,
+          size: 32,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        imageUrl,
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              fallbackIcon,
+              size: 32,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAccountSection(StreamCodeData data) {
+    if (data.accountNickname == null && data.accountAvatarUrl == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            _buildImageWithFallback(data.accountAvatarUrl, Icons.person),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localizations.accountInfo,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data.accountNickname ?? localizations.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveRoomSection(StreamCodeData data) {
+    if (data.roomTitle == null && data.coverImageUrl == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            _buildImageWithFallback(data.coverImageUrl, Icons.live_tv),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localizations.liveRoomInfo,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data.roomTitle ?? localizations.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -305,6 +406,17 @@ class _StreamCodePageState extends State<StreamCodePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Account section (if available)
+        _buildAccountSection(data),
+        if (data.accountNickname != null || data.accountAvatarUrl != null)
+          const SizedBox(height: 16),
+
+        // Live room section (if available)
+        _buildLiveRoomSection(data),
+        if (data.roomTitle != null || data.coverImageUrl != null)
+          const SizedBox(height: 16),
+
+        // Timestamp
         Text(
           '${localizations.lastUpdateTime}: $formattedDate',
           style: TextStyle(
@@ -313,16 +425,31 @@ class _StreamCodePageState extends State<StreamCodePage> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildStreamCodeRow(
-          localizations.pushAddress,
-          data.pushAddress,
-        ),
-        const SizedBox(height: 16),
-        _buildStreamCodeRow(
-          localizations.streamKey,
-          data.streamKey,
+
+        // Stream code card
+        Card(
+          elevation: 0,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStreamCodeRow(
+                  localizations.pushAddress,
+                  data.pushAddress,
+                ),
+                const SizedBox(height: 16),
+                _buildStreamCodeRow(
+                  localizations.streamKey,
+                  data.streamKey,
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 24),
+
+        // Refresh button
         Row(
           children: [
             ElevatedButton.icon(

@@ -74,20 +74,20 @@ class StreamCodeInterceptor extends Interceptor {
         return;
       }
 
-      // Extract rtmp_push_url with safe navigation
-      final rtmpPushUrl = jsonData['data']?['stream_url']?['rtmp_push_url'] as String?;
+      // Extract data map with safe navigation
+      final dataMap = jsonData['data'] as Map<String, dynamic>?;
 
-      if (rtmpPushUrl == null || rtmpPushUrl.isEmpty) {
-        logger.w('Stream code extraction skipped: rtmp_push_url field not found or empty');
+      if (dataMap == null) {
+        logger.w('Stream code extraction skipped: data field not found');
         return;
       }
 
-      // Parse stream code data
+      // Parse stream code data from full data map
       StreamCodeData streamCodeData;
       try {
-        streamCodeData = StreamCodeData.fromApiResponse(rtmpPushUrl, requestUrl);
+        streamCodeData = StreamCodeData.fromApiResponse(dataMap, request);
       } on FormatException catch (e) {
-        logger.w('Stream code extraction failed: Invalid URL format - $e');
+        logger.w('Stream code extraction failed: $e');
         return;
       }
 
