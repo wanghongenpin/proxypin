@@ -24,6 +24,7 @@ import 'package:proxypin/network/components/report_server_interceptor.dart';
 import 'package:proxypin/network/components/request_block.dart';
 import 'package:proxypin/network/components/request_rewrite.dart';
 import 'package:proxypin/network/components/script.dart';
+import 'package:proxypin/network/components/stream_code_interceptor.dart';
 import 'package:proxypin/network/handle/http_proxy_handle.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -80,11 +81,16 @@ class ProxyServer {
   Future<Server> start() async {
     Server server = Server(configuration, listener: CombinedEventListener(listeners));
 
+    // Initialize stream code interceptor
+    var streamCodeInterceptor = StreamCodeInterceptor();
+    await streamCodeInterceptor.initializeInterceptor();
+
     List<Interceptor> interceptors = [
       Hosts(),
       RequestMapInterceptor.instance,
       RequestRewriteInterceptor.instance,
       ScriptInterceptor(),
+      streamCodeInterceptor,
       RequestBlockInterceptor(),
       ReportServerInterceptor()
     ];

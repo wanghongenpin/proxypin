@@ -17,6 +17,7 @@ import 'aes_page.dart';
 import 'cert_hash.dart';
 import 'encoder.dart';
 import 'js_run.dart';
+import 'stream_code_page.dart';
 
 class Toolbox extends StatefulWidget {
   final ProxyServer? proxyServer;
@@ -181,6 +182,18 @@ class _ToolboxState extends State<Toolbox> {
                       icon: Icons.qr_code_2,
                       text: localizations.qrCode,
                       tooltip: localizations.qrCode),
+                  IconText(
+                      onTap: () async {
+                        if (Platforms.isMobile()) {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const StreamCodePage()));
+                          return;
+                        }
+                        MultiWindow.openWindow(localizations.streamCodeExtractor, 'StreamCodePage',
+                            size: const Size(800, 450));
+                      },
+                      icon: Icons.stream,
+                      text: localizations.streamCodeExtractor,
+                      tooltip: localizations.streamCodeExtractor),
                 ],
               ),
             ],

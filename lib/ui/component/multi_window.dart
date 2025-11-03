@@ -47,6 +47,7 @@ import '../toolbox/encoder.dart';
 import '../toolbox/js_run.dart';
 import '../toolbox/qr_code_page.dart';
 import '../toolbox/regexp.dart';
+import '../toolbox/stream_code_page.dart';
 import '../toolbox/timestamp.dart';
 
 bool isMultiWindow = false;
@@ -119,6 +120,10 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
 
   if (argument['name'] == 'AesPage') {
     return AesPage();
+  }
+
+  if (argument['name'] == 'StreamCodePage') {
+    return StreamCodePage(windowId: windowId);
   }
 
   //脚本日志
