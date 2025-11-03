@@ -201,7 +201,7 @@ class _ToolboxState extends State<Toolbox> {
                           // Extraction successful, open display window
                           if (!context.mounted) return;
                           MultiWindow.openWindow(localizations.streamCodeExtractor, 'StreamCodePage',
-                              size: const Size(800, 450));
+                              size: const Size(800, 650));
                         } on Exception catch (e) {
                           // Show error in main window
                           if (!context.mounted) return;

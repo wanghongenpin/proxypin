@@ -205,7 +205,7 @@ class StreamCodeManager {
     });
 
     if (matches.isEmpty) {
-      throw Exception('未找到推流码请求\n请先访问抖音直播间');
+      throw Exception('未找到推流码请求\n请先打开PC端直播伴侣并登录账号');
     }
 
     final latestRequest = matches.first;
