@@ -2147,6 +2147,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Live Room'**
   String get liveRoomInfo;
+
+  /// No description provided for @roomIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Room ID'**
+  String get roomIdLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

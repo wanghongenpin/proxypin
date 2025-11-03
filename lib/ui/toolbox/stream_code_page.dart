@@ -390,23 +390,42 @@ class _StreamCodePageState extends State<StreamCodePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              localizations.liveRoomInfo,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
+                            // Room title (larger, bold)
                             Text(
                               data.roomTitle ?? localizations.name,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
+                            // Room ID (if available)
+                            if (data.roomId != null) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      '${localizations.roomIdLabel}: ${data.roomId}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.copy_outlined, size: 16),
+                                    onPressed: () => _copyToClipboard(data.roomId!, localizations.roomIdLabel),
+                                    tooltip: '${localizations.copy} ${localizations.roomIdLabel}',
+                                    padding: const EdgeInsets.all(4),
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

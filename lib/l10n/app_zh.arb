@@ -367,5 +367,6 @@
   "noStreamCodeHint": "暂无推流码，请点击上方按钮从抓包数据中提取",
   "refreshSuccess": "刷新成功",
   "accountInfo": "账号信息",
-  "liveRoomInfo": "直播间"
+  "liveRoomInfo": "直播间",
+  "roomIdLabel": "直播间ID"
 }

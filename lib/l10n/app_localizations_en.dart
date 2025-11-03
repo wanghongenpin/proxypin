@@ -1064,4 +1064,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveRoomInfo => 'Live Room';
+
+  @override
+  String get roomIdLabel => 'Room ID';
 }

@@ -45,6 +45,9 @@ class StreamCodeData {
   /// Account Douyin ID from owner.short_id
   final String? accountShortId;
 
+  /// Live room ID from id_str (or id as fallback)
+  final String? roomId;
+
   StreamCodeData({
     required this.rtmpPushUrl,
     required this.pushAddress,
@@ -57,6 +60,7 @@ class StreamCodeData {
     this.accountNickname,
     this.accountAvatarUrl,
     this.accountShortId,
+    this.roomId,
   });
 
   /// Deserialize from JSON (for persistence)
@@ -75,6 +79,7 @@ class StreamCodeData {
       accountNickname: json['accountNickname'] as String?,
       accountAvatarUrl: json['accountAvatarUrl'] as String?,
       accountShortId: json['accountShortId'] as String?,
+      roomId: json['roomId'] as String?,
     );
   }
 
@@ -92,6 +97,7 @@ class StreamCodeData {
       'accountNickname': accountNickname,
       'accountAvatarUrl': accountAvatarUrl,
       'accountShortId': accountShortId,
+      'roomId': roomId,
     };
   }
 
@@ -99,6 +105,7 @@ class StreamCodeData {
   ///
   /// Expects the `data` object from API response containing:
   /// - stream_url.rtmp_push_url (required)
+  /// - id_str or id (optional, room ID)
   /// - title (optional)
   /// - cover.url_list (optional)
   /// - owner.nickname (optional)
@@ -143,6 +150,9 @@ class StreamCodeData {
         .toList();
     final accountAvatarUrl = avatarList?.isNotEmpty == true ? avatarList!.first : null;
 
+    // Room ID: prefer id_str to avoid precision loss with large numbers
+    final roomId = dataMap['id_str'] as String? ?? dataMap['id']?.toString();
+
     return StreamCodeData(
       rtmpPushUrl: rtmpPushUrl,
       pushAddress: rtmpPushUrl.substring(0, streamIndex),
@@ -155,6 +165,7 @@ class StreamCodeData {
       accountNickname: accountNickname,
       accountAvatarUrl: accountAvatarUrl,
       accountShortId: accountShortId,
+      roomId: roomId,
     );
   }
 

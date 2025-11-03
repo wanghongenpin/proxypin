@@ -367,5 +367,6 @@
   "noStreamCodeHint": "No stream code yet. Click the button above to extract from captured traffic",
   "refreshSuccess": "Refresh successful",
   "accountInfo": "Account",
-  "liveRoomInfo": "Live Room"
+  "liveRoomInfo": "Live Room",
+  "roomIdLabel": "Room ID"
 }

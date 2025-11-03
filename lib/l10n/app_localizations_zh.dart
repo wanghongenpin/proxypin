@@ -1051,6 +1051,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveRoomInfo => '直播间';
+
+  @override
+  String get roomIdLabel => '直播间ID';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

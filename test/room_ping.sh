@@ -1,0 +1,21 @@
+curl -X POST 'https://webcast5-mate-hl.amemv.com/webcast/room/ping/anchor/?ac=wifi&app_name=webcast_mate&version_code=10.8.8&device_platform=windows&webcast_sdk_version=1520&resolution=1829*1143&os_version=10.0.26200&language=zh&aid=2079&live_id=1&channel=online&device_id=1980634996155737&iid=2825059935194711&msToken=tqgbz_JdAbkumu3lGjyasc9KzrsRbv0zOZ1qc6CeVp1TbBinA_ArAulmxJLsPa9SZxgJ7E1lJ1PcCYJxCWWLZICIkN8a6dgQxE8THk9tr0ErLJ9Su8NJphkkMQi4Zf66BOz2YXyDRUxjIj0ZPNwkP52Ju0cCBDtHreYFfosvuCygJ8YlQBcO&a_bogus=E60RgttwYx%2FfKpebYcP4tVPU4yy%2FNOWyGaTQbx6uCOPdOh0aZqPTaxPbbqK7lG5ou8B7wCVHmDTgYfxazTOEWenpqmpDS87SO0%2F9Iw8o%2FqqpPUXsLrmdC8gzFwBbMOzL-Qd9ieURWs0F2ECXINCwApCnu%2F4xRQjdTr3XVlYCx2Os0CSjh9%2FIa572N7zqJf%3D%3D' \
+  -H 'Host: webcast5-mate-hl.amemv.com' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Length: 65' \
+  -H 'sec-ch-ua: "Not?A_Brand";v="8", "Chromium";v="108"' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  -H 'x-secsdk-csrf-token: 000100000001d6f9298ae212cd721562a04038481200da9d3fc03ce9fc6dcad999a02ced137f18748ce8e7214c59,4719743162754ac9037e46752a02989e' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) webcast_mate/10.8.8 Chrome/108.0.5359.215 Electron/22.3.18-tt.11.release.main.68 TTElectron/22.3.18-tt.11.release.main.68 Safari/537.36' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  -H 'Sec-Fetch-Site: cross-site' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'X-SS-TC: ' \
+  -H 'X-SS-DP: ' \
+  -H 'Accept-Encoding: gzip, deflate, br' \
+  -H 'Accept-Language: zh-CN' \
+  -H 'Cookie: ttwid=1%7CVpqxbyWfPyCS6PVJjo-YYTNITWpZsqbX2x1AJrdK3F4%7C1762186244%7C2f9afa06b4cfaaf2c3322ee9b8e6a230fe01675517f9e87933d16b4f01982b6a; passport_csrf_token=55947cd895595614c7d709628c2c11f4; passport_csrf_token_default=55947cd895595614c7d709628c2c11f4; odin_tt=03c2812c1440bd6f18daa234defdc1fd070abd256de63c4158109fe66b74e4b04d4ccc7ad62b1f4841103fdf3b813c4d1664e9bdb418d4f8a9d22e1cb00eccb4549c8b8507847ce0ea94b577b74fa509; passport_assist_user=Cjxmh1Eobb7RhxikVRBWmv89B7pCcn3032_0EmP6rK13wDRFIfXd1P_v3jg3sqE4Fpon8Q8bff0Cy5zlnPAaSgo8AAAAAAAAAAAAAE-rLU_3nplzsm530tpc0W4IZ5otX9YRpxPFPNRop4hCWWhsvDThxQElThfmIWX-CAEgEOjKgA4Yia_WVCABIgEDbOAwVg%3D%3D; n_mh=d1cD676tNG_MgR166CnV6H5kFMdBO8PQ_2Fx-ypqRV8; sid_guard=0605de1cd43197f2f116ca333abace99%7C1762186264%7C5184000%7CFri%2C+02-Jan-2026+16%3A11%3A04+GMT; uid_tt=1c86f169d471a8e0bc803b1672caaf53; uid_tt_ss=1c86f169d471a8e0bc803b1672caaf53; sid_tt=0605de1cd43197f2f116ca333abace99; sessionid=0605de1cd43197f2f116ca333abace99; sessionid_ss=0605de1cd43197f2f116ca333abace99; session_tlb_tag=sttt%7C16%7CBgXeHNQxl_LxFsozOrrOmf_________lWCi_J-8YArRH_UVCZVabwPz1Mp__HwTuC3U4WaDipaE%3D; is_staff_user=false; sid_ucp_v1=1.0.0-KGI2OTY4YWRjNDY4ZTQxYzNkNGZmYjEzYWNhMjE3MWMwOWZkYTQ5YjUKKAjM_rmLyQIQmKijyAYYnxAgDCjZyoCriKzCAzD48bHTBTgHQPQHSAQaAmxmIiAwNjA1ZGUxY2Q0MzE5N2YyZjExNmNhMzMzYWJhY2U5OQ; ssid_ucp_v1=1.0.0-KGI2OTY4YWRjNDY4ZTQxYzNkNGZmYjEzYWNhMjE3MWMwOWZkYTQ5YjUKKAjM_rmLyQIQmKijyAYYnxAgDCjZyoCriKzCAzD48bHTBTgHQPQHSAQaAmxmIiAwNjA1ZGUxY2Q0MzE5N2YyZjExNmNhMzMzYWJhY2U5OQ; csrf_session_id=4719743162754ac9037e46752a02989e'  \
+   --data 'stream_id=694719414102130770&room_id=7568554085717150516&status=2' \
+  --compressed
