@@ -2087,6 +2087,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.'**
   String get privacyContent;
+
+  /// No description provided for @streamCodeExtractor.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream Code Extractor'**
+  String get streamCodeExtractor;
+
+  /// No description provided for @getStreamCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Stream Code'**
+  String get getStreamCode;
+
+  /// No description provided for @extractSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream code extracted successfully'**
+  String get extractSuccess;
+
+  /// No description provided for @pushAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Address'**
+  String get pushAddress;
+
+  /// No description provided for @streamKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream Key'**
+  String get streamKey;
+
+  /// No description provided for @lastUpdateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Updated'**
+  String get lastUpdateTime;
+
+  /// No description provided for @noStreamCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No stream code yet. Click the button above to extract from captured traffic'**
+  String get noStreamCodeHint;
+
+  /// No description provided for @refreshSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh successful'**
+  String get refreshSuccess;
+
+  /// No description provided for @extractInMainWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Stream code extraction is performed in the main window. Click the toolbox icon to extract, then this window will display the results.'**
+  String get extractInMainWindow;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

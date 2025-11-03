@@ -5,6 +5,10 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/stream_code_manager.dart';
 import 'package:proxypin/network/components/stream_code/stream_code_data.dart';
+import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/desktop/desktop.dart';
+import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/utils/listenable_list.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:intl/intl.dart';
 
@@ -12,8 +16,9 @@ import 'package:intl/intl.dart';
 /// Displays captured Douyin live streaming push codes with copy and refresh functionality
 class StreamCodePage extends StatefulWidget {
   final int? windowId;
+  final ListenableList<HttpRequest>? trafficContainer;
 
-  const StreamCodePage({super.key, this.windowId});
+  const StreamCodePage({super.key, this.windowId, this.trafficContainer});
 
   @override
   State<StatefulWidget> createState() {
@@ -26,6 +31,7 @@ class _StreamCodePageState extends State<StreamCodePage> {
 
   StreamCodeManager? _manager;
   bool _isRefreshing = false;
+  bool _isExtracting = false;
 
   @override
   void initState() {
@@ -149,9 +155,8 @@ class _StreamCodePageState extends State<StreamCodePage> {
                     ),
                     const Divider(),
                   ],
-                  _buildAutoExtractToggle(),
-                  const Divider(),
-                  const SizedBox(height: 16),
+                  _buildManualExtractButton(),
+                  const SizedBox(height: 24),
                   ValueListenableBuilder<StreamCodeData?>(
                     valueListenable: _manager!.lastStreamCodeNotifier,
                     builder: (context, streamCode, child) {
@@ -167,19 +172,102 @@ class _StreamCodePageState extends State<StreamCodePage> {
     );
   }
 
-  Widget _buildAutoExtractToggle() {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _manager!.autoExtractEnabledNotifier,
-      builder: (context, enabled, child) {
-        return SwitchListTile(
-          title: Text(localizations.autoExtract),
-          subtitle: Text(localizations.autoExtractDesc),
-          value: enabled,
-          onChanged: (value) async {
-            await _manager!.setAutoExtractEnabled(value);
-          },
-        );
-      },
+  Future<void> _handleManualExtract() async {
+    if (_manager == null || _isExtracting) return;
+
+    // Auto-detect the appropriate traffic container based on platform
+    final ListenableList<HttpRequest> container;
+    if (widget.trafficContainer != null) {
+      // Use provided container (typically mobile)
+      container = widget.trafficContainer!;
+    } else if (Platforms.isDesktop()) {
+      // Access desktop container via DesktopApp
+      container = DesktopApp.container;
+    } else {
+      // Fallback to mobile container if not provided
+      container = MobileApp.container;
+    }
+
+    if (container.source.isEmpty) {
+      _showNotification('无可用流量数据\n请先抓取网络请求', isError: true);
+      return;
+    }
+
+    setState(() {
+      _isExtracting = true;
+    });
+
+    try {
+      await _manager!.extractFromTraffic(container.source);
+      if (mounted) {
+        _showNotification(localizations.extractSuccess);
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        _showNotification(e.toString().replaceFirst('Exception: ', ''), isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExtracting = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildManualExtractButton() {
+    // In desktop multi-window mode, extraction happens in main window
+    // Show instruction text instead of extract button
+    final bool isMultiWindow = widget.windowId != null && Platforms.isDesktop();
+
+    if (isMultiWindow) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Card(
+            elevation: 0,
+            color: Colors.blue.withValues(alpha: 0.1),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue[700]),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      localizations.extractInMainWindow,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Normal mode: show extract button
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: _isExtracting ? null : _handleManualExtract,
+        icon: _isExtracting
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : const Icon(Icons.search, size: 18),
+        label: Text(localizations.getStreamCode),
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      ),
     );
   }
 
@@ -193,7 +281,7 @@ class _StreamCodePageState extends State<StreamCodePage> {
             Icon(
               Icons.stream,
               size: 64,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -201,7 +289,7 @@ class _StreamCodePageState extends State<StreamCodePage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -221,7 +309,7 @@ class _StreamCodePageState extends State<StreamCodePage> {
           '${localizations.lastUpdateTime}: $formattedDate',
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 16),
@@ -256,6 +344,8 @@ class _StreamCodePageState extends State<StreamCodePage> {
   }
 
   Widget _buildStreamCodeRow(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -281,15 +371,20 @@ class _StreamCodePageState extends State<StreamCodePage> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: isDark
+                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                : Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: SelectableText(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),

@@ -1034,4 +1034,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privacyContent =>
       'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.';
+
+  @override
+  String get streamCodeExtractor => 'Stream Code Extractor';
+
+  @override
+  String get getStreamCode => 'Get Stream Code';
+
+  @override
+  String get extractSuccess => 'Stream code extracted successfully';
+
+  @override
+  String get pushAddress => 'Push Address';
+
+  @override
+  String get streamKey => 'Stream Key';
+
+  @override
+  String get lastUpdateTime => 'Last Updated';
+
+  @override
+  String get noStreamCodeHint => 'No stream code yet. Click the button above to extract from captured traffic';
+
+  @override
+  String get refreshSuccess => 'Refresh successful';
+
+  @override
+  String get extractInMainWindow =>
+      'Stream code extraction is performed in the main window. Click the toolbox icon to extract, then this window will display the results.';
 }

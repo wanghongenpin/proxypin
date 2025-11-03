@@ -5,7 +5,10 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/manager/stream_code_manager.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/desktop/desktop.dart';
+import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/toolbox/qr_code_page.dart';
 import 'package:proxypin/ui/toolbox/regexp.dart';
@@ -185,11 +188,32 @@ class _ToolboxState extends State<Toolbox> {
                   IconText(
                       onTap: () async {
                         if (Platforms.isMobile()) {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const StreamCodePage()));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => StreamCodePage(trafficContainer: MobileApp.container)));
                           return;
                         }
-                        MultiWindow.openWindow(localizations.streamCodeExtractor, 'StreamCodePage',
-                            size: const Size(800, 450));
+
+                        // Desktop: Pre-extract stream code from main window traffic before opening display window
+                        try {
+                          final manager = await StreamCodeManager.instance;
+                          await manager.extractFromTraffic(DesktopApp.container.source);
+
+                          // Extraction successful, open display window
+                          if (!context.mounted) return;
+                          MultiWindow.openWindow(localizations.streamCodeExtractor, 'StreamCodePage',
+                              size: const Size(800, 450));
+                        } on Exception catch (e) {
+                          // Show error in main window
+                          if (!context.mounted) return;
+                          final message = e.toString().replaceFirst('Exception: ', '');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(message),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
                       },
                       icon: Icons.stream,
                       text: localizations.streamCodeExtractor,

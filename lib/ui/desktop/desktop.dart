@@ -41,6 +41,13 @@ import '../app_update/app_update_repository.dart';
 import '../component/split_view.dart';
 import '../toolbox/toolbox.dart';
 
+/// Desktop application container
+/// Provides public access to desktop traffic container
+class DesktopApp {
+  /// Traffic container for desktop
+  static ListenableList<HttpRequest> get container => _DesktopHomePagePageState.container;
+}
+
 /// @author wanghongen
 /// 2023/10/8
 class DesktopHomePage extends StatefulWidget {

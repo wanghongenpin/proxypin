@@ -1021,6 +1021,33 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get privacyContent =>
       '本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。';
+
+  @override
+  String get streamCodeExtractor => '获取推流码';
+
+  @override
+  String get getStreamCode => '获取推流码';
+
+  @override
+  String get extractSuccess => '推流码获取成功';
+
+  @override
+  String get pushAddress => '推流地址';
+
+  @override
+  String get streamKey => '推流码';
+
+  @override
+  String get lastUpdateTime => '最后更新时间';
+
+  @override
+  String get noStreamCodeHint => '暂无推流码，请点击上方按钮从抓包数据中提取';
+
+  @override
+  String get refreshSuccess => '刷新成功';
+
+  @override
+  String get extractInMainWindow => '推流码提取在主窗口进行。请在工具箱中点击「获取推流码」进行提取，此窗口将显示结果。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

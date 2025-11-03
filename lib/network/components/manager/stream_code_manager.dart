@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 import '../../../storage/path.dart';
+import '../../http/http.dart';
 import '../../util/logger.dart';
 import '../stream_code/stream_code_data.dart';
 
@@ -180,5 +181,67 @@ class StreamCodeManager {
       _lastStreamCodeNotifier.value = null;
       await _flush();
     }
+  }
+
+  /// Extract stream code from captured traffic (manual extraction)
+  ///
+  /// Searches through ProxyPin's captured traffic for the most recent
+  /// `/webcast/room/get_latest_room/` response and extracts the stream code.
+  ///
+  /// Throws Exception with user-friendly message on failure.
+  Future<StreamCodeData> extractFromTraffic(List<HttpRequest> traffic) async {
+    // Reverse search to find most recent matching request
+    final matches = traffic.reversed.where((request) {
+      return request.requestUrl.contains('/webcast/room/get_latest_room/');
+    });
+
+    if (matches.isEmpty) {
+      throw Exception('未找到推流码请求\n请先访问抖音直播间');
+    }
+
+    final latestRequest = matches.first;
+
+    // Check if response has been received
+    if (latestRequest.response == null) {
+      throw Exception('请求尚未完成\n请等待响应返回');
+    }
+
+    // Get response body (already decompressed by bodyAsString)
+    final responseBody = latestRequest.response!.bodyAsString;
+    if (responseBody.isEmpty) {
+      throw Exception('响应内容为空');
+    }
+
+    // Parse JSON response
+    Map<String, dynamic> jsonData;
+    try {
+      jsonData = jsonDecode(responseBody) as Map<String, dynamic>;
+    } on FormatException catch (e) {
+      logger.w('Stream code extraction failed: JSON parse error - $e');
+      throw Exception('解析失败：响应格式异常');
+    }
+
+    // Extract rtmp_push_url with safe navigation
+    final rtmpPushUrl = jsonData['data']?['stream_url']?['rtmp_push_url'] as String?;
+
+    if (rtmpPushUrl == null || rtmpPushUrl.isEmpty) {
+      logger.w('Stream code extraction skipped: rtmp_push_url field not found or empty');
+      throw Exception('未找到推流码\n可能是房间未开播');
+    }
+
+    // Parse stream code data
+    StreamCodeData newData;
+    try {
+      newData = StreamCodeData.fromApiResponse(rtmpPushUrl, latestRequest.requestUrl);
+    } on FormatException catch (e) {
+      logger.w('Stream code extraction failed: Invalid URL format - $e');
+      throw Exception('推流码格式异常：$e');
+    }
+
+    // Save to persistent storage
+    await updateStreamCode(newData);
+
+    logger.i('Stream code extracted from traffic: ${newData.pushAddress}');
+    return newData;
   }
 }

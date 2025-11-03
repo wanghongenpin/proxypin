@@ -4,7 +4,7 @@ import '../http/http.dart';
 import '../util/logger.dart';
 import 'interceptor.dart';
 import 'manager/stream_code_manager.dart';
-import '../stream_code/stream_code_data.dart';
+import 'stream_code/stream_code_data.dart';
 
 /// Interceptor for extracting Douyin live streaming push codes.
 ///
@@ -54,7 +54,7 @@ class StreamCodeInterceptor extends Interceptor {
 
       // Check if URL matches target API
       final requestUrl = request.requestUrl;
-      if (!requestUrl.contains('webcast5-mate-lf.amemv.com/webcast/room/get_latest_room/')) {
+      if (!requestUrl.contains('/webcast/room/get_latest_room/')) {
         return; // Not target API
       }
 
