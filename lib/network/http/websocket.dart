@@ -59,13 +59,34 @@ class WebSocketFrame {
     if (opcode == 0x08) {
       return '连接关闭';
     }
-    if (opcode == 0x02) {
-      return '二进制数据';
+    if (isBinary || isText) {
+      try {
+        return utf8.decode(payloadData);
+      } catch (e) {
+        if (opcode == 0x02) {
+          return '非UTF8二进制数据';
+        }
+        return String.fromCharCodes(payloadData);
+      }
+    } else {
+      return "[WebSocket 特殊消息类型: 0x${opcode.toRadixString(16)} $opcodeAsString]";
     }
-    try {
-      return utf8.decode(payloadData);
-    } catch (e) {
-      return String.fromCharCodes(payloadData);
+  }
+
+  String get opcodeAsString {
+    switch (opcode) {
+      case 0x01:
+        return 'text';
+      case 0x02:
+        return 'binary';
+      case 0x08:
+        return 'close';
+      case 0x09:
+        return 'ping';
+      case 0x0a:
+        return 'pong';
+      default:
+        return 'hex:0x${opcode.toRadixString(16)}';
     }
   }
 }
