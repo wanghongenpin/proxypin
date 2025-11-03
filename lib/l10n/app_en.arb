@@ -358,7 +358,7 @@
   "privacyPolicy": "Privacy Policy",
   "privacyContent": "This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.",
 
-  "streamCodeExtractor": "Stream Code Extractor",
+  "streamCodeExtractor": "Douyin Stream Code",
   "getStreamCode": "Get Stream Code",
   "extractSuccess": "Stream code extracted successfully",
   "pushAddress": "Push Address",

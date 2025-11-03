@@ -358,7 +358,7 @@
   "privacyPolicy": "隐私协议",
   "privacyContent": "本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。",
 
-  "streamCodeExtractor": "获取推流码",
+  "streamCodeExtractor": "抖音推流码",
   "getStreamCode": "获取推流码",
   "extractSuccess": "推流码获取成功",
   "pushAddress": "推流地址",
