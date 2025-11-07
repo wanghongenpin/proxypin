@@ -46,6 +46,7 @@ import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../../utils/export_request.dart';
 import '../common.dart';
 
 /// 请求 URI
@@ -197,6 +198,20 @@ class _RequestWidgetState extends State<RequestWidget> {
           onClick: (_) {
             openDetailInNewWindow();
           }),
+      MenuItem.separator(),
+      MenuItem(
+          label: localizations.export,
+          type: 'submenu',
+          submenu: Menu(items: [
+            MenuItem(label: localizations.request, onClick: (_) => exportRequest(widget.request)),
+            MenuItem(label: localizations.requestBody, onClick: (_) => exportRequestBody(widget.request)),
+            MenuItem.separator(),
+            MenuItem(label: localizations.response, onClick: (_) => exportResponse(widget.response.get())),
+            MenuItem(label: localizations.responseBody, onClick: (_) => exportResponseBody(widget.response.get())),
+            MenuItem.separator(),
+            MenuItem(label: "HAR", onClick: (_) => exportHar(widget.request)),
+          ])),
+      MenuItem.separator(),
       MenuItem(label: localizations.repeat, onClick: (_) => onRepeat(widget.request)),
       MenuItem(label: localizations.customRepeat, onClick: (_) => showCustomRepeat(widget.request)),
       MenuItem(
@@ -348,7 +363,7 @@ class _RequestWidgetState extends State<RequestWidget> {
   }
 
   ///请求编辑
-  requestEdit() async {
+  Future<void> requestEdit() async {
     var size = MediaQuery.of(context).size;
     var ratio = 1.0;
     if (Platform.isWindows) {
