@@ -30,7 +30,10 @@ enum ContentType {
   font,
   image,
   video,
-  http;
+  http,
+  sse
+
+  ;
 
   static ContentType valueOf(String name) {
     return ContentType.values.firstWhere((element) => element.name == name.toLowerCase(), orElse: () => http);

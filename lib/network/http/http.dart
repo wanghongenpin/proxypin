@@ -43,7 +43,8 @@ abstract class HttpMessage {
     "form-data": ContentType.formData,
     "image": ContentType.image,
     "video": ContentType.video,
-    "application/json": ContentType.json
+    "application/json": ContentType.json,
+    "text/event-stream": ContentType.sse,
   };
 
   String protocolVersion;

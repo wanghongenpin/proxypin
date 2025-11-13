@@ -133,12 +133,20 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   @override
   Widget build(BuildContext context) {
     bool isWebSocket = widget.request.get()?.isWebSocket == true;
-    tabs[tabs.length - 1] = isWebSocket ? "WebSocket" : 'Cookies';
+    bool isSse = widget.response.get()?.headers.contentType.toLowerCase().startsWith('text/event-stream') == true;
+    bool isStreamMessages = isWebSocket || isSse;
+    if (isSse) {
+      tabs[tabs.length - 1] = "SSE";
+    } else if (isWebSocket) {
+      tabs[tabs.length - 1] = "WebSocket";
+    } else {
+      tabs[tabs.length - 1] = 'Cookies';
+    }
 
     var tabBar = TabBar(
       padding: const EdgeInsets.only(bottom: 0),
       controller: _tabController,
-      dividerColor: Theme.of(context).dividerColor.withOpacity(0.15),
+      dividerColor: Theme.of(context).dividerColor.withValues(alpha: 0.15),
       labelPadding: const EdgeInsets.symmetric(horizontal: 10),
       tabs: tabs.map((title) => Tab(child: Text(title, style: widget.tabStyle, maxLines: 1))).toList(),
     );
@@ -170,7 +178,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
               KeepAliveWrapper(child: request()),
               KeepAliveWrapper(child: response()),
               SelectionArea(
-                  child: isWebSocket
+                  child: isStreamMessages
                       ? Websocket(widget.request, widget.response)
                       : Cookies(widget.request, widget.response)),
             ],
