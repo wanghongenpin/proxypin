@@ -36,6 +36,7 @@ const contentMap = {
   ContentType.text: Icons.text_fields,
   ContentType.css: Icons.css,
   ContentType.font: Icons.font_download,
+  ContentType.sse: Icons.stream,
 };
 
 Widget getIcon(HttpResponse? response, {Color? color}) {
@@ -54,6 +55,7 @@ Widget getIcon(HttpResponse? response, {Color? color}) {
       errorBuilder: (context, error, stackTrace) => Icon(Icons.image, size: 16, color: color ?? Colors.green),
     );
   }
+
   return SizedBox(
       width: 18, child: Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green));
 }
@@ -135,6 +137,7 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
 
         FlutterToastr.show(AppLocalizations.of(context)!.copied, context);
         unSelect(editableTextState);
+
         editableTextState.hideToolbar();
       },
       type: ContextMenuButtonType.copy,
@@ -179,7 +182,8 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
 
 void unSelect(EditableTextState editableTextState) {
   editableTextState.userUpdateTextEditingValue(
-    editableTextState.textEditingValue.copyWith(selection: const TextSelection(baseOffset: 0, extentOffset: 0)),
+    editableTextState.textEditingValue
+        .copyWith(selection: TextSelection.collapsed(offset: editableTextState.textEditingValue.selection.baseOffset)),
     SelectionChangedCause.tap,
   );
 }

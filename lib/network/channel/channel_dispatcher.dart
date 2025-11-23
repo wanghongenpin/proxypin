@@ -13,6 +13,7 @@ import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/network/handle/sse_handle.dart';
 
 import '../util/task_queue.dart';
 
@@ -201,10 +202,47 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     remoteChannel.dispatcher.channelHandle(rawCodec, WebSocketChannelHandler(channel, data.request!));
   }
 
+  /// SSE 处理 (text/event-stream)
+  void onSseHandle(ChannelContext channelContext, Channel channel, HttpResponse response, List<int>? initialBody) {
+    Channel remoteChannel = channelContext.getAttribute(channel.id);
+    channelContext.currentRequest?.response = response;
+    response.request ??= channelContext.currentRequest;
+    channelContext.listener?.onResponse(channelContext, response);
+
+    remoteChannel.write(channelContext, response);
+
+    // Switch to raw streaming: server->client uses SseChannelHandler; client->server just relays
+    var rawCodec = RawCodec();
+    channel.dispatcher.channelHandle(rawCodec, SseChannelHandler(remoteChannel, response));
+    remoteChannel.dispatcher.channelHandle(rawCodec, RelayHandler(channel));
+
+    // Flush any initial body bytes that were already read
+    if (initialBody != null && initialBody.isNotEmpty) {
+      // Place existing buffered bytes and let handler consume
+      buffer.add(initialBody);
+      var body = buffer.bytes;
+      buffer.clear();
+      handler.channelRead(channelContext, channel, body);
+    }
+  }
+
   void notSupportedForward(ChannelContext channelContext, Channel channel, DecoderResult decodeResult) {
     Channel? remoteChannel = channelContext.getAttribute(channel.id);
+
+    // If this is an SSE response, switch to SSE streaming mode instead of generic relay
+    if (decodeResult.data is HttpResponse) {
+      var response = decodeResult.data as HttpResponse;
+      if (response.headers.contentType.toLowerCase().startsWith('text/event-stream') && remoteChannel != null) {
+        logger.d("[$channel] switch to SSE streaming");
+        onSseHandle(channelContext, channel, response, decodeResult.forward);
+        return;
+      }
+    }
+
+    // Fallback: generic relay for unsupported body types
     buffer.add(decodeResult.forward ?? []);
     relay(channelContext, channel, remoteChannel!);
+
     if (decodeResult.data is HttpResponse) {
       var response = decodeResult.data as HttpResponse;
       logger.w("[$channel] not supported parse ${response.headers.contentType}");

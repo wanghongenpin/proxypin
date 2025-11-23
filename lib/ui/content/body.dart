@@ -446,7 +446,7 @@ class _BodyState extends State<_Body> {
   }
 
   Widget _getBody(ViewType type) {
-    if (message?.isWebSocket == true) {
+    if (message?.isWebSocket == true || (message?.contentType == ContentType.sse && message?.messages.isNotEmpty == true)) {
       List<Widget>? list = message?.messages
           .map((e) => Container(
               margin: const EdgeInsets.only(top: 2, bottom: 2),

@@ -56,6 +56,7 @@ class DrawerWidget extends StatelessWidget {
     return Drawer(
         backgroundColor: Theme.of(context).cardColor,
         child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
                 decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
