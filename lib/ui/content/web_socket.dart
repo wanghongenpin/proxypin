@@ -69,8 +69,9 @@ class Websocket extends StatelessWidget {
                       crossAxisAlignment: message.isFromClient ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                       children: [
                         SelectionContainer.disabled(
-                            child:
-                                Text(message.time.format(), style: const TextStyle(fontSize: 12, color: Colors.grey))),
+                            child: Text(
+                                "${message.time.format()} Type: ${message.opcodeAsString} Size: ${getPackage(message.payloadLength)}",
+                                style: const TextStyle(fontSize: 12, color: Colors.grey))),
                         Row(mainAxisSize: MainAxisSize.min, children: [
                           if (!message.isFromClient) previewButton,
                           Flexible(
@@ -83,8 +84,8 @@ class Websocket extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: SelectableText(
-                                  "${message.payloadDataAsString}${message.isBinary ? ' ${getPackage(message.payloadLength)}' : ''}",
-                                  maxLines: 1,
+                                  message.payloadDataAsString,
+                                  maxLines: null,
                                   contextMenuBuilder: (context, editableTextState) =>
                                       contextMenu(context, editableTextState,
                                           customItem: ContextMenuButtonItem(
