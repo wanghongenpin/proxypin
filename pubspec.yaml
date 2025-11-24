@@ -27,7 +27,7 @@ dependencies:
   proxy_manager: ^0.0.3
   permission_handler: ^12.0.1
   flutter_toastr: ^1.0.3
-  share_plus: ^11.1.0
+  share_plus: ^12.0.1
   flutter_js: ^0.8.5
   flutter_code_editor:
     git:
