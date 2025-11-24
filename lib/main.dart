@@ -18,18 +18,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:macos_window_utils/macos/ns_window_button_type.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
-import 'package:proxypin/ui/desktop/window_listener.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/utils/desktop_support.dart';
 import 'package:proxypin/utils/navigator.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:window_manager/window_manager.dart';
-import 'package:macos_window_utils/macos_window_utils.dart';
 
 import 'l10n/app_localizations.dart';
 
@@ -55,42 +52,10 @@ void main(List<String> args) async {
     return;
   }
 
-  await windowManager.ensureInitialized();
   var appConfiguration = await instance;
-
-  //设置窗口大小
-  Size windowSize = appConfiguration.windowSize ?? (Platform.isMacOS ? const Size(1230, 750) : const Size(1100, 650));
-  WindowOptions windowOptions =
-      WindowOptions(minimumSize: const Size(1000, 600), size: windowSize, titleBarStyle: TitleBarStyle.hidden);
-
-  Offset? windowPosition = appConfiguration.windowPosition;
-
-  if (appConfiguration.themeMode != ThemeMode.system) {
-    windowManager.setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
+  if (Platforms.isDesktop()) {
+    await DesktopSupport.initialize(appConfiguration);
   }
-
-  if (Platform.isMacOS) {
-    await WindowManipulator.initialize();
-    // 调整关闭按钮的位置
-    WindowManipulator.overrideStandardWindowButtonPosition(
-        buttonType: NSWindowButtonType.closeButton, offset: Offset(10, 13));
-    WindowManipulator.overrideStandardWindowButtonPosition(
-        buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(29, 13));
-    WindowManipulator.overrideStandardWindowButtonPosition(
-        buttonType: NSWindowButtonType.zoomButton, offset: const Offset(48, 13));
-  }
-
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    if (windowPosition != null) {
-      await windowManager.setPosition(windowPosition);
-    }
-
-    await windowManager.show();
-    await windowManager.focus();
-  });
-
-  registerMethodHandler();
-  windowManager.addListener(WindowChangeListener(appConfiguration));
 
   runApp(FluentApp(DesktopHomePage(await configuration, appConfiguration), appConfiguration));
 }
