@@ -89,7 +89,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Theme.of(context).dialogBackgroundColor,
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
             title:
                 Text(localizations.requestRewrite, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
@@ -257,7 +257,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 constraints: const BoxConstraints(maxHeight: 600, minHeight: 550),
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
                   Row(
@@ -308,7 +308,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onSecondaryTapDown: (details) => showMenus(details, index),
           onDoubleTap: () => showEdit(index),
           onHover: (hover) {
@@ -334,9 +334,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
           },
           child: Container(
               color: selected[index] == true
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),
@@ -571,7 +571,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                             height: 33,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              value: ruleType,
+                              initialValue: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),

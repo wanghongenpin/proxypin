@@ -31,10 +31,10 @@ class _ReportServersPageMobileState extends State<ReportServersPageMobile> {
     final uri = Uri.parse(url);
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        FlutterToastr.show('Open guide failed', context);
+        if (mounted) FlutterToastr.show('Open guide failed', context);
       }
     } catch (e) {
-      FlutterToastr.show('Open guide failed: $e', context);
+      if (mounted) FlutterToastr.show('Open guide failed: $e', context);
     }
   }
 

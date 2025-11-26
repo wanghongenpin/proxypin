@@ -194,7 +194,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
         widget.onStart?.call();
       }).catchError((e) {
         String message = localizations.proxyPortRepeat(widget.proxyServer.port);
-        FlutterToastr.show(message, context, duration: 3);
+        if (mounted) FlutterToastr.show(message, context, duration: 3);
       });
     } finally {
       Future.delayed(const Duration(seconds: 5)).then((value) {

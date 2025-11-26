@@ -79,7 +79,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     initFromContainer();
   }
 
-  initFromContainer() {
+  void initFromContainer() {
     for (var request in widget.list) {
       var hostAndPort = request.hostAndPort!;
       domainList.add(hostAndPort);
@@ -90,7 +90,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     view = domainList.toList();
   }
 
-  add(HttpRequest request) {
+  void add(HttpRequest request) {
     var hostAndPort = request.hostAndPort!;
     domainList.remove(hostAndPort);
     domainList.add(hostAndPort);
@@ -109,7 +109,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     changeState();
   }
 
-  addResponse(HttpResponse response) {
+  void addResponse(HttpResponse response) {
     HostAndPort? hostAndPort = response.request!.hostAndPort;
     if (response.isWebSocket) {
       add(response.request!);
@@ -120,7 +120,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
   }
 
-  clean() {
+  void clean() {
     setState(() {
       view.clear();
       domainList.clear();
@@ -130,7 +130,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     });
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     for (var request in list) {
       containerMap[request.hostAndPort]?.remove(request);
       if (containerMap[request.hostAndPort]!.isEmpty) {
@@ -166,7 +166,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   }
 
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     sortDesc = desc;
   }
 
@@ -177,7 +177,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     return true;
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
@@ -244,12 +244,12 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
         });
   }
 
-  scrollToTop() {
+  void scrollToTop() {
     _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
   ///菜单
-  menu(int index) {
+  void menu(int index) {
     var hostAndPort = view.elementAt(index);
 
     showModalBottomSheet(

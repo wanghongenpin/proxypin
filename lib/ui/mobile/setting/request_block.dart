@@ -43,7 +43,7 @@ class _RequestBlockState extends State<MobileRequestBlock> {
               const SizedBox(height: 10),
               Container(
                   height: 600,
-                  decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                  decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                   child: Column(children: [
                     const SizedBox(height: 5),
                     Row(
@@ -70,11 +70,11 @@ class _RequestBlockState extends State<MobileRequestBlock> {
     return InkWell(
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
-        hoverColor: primaryColor.withOpacity(0.3),
+        hoverColor: primaryColor.withValues(alpha: 0.3),
         onLongPress: () => showMenus(index),
         onTap: () => showEdit(index),
         child: Container(
-            color: index.isEven ? Colors.grey.withOpacity(0.1) : null,
+            color: index.isEven ? Colors.grey.withValues(alpha: 0.1) : null,
             height: 38,
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
@@ -101,7 +101,7 @@ class _RequestBlockState extends State<MobileRequestBlock> {
   }
 
   //点击菜单
-  showMenus(int index) {
+  void showMenus(int index) {
     var list = widget.requestBlockManager.list;
 
     showModalBottomSheet(
@@ -142,7 +142,7 @@ class _RequestBlockState extends State<MobileRequestBlock> {
         });
   }
 
-  showEdit([int? index]) {
+  void showEdit([int? index]) {
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -193,7 +193,7 @@ class RequestBlockAddDialog extends StatelessWidget {
                       onSaved: (val) => item.url = val!.trim()),
                   const SizedBox(height: 15),
                   DropdownButtonFormField(
-                      value: item.type,
+                      initialValue: item.type,
                       decoration: InputDecoration(
                           isDense: true, labelText: localizations.type, border: const OutlineInputBorder()),
                       items: BlockType.values

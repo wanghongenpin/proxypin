@@ -5,11 +5,11 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/http/http.dart';
 
-main() async {
+Future<void> main() async {
   await socketTest();
 }
 
-socketTest() async {
+Future<void> socketTest() async {
   var task = await Socket.startConnect("127.0.0.1", 7890);
   var socket = await task.socket;
   if (socket.address.type != InternetAddressType.unix) {

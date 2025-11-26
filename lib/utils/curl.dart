@@ -35,7 +35,7 @@ String curlRequest(HttpRequest request) {
       "${headers.join('\\\n')} \\\n $body  --compressed";
 }
 
-main() {
+void main() {
   print(Curl.parse(
       "curl -X POST 'https://example.com/api' -H 'Content-Type: application/json' -d '{\"key\":\"value\"}'"));
 }

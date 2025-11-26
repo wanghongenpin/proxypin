@@ -112,7 +112,7 @@ class _RequestWidgetState extends State<RequestWidget> {
             minLeadingWidth: 5,
             textColor: requestColor,
             selectedColor: requestColor,
-            selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             leading: getIcon(widget.response.get() ?? widget.request.response, color: requestColor),
             trailing: widget.trailing,
             title: Text(title.fixAutoLines(), overflow: TextOverflow.ellipsis, maxLines: 2),
@@ -159,8 +159,9 @@ class _RequestWidgetState extends State<RequestWidget> {
           label: localizations.copyUrl,
           onClick: (_) {
             var requestUrl = widget.request.requestUrl;
-            Clipboard.setData(ClipboardData(text: requestUrl))
-                .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
+            Clipboard.setData(ClipboardData(text: requestUrl)).then((value) {
+              if (mounted) FlutterToastr.show(localizations.copied, rootNavigator: true, context);
+            });
           }),
       MenuItem(
           label: localizations.copy,
@@ -169,26 +170,31 @@ class _RequestWidgetState extends State<RequestWidget> {
             MenuItem(
                 label: localizations.copyCurl,
                 onClick: (_) {
-                  Clipboard.setData(ClipboardData(text: curlRequest(widget.request)))
-                      .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
+                  Clipboard.setData(ClipboardData(text: curlRequest(widget.request))).then((value) {
+                    if (mounted) FlutterToastr.show(localizations.copied, rootNavigator: true, context);
+                  });
                 }),
             MenuItem(
                 label: localizations.copyRawRequest,
                 onClick: (_) {
-                  Clipboard.setData(ClipboardData(text: copyRawRequest(widget.request)))
-                      .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
+                  Clipboard.setData(ClipboardData(text: copyRawRequest(widget.request))).then((value) {
+                    if (mounted) FlutterToastr.show(localizations.copied, rootNavigator: true, context);
+                  });
                 }),
             MenuItem(
                 label: localizations.copyRequestResponse,
                 onClick: (_) {
                   Clipboard.setData(ClipboardData(text: copyRequest(widget.request, widget.response.get())))
-                      .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
+                      .then((value) {
+                    if (mounted) FlutterToastr.show(localizations.copied, rootNavigator: true, context);
+                  });
                 }),
             MenuItem(
               label: localizations.copyAsPythonRequests,
               onClick: (_) {
-                Clipboard.setData(ClipboardData(text: copyAsPythonRequests(widget.request)))
-                    .then((value) => FlutterToastr.show(localizations.copied, rootNavigator: true, context));
+                Clipboard.setData(ClipboardData(text: copyAsPythonRequests(widget.request))).then((value) {
+                  if (mounted) FlutterToastr.show(localizations.copied, rootNavigator: true, context);
+                });
               },
             ),
           ])),

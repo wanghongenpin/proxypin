@@ -182,7 +182,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   }
 
   ///发送请求
-  sendRequest() async {
+  Future<void> sendRequest() async {
     var currentState = requestLineKey.currentState!;
     var headers = requestKey.currentState?.getHeaders();
     var requestBody = requestKey.currentState?.getBody();
@@ -208,7 +208,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
       // FlutterToastr.show(localizations.requestSuccess, context);
     }).catchError((e) {
       responseChange.value = -1;
-      FlutterToastr.show('${localizations.fail}$e', context);
+      if (mounted) FlutterToastr.show('${localizations.fail}$e', context);
     });
 
     tabController.animateTo(1);
@@ -221,13 +221,13 @@ class UrlQueryNotifier {
   ParamCallback? _urlNotifier;
   ParamCallback? _paramNotifier;
 
-  urlListener(ParamCallback listener) => _urlNotifier = listener;
+  ParamCallback urlListener(ParamCallback listener) => _urlNotifier = listener;
 
-  paramListener(ParamCallback listener) => _paramNotifier = listener;
+  ParamCallback paramListener(ParamCallback listener) => _paramNotifier = listener;
 
-  onUrlChange(String url) => _urlNotifier?.call(url);
+  void onUrlChange(String url) => _urlNotifier?.call(url);
 
-  onParamChange(String param) => _paramNotifier?.call(param);
+  void onParamChange(String param) => _paramNotifier?.call(param);
 }
 
 class _HttpWidget extends StatefulWidget {
@@ -271,7 +271,7 @@ class _HttpState extends State<_HttpWidget> with AutomaticKeepAliveClientMixin {
     }
   }
 
-  change(HttpMessage? message) {
+  void change(HttpMessage? message) {
     this.message = message;
     body = message?.bodyAsString;
     headerKey.currentState?.refreshParam(message?.headers.getHeaders());
@@ -363,19 +363,19 @@ class _RequestLineState extends State<_RequestLine> {
     super.dispose();
   }
 
-  change(String? requestUrl, String? requestMethod) {
+  void change(String? requestUrl, String? requestMethod) {
     this.requestUrl.text = requestUrl ?? this.requestUrl.text;
     this.requestMethod = requestMethod ?? this.requestMethod;
 
     urlNotifier();
   }
 
-  urlNotifier() {
+  void urlNotifier() {
     var splitFirst = requestUrl.text.splitFirst("?".codeUnits.first);
     widget.urlQueryNotifier?.onUrlChange(splitFirst.length > 1 ? splitFirst.last : '');
   }
 
-  onQueryChange(String query) {
+  void onQueryChange(String query) {
     var url = requestUrl.text;
     var indexOf = url.indexOf("?");
     if (indexOf == -1) {
@@ -465,7 +465,7 @@ class KeyValState extends State<KeyValWidget> {
   }
 
   //监听url发生变化 更改表单
-  onChange(String value) {
+  void onChange(String value) {
     var query = value.split("&");
     int index = 0;
     while (index < query.length) {
@@ -486,7 +486,7 @@ class KeyValState extends State<KeyValWidget> {
     setState(() {});
   }
 
-  notifierChange() {
+  void notifierChange() {
     if (widget.paramNotifier == null) return;
     String query = _params
         .where((e) => e.enabled && e.key.isNotEmpty)
@@ -510,7 +510,7 @@ class KeyValState extends State<KeyValWidget> {
   }
 
   //刷新param
-  refreshParam(Map<String, List<String>>? headers) {
+  void refreshParam(Map<String, List<String>>? headers) {
     _params.clear();
     setState(() {
       headers?.forEach((name, values) {
@@ -572,7 +572,7 @@ class KeyValState extends State<KeyValWidget> {
   }
 
   /// 修改请求头
-  modifyParam(KeyVal keyVal) {
+  void modifyParam(KeyVal keyVal) {
     //隐藏输入框焦点
     hideKeyword(context);
     String headerName = keyVal.key;
@@ -620,7 +620,7 @@ class KeyValState extends State<KeyValWidget> {
   }
 
   //删除
-  deleteHeader(KeyVal keyVal) {
+  void deleteHeader(KeyVal keyVal) {
     showDialog(
         context: context,
         builder: (ctx) {

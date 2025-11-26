@@ -47,10 +47,10 @@ class _ReportServersPageState extends State<ReportServersPage> {
     final uri = Uri.parse(url);
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        FlutterToastr.show('Open guide failed', context);
+        if (mounted) FlutterToastr.show('Open guide failed', context);
       }
     } catch (e) {
-      FlutterToastr.show('Open guide failed: $e', context);
+      if (mounted) FlutterToastr.show('Open guide failed: $e', context);
     }
   }
 
@@ -241,7 +241,6 @@ class _ReportServersPageState extends State<ReportServersPage> {
         title: Text(localizations.reportServers),
         centerTitle: true,
         actions: [
-
           TextButton.icon(
             label: Text(localizations.newBuilt),
             onPressed: _addServerDialog,
@@ -251,7 +250,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
           IconButton(
             tooltip: localizations.useGuide,
             onPressed: _openGuide,
-            icon: const Icon(Icons.help_outline,size: 21),
+            icon: const Icon(Icons.help_outline, size: 21),
           ),
           IconButton(
             tooltip: localizations.close,

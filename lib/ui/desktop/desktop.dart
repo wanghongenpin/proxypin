@@ -120,7 +120,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               // color: Theme.of(context).brightness == Brightness.dark ? null : Color(0xFFF9F9F9),
               border: Border(
                   bottom: BorderSide(
-                      color: Theme.of(context).dividerColor.withOpacity(0.3), width: Platform.isMacOS ? 0.2 : 0.55))),
+                      color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                      width: Platform.isMacOS ? 0.2 : 0.55))),
           child: Platform.isMacOS
               ? Toolbar(proxyServer, requestListStateKey)
               : WindowsToolbar(title: Toolbar(proxyServer, requestListStateKey)),
@@ -190,8 +191,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                               '4. Search supports protocol selection and filtering of time consumption range;\n'
                               '5. History records support image persistence;\n'
                               '6. About increasing sponsorship;\n'
-                              '7. Fix large response body JSON Text preview lag;\n'
-                            ,
+                              '7. Fix large response body JSON Text preview lag;\n',
                       style: const TextStyle(fontSize: 14))));
         });
   }

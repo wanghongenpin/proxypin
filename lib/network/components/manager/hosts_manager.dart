@@ -140,7 +140,7 @@ class HostsManager {
     return null;
   }
 
-  removeHosts(Iterable<HostsItem> items) async {
+  Future<void> removeHosts(Iterable<HostsItem> items) async {
     if (items.isEmpty) return;
     for (var item in items) {
       if (item.parent == null) {

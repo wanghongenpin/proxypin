@@ -229,7 +229,7 @@ class _TimestampPageState extends State<TimestampPage> {
         });
   }
 
-  timestampConvert(String timestamp) {
+  void timestampConvert(String timestamp) {
     if (timestamp.isEmpty) return;
     try {
       if (timestamp.length == 13) {
@@ -247,7 +247,7 @@ class _TimestampPageState extends State<TimestampPage> {
     }
   }
 
-  timeConvert(String dateTime) {
+  void timeConvert(String dateTime) {
     if (dateTime.isEmpty) return;
     try {
       var date = DateTime.parse(dateTime);

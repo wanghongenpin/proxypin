@@ -55,7 +55,7 @@ class RewriteUpdateState extends State<DesktopRewriteUpdate> {
   }
 
   ///初始化重写项
-  initItems(RuleType ruleType, List<RewriteItem>? items) {
+  void initItems(RuleType ruleType, List<RewriteItem>? items) {
     this.ruleType = ruleType;
     this.items.clear();
 
@@ -87,7 +87,7 @@ class RewriteUpdateState extends State<DesktopRewriteUpdate> {
     );
   }
 
-  add() {
+  void add() {
     showDialog(
         context: context,
         builder: (context) => RewriteUpdateAddDialog(ruleType: ruleType, request: widget.request)).then((value) {
@@ -197,7 +197,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                       SizedBox(
                           width: 140,
                           child: DropdownButtonFormField<RewriteType>(
-                              value: rewriteType,
+                              initialValue: rewriteType,
                               focusColor: Colors.transparent,
                               itemHeight: 48,
                               decoration: const InputDecoration(
@@ -250,7 +250,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                 ]))));
   }
 
-  initTestData() {
+  void initTestData() {
     dataController.splitPattern = null;
     dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
@@ -290,7 +290,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   bool onMatch = false; //是否正在匹配
   bool isMatch = true;
 
-  onInputChangeMatch() {
+  void onInputChangeMatch() {
     if (onMatch || dataController.highlightEnabled == false) {
       return;
     }
@@ -380,7 +380,7 @@ class _UpdateListState extends State<UpdateList> {
     return Container(
         padding: const EdgeInsets.only(top: 10),
         constraints: const BoxConstraints(minHeight: 330),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
         child: SingleChildScrollView(
             child: Column(children: [
           Row(
@@ -407,7 +407,7 @@ class _UpdateListState extends State<UpdateList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onDoubleTap: () => showDialog(
                       context: context,
                       builder: (context) =>
@@ -420,7 +420,7 @@ class _UpdateListState extends State<UpdateList> {
               color: selected == index
                   ? primaryColor
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),
@@ -454,10 +454,8 @@ class _UpdateListState extends State<UpdateList> {
     return "${item.key}=${item.value}";
   }
 
-  showMenus(TapDownDetails details, int index) {
-    setState(() {
-      selected = index;
-    });
+  void showMenus(TapDownDetails details, int index) {
+    setState(() => selected = index);
 
     showContextMenu(context, details.globalPosition, items: [
       PopupMenuItem(

@@ -168,7 +168,7 @@ class _ExternalProxyDialogState extends State<ExternalProxyDialog> {
             ])));
   }
 
-  submit() async {
+  Future<void> submit() async {
     bool setting = true;
     if (externalProxy.enabled) {
       try {

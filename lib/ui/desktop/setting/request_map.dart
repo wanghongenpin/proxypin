@@ -238,7 +238,7 @@ class _RequestMapListState extends State<RequestMapList> {
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 height: 530,
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
                   Row(
@@ -264,7 +264,7 @@ class _RequestMapListState extends State<RequestMapList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onSecondaryTapDown: (details) => showMenus(details, index),
           onDoubleTap: () => showEdit(index),
           onHover: (hover) {
@@ -290,9 +290,9 @@ class _RequestMapListState extends State<RequestMapList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),
@@ -531,7 +531,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                             height: 33,
                             child: DropdownButtonFormField<RequestMapType>(
                               onSaved: (val) => rule.type = val!,
-                              value: mapType,
+                              initialValue: mapType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),

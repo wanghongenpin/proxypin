@@ -54,7 +54,7 @@ class ColorTransitionState extends State<ColorTransition> with SingleTickerProvi
     }
   }
 
-  show() {
+  void show() {
     _animationController.reset();
     _animationController.forward();
   }

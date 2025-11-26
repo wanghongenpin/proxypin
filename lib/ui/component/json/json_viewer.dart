@@ -464,8 +464,9 @@ void showJsonCopyMenu(BuildContext context, Offset position, Object? value) {
               if (value == null) {
                 return;
               }
-              Clipboard.setData(ClipboardData(text: value is String ? value : jsonEncode(value)))
-                  .then((value) => Toast.show(localizations.copied, context));
+              Clipboard.setData(ClipboardData(text: value is String ? value : jsonEncode(value))).then((value) {
+                if (context.mounted) Toast.show(localizations.copied, context);
+              });
             })
       ]);
 }

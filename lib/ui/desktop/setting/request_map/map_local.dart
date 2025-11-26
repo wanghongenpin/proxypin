@@ -132,7 +132,7 @@ class MapLocaleState extends State<DesktopMapLocal> {
             SizedBox(
                 width: 90,
                 child: DropdownButtonFormField<String>(
-                    value: bodyType.value,
+                    initialValue: bodyType.value,
                     focusColor: Colors.transparent,
                     itemHeight: 48,
                     decoration: const InputDecoration(

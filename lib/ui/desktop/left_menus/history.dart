@@ -177,7 +177,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
   }
 
   //导入har
-  import() async {
+  Future<void> import() async {
     final results = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['har']);
     if (results == null || results.files.isEmpty) {
       return;

@@ -192,7 +192,7 @@ class _JavaScriptState extends State<JavaScript> {
 class FullScreenCodeField extends StatelessWidget {
   final CodeController code;
 
-  FullScreenCodeField({required this.code});
+  const FullScreenCodeField({super.key, required this.code});
 
   @override
   Widget build(BuildContext context) {

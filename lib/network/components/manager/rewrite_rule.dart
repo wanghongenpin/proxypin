@@ -75,7 +75,7 @@ class RequestRewriteRule {
     _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
   }
 
-  toJson() {
+  Map<String, Object?> toJson() {
     return {
       'name': name,
       'enabled': enabled,

@@ -169,7 +169,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
         SizedBox(
             width: 90,
             child: DropdownButtonFormField<String>(
-                value: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
+                initialValue: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
                 focusColor: Colors.transparent,
                 itemHeight: 48,
                 decoration:
@@ -295,7 +295,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
           SizedBox(
               width: 120,
               child: DropdownButtonFormField<String>(
-                  value: rewriteItem.method?.name ?? 'GET',
+                  initialValue: rewriteItem.method?.name ?? 'GET',
                   focusColor: Colors.transparent,
                   itemHeight: 48,
                   decoration: const InputDecoration(
@@ -475,7 +475,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     super.dispose();
   }
 
-  _clear() {
+  void _clear() {
     _headers.forEach((key, value) {
       key.dispose();
       value.dispose();

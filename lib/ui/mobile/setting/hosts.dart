@@ -53,7 +53,7 @@ class _HostsPageState extends State<HostsPage> {
     super.initState();
   }
 
-  saveConfig() {
+  void saveConfig() {
     if (saving) return;
     saving = true;
     Future.delayed(const Duration(milliseconds: 3000), () {
@@ -144,9 +144,9 @@ class _HostsPageState extends State<HostsPage> {
           },
           child: Container(
               color: selected.contains(item)
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 42,
               padding: padding ?? const EdgeInsets.symmetric(vertical: 3),
@@ -184,11 +184,11 @@ class _HostsPageState extends State<HostsPage> {
     ]);
   }
 
-  newFolder() {
+  void newFolder() {
     showEdit(isFolder: true);
   }
 
-  showEdit({HostsItem? item, HostsItem? parent, bool? isFolder}) {
+  void showEdit({HostsItem? item, HostsItem? parent, bool? isFolder}) {
     isFolder ??= item?.isFolder == true;
     showDialog(
         context: context,
@@ -203,13 +203,13 @@ class _HostsPageState extends State<HostsPage> {
     });
   }
 
-  globalMenu() {
+  Stack globalMenu() {
     return Stack(children: [
       Container(
           height: 50,
           width: double.infinity,
           margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2)))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2)))),
       Positioned(
           top: 0,
           left: 0,
@@ -246,7 +246,7 @@ class _HostsPageState extends State<HostsPage> {
   }
 
   //点击菜单
-  showMenus(LongPressStartDetails details, HostsItem item) {
+  void showMenus(LongPressStartDetails details, HostsItem item) {
     //长按反馈
     HapticFeedback.lightImpact();
 
@@ -299,7 +299,7 @@ class _HostsPageState extends State<HostsPage> {
   }
 
   //导入
-  import() async {
+  Future<void> import() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     var file = result?.files.single;
     if (file == null) {
@@ -338,7 +338,7 @@ class _HostsPageState extends State<HostsPage> {
   }
 
   //导出
-  export(Iterable<HostsItem> items) async {
+  Future<void> export(Iterable<HostsItem> items) async {
     if (items.isEmpty) return;
 
     String fileName = 'hosts.json';

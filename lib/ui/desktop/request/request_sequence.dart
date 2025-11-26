@@ -74,7 +74,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     KeywordHighlights.addListener(highlightListener);
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
@@ -139,12 +139,12 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///高亮处理
-  highlightHandler() {
+  void highlightHandler() {
     setState(() {});
   }
 
   ///添加请求
-  add(HttpRequest request) {
+  void add(HttpRequest request) {
     ///过滤
     if (searchModel?.isNotEmpty == true && !searchModel!.filter(request, request.response)) {
       return;
@@ -160,7 +160,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///添加响应
-  addResponse(HttpResponse response) {
+  void addResponse(HttpResponse response) {
     if (searchModel == null || searchModel!.isEmpty || response.request == null) {
       changeState();
       return;
@@ -186,13 +186,13 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     setState(() {});
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     setState(() {
       view.removeWhere((element) => list.contains(element));
     });
   }
 
-  clean() {
+  void clean() {
     setState(() {
       view.clear();
       view.addAll(widget.container.source.reversed);
@@ -200,7 +200,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     sortDesc = desc;
     setState(() {
       view = Queue.of(view.toList().reversed);

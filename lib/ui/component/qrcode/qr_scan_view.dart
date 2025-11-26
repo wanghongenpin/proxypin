@@ -84,7 +84,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     _initAnimation();
   }
 
-  handle(String data) async {
+  Future<void> handle(String data) async {
     if (!isScan) return;
     stop();
     if (mounted) await Navigator.of(context, rootNavigator: true).maybePop(data);
@@ -133,15 +133,13 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     setState(() {});
   }
 
-  setFlashlight() async {
-    if (!isScan) return false;
+  void setFlashlight() async {
+    if (!isScan) return;
     _controller?.setFlashlight();
-    setState(() {
-      openFlashlight = !openFlashlight;
-    });
+    setState(() => openFlashlight = !openFlashlight);
   }
 
-  scanImage(String path) {
+  void scanImage(String path) {
     FlutterQrReader.imgScan(path).then((value) {
       stop();
       if (mounted) {

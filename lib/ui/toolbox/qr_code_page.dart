@@ -338,7 +338,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
   }
 
   //保存相册
-  saveImage() async {
+  Future<void> saveImage() async {
     if (data == null || data!.isEmpty) {
       return;
     }

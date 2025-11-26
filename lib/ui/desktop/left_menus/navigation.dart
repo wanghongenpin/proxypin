@@ -114,7 +114,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         selectedIconTheme: IconTheme.of(context).copyWith(color: Theme.of(context).colorScheme.primary, size: 22),
         unselectedIconTheme:
-            IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withOpacity(0.55), size: 22),
+            IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.55), size: 22),
         labelType: NavigationRailLabelType.all,
         destinations: destinations,
         selectedIndex: index,

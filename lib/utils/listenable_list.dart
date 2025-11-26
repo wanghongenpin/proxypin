@@ -15,7 +15,7 @@
  */
 abstract class ListenerListEvent<T> {
   /// 监听的源
-  sourceAware(List<T> source) {}
+  void sourceAware(List<T> source) {}
 
   void onAdd(T item);
 
@@ -25,7 +25,7 @@ abstract class ListenerListEvent<T> {
 
   void onBatchRemove(List<T> items);
 
-  clear();
+  void clear();
 }
 
 class OnchangeListEvent<T> extends ListenerListEvent<T> {
@@ -60,13 +60,13 @@ class ListenableList<T> extends Iterable<T> {
     if (source != null) this.source = source;
   }
 
-  addListener(ListenerListEvent<T> listener) {
+  void addListener(ListenerListEvent<T> listener) {
     if (_listeners.contains(listener)) return;
     listener.sourceAware(source);
     _listeners.add(listener);
   }
 
-  removeListener(ListenerListEvent<T> listener) {
+  void removeListener(ListenerListEvent<T> listener) {
     _listeners.remove(listener);
   }
 
@@ -85,21 +85,21 @@ class ListenableList<T> extends Iterable<T> {
     return source.sublist(start, end);
   }
 
-  void removeRange(start, end) {
+  void removeRange(int start, int end) {
     source.removeRange(start, end > source.length ? source.length : end);
     for (var element in _listeners) {
       element.clear();
     }
   }
 
-  update(int index, T item) {
+  void update(int index, T item) {
     source[index] = item;
     for (var element in _listeners) {
       element.onUpdate(item);
     }
   }
 
-  add(T item) {
+  void add(T item) {
     source.add(item);
     for (var element in _listeners) {
       element.onAdd(item);
@@ -126,14 +126,14 @@ class ListenableList<T> extends Iterable<T> {
     return item;
   }
 
-  clear() {
+  void clear() {
     source.clear();
     for (var element in _listeners) {
       element.clear();
     }
   }
 
-  removeWhere(bool Function(T element) test) {
+  void removeWhere(bool Function(T element) test) {
     var list = <T>[];
     source.removeWhere((it) {
       if (test.call(it)) {

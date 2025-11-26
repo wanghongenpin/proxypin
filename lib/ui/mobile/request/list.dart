@@ -93,31 +93,31 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///添加请求
-  add(Channel channel, HttpRequest request) {
+  void add(Channel channel, HttpRequest request) {
     container.add(request);
     requestSequenceKey.currentState?.add(request);
     domainListKey.currentState?.add(request);
   }
 
   ///添加响应
-  addResponse(ChannelContext channelContext, HttpResponse response) {
+  void addResponse(ChannelContext channelContext, HttpResponse response) {
     requestSequenceKey.currentState?.addResponse(response);
     domainListKey.currentState?.addResponse(response);
   }
 
   ///移除
-  domainListRemove(List<HttpRequest> list) {
+  void domainListRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     requestSequenceKey.currentState?.remove(list);
   }
 
   ///全部请求删除
-  sequenceRemove(List<HttpRequest> list) {
+  void sequenceRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     domainListKey.currentState?.remove(list);
   }
 
-  search(SearchModel searchModel) {
+  void search(SearchModel searchModel) {
     requestSequenceKey.currentState?.search(searchModel);
     domainListKey.currentState?.search(searchModel.keyword?.trim());
   }
@@ -127,7 +127,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///清理
-  clean() {
+  void clean() {
     setState(() {
       container.clear();
       domainListKey.currentState?.clean();
@@ -136,7 +136,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///清理早期数据
-  cleanupEarlyData(int retain) {
+  void cleanupEarlyData(int retain) {
     var list = container.source;
     if (list.length <= retain) {
       return;
@@ -149,7 +149,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   //导出har
-  export(BuildContext context, String title) async {
+  Future<void> export(BuildContext context, String title) async {
     //文件名称
     String fileName =
         '${title.contains("ProxyPin") ? '' : 'ProxyPin'}$title.har'.replaceAll(" ", "_").replaceAll(":", "_");
@@ -162,16 +162,18 @@ class RequestListState extends State<RequestListWidget> {
     if (await Platforms.isIpad() && context.mounted) {
       box = context.findRenderObject() as RenderBox?;
     }
-    Share.shareXFiles([file],
-        fileNameOverrides: [fileName],
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
+
+    SharePlus.instance.share(ShareParams(
+      files: [file],
+      fileNameOverrides: [fileName],
+      sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    ));
   }
 
-  sort(bool sortDesc) {
+  void sort(bool sortDesc) {
     requestSequenceKey.currentState?.sort(sortDesc);
     domainListKey.currentState?.sort(sortDesc);
   }
-
 }
 
 class DoubleClickHandle {

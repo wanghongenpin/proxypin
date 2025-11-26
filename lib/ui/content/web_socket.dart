@@ -78,8 +78,8 @@ class Websocket extends StatelessWidget {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: message.isFromClient
-                                      ? Colors.green.withOpacity(0.26)
-                                      : Colors.blue.withOpacity(0.3),
+                                      ? Colors.green.withValues(alpha: 0.26)
+                                      : Colors.blue.withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: SelectableText(

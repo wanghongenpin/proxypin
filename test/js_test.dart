@@ -14,7 +14,7 @@ import 'package:proxypin/network/components/js/md5.dart';
 //   };
 // }
 
-main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var flutterJs = getJavascriptRuntime();
   Md5Bridge.registerMd5(flutterJs);

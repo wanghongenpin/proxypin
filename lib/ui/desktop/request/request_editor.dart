@@ -303,7 +303,7 @@ class _HttpState extends State<_HttpWidget> {
     }
   }
 
-  change(HttpMessage? message) {
+  void change(HttpMessage? message) {
     this.message = message;
     body?.text = message?.bodyAsString ?? '';
     headerKey.currentState?.refreshParam(message?.headers.getHeaders());
@@ -396,19 +396,19 @@ class _RequestLineState extends State<_RequestLine> {
     super.dispose();
   }
 
-  change(String? requestUrl, String? requestMethod) {
+  void change(String? requestUrl, String? requestMethod) {
     this.requestUrl.text = requestUrl ?? this.requestUrl.text;
     this.requestMethod = requestMethod ?? this.requestMethod;
 
     urlNotifier();
   }
 
-  urlNotifier() {
+  void urlNotifier() {
     var splitFirst = requestUrl.text.splitFirst("?".codeUnits.first);
     widget.urlQueryNotifier?.onUrlChange(splitFirst.length > 1 ? splitFirst.last : '');
   }
 
-  onQueryChange(String query) {
+  void onQueryChange(String query) {
     var url = requestUrl.text;
     var indexOf = url.indexOf("?");
     if (indexOf == -1) {
@@ -499,7 +499,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
   }
 
   //监听url发生变化 更改表单
-  onChange(String value) {
+  void onChange(String value) {
     var query = value.split("&");
     int index = 0;
     while (index < query.length) {
@@ -520,7 +520,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
     setState(() {});
   }
 
-  notifierChange() {
+  void notifierChange() {
     if (widget.paramNotifier == null) return;
     String query = _params
         .where((e) => e.enabled && e.key.text.isNotEmpty)
@@ -529,7 +529,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
     widget.paramNotifier?.onParamChange(query);
   }
 
-  clear() {
+  void clear() {
     for (var element in _params) {
       element.key.dispose();
       element.value.dispose();
@@ -538,7 +538,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
   }
 
   //刷新param
-  refreshParam(Map<String, List<String>>? headers) {
+  void refreshParam(Map<String, List<String>>? headers) {
     clear();
     setState(() {
       headers?.forEach((name, values) {

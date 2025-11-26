@@ -76,11 +76,11 @@ class ValueWrap<V> {
     return valueWrap;
   }
 
-  void set(V? v) => this._v = v;
+  void set(V? v) => _v = v;
 
-  V? get() => this._v;
+  V? get() => _v;
 
-  bool isNull() => this._v == null;
+  bool isNull() => _v == null;
 }
 
 class Strings {

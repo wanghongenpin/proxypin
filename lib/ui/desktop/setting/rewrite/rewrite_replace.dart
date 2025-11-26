@@ -62,7 +62,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
   }
 
   ///初始化重写项
-  initItems(RuleType ruleType, List<RewriteItem>? items) {
+  void initItems(RuleType ruleType, List<RewriteItem>? items) {
     this.items.clear();
     this.ruleType = ruleType;
     if (ruleType == RuleType.redirect) {
@@ -175,7 +175,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
         SizedBox(
             width: 90,
             child: DropdownButtonFormField<String>(
-                value: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
+                initialValue: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
                 focusColor: Colors.transparent,
                 itemHeight: 48,
                 decoration:
@@ -305,7 +305,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
           SizedBox(
               width: 120,
               child: DropdownButtonFormField<String>(
-                  value: rewriteItem.method?.name ?? 'GET',
+                  initialValue: rewriteItem.method?.name ?? 'GET',
                   focusColor: Colors.transparent,
                   itemHeight: 48,
                   decoration: const InputDecoration(
@@ -464,7 +464,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     setHeaders(widget.headers);
   }
 
-  setHeaders(Map<String, String>? headers) {
+  void setHeaders(Map<String, String>? headers) {
     _clear();
     headers?.forEach((name, value) {
       _headers[TextEditingController(text: name)] = TextEditingController(text: value);
@@ -489,7 +489,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     super.dispose();
   }
 
-  _clear() {
+  void _clear() {
     _headers.forEach((key, value) {
       key.dispose();
       value.dispose();
