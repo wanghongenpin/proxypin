@@ -498,6 +498,8 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
         leading: bottomNavigation ? const SizedBox() : null,
+        systemOverlayStyle:
+            Platform.isAndroid ? SystemUiOverlayStyle(systemNavigationBarColor: ColorScheme.of(context).surface) : null,
         title: MobileSearch(
             key: MobileApp.searchStateKey, onSearch: (val) => MobileApp.requestStateKey.currentState?.search(val)),
         actions: [
