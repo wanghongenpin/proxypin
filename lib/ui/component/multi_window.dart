@@ -48,6 +48,7 @@ import '../toolbox/js_run.dart';
 import '../toolbox/qr_code_page.dart';
 import '../toolbox/regexp.dart';
 import '../toolbox/timestamp.dart';
+import '../toolbox/websocket_request.dart';
 
 bool isMultiWindow = false;
 
@@ -124,6 +125,10 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   //脚本日志
   if (argument['name'] == 'ScriptConsoleWidget') {
     return ScriptConsoleWidget(windowId: windowId);
+  }
+
+  if (argument['name'] == 'WebSocketRequestPage') {
+    return WebSocketRequestPage(windowId: windowId);
   }
 
   return const SizedBox();

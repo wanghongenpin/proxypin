@@ -721,6 +721,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteConnectDisconnect => 'Check remote connection failed, disconnected';
 
   @override
+  String get connect => 'Connect';
+
+  @override
   String get reconnect => 'Reconnect';
 
   @override

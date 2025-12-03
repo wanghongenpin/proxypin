@@ -715,6 +715,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteConnectDisconnect => '检查远程连接失败，已断开';
 
   @override
+  String get connect => '连接';
+
+  @override
   String get reconnect => '重新连接';
 
   @override
@@ -1732,6 +1735,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get remoteConnectDisconnect => '檢查遠端連接失敗，已中斷連接';
+
+  @override
+  String get connect => '連接';
 
   @override
   String get reconnect => '重新連接';

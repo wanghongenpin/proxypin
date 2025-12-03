@@ -17,6 +17,7 @@ import 'aes_page.dart';
 import 'cert_hash.dart';
 import 'encoder.dart';
 import 'js_run.dart';
+import 'websocket_request.dart';
 
 class Toolbox extends StatefulWidget {
   final ProxyServer? proxyServer;
@@ -53,6 +54,18 @@ class _ToolboxState extends State<Toolbox> {
                     onTap: httpRequest,
                     tooltip: localizations.httpRequest,
                   ),
+                  IconText(
+                      onTap: () async {
+                        if (Platforms.isMobile()) {
+                          Navigator.of(context)
+                              .push(MaterialPageRoute(builder: (context) => const WebSocketRequestPage()));
+                          return;
+                        }
+                        MultiWindow.openWindow('WebSocket', 'WebSocketRequestPage', size: const Size(800, 600));
+                      },
+                      icon: Icons.wifi_tethering,
+                      text: 'WebSocket',
+                      tooltip: 'WebSocket'),
                   IconText(
                     icon: Icons.javascript,
                     text: 'JavaScript',

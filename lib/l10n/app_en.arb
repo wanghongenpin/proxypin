@@ -246,6 +246,7 @@
   "curlSchemeRequest": "If the curl format is recognized, should it be converted into an HTTP request?",
   "appExitTips": "Press again to exit the program",
   "remoteConnectDisconnect": "Check remote connection failed, disconnected",
+  "connect": "Connect",
   "reconnect": "Reconnect",
   "remoteConnected": "Connected {os}, traffic will be forwarded to {os}",
   "remoteConnectForward": "Remote connection, forwarding requests to other terminals",

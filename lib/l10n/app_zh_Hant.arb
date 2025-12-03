@@ -232,6 +232,7 @@
   "curlSchemeRequest": "識別到curl格式，是否轉換為HTTP請求？",
   "appExitTips": "再按一次退出程式",
   "remoteConnectDisconnect": "檢查遠端連接失敗，已中斷連接",
+  "connect": "連接",
   "reconnect": "重新連接",
   "remoteConnected": "已連接{os}，流量將轉發到{os}",
   "remoteConnectForward": "遠端連接，將其他裝置流量轉發到目前裝置",

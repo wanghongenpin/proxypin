@@ -1482,6 +1482,12 @@ abstract class AppLocalizations {
   /// **'Check remote connection failed, disconnected'**
   String get remoteConnectDisconnect;
 
+  /// No description provided for @connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connect;
+
   /// No description provided for @reconnect.
   ///
   /// In en, this message translates to:
