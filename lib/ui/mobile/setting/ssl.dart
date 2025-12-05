@@ -17,7 +17,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -172,7 +171,7 @@ class _MobileSslState extends State<MobileSslWidget> {
                   showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,
                       onConfirm: () async {
                     await CertificateManager.generateNewRootCA();
-                    if (mounted) FlutterToastr.show(localizations.success, context);
+                    if (context.mounted) FlutterToastr.show(localizations.success, context);
                     if (Platform.isIOS) _refreshStatus();
                   });
                 }),
@@ -184,7 +183,7 @@ class _MobileSslState extends State<MobileSslWidget> {
                       title: localizations.resetDefaultCA,
                       content: localizations.resetDefaultCADescribe, onConfirm: () async {
                     await CertificateManager.resetDefaultRootCA();
-                    if (mounted) FlutterToastr.show(localizations.success, context);
+                    if (context.mounted) FlutterToastr.show(localizations.success, context);
                     if (Platform.isIOS) _refreshStatus();
                   });
                 }),

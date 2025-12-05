@@ -56,18 +56,13 @@ class Header {
     // header field names MUST be treated as malformed (Section 8.1.2.6).`
     return Header(ascii.encode(name.toLowerCase()), ascii.encode(value));
   }
-
 }
 
 /// A stateful HPACK decoder.
 class HPackDecoder {
-  int _maxHeaderTableSize = 4096;
-
   final IndexTable _table = IndexTable();
 
-  void updateMaxReceivingHeaderTableSize(int newMaximumSize) {
-    _maxHeaderTableSize = newMaximumSize;
-  }
+  void updateMaxReceivingHeaderTableSize(int newMaximumSize) {}
 
   List<Header> decode(List<int> data) {
     var offset = 0;

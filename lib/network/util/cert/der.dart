@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'dart:convert';
 import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:pointycastle/asn1.dart';
-import 'package:pointycastle/src//utils.dart';
+import 'package:pointycastle/src/utils.dart';
 
 class DerValue {
   /// Tag value indicating an ASN.1 "INTEGER" value.

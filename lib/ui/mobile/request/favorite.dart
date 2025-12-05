@@ -168,7 +168,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   ///右键菜单
-  menu(details) {
+  void menu(LongPressStartDetails details) {
     // setState(() {
     //   selected = true;
     // });
@@ -309,14 +309,14 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   //显示高级重发
-  showCustomRepeat(HttpRequest request) {
+  void showCustomRepeat(HttpRequest request) {
     Navigator.of(context).pop();
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => futureWidget(SharedPreferences.getInstance(),
             (prefs) => MobileCustomRepeat(onRepeat: () => onRepeat(request), prefs: prefs))));
   }
 
-  onRepeat(HttpRequest request) {
+  void onRepeat(HttpRequest request) {
     var httpRequest = request.copy(uri: request.requestUrl);
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
@@ -327,7 +327,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   //重命名
-  rename(Favorite item) {
+  void rename(Favorite item) {
     String? name = item.name;
     showDialog(
         context: context,
@@ -373,7 +373,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     return TextButton.icon(
         onPressed: onPressed,
         label: Text(label, style: style),
-        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withOpacity(0.65)));
+        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withValues(alpha: 0.65)));
   }
 
   Widget menuItem({required Widget left, required Widget right}) {

@@ -34,7 +34,7 @@ class KeywordHighlights {
     return null;
   }
 
-  static addListener(VoidCallback listener) {
+  static void addListener(VoidCallback listener) {
     if (!initialized) {
       initialized = true;
       SharedPreferences.getInstance().then((prefs) {
@@ -64,7 +64,7 @@ class KeywordHighlights {
     _keywordsController.value = keywords;
   }
 
-  static removeListener(VoidCallback listener) {
+  static void removeListener(VoidCallback listener) {
     _keywordsController.removeListener(listener);
   }
 }

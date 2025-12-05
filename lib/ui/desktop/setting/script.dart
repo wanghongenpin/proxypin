@@ -102,7 +102,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Theme.of(context).dialogBackgroundColor,
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
             title: Text(localizations.script, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             toolbarHeight: 36,
@@ -207,7 +207,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
   }
 
   /// 添加脚本
-  scriptAdd() async {
+  Future<void> scriptAdd() async {
     showDialog(barrierDismissible: false, context: context, builder: (_) => const ScriptEdit()).then((value) {
       if (value != null) {
         setState(() {});
@@ -259,7 +259,7 @@ class _ScriptConsoleState extends State<ScriptConsoleWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Theme.of(context).dialogBackgroundColor,
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
             title: Text(localizations.logger, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             actions: [
@@ -287,7 +287,7 @@ class _ScriptConsoleState extends State<ScriptConsoleWidget> {
             toolbarHeight: 36,
             centerTitle: true),
         body: Container(
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.3))),
+            decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.3))),
             margin: const EdgeInsets.all(5),
             padding: const EdgeInsets.all(5),
             child: ListView.builder(
@@ -421,10 +421,10 @@ class _ScriptEditState extends State<ScriptEdit> {
             children: [
               // Name section
               Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                      side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                       borderRadius: BorderRadius.circular(8)),
                   child: Padding(
                       padding: const EdgeInsets.all(10),
@@ -433,10 +433,10 @@ class _ScriptEditState extends State<ScriptEdit> {
 
               // URLs section
               Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                      side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                       borderRadius: BorderRadius.circular(8)),
                   child: Padding(
                       padding: const EdgeInsets.all(10),
@@ -492,10 +492,10 @@ class _ScriptEditState extends State<ScriptEdit> {
 
               // Script section
               Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                      side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                      side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                       borderRadius: BorderRadius.circular(8)),
                   child: Padding(
                       padding: const EdgeInsets.all(10),
@@ -552,7 +552,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                     child: Container(
                                         decoration: BoxDecoration(
                                             color: Colors.grey.shade900,
-                                            border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                                            border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                                         child: SingleChildScrollView(
                                             child: CodeField(
                                           textStyle: const TextStyle(fontSize: 13, color: Colors.white),
@@ -640,7 +640,7 @@ class _ScriptListState extends State<ScriptList> {
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 height: 530,
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
                   Row(mainAxisAlignment: MainAxisAlignment.start, children: [
@@ -665,7 +665,7 @@ class _ScriptListState extends State<ScriptList> {
           // },
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onDoubleTap: () => showEdit(index),
           onSecondaryTapDown: (details) => showMenus(details, index),
           onHover: (hover) {
@@ -691,9 +691,9 @@ class _ScriptListState extends State<ScriptList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),

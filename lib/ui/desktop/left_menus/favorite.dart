@@ -157,20 +157,24 @@ class _FavoriteItemState extends State<_FavoriteItem> {
       items: <PopupMenuEntry>[
         popupItem(localizations.copyUrl, onTap: () {
           var requestUrl = request.requestUrl;
-          Clipboard.setData(ClipboardData(text: requestUrl))
-              .then((value) => FlutterToastr.show(localizations.copied, context));
+          Clipboard.setData(ClipboardData(text: requestUrl)).then((value) {
+            if (mounted) FlutterToastr.show(localizations.copied, context);
+          });
         }),
         popupItem(localizations.copyRequestResponse, onTap: () {
-          Clipboard.setData(ClipboardData(text: copyRequest(request, request.response)))
-              .then((value) => FlutterToastr.show(localizations.copied, context));
+          Clipboard.setData(ClipboardData(text: copyRequest(request, request.response))).then((value) {
+            if (mounted) FlutterToastr.show(localizations.copied, context);
+          });
         }),
         popupItem(localizations.copyCurl, onTap: () {
-          Clipboard.setData(ClipboardData(text: curlRequest(request)))
-              .then((value) => FlutterToastr.show(localizations.copied, context));
+          Clipboard.setData(ClipboardData(text: curlRequest(request))).then((value) {
+            if (mounted) FlutterToastr.show(localizations.copied, context);
+          });
         }),
         popupItem(localizations.copyAsPythonRequests, onTap: () {
-          Clipboard.setData(ClipboardData(text: copyAsPythonRequests(request)))
-              .then((value) => FlutterToastr.show(localizations.copied, context));
+          Clipboard.setData(ClipboardData(text: copyAsPythonRequests(request))).then((value) {
+            if (mounted) FlutterToastr.show(localizations.copied, context);
+          });
         }),
         const PopupMenuDivider(height: 0.3),
         popupItem(localizations.repeat, onTap: () => onRepeat(request)),

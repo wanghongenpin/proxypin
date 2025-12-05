@@ -50,7 +50,7 @@ class RewriteUpdateState extends State<MobileRewriteUpdate> {
   }
 
   ///初始化重写项
-  initItems(RuleType ruleType, List<RewriteItem>? items) {
+  void initItems(RuleType ruleType, List<RewriteItem>? items) {
     this.ruleType = ruleType;
     this.items.clear();
     if (items != null) {
@@ -85,7 +85,7 @@ class RewriteUpdateState extends State<MobileRewriteUpdate> {
     );
   }
 
-  add() {
+  void add() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (context) => RewriteUpdateEdit(ruleType: ruleType, request: widget.request)))
         .then((value) {
@@ -192,7 +192,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                   SizedBox(
                       width: 140,
                       child: DropdownButtonFormField<RewriteType>(
-                          value: rewriteType,
+                          initialValue: rewriteType,
                           focusColor: Colors.transparent,
                           itemHeight: 48,
                           decoration: const InputDecoration(
@@ -241,7 +241,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
             ])));
   }
 
-  initTestData() {
+  void initTestData() {
     dataController.splitPattern = null;
     dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
@@ -281,7 +281,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   bool onMatch = false; //是否正在匹配
   bool isMatch = true;
 
-  onInputChangeMatch() {
+  void onInputChangeMatch() {
     if (onMatch || dataController.highlightEnabled == false) {
       return;
     }
@@ -372,7 +372,7 @@ class _UpdateListState extends State<UpdateList> {
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.only(top: 10),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
         child: Column(children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -397,7 +397,7 @@ class _UpdateListState extends State<UpdateList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -411,7 +411,7 @@ class _UpdateListState extends State<UpdateList> {
               color: selected == index
                   ? primaryColor
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               constraints: const BoxConstraints(minHeight: 38, maxHeight: 45),
               padding: const EdgeInsets.all(5),
@@ -448,7 +448,7 @@ class _UpdateListState extends State<UpdateList> {
     return "${item.key}=${item.value}";
   }
 
-  showMenus(int index) {
+  void showMenus(int index) {
     setState(() {
       selected = index;
     });

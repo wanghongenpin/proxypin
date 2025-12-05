@@ -241,7 +241,7 @@ class Pkcs12 {
     }
   }
 
-  static _generateSafeBagsForCerts(List<String> certificates, Uint8List localKeyId, {String? friendlyName}) {
+  static List<ASN1SafeBag> _generateSafeBagsForCerts(List<String> certificates, Uint8List localKeyId, {String? friendlyName}) {
     var certBags = <ASN1CertBag>[];
     var safeBags = <ASN1SafeBag>[];
 
@@ -282,7 +282,7 @@ class Pkcs12 {
     return safeBagsKey;
   }
 
-  static _generateSafeBagsForShroudedKey(ASN1Object bagValue, Uint8List localKeyId, {String? friendlyName}) {
+  static List<ASN1SafeBag> _generateSafeBagsForShroudedKey(ASN1Object bagValue, Uint8List localKeyId, {String? friendlyName}) {
     var safeBagsKey = <ASN1SafeBag>[];
     var asn1Set = ASN1Set(elements: []);
     asn1Set.add(ASN1Pkcs12Attribute.localKeyID(localKeyId));

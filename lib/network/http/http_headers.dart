@@ -66,7 +66,7 @@ class HttpHeaders {
   }
 
   ///从headers中添加
-  addAll(HttpHeaders? headers) {
+  void addAll(HttpHeaders? headers) {
     headers?.forEach((key, values) {
       for (var val in values) {
         add(key, val);

@@ -222,7 +222,7 @@ class _RegExpPageState extends State<RegExpPage> {
   bool onMatch = false; //是否正在匹配
   bool isMatch = true; //是否匹配成功
 
-  onInputChangeMatch() {
+  void onInputChangeMatch() {
     if (onMatch || input.highlightEnabled == false) {
       return;
     }

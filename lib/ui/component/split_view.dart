@@ -29,9 +29,9 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
   late double _ratio;
   double _maxWidth = double.infinity;
 
-  get _width1 => _ratio * _maxWidth;
+  double get _width1 => _ratio * _maxWidth;
 
-  get _width2 => (1 - _ratio) * _maxWidth;
+  double get _width2 => (1 - _ratio) * _maxWidth;
 
   @override
   void initState() {

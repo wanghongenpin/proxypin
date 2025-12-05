@@ -227,7 +227,7 @@ class AppConfiguration {
   bool _isWriting = false;
 
   /// 刷新配置文件
-  flushConfig() async {
+  Future<void> flushConfig() async {
     if (_isWriting) return;
     _isWriting = true;
 

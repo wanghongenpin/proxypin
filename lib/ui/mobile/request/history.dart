@@ -156,7 +156,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //导入har
-  import(HistoryStorage storage) async {
+  Future<void> import(HistoryStorage storage) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
@@ -215,7 +215,7 @@ class _MobileHistoryState extends State<MobileHistory> {
         ));
   }
 
-  toRequestsView(HistoryItem item, HistoryStorage storage) {
+  void toRequestsView(HistoryItem item, HistoryStorage storage) {
     Navigator.of(context)
         .push(MaterialPageRoute(
             builder: (BuildContext context) => HistoryRecord(history: item, proxyServer: widget.proxyServer)))
@@ -229,7 +229,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //导出har
-  export(HistoryStorage storage, HistoryItem item, {Offset? offset}) async {
+  Future<void> export(HistoryStorage storage, HistoryItem item, {Offset? offset}) async {
     //文件名称
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");
@@ -243,12 +243,12 @@ class _MobileHistoryState extends State<MobileHistory> {
       rect = Rect.fromCenter(center: offset, width: 1, height: 1);
     }
 
-    Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: rect);
+    SharePlus.instance.share(ShareParams(files: [file], fileNameOverrides: [fileName], sharePositionOrigin: rect));
     Future.delayed(const Duration(seconds: 30), () => item.requests = null);
   }
 
   //重命名
-  renameHistory(HistoryStorage storage, HistoryItem item) {
+  void renameHistory(HistoryStorage storage, HistoryItem item) {
     String name = "";
     showDialog(
         context: context,
@@ -280,7 +280,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //删除
-  deleteHistory(HistoryStorage storage, int index) {
+  void deleteHistory(HistoryStorage storage, int index) {
     showDialog(
         context: context,
         builder: (context) {
@@ -390,7 +390,7 @@ class _HistoryRecordState extends State<HistoryRecord> {
   }
 
   //导出har
-  export(BuildContext context) async {
+  Future<void> export(BuildContext context) async {
     var item = widget.history;
     requestStateKey.currentState?.export(context, item.name);
   }

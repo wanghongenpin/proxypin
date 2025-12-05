@@ -69,7 +69,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///添加请求
-  add(HttpRequest request) {
+  void add(HttpRequest request) {
     ///过滤
     if (searchModel?.isNotEmpty == true && !searchModel!.filter(request, request.response)) {
       return;
@@ -85,7 +85,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///添加响应
-  addResponse(HttpResponse response) {
+  void addResponse(HttpResponse response) {
     var state = indexes.remove(response.request?.requestId);
     state?.currentState?.change(response);
 
@@ -102,7 +102,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     }
   }
 
-  clean() {
+  void clean() {
     setState(() {
       view.clear();
       indexes.clear();
@@ -111,7 +111,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     });
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     setState(() {
       view.removeWhere((element) => list.contains(element));
     });
@@ -132,7 +132,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     return view;
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
@@ -181,13 +181,13 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
             }));
   }
 
-  scrollToTop() {
+  void scrollToTop() {
     PrimaryScrollController.maybeOf(context)
         ?.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
   }
 
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     if (sortDesc == desc) {
       return;
     }

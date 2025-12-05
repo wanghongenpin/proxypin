@@ -76,7 +76,7 @@ class RequestRowState extends State<RequestRow> {
 
   AppLocalizations get localizations => AppLocalizations.of(availableContext)!;
 
-  change(HttpResponse response) {
+  void change(HttpResponse response) {
     setState(() {
       this.response = response;
     });
@@ -184,7 +184,7 @@ class RequestRowState extends State<RequestRow> {
   }
 
   ///菜单
-  menu(details) {
+  void menu(LongPressStartDetails details) {
     setState(() {
       selected = true;
     });
@@ -279,10 +279,10 @@ class RequestRowState extends State<RequestRow> {
 
                       var pageRoute = MaterialPageRoute(
                           builder: (context) => ScriptEdit(
-                            scriptItem: scriptItem,
-                            script: script,
-                            urls: scriptItem?.urls ?? [url],
-                            title: request.hostAndPort?.host));
+                              scriptItem: scriptItem,
+                              script: script,
+                              urls: scriptItem?.urls ?? [url],
+                              title: request.hostAndPort?.host));
 
                       Navigator.push(getContext(), pageRoute);
                     },
@@ -373,7 +373,7 @@ class RequestRowState extends State<RequestRow> {
     return TextButton.icon(
         onPressed: onPressed,
         label: Text(label, style: style),
-        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withOpacity(0.65)));
+        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withValues(alpha: 0.65)));
   }
 
   Widget menuItem({required Widget left, required Widget right}) {

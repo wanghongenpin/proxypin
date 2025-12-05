@@ -1,6 +1,6 @@
 import 'dart:io';
 
-main() async {
+Future<void> main() async {
   var contentType = ContentType.parse("application/json");
   print(contentType);
   print(contentType.charset);
@@ -9,7 +9,7 @@ main() async {
   await webTest();
 }
 
-webTest() async {
+Future<void> webTest() async {
 
   var httpClient = HttpClient();
   httpClient.findProxy = (uri) => "PROXY 127.0.0.1:7890";

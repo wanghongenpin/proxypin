@@ -15,7 +15,6 @@
  */
 
 import 'dart:async';
-import 'dart:collection';
 
 /// A cache that expires entries after a given duration.
 /// The cache uses a timer to remove entries after the specified duration.
@@ -67,7 +66,7 @@ class ExpiringCache<K, V> {
 
 class LruCache<K, V> {
   final int capacity;
-  final _cache = LinkedHashMap<K, V>();
+  final _cache = <K, V>{};
 
   LruCache(this.capacity);
 

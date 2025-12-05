@@ -136,7 +136,7 @@ class _DomainFilterState extends State<DomainFilter> {
   }
 
   //导入
-  import() async {
+  Future<void> import() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
@@ -239,7 +239,7 @@ class _DomainListState extends State<DomainList> {
   bool changed = false;
   bool multiple = false;
 
-  onChanged() {
+  void onChanged() {
     changed = true;
     widget.onChange.call();
   }
@@ -251,7 +251,7 @@ class _DomainListState extends State<DomainList> {
         body: Container(
             padding: const EdgeInsets.only(top: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             ),
             child: Scrollbar(
                 child: ListView(children: [
@@ -267,13 +267,13 @@ class _DomainListState extends State<DomainList> {
             ]))));
   }
 
-  globalMenu() {
+  Stack globalMenu() {
     return Stack(children: [
       Container(
           height: 50,
           width: double.infinity,
           margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2)))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2)))),
       Positioned(
           top: 0,
           left: 0,
@@ -317,7 +317,7 @@ class _DomainListState extends State<DomainList> {
           enableFeedback: false,
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onLongPress: () => showMenus(index),
           // menus
           onDoubleTap: () => showEdit(index),
@@ -334,9 +334,9 @@ class _DomainListState extends State<DomainList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withValues(alpha: 0.8)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 38,
               padding: const EdgeInsets.symmetric(vertical: 3),
@@ -350,7 +350,7 @@ class _DomainListState extends State<DomainList> {
     });
   }
 
-  showEdit([int? index]) {
+  void showEdit([int? index]) {
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -366,7 +366,7 @@ class _DomainListState extends State<DomainList> {
   }
 
   //点击菜单
-  showMenus(int index) {
+  void showMenus(int index) {
     setState(() {
       selected.add(index);
     });
@@ -426,7 +426,7 @@ class _DomainListState extends State<DomainList> {
   }
 
   //导出
-  export(List<int> indexes) async {
+  Future<void> export(List<int> indexes) async {
     if (indexes.isEmpty) return;
 
     String fileName = 'host-filters.config';
@@ -442,9 +442,11 @@ class _DomainListState extends State<DomainList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'config');
-    await Share.shareXFiles([file],
-        fileNameOverrides: [fileName],
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
+    await SharePlus.instance.share(ShareParams(
+      files: [file],
+      fileNameOverrides: [fileName],
+      sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    ));
   }
 
   //删除

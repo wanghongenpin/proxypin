@@ -34,7 +34,9 @@ class _PortState extends State<PortWidget> {
 
         if (widget.proxyServer.isRunning) {
           String message = localizations.proxyPortRepeat(widget.proxyServer.port);
-          widget.proxyServer.restart().catchError((e) => FlutterToastr.show(message, context, duration: 3));
+          widget.proxyServer.restart().catchError((e) {
+            if (mounted) FlutterToastr.show(message, context, duration: 3);
+          });
         }
         widget.proxyServer.configuration.flushConfig();
       }

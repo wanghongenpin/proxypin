@@ -56,7 +56,7 @@ class HighlightTextEditingController extends TextEditingController {
     return TextSpan(children: spans, style: style);
   }
 
-  matchHighlight(String text, List<TextSpan> spans, {TextStyle? normalStyle, TextStyle? highlightStyle}) {
+  void matchHighlight(String text, List<TextSpan> spans, {TextStyle? normalStyle, TextStyle? highlightStyle}) {
     int start = 0;
     for (final match in highlightPattern!.allMatches(text)) {
       if (match.start > start) {

@@ -208,7 +208,7 @@ class MacSystemProxy implements SystemProxy {
     ]);
   }
 
-  static _concatCommands(List<String> commands) {
+  static String _concatCommands(List<String> commands) {
     return commands.where((element) => element.isNotEmpty).join(' && ');
   }
 }

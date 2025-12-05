@@ -156,7 +156,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///高亮处理
-  highlightHandler() {
+  void highlightHandler() {
     //获取所有请求Widget
     List<RequestWidget> requests = containerMap.values.map((e) => e.body).expand((element) => element).toList();
     for (RequestWidget request in requests) {
@@ -166,7 +166,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///添加请求
-  add(Channel channel, HttpRequest request) {
+  void add(Channel channel, HttpRequest request) {
     String? host = request.remoteDomain();
     if (host == null) {
       return;
@@ -222,7 +222,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///移除域名
-  deleteHost(String host) {
+  void deleteHost(String host) {
     DomainRequests? domainRequests = containerMap.remove(host);
     if (domainRequests == null) {
       return;
@@ -233,7 +233,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///添加响应
-  addResponse(ChannelContext channelContext, HttpResponse response) {
+  void addResponse(ChannelContext channelContext, HttpResponse response) {
     String domain = channelContext.host!.domain;
     DomainRequests? domainRequests = containerMap[domain];
     var pathRow = domainRequests?.getRequest(response);
@@ -252,7 +252,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     }
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     for (var request in list) {
       String? host = request.remoteDomain();
       containerMap[host]?._removeRequest(request);
@@ -260,7 +260,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///清理
-  clean() {
+  void clean() {
     setState(() {
       containerMap.clear();
       searchView.clear();
@@ -282,7 +282,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     sortDesc = desc;
     containerMap.forEach((key, request) {
       var reversed = request.body.toList().reversed;
@@ -336,19 +336,19 @@ class DomainRequests extends StatefulWidget {
     return requestMap[response.request?.requestId ?? response.requestId];
   }
 
-  setTrailing(Widget? trailing) {
+  void setTrailing(Widget? trailing) {
     var state = key as GlobalKey<_DomainRequestsState>;
     state.currentState?.trailing = trailing;
   }
 
-  _remove(RequestWidget requestWidget) {
+  void _remove(RequestWidget requestWidget) {
     if (body.remove(requestWidget)) {
       onRequestRemove?.call(requestWidget.request);
       changeState();
     }
   }
 
-  _removeRequest(HttpRequest request) {
+  void _removeRequest(HttpRequest request) {
     var requestWidget = requestMap.remove(request.requestId);
     if (requestWidget != null) {
       _remove(requestWidget);
@@ -381,7 +381,7 @@ class DomainRequests extends StatefulWidget {
     return state.currentState?.selected == true;
   }
 
-  changeState() {
+  void changeState() {
     var state = key as GlobalKey<_DomainRequestsState>;
     state.currentState?.changeState();
   }
@@ -409,7 +409,7 @@ class _DomainRequestsState extends State<DomainRequests> {
     trailing = widget.trailing;
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
@@ -464,7 +464,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   }
 
   //域名右键菜单
-  menu() {
+  void menu() {
     Menu menu = Menu(items: [
       MenuItem(
           label: localizations.copyHost,
@@ -528,7 +528,7 @@ class _DomainRequestsState extends State<DomainRequests> {
     ]);
   }
 
-  _delete() {
+  void _delete() {
     widget.onDelete?.call(widget.domain);
     widget.requestMap.clear();
     widget.body.clear();

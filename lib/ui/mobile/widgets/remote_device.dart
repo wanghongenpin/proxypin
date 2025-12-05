@@ -310,7 +310,7 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
   }
 
   ///输入地址链接
-  inputAddress(var host) {
+  void inputAddress(String host) {
     //输入账号密码连接
     host = host.substring(0, host.contains('.') ? host.lastIndexOf('.') + 1 : host.length);
     int? port = 9099;
@@ -363,13 +363,13 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
   }
 
   ///扫码连接
-  connectRemote() async {
+  Future<void> connectRemote() async {
     AppLocalizations localizations = AppLocalizations.of(context)!;
     String? scanRes = await QrCodeScanner.scan(context);
     if (scanRes == null) return;
 
     if (scanRes == "-1") {
-      if (context.mounted) FlutterToastr.show(localizations.invalidQRCode, context);
+      if (mounted) FlutterToastr.show(localizations.invalidQRCode, context);
       return;
     }
 
@@ -442,7 +442,7 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
   }
 
   ///连接二维码
-  qrCode(BuildContext context, String host, int port) {
+  void qrCode(BuildContext context, String host, int port) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
 
     showDialog(
@@ -484,7 +484,7 @@ class _RemoteDevicePageState extends State<RemoteDevicePage> {
   }
 
   //拉取桌面配置
-  pullConfig() {
+  void pullConfig() {
     var desktopModel = widget.remoteDevice.value;
     HttpClients.get('http://${desktopModel.host}:${desktopModel.port}/config').then((response) {
       if (response.status.isSuccessful() && mounted) {

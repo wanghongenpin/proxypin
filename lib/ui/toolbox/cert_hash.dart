@@ -138,7 +138,7 @@ class _CertHashPageState extends State<CertHashPage> {
         ]));
   }
 
-  getSubjectName() {
+  void getSubjectName() {
     var content = input.text;
     if (content.isEmpty) return;
     try {

@@ -30,7 +30,7 @@ import 'package:proxypin/utils/platform.dart';
 // ignore: non_constant_identifier_names
 var _XHR_DEBUG = false;
 
-setXhrDebug(bool value) => _XHR_DEBUG = value;
+bool setXhrDebug(bool value) => _XHR_DEBUG = value;
 
 const HTTP_GET = "get";
 const HTTP_POST = "post";
@@ -49,8 +49,9 @@ String _debugSendNativeCallback() {
       console.log(responseInfo);
       console.log(responseText);
       console.log(error);""";
-  } else
+  } else {
     return "";
+  }
 }
 
 final String xhrJsCode = """
@@ -228,7 +229,7 @@ const XHR_PENDING_CALLS_KEY = "xhrPendingCalls";
 
 http.Client? httpClient;
 
-xhrSetHttpClient(http.Client client) {
+void xhrSetHttpClient(http.Client client) {
   httpClient = client;
 }
 
@@ -378,7 +379,7 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
       });
     });
 
-    this.evaluate("""
+    evaluate("""
     var xhrRequests = {};
     var idRequest = -1;
     function XMLHttpRequestExtension_send_native() {
@@ -400,11 +401,11 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
     }
     """);
 
-    final evalXhrResult = this.evaluate(xhrJsCode);
+    final evalXhrResult = evaluate(xhrJsCode);
 
     if (_XHR_DEBUG) print('RESULT evalXhrResult: $evalXhrResult');
 
-    this.onMessage('SendNative', (arguments) {
+    onMessage('SendNative', (arguments) {
       try {
         String? method = arguments[0];
         String? url = arguments[1];
@@ -458,12 +459,7 @@ class XhtmlHttpResponseInfo {
   }
 
   Map<String, Object?> toJson() {
-    return {
-      "statusCode": statusCode,
-      "statusText": statusText,
-      "body": body,
-      "responseHeaders": responseHeaders
-    };
+    return {"statusCode": statusCode, "statusText": statusText, "body": body, "responseHeaders": responseHeaders};
   }
 }
 

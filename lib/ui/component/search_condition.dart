@@ -336,7 +336,7 @@ class SearchConditionsState extends State<SearchConditions> {
           style: style,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.only(left: 10, right: 10, top: 2, bottom: 2),
-            border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withOpacity(0.3))),
+            border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withValues(alpha: 0.3))),
           ),
         ));
   }
