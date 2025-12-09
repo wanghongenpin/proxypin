@@ -176,6 +176,13 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
     _scheduleScroll();
   }
 
+  void _clearMessages() {
+    if (_messages.isEmpty) return;
+    setState(() {
+      _messages.clear();
+    });
+  }
+
   String _formatTime(DateTime dt) {
     final d = dt.toLocal();
     String two(int n) => n.toString().padLeft(2, '0');
@@ -235,7 +242,15 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
     return Scaffold(
       appBar: AppBar(
           title: Text('WebSocket', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          centerTitle: true),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              tooltip: 'Clear messages',
+              icon: const Icon(Icons.delete),
+              onPressed: () => _clearMessages(),
+            ),
+            SizedBox(width: 8),
+          ]),
       body: Stack(children: [
         // main content
         Column(children: [
@@ -538,8 +553,8 @@ class _PreviewDialogState extends State<_PreviewDialog> {
 
     return AlertDialog(
       content: SizedBox(
-        width: 700,
-        height: 650,
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.6,
         child: DefaultTabController(
           length: tabs.length,
           initialIndex: tabIndex,
