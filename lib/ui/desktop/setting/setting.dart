@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
+import 'package:proxypin/network/mcp/mcp_server.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
@@ -70,6 +72,7 @@ class _SettingState extends State<Setting> {
       },
       menuChildren: [
         _ProxyMenu(proxyServer: widget.proxyServer),
+        _McpMenu(configuration: configuration),
         item(localizations.domainFilter, onPressed: hostFilter),
         item(localizations.hosts, onPressed: hosts),
         item(localizations.requestBlock, onPressed: showRequestBlock),
@@ -139,6 +142,131 @@ class _SettingState extends State<Setting> {
         barrierDismissible: false,
         context: context,
         builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
+  }
+}
+
+class _McpMenu extends StatefulWidget {
+  final Configuration configuration;
+
+  const _McpMenu({required this.configuration});
+
+  @override
+  State<StatefulWidget> createState() => _McpMenuState();
+}
+
+class _McpMenuState extends State<_McpMenu> {
+  final mcpPortController = TextEditingController();
+  final FocusNode mcpPortFocus = FocusNode();
+  bool changed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    mcpPortController.text = widget.configuration.mcpPort.toString();
+    mcpPortFocus.addListener(() async {
+      if (!mcpPortFocus.hasFocus && mcpPortController.text != widget.configuration.mcpPort.toString()) {
+        int? port = int.tryParse(mcpPortController.text);
+        if (port != null && port > 0 && port < 65535) {
+          widget.configuration.mcpPort = port;
+          changed = true;
+          if (McpServer().isRunning) {
+            await McpServer().stop();
+            await McpServer().start();
+          }
+        } else {
+          mcpPortController.text = widget.configuration.mcpPort.toString();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    if (changed) {
+      widget.configuration.flushConfig();
+    }
+    mcpPortController.dispose();
+    mcpPortFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SubmenuButton(
+      menuChildren: [
+        // MCP Server 启动/停止开关
+        Row(children: [
+          Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 15),
+                  child: Text(
+                    McpServer().isRunning ? "Running" : "Stopped",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: McpServer().isRunning ? Colors.green : Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ))),
+          SwitchWidget(
+              value: McpServer().isRunning,
+              scale: 0.75,
+              onChanged: (val) async {
+                try {
+                  if (val) {
+                    await McpServer().start();
+                  } else {
+                    await McpServer().stop();
+                  }
+                  setState(() {});
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('MCP Error: $e')));
+                  }
+                }
+              }),
+          const SizedBox(width: 10)
+        ]),
+        const Divider(thickness: 0.3, height: 8),
+        Row(children: [
+          const Padding(padding: EdgeInsets.only(left: 15)),
+          const Text("Port", style: TextStyle(fontSize: 13)),
+          SizedBox(
+              width: 80,
+              child: TextFormField(
+                focusNode: mcpPortFocus,
+                controller: mcpPortController,
+                textAlign: TextAlign.center,
+                onTapOutside: (event) => mcpPortFocus.unfocus(),
+                keyboardType: TextInputType.datetime,
+                inputFormatters: <TextInputFormatter>[
+                  LengthLimitingTextInputFormatter(5),
+                  FilteringTextInputFormatter.allow(RegExp("[0-9]"))
+                ],
+                decoration: const InputDecoration(),
+              ))
+        ]),
+        const Divider(thickness: 0.3, height: 8),
+        Row(children: [
+          Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 15),
+                  child: const Text("Auto Startup", style: TextStyle(fontSize: 14)))),
+          SwitchWidget(
+              value: widget.configuration.mcpAutoStart,
+              scale: 0.75,
+              onChanged: (val) {
+                widget.configuration.mcpAutoStart = val;
+                changed = true;
+                setState(() {});
+              }),
+          const SizedBox(width: 10)
+        ]),
+        const SizedBox(height: 10),
+      ],
+      child: const Padding(
+          padding: EdgeInsets.only(left: 10),
+          child: Text("MCP Server", style: TextStyle(fontSize: 14))),
+    );
   }
 }
 

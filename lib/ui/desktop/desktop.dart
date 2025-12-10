@@ -25,6 +25,8 @@ import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/network/mcp/mcp_bridge.dart';
+import 'package:proxypin/network/mcp/mcp_server.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -35,6 +37,7 @@ import 'package:proxypin/ui/desktop/left_menus/navigation.dart';
 import 'package:proxypin/ui/desktop/request/list.dart';
 import 'package:proxypin/ui/desktop/toolbar/toolbar.dart';
 import 'package:proxypin/ui/desktop/widgets/windows_toolbar.dart';
+import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import '../app_update/app_update_repository.dart';
@@ -47,6 +50,9 @@ class DesktopHomePage extends StatefulWidget {
   final Configuration configuration;
   final AppConfiguration appConfiguration;
 
+  /// 全局请求容器，方便 MCP 等外部模块访问
+  static final container = ListenableList<HttpRequest>();
+
   const DesktopHomePage(this.configuration, this.appConfiguration, {super.key, required});
 
   @override
@@ -54,8 +60,6 @@ class DesktopHomePage extends StatefulWidget {
 }
 
 class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventListener {
-  static final container = ListenableList<HttpRequest>();
-
   static final GlobalKey<DesktopRequestListState> requestListStateKey = GlobalKey<DesktopRequestListState>();
 
   final ValueNotifier<int> _selectIndex = ValueNotifier(0);
@@ -90,7 +94,20 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   @override
   void initState() {
     super.initState();
+    // McpBridge first!
+    var mcpBridge = McpBridge();
+    mcpBridge.setRequestContainer(DesktopHomePage.container); // 设置请求容器，避免重复存储
+    // 设置UI清除回调（对应垃圾桶图标）
+    mcpBridge.onClearUI = () {
+      requestListStateKey.currentState?.clean();
+    };
+    proxyServer.listeners.insert(0, mcpBridge);
     proxyServer.addListener(this);
+    
+    if (widget.configuration.mcpAutoStart) {
+       McpServer().start();
+    }
+
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
     if (widget.appConfiguration.upgradeNoticeV22) {
@@ -103,11 +120,17 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   }
 
   @override
+  void dispose() {
+    McpServer().stop();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     var navigationView = [
-      DesktopRequestListWidget(key: requestListStateKey, proxyServer: proxyServer, list: container, panel: panel),
+      DesktopRequestListWidget(key: requestListStateKey, proxyServer: proxyServer, list: DesktopHomePage.container, panel: panel),
       Favorites(panel: panel),
-      HistoryPageWidget(proxyServer: proxyServer, container: container, panel: panel),
+      HistoryPageWidget(proxyServer: proxyServer, container: DesktopHomePage.container, panel: panel),
       const Toolbox()
     ];
 
