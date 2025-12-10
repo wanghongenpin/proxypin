@@ -92,7 +92,7 @@ class Configuration {
     enableSystemProxy = config['enableSystemProxy'] ?? (config['enableDesktop'] ?? true);
     enableSocks5 = config['enableSocks5'] ?? true;
     enabledHttp2 = config['enabledHttp2'] ?? false;
-    mcpPort = config['mcpPort'] ?? 9527;
+    mcpPort = config['mcpPort'] ?? 17777;
     mcpAutoStart = config['mcpAutoStart'] ?? true;
 
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
