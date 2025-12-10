@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/mcp/mcp_server.dart';
 import 'package:proxypin/ui/desktop/toolbar/phone_connect.dart';
 import 'package:proxypin/ui/desktop/setting/setting.dart';
 import 'package:proxypin/ui/desktop/ssl/ssl.dart';
@@ -49,6 +51,10 @@ class _ToolbarState extends State<Toolbar> {
   void initState() {
     super.initState();
     HardwareKeyboard.instance.addHandler(onKeyEvent);
+    // 监听MCP状态变化
+    McpServer().onStatusChanged = () {
+      if (mounted) setState(() {});
+    };
   }
 
   bool onKeyEvent(KeyEvent event) {
@@ -74,6 +80,7 @@ class _ToolbarState extends State<Toolbar> {
 
   @override
   void dispose() {
+    McpServer().onStatusChanged = null;
     HardwareKeyboard.instance.removeHandler(onKeyEvent);
     super.dispose();
   }
@@ -102,6 +109,59 @@ class _ToolbarState extends State<Toolbar> {
             final ips = await localIps(readCache: false);
             phoneConnect(ips, widget.proxyServer.port);
           }),
+      const Padding(padding: EdgeInsets.only(left: 18)),
+      Tooltip(
+        message: 'MCP Server ${McpServer().isRunning ? 'Running' : 'Stopped'}',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(4),
+          onTap: () async {
+            try {
+              if (McpServer().isRunning) {
+                await McpServer().stop();
+              } else {
+                await McpServer().start();
+              }
+              setState(() {});
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('MCP Error: $e')));
+              }
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: McpServer().isRunning 
+                  ? Colors.green.withOpacity(0.15) 
+                  : Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: McpServer().isRunning ? Colors.green : Colors.grey,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.hub_outlined,
+                  color: McpServer().isRunning ? Colors.green : Colors.grey,
+                  size: 18,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'MCP',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: McpServer().isRunning ? Colors.green : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       const Padding(padding: EdgeInsets.only(left: 10)),
     ]);
   }

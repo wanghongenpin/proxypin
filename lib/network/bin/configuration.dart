@@ -57,6 +57,9 @@ class Configuration {
 
   bool enabledHttp2 = false; // 是否启用http2
 
+  int mcpPort = 17777; // MCP server port
+  bool mcpAutoStart = true; // MCP server auto start
+
   //历史记录缓存时间
   int historyCacheTime = 0;
 
@@ -89,6 +92,8 @@ class Configuration {
     enableSystemProxy = config['enableSystemProxy'] ?? (config['enableDesktop'] ?? true);
     enableSocks5 = config['enableSocks5'] ?? true;
     enabledHttp2 = config['enabledHttp2'] ?? false;
+    mcpPort = config['mcpPort'] ?? 9527;
+    mcpAutoStart = config['mcpAutoStart'] ?? true;
 
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
     historyCacheTime = config['historyCacheTime'] ?? 0;
@@ -150,6 +155,8 @@ class Configuration {
       'appBlacklist': appBlacklist,
       'historyCacheTime': historyCacheTime,
       'enabledHttp2': enabledHttp2,
+      'mcpPort': mcpPort,
+      'mcpAutoStart': mcpAutoStart,
       'whitelist': HostFilter.whitelist.toJson(),
       'blacklist': HostFilter.blacklist.toJson(),
     };
