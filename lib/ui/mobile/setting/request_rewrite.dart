@@ -33,6 +33,7 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../component/http_method_popup.dart';
 import 'rewrite/rewrite_replace.dart';
 
 class MobileRequestRewrite extends StatefulWidget {
@@ -524,9 +525,40 @@ class _RewriteRuleState extends State<RewriteRule> {
                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                         SwitchWidget(value: rule.enabled, onChanged: (val) => rule.enabled = val, scale: 0.8)
                       ]),
+                      const SizedBox(height: 8),
                       textField('${localizations.name}:', nameInput, localizations.pleaseEnter),
-                      textField('URL:', urlInput, 'https://www.example.com/api/*',
-                          required: true, keyboardType: TextInputType.url),
+                      const SizedBox(height: 8),
+                      // URL input with Method as prefix (method shown before the URL field)
+                      Row(children: [
+                        SizedBox(width: 60, child: Text('URL:', style: const TextStyle(fontSize: 16))),
+                        Expanded(
+                          child: TextFormField(
+                            controller: urlInput,
+                            validator: (val) => val?.isNotEmpty == true ? null : "",
+                            keyboardType: TextInputType.url,
+                            decoration: InputDecoration(
+                              hintText: 'https://www.example.com/api/*',
+                              hintStyle: TextStyle(color: Colors.grey.shade500),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                              errorStyle: const TextStyle(height: 0, fontSize: 0),
+                              border: const OutlineInputBorder(),
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.only(left: 6, right: 6),
+                                child: MethodPopupMenu(
+                                  value: rule.method,
+                                  showSeparator: true,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      rule.method = val;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: 8),
                       Row(children: [
                         SizedBox(
                             width: 60,
@@ -537,9 +569,11 @@ class _RewriteRuleState extends State<RewriteRule> {
                             height: 50,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              value: ruleType,
+                              initialValue: ruleType,
                               decoration: const InputDecoration(
-                                  errorStyle: TextStyle(height: 0, fontSize: 0), contentPadding: EdgeInsets.only()),
+                                  border: OutlineInputBorder(),
+                                  errorStyle: TextStyle(height: 0, fontSize: 0),
+                                  contentPadding: EdgeInsets.only(left: 5)),
                               items: RuleType.values
                                   .map((e) => DropdownMenuItem(value: e, child: Text(isCN ? e.label : e.name)))
                                   .toList(),
@@ -607,8 +641,9 @@ class _RewriteRuleState extends State<RewriteRule> {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade500),
-          contentPadding: const EdgeInsets.only(),
+          contentPadding: const EdgeInsets.only(left: 5),
           errorStyle: const TextStyle(height: 0, fontSize: 0),
+          border: const OutlineInputBorder(),
         ),
       ))
     ]);
