@@ -27,14 +27,18 @@ class DesktopSupport {
       }
 
       if (Platform.isMacOS) {
-        await WindowManipulator.initialize();
-        // 调整关闭按钮的位置
-        WindowManipulator.overrideStandardWindowButtonPosition(
-            buttonType: NSWindowButtonType.closeButton, offset: Offset(10, 13));
-        WindowManipulator.overrideStandardWindowButtonPosition(
-            buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(29, 13));
-        WindowManipulator.overrideStandardWindowButtonPosition(
-            buttonType: NSWindowButtonType.zoomButton, offset: const Offset(48, 13));
+        try {
+          await WindowManipulator.initialize();
+          // 调整关闭按钮的位置
+          WindowManipulator.overrideStandardWindowButtonPosition(
+              buttonType: NSWindowButtonType.closeButton, offset: Offset(10, 13));
+          WindowManipulator.overrideStandardWindowButtonPosition(
+              buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(29, 13));
+          WindowManipulator.overrideStandardWindowButtonPosition(
+              buttonType: NSWindowButtonType.zoomButton, offset: const Offset(48, 13));
+        } catch (e) {
+          logger.e("Error adjusting macOS window button positions: $e");
+        }
       }
 
       await windowManager.waitUntilReadyToShow(windowOptions, () async {

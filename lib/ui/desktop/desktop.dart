@@ -93,7 +93,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
 
-    if (widget.appConfiguration.upgradeNoticeV22) {
+    if (widget.appConfiguration.upgradeNoticeV23) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -161,13 +161,13 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.appConfiguration.upgradeNoticeV22 = false;
+                      // widget.appConfiguration.upgradeNoticeV23 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
-                    child: Text(localizations.cancel))
+                    child: Text(localizations.close))
               ],
-              title: Text(isCN ? '更新内容V${AppConfiguration.version}' : "Update content V${AppConfiguration.version}",
+              title: Text(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}",
                   style: const TextStyle(fontSize: 18)),
               content: Container(
                   constraints: const BoxConstraints(maxWidth: 600),
@@ -175,23 +175,23 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                       isCN
                           ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
                               '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                              '1. 脚本支持多 URL 匹配；\n'
-                              '2. 证书安装检测引导和自动安装证书；\n'
-                              '3. 优化菜单 UI；\n'
-                              '4. 搜索支持协议选择和耗时范围筛选；\n'
-                              '5. 历史记录支持图片持久化；\n'
-                              '6. 关于增加赞助；\n'
-                              '7. 修复较大响应体 JSON Text 预览卡顿；\n'
-                          : 'Tips：By default, HTTPS packet capture will not be enabled. Please install the certificate before enabling HTTPS packet capture。\n'
-                              'Click HTTPS Capture packets(Lock icon)，Choose to install the root certificate and follow the prompts to proceed。\n\n'
-                              '1. Script supports multiple URL matching;\n'
-                              '2. Certificate installation detection guidance and automatic certificate installation;\n'
-                              '3. Optimize menu UI;\n'
-                              '4. Search supports protocol selection and filtering of time consumption range;\n'
-                              '5. History records support image persistence;\n'
-                              '6. About increasing sponsorship;\n'
-                              '7. Fix large response body JSON Text preview lag;\n'
-                            ,
+                              '1. 工具箱增加 WebSocket 请求测试；\n'
+                              '2. 支持数据上报服务器；\n'
+                              '3. 支持 SSE（event-stream）请求；\n'
+                              '4. 增加保存HTTP请求；\n'
+                              '5. 请求重写支持 请求方法匹配；\n'
+                              '6. Android 系统导航栏颜色适配；\n'
+                              '7. 修复 ios26 分享 bug；\n'
+                              '8. bug修复和改进；\n'
+                          : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
+                              '1. Added WebSocket request testing in the Toolbox.\n'
+                              '2. Added support for data-reporting servers.\n'
+                              '3. Added support for Server-Sent Events (SSE / event-stream).\n'
+                              '4. Added the ability to save HTTP requests.\n'
+                              "5. Request rewrite rules now support matching by HTTP method.\n"
+                              '6. Improved Android navigation bar color handling.\n'
+                              '7. Fixed a sharing bug on iOS 26.\n'
+                              '8. Various bug fixes and improvements.\n',
                       style: const TextStyle(fontSize: 14))));
         });
   }
