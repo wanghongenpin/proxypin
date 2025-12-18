@@ -11,24 +11,33 @@ class QrCodeScanner {
   static Future<String?> scan(BuildContext context) async {
     var status = await Permission.camera.status;
 
-    if (status.isRestricted || status.isPermanentlyDenied) {
-      openAppSettings();
-      return Future.value(null);
-    } else if (!status.isGranted) {
+    if (!status.isGranted) {
       status = await Permission.camera.request();
     }
 
-    if (status.isDenied) {
+    if (!status.isGranted) {
       if (!context.mounted) return Future.value(null);
       AppLocalizations localizations = AppLocalizations.of(context)!;
       bool isCN = localizations.localeName == 'zh';
-      showDialog(
+      await showDialog(
           context: context,
           builder: (context) => AlertDialog(
                 content: Text(isCN ? "请授予相机权限" : "Please grant camera permission"),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    child: Text(localizations.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      if (!context.mounted) return Future.value(null);
+                      Navigator.of(context).pop();
+                      final PermissionStatus newStatus = await Permission.camera.request();
+                      // Flutter权限处理有bug  url: https://github.com/Baseflow/flutter-permission-handler/issues/1206
+                      if (newStatus.isRestricted || newStatus.isPermanentlyDenied) {
+                        openAppSettings();
+                      }
+                    },
                     child: Text(localizations.confirm),
                   ),
                 ],
