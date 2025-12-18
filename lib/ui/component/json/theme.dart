@@ -10,25 +10,18 @@ class ColorTheme {
         keyword: const Color(0xff0033b3),
         searchMatchColor: colorScheme.inversePrimary,
         searchMatchCurrentColor: colorScheme.primary,
-      );
-
-  static Color _lighten(Color color, [double amount = 0.2]) {
-        final hsl = HSLColor.fromColor(color);
-        final hslLight =
-            hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0));
-        return hslLight.toColor();
-  }
+  );
 
   static ColorTheme dark(ColorScheme colorScheme) => ColorTheme(
         background: const Color(0xff2b2b2b),
-        propertyKey: _lighten(const Color(0xff9876aa), 0.18),
-        colon: _lighten(const Color(0xffcc7832), 0.15),
-        string: _lighten(const Color(0xff6a8759), 0.20),
-        number: _lighten(const Color(0xff6897bb), 0.20),
-        keyword: _lighten(const Color.fromRGBO(204, 120, 50, 1), 0.15),
+        propertyKey: const Color(0xffb9a3d3),
+        colon: const Color(0xffe0a56d),
+        string: const Color(0xff8fbf9a),
+        number: const Color(0xff9fc1e3),
+        keyword: const Color(0xffe0a56d),
         searchMatchColor: colorScheme.inversePrimary,
         searchMatchCurrentColor: colorScheme.primary,
-      );
+  );
 
   final Color background;
   final Color propertyKey;
