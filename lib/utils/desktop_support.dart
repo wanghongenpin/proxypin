@@ -33,9 +33,9 @@ class DesktopSupport {
           WindowManipulator.overrideStandardWindowButtonPosition(
               buttonType: NSWindowButtonType.closeButton, offset: Offset(10, 13));
           WindowManipulator.overrideStandardWindowButtonPosition(
-              buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(29, 13));
+              buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(32, 13));
           WindowManipulator.overrideStandardWindowButtonPosition(
-              buttonType: NSWindowButtonType.zoomButton, offset: const Offset(48, 13));
+              buttonType: NSWindowButtonType.zoomButton, offset: const Offset(52, 13));
         } catch (e) {
           logger.e("Error adjusting macOS window button positions: $e");
         }

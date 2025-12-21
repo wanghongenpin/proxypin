@@ -161,7 +161,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      // widget.appConfiguration.upgradeNoticeV23 = false;
+                      widget.appConfiguration.upgradeNoticeV23 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
