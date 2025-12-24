@@ -33,6 +33,7 @@ Podfile.lock
 .pub-cache/
 .pub/
 /build/
+generate*
 
 # Symbolication related
 app.*.symbols
