@@ -10,7 +10,6 @@ import device_info_plus
 import file_picker
 import flutter_desktop_context_menu
 import flutter_js
-import macos_window_utils
 import path_provider_foundation
 import proxy_manager
 import screen_retriever_macos
@@ -26,7 +25,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FilePickerPlugin.register(with: registry.registrar(forPlugin: "FilePickerPlugin"))
   FlutterDesktopContextMenuPlugin.register(with: registry.registrar(forPlugin: "FlutterDesktopContextMenuPlugin"))
   FlutterJsPlugin.register(with: registry.registrar(forPlugin: "FlutterJsPlugin"))
-  MacOSWindowUtilsPlugin.register(with: registry.registrar(forPlugin: "MacOSWindowUtilsPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   ProxyManagerPlugin.register(with: registry.registrar(forPlugin: "ProxyManagerPlugin"))
   ScreenRetrieverMacosPlugin.register(with: registry.registrar(forPlugin: "ScreenRetrieverMacosPlugin"))
