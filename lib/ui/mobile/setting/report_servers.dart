@@ -268,7 +268,8 @@ class _ReportServerEditPageMobileState extends State<ReportServerEditPageMobile>
                   SizedBox(
                     width: 120,
                     child: DropdownButtonFormField<String>(
-                      initialValue: _compression,
+                      // use `value` for compatibility with older Flutter SDKs
+                      value: _compression,
                       decoration: dec(),
                       items: [
                         DropdownMenuItem(value: 'none', child: Text(localizations.compressionNone)),

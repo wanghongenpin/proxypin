@@ -344,8 +344,8 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
                         color: Theme.of(context).colorScheme.primary,
                         shape: BoxShape.circle,
                         boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 3))
+                          // use withOpacity for compatibility
+                          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 3))
                         ],
                       ),
                       child: const Icon(Icons.send, color: Colors.white, size: 20),
@@ -399,8 +399,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
                         color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(20.0),
                         boxShadow: [
-                          BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.24), blurRadius: 8, offset: const Offset(0, 4))
+                          BoxShadow(color: Colors.black.withOpacity(0.24), blurRadius: 8, offset: const Offset(0, 4))
                         ],
                       ),
                       child: const Icon(Icons.arrow_downward, color: Colors.white, size: 18),
@@ -456,7 +455,8 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
         final bubble = Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: displayOnLeft ? Colors.green.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.2),
+            // replace withOpacity to support broader SDK versions
+            color: displayOnLeft ? Colors.green.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
           ),
           child: SelectableText(bubbleText),
@@ -465,7 +465,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
           onPressed: () {
             showDialog(context: context, builder: (context) => _PreviewDialog(bytes: m.bytes));
           },
-          icon: Icon(Icons.expand_more, color: ColorScheme.of(context).primary),
+          icon: Icon(Icons.expand_more, color: Theme.of(context).colorScheme.primary),
         );
         // attach key to the last message so we can ensureVisible it
         final widgetKey = index == _messages.length - 1 ? _lastMessageKey : null;

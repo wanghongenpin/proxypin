@@ -95,14 +95,16 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
                   onTap: () {
                     showDialog(
                         context: context,
-                        builder: (ctx) => AlertDialog(
+                        builder: (ctx) => ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 385),
-                              title: Text(localizations.privacyPolicy),
-                              content: SingleChildScrollView(
-                                  child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35))),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
-                              ],
+                              child: AlertDialog(
+                                title: Text(localizations.privacyPolicy),
+                                content: SingleChildScrollView(
+                                    child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35))),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                                ],
+                              ),
                             ));
                   }),
               ListTile(

@@ -568,7 +568,6 @@ class _RewriteRuleState extends State<RewriteRule> {
                             height: 50,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: ruleType,
                               decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   errorStyle: TextStyle(height: 0, fontSize: 0),
@@ -576,7 +575,13 @@ class _RewriteRuleState extends State<RewriteRule> {
                               items: RuleType.values
                                   .map((e) => DropdownMenuItem(value: e, child: Text(isCN ? e.label : e.name)))
                                   .toList(),
-                              onChanged: onChangeType,
+                              onChanged: (val) {
+                                setState(() {
+                                  rule.type = val!;
+                                });
+                              },
+                              // use `value` for compatibility with older SDKs
+                              value: rule.type,
                             )),
                         const SizedBox(width: 10),
                       ]),
