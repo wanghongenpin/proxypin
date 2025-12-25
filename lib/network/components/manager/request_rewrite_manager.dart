@@ -182,7 +182,7 @@ class RequestRewriteManager {
   RequestRewriteRule getRequestRewriteRule(HttpRequest request, RuleType type) {
     var url = request.domainPath;
     for (var rule in rules) {
-      if (rule.match(url) && rule.type == type) {
+      if (rule.match(url, type: type, method: request.method) && rule.type == type) {
         return rule;
       }
     }

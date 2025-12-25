@@ -47,14 +47,20 @@ class RequestRewriteRule {
   RegExp _urlReg;
   String? rewritePath;
 
-  RequestRewriteRule({this.enabled = true, this.name, required this.url, required this.type, this.rewritePath})
+  // 可选的 HTTP 方法匹配；null 表示匹配任意方法
+  HttpMethod? method;
+
+  RequestRewriteRule({this.enabled = true, this.name, required this.url, required this.type, this.rewritePath, this.method})
       : _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
 
-  bool match(String url, {RuleType? type}) {
-    if (enabled && (type == null || this.type == type)) {
-      return _urlReg.hasMatch(url);
-    }
-    return false;
+  bool match(String url, {RuleType? type, HttpMethod? method}) {
+    if (!enabled) return false;
+    if (type != null && this.type != type) return false;
+
+    // 如果调用方提供了 method，则当规则定义了 method 时进行比较；如果调用方未提供 method，则不按方法过滤（向后兼容）
+    if (method != null && this.method != null && this.method != method) return false;
+
+    return _urlReg.hasMatch(url);
   }
 
   bool matchUrl(String url, RuleType type) {
@@ -63,26 +69,42 @@ class RequestRewriteRule {
 
   /// 从json中创建
   factory RequestRewriteRule.formJson(Map<dynamic, dynamic> map) {
+    HttpMethod? method;
+    try {
+      if (map['method'] != null) {
+        method = HttpMethod.valueOf(map['method'].toString());
+      }
+    } catch (e) {
+      // ignore invalid method
+    }
+
     return RequestRewriteRule(
         enabled: map['enabled'] == true,
         name: map['name'],
         url: map['url'] ?? map['domain'] + map['path'],
         type: RuleType.fromName(map['type']),
-        rewritePath: map['rewritePath']);
+        rewritePath: map['rewritePath'],
+        method: method);
   }
 
   void updatePathReg() {
     _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
   }
 
-  toJson() {
-    return {
+  Map<String, dynamic> toJson() {
+    var json = {
       'name': name,
       'enabled': enabled,
       'url': url,
       'type': type.name,
       'rewritePath': rewritePath,
     };
+
+    if (method != null) {
+      json['method'] = method!.name;
+    }
+
+    return json;
   }
 }
 

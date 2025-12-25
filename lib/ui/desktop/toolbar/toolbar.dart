@@ -81,12 +81,12 @@ class _ToolbarState extends State<Toolbar> {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 80 : 20)),
+      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
       SocketLaunch(proxyServer: widget.proxyServer, startup: widget.proxyServer.configuration.startup),
       const Padding(padding: EdgeInsets.only(left: 18)),
       IconButton(
           tooltip: localizations.clear,
-          icon: const Icon(Icons.cleaning_services_outlined, size: 21),
+          icon: const Icon(Icons.delete_outline, size: 21),
           onPressed: () {
             widget.requestListStateKey.currentState?.clean();
           }),
@@ -97,7 +97,7 @@ class _ToolbarState extends State<Toolbar> {
       const Padding(padding: EdgeInsets.only(left: 18)),
       IconButton(
           tooltip: localizations.mobileConnect,
-          icon: const Icon(Icons.phone_iphone, size: 21),
+          icon: const Icon(Icons.phone_iphone_outlined, size: 21),
           onPressed: () async {
             final ips = await localIps(readCache: false);
             phoneConnect(ips, widget.proxyServer.port);

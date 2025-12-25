@@ -104,8 +104,12 @@ class ProxyVpnService : VpnService(), ProtectSocket {
         disconnect()
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        return if (intent.action == ACTION_DISCONNECT) {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent == null) {
+           return START_NOT_STICKY
+        }
+
+        return if (intent?.action == ACTION_DISCONNECT) {
             disconnect()
             START_NOT_STICKY
         } else {

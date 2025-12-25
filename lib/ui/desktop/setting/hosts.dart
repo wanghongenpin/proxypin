@@ -537,12 +537,13 @@ class _HostsEditDialogState extends State<HostsEditDialog> {
                           controller: hostController,
                           validator: (val) => val == null || val.trim().isEmpty ? localizations.cannotBeEmpty : null,
                           decoration: const InputDecoration(
+                              isDense: true,
                               hintText: '*.example.com',
                               hintStyle: TextStyle(color: Colors.grey),
                               errorStyle: TextStyle(height: 0, fontSize: 0),
                               border: OutlineInputBorder()))),
                 ]),
-                const SizedBox(height: 10),
+                const SizedBox(height: 15),
                 Row(children: [
                   SizedBox(width: 80, child: Text(localizations.toAddress)),
                   Expanded(
@@ -550,6 +551,7 @@ class _HostsEditDialogState extends State<HostsEditDialog> {
                           controller: toAddressController,
                           validator: (val) => val == null || val.trim().isEmpty ? localizations.cannotBeEmpty : null,
                           decoration: const InputDecoration(
+                              isDense: true,
                               hintText: '202.108.22.5',
                               errorStyle: TextStyle(height: 0, fontSize: 0),
                               hintStyle: TextStyle(color: Colors.grey),

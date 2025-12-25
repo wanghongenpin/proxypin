@@ -105,6 +105,12 @@
   "matchRule": "Match Rule",
   "emptyMatchAll": "Empty means match all",
   "newBuilt": "New",
+  "reportServers": "Report Servers",
+  "addReportServer": "Add Report Server",
+  "editReportServer": "Edit Report Server",
+  "serverUrl": "Server URL",
+  "compression": "Compression",
+  "compressionNone": "None",
   "newFolder": "New Folder",
   "enableSelect": "Enable Select",
   "disableSelect": "Disable Select",
@@ -240,6 +246,7 @@
   "curlSchemeRequest": "If the curl format is recognized, should it be converted into an HTTP request?",
   "appExitTips": "Press again to exit the program",
   "remoteConnectDisconnect": "Check remote connection failed, disconnected",
+  "connect": "Connect",
   "reconnect": "Reconnect",
   "remoteConnected": "Connected {os}, traffic will be forwarded to {os}",
   "remoteConnectForward": "Remote connection, forwarding requests to other terminals",
@@ -347,5 +354,8 @@
   "sponsorSupport": "Support ongoing development",
   "sponsorThanks": "Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.",
   "sponsorAfdian": "AFDIAN",
-  "sponsorBuyMeCoffee": "Buy Me a Coffee"
+  "sponsorBuyMeCoffee": "Buy Me a Coffee",
+
+  "privacyPolicy": "Privacy Policy",
+  "privacyContent": "This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code."
 }

@@ -324,7 +324,7 @@ class JsonParser {
   /// 获取数组json
   List<TextSpan> getArrayText(List<dynamic> list, {String openPrefix = '', String prefix = '', String suffix = ''}) {
     var result = <TextSpan>[];
-    result.add(TextSpan(text: '$openPrefix[ \n'));
+    // result.add(TextSpan(text: '$openPrefix[ \n'));
 
     for (int i = 0; i < list.length; i++) {
       var value = list[i];

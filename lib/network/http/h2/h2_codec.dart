@@ -25,6 +25,8 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/http/sse.dart';
+import 'package:proxypin/network/http/websocket.dart';
 
 import '../../util/byte_utils.dart';
 import 'frame.dart';
@@ -43,6 +45,9 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   T createMessage(ChannelContext channelContext, FrameHeader frameHeader, Map<String, List<String>> headers);
 
   T? getMessage(ChannelContext channelContext, FrameHeader frameHeader);
+
+  // Per-stream SSE decoder instances keyed by HTTP/2 stream id
+  final Map<int, SseDecoder> sseDecoders = {};
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf byteBuf, {bool resolveBody = true}) {
@@ -115,6 +120,20 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
           headersFrame.headerBlockFragment = [];
           channelContext.put(frameHeader.streamIdentifier, headersFrame);
         }
+
+        //handle special case for SSE
+        var possibleMessage = getMessage(channelContext, frameHeader);
+        if (possibleMessage is HttpResponse &&
+            possibleMessage.headers.contentType.toLowerCase().startsWith('text/event-stream')) {
+          result.forward = List.from(frameHeader.encode())..addAll(framePayload);
+          result.data = possibleMessage;
+          var currentRequest = channelContext.getStreamRequest(frameHeader.streamIdentifier);
+          currentRequest?.response = possibleMessage;
+          possibleMessage.request ??= channelContext.currentRequest;
+          channelContext.listener?.onResponse(channelContext, possibleMessage);
+          return result;
+        }
+
         break;
       case FrameType.continuation:
         //处理CONTINUATION帧
@@ -136,7 +155,16 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
         break;
       case FrameType.data:
         //处理DATA帧
-        _handleDataFrame(channelContext, frameHeader, ByteBuf(framePayload));
+        var message = getMessage(channelContext, frameHeader)!;
+        bool isSseResponse =
+            message is HttpResponse && message.headers.contentType.toLowerCase().startsWith('text/event-stream');
+        if (isSseResponse) {
+          _handleSseDataFrame(channelContext, frameHeader, message, ByteBuf(framePayload));
+          result.forward = List.from(frameHeader.encode())..addAll(framePayload);
+          return result;
+        }
+
+        _handleDataFrame(channelContext, frameHeader, message, ByteBuf(framePayload));
         result.isDone = frameHeader.hasEndStreamFlag;
         break;
       case FrameType.settings:
@@ -287,10 +315,36 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     return true;
   }
 
-  DataFrame _handleDataFrame(ChannelContext channelContext, FrameHeader frameHeader, ByteBuf payload) {
+  void _handleSseDataFrame(
+      ChannelContext channelContext, FrameHeader frameHeader, HttpMessage message, ByteBuf payload) {
     //  DATA 帧格式
     int padLength = 0;
-    //如果帧头部有PADDED标志位，则需要读取PADDED长度
+    if (frameHeader.hasPaddedFlag) {
+      padLength = payload.readByte();
+    }
+    int dataLength = payload.readableBytes() - padLength;
+    var data = payload.readBytes(dataLength);
+    // Incremental SSE parsing: do not accumulate full body to avoid large memory usage
+    final decoder = sseDecoders.putIfAbsent(frameHeader.streamIdentifier, () => SseDecoder());
+    final frames = decoder.feed(Uint8List.fromList(data));
+    for (final WebSocketFrame frame in frames) {
+      frame.isFromClient = false; // server -> client
+      message.messages.add(frame);
+      channelContext.listener?.onMessage(channelContext.clientChannel!, message, frame);
+      logger.d(
+          '[${channelContext.clientChannel?.id}] h2 sse streamId:${frameHeader.streamIdentifier} frame ${frame.payloadLength} ${frame.payloadDataAsString}');
+    }
+
+    if (frameHeader.hasEndStreamFlag) {
+      sseDecoders.remove(frameHeader.streamIdentifier);
+      channelContext.removeStream(frameHeader.streamIdentifier);
+    }
+  }
+
+  DataFrame _handleDataFrame(
+      ChannelContext channelContext, FrameHeader frameHeader, HttpMessage message, ByteBuf payload) {
+    //  DATA 帧格式
+    int padLength = 0;
     if (frameHeader.hasPaddedFlag) {
       padLength = payload.readByte();
     }
@@ -298,7 +352,8 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     //读取数据
     int dataLength = payload.readableBytes() - padLength;
     var data = payload.readBytes(dataLength);
-    var message = getMessage(channelContext, frameHeader)!;
+
+    // Regular body accumulation
     if (message.body == null) {
       message.body = data;
     } else {
@@ -353,6 +408,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       }
     });
 
+    message.streamId = frameHeader.streamIdentifier;
     message.packageSize = frameHeader.length;
     return HeadersFrame(frameHeader, padLength, exclusiveDependency, streamDependency, weight, blockFragment);
   }

@@ -25,4 +25,8 @@ abstract class Interceptor {
   Future<HttpResponse?> onResponse(HttpRequest request, HttpResponse response) async {
     return response;
   }
+
+  Future<void> onError(HttpRequest? request, dynamic error, StackTrace? stackTrace) async {
+    return;
+  }
 }

@@ -105,6 +105,12 @@
   "matchRule": "匹配规则",
   "emptyMatchAll": "为空表示匹配全部",
   "newBuilt": "新建",
+  "reportServers": "上报服务器",
+  "addReportServer": "新增上报服务器",
+  "editReportServer": "编辑上报服务器",
+  "serverUrl": "服务器 URL",
+  "compression": "压缩",
+  "compressionNone": "无",
   "newFolder": "新建文件夹",
   "enableSelect": "启用选择",
   "disableSelect": "禁用选择",
@@ -240,6 +246,7 @@
   "curlSchemeRequest": "识别到curl格式，是否转换为HTTP请求？",
   "appExitTips": "再按一次退出程序",
   "remoteConnectDisconnect": "检查远程连接失败，已断开",
+  "connect": "连接",
   "reconnect": "重新连接",
   "remoteConnected": "已连接{os}，流量将转发到{os}",
   "remoteConnectForward": "远程连接，将其他设备流量转发到当前设备",
@@ -347,5 +354,8 @@
   "sponsorSupport": "支持项目持续开发",
   "sponsorThanks": "感谢支持开源项目，可选择以下任意方式，帮助项目长期发展",
   "sponsorAfdian": "爱发电赞助",
-  "sponsorBuyMeCoffee": "Buy Me a Coffee"
+  "sponsorBuyMeCoffee": "Buy Me a Coffee",
+
+  "privacyPolicy": "隐私协议",
+  "privacyContent": "本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。"
 }

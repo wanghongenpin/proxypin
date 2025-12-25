@@ -21,8 +21,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -33,6 +33,8 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_replace.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
+
+import '../../component/http_method_popup.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -548,7 +550,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
             width: 550,
-            constraints: const BoxConstraints(minHeight: 200, maxHeight: 550),
+            constraints: const BoxConstraints(minHeight: 200, maxHeight: 560),
             child: Form(
                 key: formKey,
                 child: Column(
@@ -562,16 +564,47 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                       const SizedBox(height: 5),
                       textField('${localizations.name}:', nameInput, localizations.pleaseEnter),
                       const SizedBox(height: 10),
-                      textField('URL:', urlInput, 'https://www.example.com/api/*', required: true),
+                      // URL input with Method as prefix (method shown before the URL field)
+                      Row(children: [
+                        SizedBox(width: 60, child: Text('URL:')),
+                        Expanded(
+                          child: TextFormField(
+                            controller: urlInput,
+                            style: const TextStyle(fontSize: 14),
+                            validator: (val) => val?.isNotEmpty == true ? null : "",
+                            decoration: InputDecoration(
+                              hintText: 'https://www.example.com/api/*',
+                              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                              errorStyle: const TextStyle(height: 0, fontSize: 0),
+                              focusedBorder: focusedBorder(),
+                              isDense: true,
+                              border: const OutlineInputBorder(),
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.only(left: 6, right: 6),
+                                child: MethodPopupMenu(
+                                  value: rule.method,
+                                  showSeparator: true,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      rule.method = val;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]),
                       const SizedBox(height: 10),
                       Row(children: [
                         SizedBox(width: 60, child: Text('${localizations.action}:')),
                         SizedBox(
                             width: 150,
-                            height: 33,
+                            height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              value: ruleType,
+                              initialValue: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),
@@ -580,7 +613,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                               items: RuleType.values
                                   .map((e) => DropdownMenuItem(
                                       value: e,
-                                      child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 13))))
+                                      child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 14))))
                                   .toList(),
                               onChanged: onChangeType,
                             )),
@@ -602,6 +635,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                 (formKey.currentState as FormState).save();
                 rule.name = nameInput.text;
                 rule.url = urlInput.text;
+                // method already set on change
                 items = rewriteReplaceKey.currentState?.getItems() ?? rewriteUpdateKey.currentState?.getItems();
 
                 var requestRewrites = await RequestRewriteManager.instance;
@@ -676,7 +710,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
         decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
             errorStyle: const TextStyle(height: 0, fontSize: 0),
             focusedBorder: focusedBorder(),
             isDense: true,

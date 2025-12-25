@@ -313,6 +313,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newBuilt => 'New';
 
   @override
+  String get reportServers => 'Report Servers';
+
+  @override
+  String get addReportServer => 'Add Report Server';
+
+  @override
+  String get editReportServer => 'Edit Report Server';
+
+  @override
+  String get serverUrl => 'Server URL';
+
+  @override
+  String get compression => 'Compression';
+
+  @override
+  String get compressionNone => 'None';
+
+  @override
   String get newFolder => 'New Folder';
 
   @override
@@ -692,6 +710,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteConnectDisconnect => 'Check remote connection failed, disconnected';
 
   @override
+  String get connect => 'Connect';
+
+  @override
   String get reconnect => 'Reconnect';
 
   @override
@@ -991,4 +1012,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get privacyContent =>
+      'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.';
 }

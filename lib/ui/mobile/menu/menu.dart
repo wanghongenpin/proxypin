@@ -21,6 +21,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/ui/mobile/setting/app_filter.dart';
+import 'package:proxypin/ui/mobile/setting/report_servers.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/highlight.dart';
 import 'package:proxypin/ui/mobile/widgets/remote_device.dart';
@@ -75,6 +76,17 @@ class MoreMenu extends StatelessWidget {
                 onTap: () {
                   Navigator.maybePop(context);
                   navigator(context, RemoteDevicePage(proxyServer: proxyServer, remoteDevice: remoteDevice));
+                },
+              )),
+          PopupMenuItem(
+              height: 32,
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.cloud_upload_outlined),
+                title: Text(localizations.reportServers),
+                onTap: () {
+                  Navigator.maybePop(context);
+                  navigator(context, const ReportServersPageMobile());
                 },
               )),
           const PopupMenuDivider(height: 0),

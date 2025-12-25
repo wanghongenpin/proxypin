@@ -30,6 +30,8 @@ import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
 
+import '../../component/http_method_popup.dart';
+
 /// @author wanghongen
 class MobileRequestEditor extends StatefulWidget {
   final HttpRequest? request;
@@ -109,7 +111,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                         setState(() {
                           request = Curl.parse(text!);
                           requestKey.currentState?.change(request!);
-                          requestLineKey.currentState?.change(request?.requestUrl, request?.method.name);
+                          requestLineKey.currentState?.change(request?.requestUrl, request?.method);
                         });
                       } catch (e) {
                         FlutterToastr.show(localizations.fail, context);
@@ -188,7 +190,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     var requestBody = requestKey.currentState?.getBody();
     String url = currentState.requestUrl.text;
 
-    HttpRequest request = HttpRequest(HttpMethod.valueOf(currentState.requestMethod), Uri.parse(url).toString(),
+    HttpRequest request = HttpRequest(currentState.requestMethod, Uri.parse(url).toString(),
         protocolVersion: this.request?.protocolVersion ?? "HTTP/1.1");
 
     request.headers.addAll(headers);
@@ -221,13 +223,13 @@ class UrlQueryNotifier {
   ParamCallback? _urlNotifier;
   ParamCallback? _paramNotifier;
 
-  urlListener(ParamCallback listener) => _urlNotifier = listener;
+  ParamCallback urlListener(ParamCallback listener) => _urlNotifier = listener;
 
-  paramListener(ParamCallback listener) => _paramNotifier = listener;
+  ParamCallback paramListener(ParamCallback listener) => _paramNotifier = listener;
 
-  onUrlChange(String url) => _urlNotifier?.call(url);
+  void onUrlChange(String url) => _urlNotifier?.call(url);
 
-  onParamChange(String param) => _paramNotifier?.call(param);
+  void onParamChange(String param) => _paramNotifier?.call(param);
 }
 
 class _HttpWidget extends StatefulWidget {
@@ -342,7 +344,7 @@ class _RequestLine extends StatefulWidget {
 
 class _RequestLineState extends State<_RequestLine> {
   TextEditingController requestUrl = TextEditingController(text: "");
-  String requestMethod = HttpMethod.get.name;
+  HttpMethod requestMethod = HttpMethod.get;
 
   @override
   void initState() {
@@ -354,7 +356,7 @@ class _RequestLineState extends State<_RequestLine> {
     }
     var request = widget.request!;
     requestUrl.text = request.requestUrl;
-    requestMethod = request.method.name;
+    requestMethod = request.method;
   }
 
   @override
@@ -363,19 +365,19 @@ class _RequestLineState extends State<_RequestLine> {
     super.dispose();
   }
 
-  change(String? requestUrl, String? requestMethod) {
+  void change(String? requestUrl, HttpMethod? requestMethod) {
     this.requestUrl.text = requestUrl ?? this.requestUrl.text;
     this.requestMethod = requestMethod ?? this.requestMethod;
 
     urlNotifier();
   }
 
-  urlNotifier() {
+  void urlNotifier() {
     var splitFirst = requestUrl.text.splitFirst("?".codeUnits.first);
     widget.urlQueryNotifier?.onUrlChange(splitFirst.length > 1 ? splitFirst.last : '');
   }
 
-  onQueryChange(String query) {
+  void onQueryChange(String query) {
     var url = requestUrl.text;
     var indexOf = url.indexOf("?");
     if (indexOf == -1) {
@@ -396,19 +398,15 @@ class _RequestLineState extends State<_RequestLine> {
         autofocus: false,
         controller: requestUrl,
         decoration: InputDecoration(
-            prefix: DropdownButton(
-              padding: const EdgeInsets.only(right: 10),
-              underline: const SizedBox(),
-              isDense: true,
-              focusColor: Colors.transparent,
-              value: requestMethod,
-              items: HttpMethod.methods()
-                  .map((it) =>
-                      DropdownMenuItem(value: it.name, child: Text(it.name, style: const TextStyle(fontSize: 12))))
-                  .toList(),
-              onChanged: (String? value) {
-                setState(() => requestMethod = value!);
-              },
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 6, right: 6),
+              child: MethodPopupMenu(
+                value: requestMethod,
+                showSeparator: true,
+                onChanged: (val) {
+                  setState(() => requestMethod = val!);
+                },
+              ),
             ),
             isDense: true,
             border: const OutlineInputBorder(borderSide: BorderSide()),

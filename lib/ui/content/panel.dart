@@ -17,25 +17,18 @@
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/storage/favorites.dart';
-import 'package:proxypin/ui/component/share.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
-import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/web_socket.dart';
-import 'package:proxypin/ui/mobile/menu/drawer.dart';
-import 'package:proxypin/ui/mobile/request/request_editor.dart';
-import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:proxypin/utils/python.dart';
 
 import 'body.dart';
+import 'menu.dart';
 
 ///网络请求详情页
 ///@Author: wanghongen
@@ -140,12 +133,20 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   @override
   Widget build(BuildContext context) {
     bool isWebSocket = widget.request.get()?.isWebSocket == true;
-    tabs[tabs.length - 1] = isWebSocket ? "WebSocket" : 'Cookies';
+    bool isSse = widget.response.get()?.headers.contentType.toLowerCase().startsWith('text/event-stream') == true;
+    bool isStreamMessages = isWebSocket || isSse;
+    if (isSse) {
+      tabs[tabs.length - 1] = "SSE";
+    } else if (isWebSocket) {
+      tabs[tabs.length - 1] = "WebSocket";
+    } else {
+      tabs[tabs.length - 1] = 'Cookies';
+    }
 
     var tabBar = TabBar(
       padding: const EdgeInsets.only(bottom: 0),
       controller: _tabController,
-      dividerColor: Theme.of(context).dividerColor.withOpacity(0.15),
+      dividerColor: Theme.of(context).dividerColor.withValues(alpha: 0.15),
       labelPadding: const EdgeInsets.symmetric(horizontal: 10),
       tabs: tabs.map((title) => Tab(child: Text(title, style: widget.tabStyle, maxLines: 1))).toList(),
     );
@@ -159,63 +160,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
               ShareWidget(
                   proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
               const SizedBox(width: 3),
-              PopupMenuButton(
-                  offset: const Offset(0, 30),
-                  padding: const EdgeInsets.all(0),
-                  itemBuilder: (context) => [
-                        PopupMenuItem(
-                            child: Text(localizations.favorite),
-                            onTap: () {
-                              var request = widget.request.get();
-                              if (request == null) return;
-
-                              FavoriteStorage.addFavorite(request);
-                              FlutterToastr.show(localizations.addSuccess, context);
-                            }),
-                        PopupMenuItem(
-                            child: Text(localizations.requestEdit),
-                            onTap: () {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) => MobileRequestEditor(
-                                        request: widget.request.get(), proxyServer: widget.proxyServer)));
-                              });
-                            }),
-                        PopupMenuItem(
-                            child: Text(localizations.requestMap),
-                            onTap: () {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                navigator(
-                                    context,
-                                    MobileRequestMapEdit(
-                                        url: widget.request.get()?.domainPath,
-                                        title: widget.request.get()?.hostAndPort?.host));
-                              });
-                            }),
-                        CustomPopupMenuItem(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: Text(localizations.copyRawRequest),
-                            onTap: () {
-                              var request = widget.request.get();
-                              if (request == null) return;
-
-                              var text = copyRawRequest(request);
-                              Clipboard.setData(ClipboardData(text: text));
-                              FlutterToastr.show(localizations.copied, context);
-                            }),
-                        CustomPopupMenuItem(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: Text(localizations.copyAsPythonRequests),
-                            onTap: () {
-                              var request = widget.request.get();
-                              if (request == null) return;
-
-                              var text = copyAsPythonRequests(request);
-                              Clipboard.setData(ClipboardData(text: text));
-                              FlutterToastr.show(localizations.copied, context);
-                            })
-                      ],
-                  child: const SizedBox(height: 38, width: 38, child: Icon(Icons.more_vert, size: 28))),
+              DetailMenuWidget(request: widget.request.get()),
               const SizedBox(width: 10),
             ],
           );
@@ -233,7 +178,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
               KeepAliveWrapper(child: request()),
               KeepAliveWrapper(child: response()),
               SelectionArea(
-                  child: isWebSocket
+                  child: isStreamMessages
                       ? Websocket(widget.request, widget.response)
                       : Cookies(widget.request, widget.response)),
             ],

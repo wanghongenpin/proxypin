@@ -204,13 +204,17 @@ class RequestBlockAddDialog extends StatelessWidget {
                   TextFormField(
                       initialValue: item.url,
                       decoration: const InputDecoration(
-                          labelText: 'URL', hintText: 'https://example.com/*', border: OutlineInputBorder()),
+                          isDense: true,
+                          labelText: 'URL',
+                          hintText: 'https://example.com/*',
+                          border: OutlineInputBorder()),
                       validator: (val) => val == null || val.trim().isEmpty ? localizations.cannotBeEmpty : null,
                       onSaved: (val) => item.url = val!.trim()),
                   const SizedBox(height: 20),
                   DropdownButtonFormField(
                       value: item.type,
-                      decoration: InputDecoration(labelText: localizations.type, border: const OutlineInputBorder()),
+                      decoration: InputDecoration(
+                          isDense: true, labelText: localizations.type, border: const OutlineInputBorder()),
                       items: BlockType.values
                           .map((e) => DropdownMenuItem(
                               value: e, child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 14))))
