@@ -156,6 +156,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
         : AppBar(
             title: widget.title,
             bottom: tabBar,
+            centerTitle: true,
             actions: [
               ShareWidget(
                   proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
