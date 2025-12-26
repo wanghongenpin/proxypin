@@ -10,18 +10,18 @@ class ColorTheme {
         keyword: const Color(0xff0033b3),
         searchMatchColor: colorScheme.inversePrimary,
         searchMatchCurrentColor: colorScheme.primary,
-      );
+  );
 
   static ColorTheme dark(ColorScheme colorScheme) => ColorTheme(
         background: const Color(0xff2b2b2b),
-        propertyKey: const Color(0xff9876aa),
-        colon: const Color(0xffcc7832),
-        string: const Color(0xff6a8759),
-        number: const Color(0xff6897bb),
-        keyword: const Color(0xffcc7832),
+        propertyKey: const Color(0xffb9a3d3),
+        colon: const Color(0xffe0a56d),
+        string: const Color(0xff8fbf9a),
+        number: const Color(0xff9fc1e3),
+        keyword: const Color(0xffe0a56d),
         searchMatchColor: colorScheme.inversePrimary,
         searchMatchCurrentColor: colorScheme.primary,
-      );
+  );
 
   final Color background;
   final Color propertyKey;
