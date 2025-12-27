@@ -52,7 +52,7 @@ class _AboutState extends State<About> {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(localizations.proxyPinSoftware, textAlign: TextAlign.center))),
           const SizedBox(height: 8),
-          Center(child: Text("${localizations.version} ${AppConfiguration.version}")),
+          Center(child: Text("Version ${AppConfiguration.version}")),
           const SizedBox(height: 12),
           Card(
               color: Colors.transparent,
@@ -101,13 +101,15 @@ class _AboutState extends State<About> {
                     onTap: () {
                       showDialog(
                           context: context,
-                          builder: (ctx) => AlertDialog(
+                          builder: (ctx) => ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 385),
-                                title: Text(localizations.privacyPolicy),
-                                content: SingleChildScrollView(child: Text(localizations.privacyContent)),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
-                                ],
+                                child: AlertDialog(
+                                  title: Text(localizations.privacyPolicy),
+                                  content: SingleChildScrollView(child: Text(localizations.privacyContent)),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                                  ],
+                                ),
                               ));
                     }),
                 Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),

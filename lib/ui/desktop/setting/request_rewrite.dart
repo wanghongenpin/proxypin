@@ -604,7 +604,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                             height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: ruleType,
+                              value: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),
