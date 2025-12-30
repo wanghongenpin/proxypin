@@ -100,17 +100,18 @@ class _AboutState extends State<About> {
                     trailing: const Icon(Icons.privacy_tip_outlined, size: 22),
                     onTap: () {
                       showDialog(
-                          context: context,
-                          builder: (ctx) => ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 385),
-                                child: AlertDialog(
-                                  title: Text(localizations.privacyPolicy),
-                                  content: SingleChildScrollView(child: Text(localizations.privacyContent)),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
-                                  ],
-                                ),
-                              ));
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(localizations.privacyPolicy),
+                          content: SingleChildScrollView(
+                              child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 385),
+                                  child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35)))),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                          ],
+                        ),
+                      );
                     }),
                 Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 // Sponsor / Donate entry

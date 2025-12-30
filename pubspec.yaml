@@ -23,7 +23,7 @@ dependencies:
       url: https://gitee.com/wanghongenpin/flutter-plugins.git
       path: packages/desktop_multi_window
   path_provider: ^2.1.5
-  file_picker: ^10.3.7
+  file_picker: ^10.3.8
   proxy_manager: ^0.0.3
   permission_handler: ^12.0.1
   flutter_toastr: ^1.0.3
@@ -33,9 +33,10 @@ dependencies:
     git:
       url: https://github.com/wanghongenpin/flutter-code-editor.git
       ref: secure-keyboard
+  flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^11.5.0
-  shared_preferences: ^2.5.3
+  shared_preferences: ^2.5.4
   url_launcher: ^6.3.2
   toastification: ^3.0.2
   get: ^4.7.3
