@@ -20,7 +20,7 @@ on:
       - 'v*'
 
 env:
-  FLUTTER_VERSION: '3.24.0'
+  FLUTTER_VERSION: '3.27.2'
   APP_NAME: 'proxypin-with-mcp'
 
 jobs:
@@ -131,10 +131,10 @@ jobs:
         continue-on-error: true
       
       - name: Fallback to zip if DMG fails
-        if: failure()
         run: |
           cd build/macos/Build/Products/Release
-          zip -r ../../../../../${{ env.APP_NAME }}-${{ needs.version.outputs.version }}-macos.zip ProxyPin.app
+          zip -r ${{ env.APP_NAME }}-${{ needs.version.outputs.version }}-macos.zip ProxyPin.app
+          mv ${{ env.APP_NAME }}-${{ needs.version.outputs.version }}-macos.zip ../../../../../
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
