@@ -18,10 +18,7 @@ dependencies:
   logger: ^2.6.2
   date_format: ^2.0.9
   window_manager: ^0.5.1
-  desktop_multi_window:
-    git:
-      url: https://gitee.com/wanghongenpin/flutter-plugins.git
-      path: packages/desktop_multi_window
+  desktop_multi_window: ^0.2.0
   path_provider: ^2.1.5
   file_picker: ^10.3.8
   proxy_manager: ^0.0.3

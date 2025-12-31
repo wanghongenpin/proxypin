@@ -109,7 +109,12 @@ jobs:
           cd macos && pod install
       
       - name: Build macOS
-        run: flutter build macos --release
+        run: |
+          flutter build macos --release
+        env:
+          CODE_SIGN_IDENTITY: ""
+          CODE_SIGNING_REQUIRED: "NO"
+          CODE_SIGNING_ALLOWED: "NO"
       
       - name: Install create-dmg
         run: brew install create-dmg
