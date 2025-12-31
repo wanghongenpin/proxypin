@@ -21,7 +21,7 @@ on:
 
 env:
   FLUTTER_VERSION: '3.24.0'
-  APP_NAME: 'ProxyPin'
+  APP_NAME: 'proxypin-with-mcp'
 
 jobs:
   # 提取版本信息
@@ -310,7 +310,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: ProxyPin v${{ needs.version.outputs.version }}
+          name: proxypin-with-mcp v${{ needs.version.outputs.version }}
           draft: false
           prerelease: false
           files: artifacts/*
