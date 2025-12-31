@@ -88,7 +88,7 @@ class _ToolbarState extends State<Toolbar> {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 80 : 20)),
+      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
       SocketLaunch(proxyServer: widget.proxyServer, startup: widget.proxyServer.configuration.startup),
       const Padding(padding: EdgeInsets.only(left: 18)),
       IconButton(

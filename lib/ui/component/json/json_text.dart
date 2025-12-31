@@ -93,7 +93,7 @@ class _JsonTextState extends State<JsonText> {
       chunks = chunks ?? splitTextSpans(textList, 500);
       return SizedBox(
           width: double.infinity,
-          height: MediaQuery.of(context).size.height - 160,
+          height: MediaQuery.of(context).size.height - 200,
           child: SelectionArea(
               child: ScrollablePositionedList.builder(
             physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),

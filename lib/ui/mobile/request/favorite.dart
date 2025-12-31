@@ -16,6 +16,7 @@
 
 import 'dart:collection';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 
 /// 收藏列表页面
 /// @author WangHongEn
@@ -57,10 +59,59 @@ class MobileFavorites extends StatefulWidget {
 class _FavoritesState extends State<MobileFavorites> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
+  Future<void> _exportJson() async {
+    final favorites = await FavoriteStorage.favorites;
+    final json = FavoriteStorage.toJson(favorites);
+    final bytes = utf8.encode(json);
+    final path = await FilePicker.platform.saveFile(fileName: 'favorites.json', bytes: bytes);
+    if (path == null) return;
+    if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
+  }
+
+  Future<String?> _materializePickedFile(PlatformFile file) async {
+    if (file.path != null) return file.path!;
+    if (file.bytes == null) return null;
+    final tmp = await File('${Directory.systemTemp.path}/${file.name}').create();
+    await tmp.writeAsBytes(file.bytes!, flush: true);
+    return tmp.path;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text(localizations.favorites, style: const TextStyle(fontSize: 16)), centerTitle: true),
+        appBar: AppBar(
+            title: Text(localizations.favorites, style: const TextStyle(fontSize: 16)),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                  tooltip: localizations.export,
+                  icon: const Icon(Icons.upload_file, size: 20),
+                  onPressed: () async {
+                    try {
+                      await _exportJson();
+                    } catch (e) {
+                      if (context.mounted) FlutterToastr.show('${localizations.importFailed}: $e', context);
+                    }
+                  }),
+              IconButton(
+                  tooltip: localizations.import,
+                  icon: const Icon(Icons.download_for_offline_outlined, size: 20),
+                  onPressed: () async {
+                    final result = await FilePicker.platform
+                        .pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har'], withData: true);
+                    final file = result?.files.isNotEmpty == true ? result!.files.first : null;
+                    if (file == null) return;
+                    final path = await _materializePickedFile(file);
+                    if (path == null) return;
+                    try {
+                      await FavoriteStorage.importFromFile(path);
+                      if (context.mounted) FlutterToastr.show(localizations.importSuccess, context);
+                      setState(() {});
+                    } catch (e) {
+                      if (context.mounted) FlutterToastr.show('${localizations.importFailed}: $e', context);
+                    }
+                  }),
+            ]),
         body: FutureBuilder(
             future: FavoriteStorage.favorites,
             builder: (BuildContext context, AsyncSnapshot<Queue<Favorite>> snapshot) {
@@ -168,7 +219,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   ///右键菜单
-  menu(details) {
+  void menu(details) {
     // setState(() {
     //   selected = true;
     // });
@@ -309,14 +360,14 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   //显示高级重发
-  showCustomRepeat(HttpRequest request) {
+  void showCustomRepeat(HttpRequest request) {
     Navigator.of(context).pop();
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => futureWidget(SharedPreferences.getInstance(),
             (prefs) => MobileCustomRepeat(onRepeat: () => onRepeat(request), prefs: prefs))));
   }
 
-  onRepeat(HttpRequest request) {
+  void onRepeat(HttpRequest request) {
     var httpRequest = request.copy(uri: request.requestUrl);
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
@@ -327,7 +378,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   }
 
   //重命名
-  rename(Favorite item) {
+  void rename(Favorite item) {
     String? name = item.name;
     showDialog(
         context: context,

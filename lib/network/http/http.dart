@@ -260,6 +260,7 @@ class HttpRequest extends HttpMessage {
   Map<String, dynamic> toJson() {
     return {
       '_class': 'HttpRequest',
+      '_id': requestId,
       'uri': requestUrl,
       'method': method.name,
       'protocolVersion': protocolVersion,
@@ -273,7 +274,8 @@ class HttpRequest extends HttpMessage {
   factory HttpRequest.fromJson(Map<String, dynamic> json) {
     var request = HttpRequest(HttpMethod.valueOf(json['method']), json['uri'],
         protocolVersion: json['protocolVersion'] ?? "HTTP/1.1");
-    
+
+    request.requestId = json['_id'] ?? request.requestId;
     request.headers.addAll(HttpHeaders.fromJson(json['headers']));
     request.body = json['body']?.toString().codeUnits;
     if (json['requestTime'] != null) {

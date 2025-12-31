@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:macos_window_utils/macos/ns_window_button_type.dart';
-import 'package:macos_window_utils/macos_window_utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -27,14 +25,18 @@ class DesktopSupport {
       }
 
       if (Platform.isMacOS) {
-        await WindowManipulator.initialize();
-        // 调整关闭按钮的位置
-        WindowManipulator.overrideStandardWindowButtonPosition(
-            buttonType: NSWindowButtonType.closeButton, offset: Offset(10, 13));
-        WindowManipulator.overrideStandardWindowButtonPosition(
-            buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(29, 13));
-        WindowManipulator.overrideStandardWindowButtonPosition(
-            buttonType: NSWindowButtonType.zoomButton, offset: const Offset(48, 13));
+        // try {
+        //   await WindowManipulator.initialize();
+        //   // 调整关闭按钮的位置
+        //   WindowManipulator.overrideStandardWindowButtonPosition(
+        //       buttonType: NSWindowButtonType.closeButton, offset: Offset(10, 13));
+        //   WindowManipulator.overrideStandardWindowButtonPosition(
+        //       buttonType: NSWindowButtonType.miniaturizeButton, offset: const Offset(32, 13));
+        //   WindowManipulator.overrideStandardWindowButtonPosition(
+        //       buttonType: NSWindowButtonType.zoomButton, offset: const Offset(52, 13));
+        // } catch (e) {
+        //   logger.e("Error adjusting macOS window button positions: $e");
+        // }
       }
 
       await windowManager.waitUntilReadyToShow(windowOptions, () async {

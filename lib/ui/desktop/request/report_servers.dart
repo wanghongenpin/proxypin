@@ -17,6 +17,8 @@ Future<void> showReportServersDialog(BuildContext context) {
     barrierDismissible: false,
     builder: (ctx) => Dialog(
       insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: 570,
         height: 560,
@@ -144,7 +146,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
                           SizedBox(
                             width: 100,
                             child: DropdownButtonFormField<String>(
-                              initialValue: compression,
+                              value: compression,
                               decoration: dec(),
                               isDense: true,
                               items: [

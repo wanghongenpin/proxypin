@@ -63,7 +63,7 @@ class ThemeModel {
 }
 
 class AppConfiguration {
-  static const String version = "1.2.2";
+  static const String version = "1.2.3";
 
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
@@ -71,7 +71,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV22 = true;
+  bool upgradeNoticeV23 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -81,6 +81,9 @@ class AppConfiguration {
 
   /// header默认展示
   bool headerExpanded = true;
+
+  /// Headers展示模式: table(逐行) / text(原始文本)
+  String headerViewMode = "table";
 
   /// 底部导航栏
   bool bottomNavigation = true;
@@ -196,7 +199,7 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV22 = config['upgradeNoticeV22'] ?? true;
+      upgradeNoticeV23 = config['upgradeNoticeV23'] ?? true;
       _language = config['language'] == null 
         ? null 
         : Locale.fromSubtags(
@@ -206,6 +209,7 @@ class AppConfiguration {
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerExpanded = config['headerExpanded'] ?? true;
+      headerViewMode = config['headerViewMode'] ?? "table";
       bottomNavigation = config['bottomNavigation'] ?? true;
       memoryCleanupThreshold = config['memoryCleanupThreshold'];
       autoReadEnabled = config['autoReadEnabled'] ?? true;
@@ -227,7 +231,7 @@ class AppConfiguration {
   bool _isWriting = false;
 
   /// 刷新配置文件
-  flushConfig() async {
+  Future<void> flushConfig() async {
     if (_isWriting) return;
     _isWriting = true;
 
@@ -247,10 +251,11 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV22': upgradeNoticeV22,
+      'upgradeNoticeV23': upgradeNoticeV23,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerExpanded": headerExpanded,
+      "headerViewMode": headerViewMode,
       "autoReadEnabled": autoReadEnabled,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,

@@ -82,7 +82,8 @@ class _PreferenceState extends State<Preference> {
                     items: [
                       DropdownMenuItem(value: null, child: Text(localizations.followSystem)),
                       const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh"), child: Text("简体中文")),
-                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh", scriptCode: "Hant"), child: Text("繁體中文")),
+                      const DropdownMenuItem(
+                          value: Locale.fromSubtags(languageCode: "zh", scriptCode: "Hant"), child: Text("繁體中文")),
                       const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "en"), child: Text("English")),
                     ]),
               ]),
@@ -122,7 +123,8 @@ class _PreferenceState extends State<Preference> {
               const Divider(),
               ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(localizations.autoStartup), //默认是否启动
+                  title: Text(localizations.autoStartup, style: titleStyle),
+                  //默认是否启动
                   subtitle: Text(localizations.autoStartupDescribe, style: subtitleStyle),
                   trailing: SwitchWidget(
                       scale: 0.75,
@@ -133,7 +135,7 @@ class _PreferenceState extends State<Preference> {
                       })),
               ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(localizations.headerExpanded),
+                  title: Text(localizations.headerExpanded, style: titleStyle),
                   subtitle: Text(localizations.headerExpandedSubtitle, style: subtitleStyle),
                   trailing: SwitchWidget(
                       scale: 0.75,
@@ -142,10 +144,9 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.headerExpanded = value;
                         appConfiguration.flushConfig();
                       })),
-              SizedBox(height: 5),
               ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(localizations.memoryCleanup),
+                  title: Text(localizations.memoryCleanup, style: titleStyle),
                   subtitle: Text(localizations.memoryCleanupSubtitle, style: subtitleStyle),
                   trailing: memoryCleanup(context, localizations)),
 

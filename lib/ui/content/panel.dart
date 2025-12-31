@@ -22,12 +22,12 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
-import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/web_socket.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 
 import 'body.dart';
+import 'headers.dart';
 import 'menu.dart';
 
 ///网络请求详情页
@@ -156,6 +156,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
         : AppBar(
             title: widget.title,
             bottom: tabBar,
+            centerTitle: true,
             actions: [
               ShareWidget(
                   proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
@@ -218,35 +219,13 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   }
 
   List<Widget> message(HttpMessage? message, String type, ScrollController scrollController) {
-    var headers = <Widget>[];
-    message?.headers.forEach((name, values) {
-      for (var v in values) {
-        const nameStyle = TextStyle(fontWeight: FontWeight.w500, color: Colors.deepOrangeAccent, fontSize: 14);
-        headers.add(Row(children: [
-          SelectableText(name, contextMenuBuilder: contextMenu, style: nameStyle),
-          const Text(": ", style: nameStyle),
-          if (Platforms.isDesktop()) SizedBox(width: 5),
-          Expanded(
-              child: SelectableText(v, style: textStyle, contextMenuBuilder: contextMenu, maxLines: 8, minLines: 1)),
-        ]));
-        headers.add(const Divider(thickness: 0.1));
-      }
-    });
-
     Widget bodyWidgets = HttpBodyWidget(
         key: type == "Request" ? requestHttpBodyKey : responseHttpBodyKey,
         hideRequestRewrite: widget.windowId != null,
         httpMessage: message,
         scrollController: scrollController);
 
-    Widget headerWidget = ExpansionTile(
-        tilePadding: const EdgeInsets.only(left: 0),
-        title: Text("$type Headers", style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-        initiallyExpanded: AppConfiguration.current?.headerExpanded ?? true,
-        shape: const Border(),
-        children: headers);
-
-    return [headerWidget, bodyWidgets];
+    return [HeadersWidget(title: type, message: message, valueTextStyle: textStyle), bodyWidgets];
   }
 }
 
@@ -281,32 +260,32 @@ class General extends StatelessWidget {
     var content = [
       const SizedBox(height: 10),
       RowWidget("Request URL", requestUrl),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Request Method", request.method.name),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Protocol", request.protocolVersion),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Status Code", response?.status.toString()),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Remote Address",
           '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Request Time", request.requestTime.formatMillisecond()),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Duration", response?.costTime()),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Request Content-Type", request.headers.contentType),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Response Content-Type", response?.headers.contentType),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Request Package", getPackage(request.packageSize)),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       RowWidget("Response Package", getPackage(response?.packageSize)),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
     ];
     if (request.processInfo != null) {
       content.add(RowWidget("App", request.processInfo!.name));
-      content.add(const SizedBox(height: 20));
+      content.add(const SizedBox(height: 15));
     }
 
     return ListView(children: [expansionTile("General", content)]);
@@ -327,7 +306,7 @@ class Cookies extends StatelessWidget {
     var responseCookie = response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(e)!);
     return ListView(children: [
       requestCookie == null ? const SizedBox() : expansionTile("Request Cookies", requestCookie.toList()),
-      const SizedBox(height: 20),
+      const SizedBox(height: 15),
       responseCookie == null ? const SizedBox() : expansionTile("Response Cookies", responseCookie.toList()),
     ]);
   }
@@ -337,7 +316,7 @@ class Cookies extends StatelessWidget {
 
     cookie?.split(";").map((e) => Strings.splitFirst(e, "=")).where((element) => element != null).forEach((e) {
       headers.add(RowWidget(e!.key.trim(), e.value));
-      headers.add(const Divider(thickness: 0.1));
+      headers.add(const Divider(thickness: 0.1, height: 10));
     });
 
     return headers;

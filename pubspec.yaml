@@ -2,7 +2,7 @@ name: proxypin
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.2.3+25
+version: 1.2.3+26
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -23,7 +23,7 @@ dependencies:
       url: https://gitee.com/wanghongenpin/flutter-plugins.git
       path: packages/desktop_multi_window
   path_provider: ^2.1.5
-  file_picker: ^10.3.7
+  file_picker: ^10.3.8
   proxy_manager: ^0.0.3
   permission_handler: ^12.0.1
   flutter_toastr: ^1.0.3
@@ -33,17 +33,18 @@ dependencies:
     git:
       url: https://github.com/wanghongenpin/flutter-code-editor.git
       ref: secure-keyboard
+  flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^11.5.0
-  shared_preferences: ^2.5.3
+  shared_preferences: ^2.5.4
   url_launcher: ^6.3.2
   toastification: ^3.0.2
-  get: ^4.7.2
+  get: ^4.7.3
   zstandard: ^1.3.29
   qr_flutter: ^4.1.0
   flutter_qr_reader_plus: ^1.0.6
   brotli: ^0.6.0
-  macos_window_utils: ^1.9.0
+#  macos_window_utils: 1.6.1
   win32audio: ^1.3.1
   vclibs: ^0.1.3
   scrollable_positioned_list_nic: ^0.0.2

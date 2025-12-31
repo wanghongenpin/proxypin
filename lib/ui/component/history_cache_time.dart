@@ -24,6 +24,7 @@ class _HistoryCacheTimeState extends State<HistoryCacheTime> {
         offset: const Offset(0, 35),
         icon: const Icon(Icons.av_timer, size: 19),
         initialValue: widget.configuration.historyCacheTime,
+        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
         onSelected: (val) {
           widget.configuration.historyCacheTime = val;
           widget.configuration.flushConfig();
