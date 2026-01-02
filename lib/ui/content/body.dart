@@ -35,6 +35,7 @@ import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
+import 'package:proxypin/utils/crypto_body_decoder.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/num.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -75,12 +76,25 @@ class HttpBodyState extends State<HttpBodyWidget> {
   final SearchTextController searchController = SearchTextController();
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+  bool showDecoded = false;
+  CryptoDecodedResult? decoded;
 
   @override
   void initState() {
     super.initState();
     if (widget.windowController != null) {
       HardwareKeyboard.instance.addHandler(onKeyEvent);
+    }
+    _loadDecoded();
+  }
+
+  @override
+  void didUpdateWidget(covariant HttpBodyWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.httpMessage?.requestId != widget.httpMessage?.requestId) {
+      showDecoded = false;
+      decoded = null;
+      _loadDecoded();
     }
   }
 
@@ -94,6 +108,13 @@ class HttpBodyState extends State<HttpBodyWidget> {
     }
 
     return false;
+  }
+
+  Future<void> _loadDecoded() async {
+    final message = widget.httpMessage;
+    if (message == null) return;
+    decoded = await CryptoBodyDecoder.maybeDecode(message);
+    if (mounted) setState(() {});
   }
 
   @override
@@ -273,6 +294,19 @@ class HttpBodyState extends State<HttpBodyWidget> {
           onPressed: () => openNew()));
     }
 
+    if (decoded != null) {
+      list.add(Row(children: [
+        TextButton.icon(
+            onPressed: () {
+              setState(() {
+                showDecoded = !showDecoded;
+              });
+            },
+            icon: Icon(showDecoded ? Icons.lock_open : Icons.lock),
+            label: Text(showDecoded ? localizations.cryptoDecoded : localizations.cryptoDecodeToggle)),
+      ]));
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(children: list),
@@ -419,6 +453,11 @@ class _BodyState extends State<_Body> {
   }
 
   Future<String?> getBody() async {
+    final parent = context.findAncestorStateOfType<HttpBodyState>();
+    if (parent?.showDecoded == true && parent?.decoded?.text != null) {
+      return parent!.decoded!.text;
+    }
+
     if (message?.isWebSocket == true) {
       return message?.messages.map((e) => e.payloadDataAsString).join("\n");
     }
@@ -446,6 +485,11 @@ class _BodyState extends State<_Body> {
   }
 
   Widget _getBody(ViewType type) {
+    final parent = context.findAncestorStateOfType<HttpBodyState>();
+    final message = parent?.showDecoded == true && parent?.decoded != null
+        ? _DecodedHttpMessage(widget.message!, parent!.decoded!)
+        : widget.message;
+
     if (message?.isWebSocket == true || (message?.contentType == ContentType.sse && message?.messages.isNotEmpty == true)) {
       List<Widget>? list = message?.messages
           .map((e) => Container(
@@ -479,7 +523,9 @@ class _BodyState extends State<_Body> {
     }
 
     if (type == ViewType.image) {
-      return Center(child: Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
+      return Center(
+          child: Image.memory(
+              Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
     }
     if (type == ViewType.video) {
       return const Center(child: Text("video not support preview"));
@@ -495,7 +541,8 @@ class _BodyState extends State<_Body> {
           contextMenuBuilder: contextMenu);
     }
 
-    return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
+    return futureWidget(message!.decodeBodyString(),
+        initialData: message!.getBodyString(), (body) {
       try {
         if (type == ViewType.jsonText) {
           var jsonObject = json.decode(body);
@@ -642,4 +689,17 @@ class HexViewer extends StatelessWidget {
     }
     return buffer.toString();
   }
+}
+
+class _DecodedHttpMessage extends HttpMessage {
+  final HttpMessage original;
+  final CryptoDecodedResult decoded;
+
+  _DecodedHttpMessage(this.original, this.decoded) : super(original.protocolVersion) {
+    headers.addAll(original.headers);
+    body = decoded.bytes;
+  }
+
+  @override
+  Map<String, dynamic> toJson() => original.toJson();
 }

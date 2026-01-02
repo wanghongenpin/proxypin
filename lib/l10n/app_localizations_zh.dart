@@ -1024,6 +1024,21 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get privacyContent =>
       '本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。';
+
+  @override
+  String get requestCrypto => '请求解密';
+
+  @override
+  String get cryptoDecoded => '已解密';
+
+  @override
+  String get cryptoDecodeToggle => '解密';
+
+  @override
+  String get optional => '可选';
+
+  @override
+  String get cryptoRuleField => '字段';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

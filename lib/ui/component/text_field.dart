@@ -72,13 +72,14 @@ class HighlightTextEditingController extends TextEditingController {
   }
 }
 
-InputDecoration decoration(BuildContext context, {String? label, String? hintText, Widget? suffixIcon}) {
+InputDecoration decoration(BuildContext context, {String? label, String? hintText, Widget? suffixIcon, bool? isDense}) {
   Color color = Theme.of(context).colorScheme.primary;
   return InputDecoration(
       floatingLabelBehavior: FloatingLabelBehavior.always,
       labelText: label,
       hintText: hintText,
       suffixIcon: suffixIcon,
+      isDense: isDense,
       hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15),
       border: OutlineInputBorder(borderSide: BorderSide(width: 0.8, color: color)),
       enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.3, color: color)),

@@ -2093,6 +2093,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.'**
   String get privacyContent;
+
+  /// No description provided for @requestCrypto.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Crypto'**
+  String get requestCrypto;
+
+  /// No description provided for @cryptoDecoded.
+  ///
+  /// In en, this message translates to:
+  /// **'Decoded'**
+  String get cryptoDecoded;
+
+  /// No description provided for @cryptoDecodeToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrypt'**
+  String get cryptoDecodeToggle;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// No description provided for @cryptoRuleField.
+  ///
+  /// In en, this message translates to:
+  /// **'Field Name'**
+  String get cryptoRuleField;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
