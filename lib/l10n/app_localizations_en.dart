@@ -1052,4 +1052,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoRuleField => 'Field Name';
+
+  @override
+  String get cryptoIvPrefixLabel => 'IV Prefix';
+
+  @override
+  String get cryptoIvPrefixTooltip => 'Use the first N bytes of the response body as IV';
 }

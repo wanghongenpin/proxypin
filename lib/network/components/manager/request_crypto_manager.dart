@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/util/logger.dart';
 
@@ -73,7 +74,9 @@ class RequestCryptoManager {
   }
 
   /// Get the first matching rule for the given URL and optional field name
-  CryptoRule? getMatchingRule(String url) {
+  CryptoRule? getMatchingRule(HttpMessage message) {
+    final url = message.requestUrl;
+    if (url == null) return null;
     if (!enabled) return null;
     for (final rule in rules) {
       if (!rule.enabled || !rule.matches(url)) continue;
@@ -119,10 +122,10 @@ class CryptoRule {
   final String name;
   final String urlPattern;
   final String? field; // single field supported
-  final bool enabled;
+  bool enabled;
   final CryptoKeyConfig config;
 
-  const CryptoRule({
+  CryptoRule({
     required this.name,
     required this.urlPattern,
     this.field,
@@ -131,9 +134,6 @@ class CryptoRule {
   });
 
   bool matches(String url) {
-    if (urlPattern.isEmpty) {
-      return true;
-    }
     try {
       return RegExp(urlPattern).hasMatch(url);
     } catch (_) {

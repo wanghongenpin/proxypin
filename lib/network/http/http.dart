@@ -53,6 +53,8 @@ abstract class HttpMessage {
 
   int get contentLength => headers.contentLength;
 
+  String? get requestUrl;
+
   //报文大小
   int? packageSize;
 
@@ -202,6 +204,7 @@ class HttpRequest extends HttpMessage {
     return hostAndPort?.domain;
   }
 
+  @override
   String get requestUrl {
     if (HostAndPort.startsWithScheme(uri)) {
       return uri;
@@ -296,6 +299,10 @@ class HttpResponse extends HttpMessage {
   HttpStatus status;
   DateTime responseTime = DateTime.now();
   HttpRequest? request;
+  String? _requestUrl;
+
+  @override
+  String? get requestUrl => request?.requestUrl ?? _requestUrl;
 
   HttpResponse(this.status, {String protocolVersion = "HTTP/1.1"}) : super(protocolVersion);
 
@@ -320,6 +327,7 @@ class HttpResponse extends HttpMessage {
       httpResponse.responseTime = DateTime.fromMillisecondsSinceEpoch(json['responseTime']);
     }
     httpResponse.packageSize = json['packageSize'];
+    httpResponse._requestUrl = json['requestUrl'];
     return httpResponse;
   }
 
@@ -327,6 +335,7 @@ class HttpResponse extends HttpMessage {
   Map<String, dynamic> toJson() {
     return {
       '_class': 'HttpResponse',
+      'requestUrl': request?.requestUrl ?? _requestUrl,
       'protocolVersion': protocolVersion,
       'packageSize': packageSize,
       'status': {

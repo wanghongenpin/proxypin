@@ -19,20 +19,14 @@ class CryptoDecodedResult {
 
 class CryptoBodyDecoder {
   static Future<CryptoDecodedResult?> maybeDecode(HttpMessage message) async {
-    final url = message is HttpRequest
-        ? message.requestUrl
-        : message is HttpResponse
-            ? message.request?.requestUrl
-            : null;
-    if (url == null) return null;
     final ruleStore = await RequestCryptoManager.instance;
 
-    CryptoRule? match = ruleStore.getMatchingRule(url);
-    if (match != null) {
-      return _tryDecode(message, match.config, rule: match);
+    CryptoRule? match = ruleStore.getMatchingRule(message);
+    if (match == null) {
+      return null;
     }
 
-    return null;
+    return _tryDecode(message, match.config, rule: match);
   }
 
   static CryptoDecodedResult? decode(HttpMessage message, CryptoKeyConfig config) {
@@ -124,7 +118,8 @@ class CryptoBodyDecoder {
       if (config.padding != 'PKCS7' && (cipherBytes.length % aesBlockSize != 0)) return null;
       final ivStr = 'base64:' + base64.encode(ivBytes);
       try {
-        return AesUtils.decrypt(cipherBytes, key: config.key, keyLength: config.keyLength, mode: config.mode, padding: config.padding, iv: ivStr);
+        return AesUtils.decrypt(cipherBytes,
+            key: config.key, keyLength: config.keyLength, mode: config.mode, padding: config.padding, iv: ivStr);
       } catch (e) {
         logger.d('CryptoBodyDecoder _decryptCandidate error (prefix): $e');
         return null;
@@ -135,7 +130,8 @@ class CryptoBodyDecoder {
       if (config.padding != 'PKCS7' && (candidate.length % aesBlockSize != 0)) return null;
       final ivParam = (config.mode == 'CBC') ? config.iv : null;
       try {
-        return AesUtils.decrypt(candidate, key: config.key, keyLength: config.keyLength, mode: config.mode, padding: config.padding, iv: ivParam);
+        return AesUtils.decrypt(candidate,
+            key: config.key, keyLength: config.keyLength, mode: config.mode, padding: config.padding, iv: ivParam);
       } catch (e) {
         logger.d('CryptoBodyDecoder _decryptCandidate error: $e');
         return null;

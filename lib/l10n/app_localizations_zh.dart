@@ -1038,7 +1038,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get optional => '可选';
 
   @override
-  String get cryptoRuleField => '字段';
+  String get cryptoRuleField => '字段名称';
+
+  @override
+  String get cryptoIvPrefixLabel => 'IV 前缀';
+
+  @override
+  String get cryptoIvPrefixTooltip => '使用响应体前 N 个字节作为 IV';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2062,4 +2068,25 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get privacyContent =>
       '本專案為開源抓包工具，所有功能均在本機裝置上運行；無任何後端伺服器，不會蒐集、儲存或上傳任何使用者資訊。擷取的網路資料僅在本機處理，除非您主動使用遠端轉發功能。所需權限（如網路、儲存、相機用於掃碼）僅用於實現相應功能。您可在公開的原始碼中稽核其行為。';
+
+  @override
+  String get requestCrypto => '請求解密';
+
+  @override
+  String get cryptoDecoded => '已解密';
+
+  @override
+  String get cryptoDecodeToggle => '解密';
+
+  @override
+  String get optional => '可選';
+
+  @override
+  String get cryptoRuleField => '字段';
+
+  @override
+  String get cryptoIvPrefixLabel => 'IV 前綴';
+
+  @override
+  String get cryptoIvPrefixTooltip => '使用回應內容的前 N 個字節作為 IV';
 }

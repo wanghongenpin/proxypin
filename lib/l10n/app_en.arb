@@ -363,5 +363,8 @@
   "cryptoDecoded": "Decoded",
   "cryptoDecodeToggle": "Decrypt",
   "optional": "Optional",
-  "cryptoRuleField": "Field Name"
+  "cryptoRuleField": "Field Name",
+
+  "cryptoIvPrefixLabel": "IV Prefix",
+  "cryptoIvPrefixTooltip": "Use the first N bytes of the response body as IV"
 }

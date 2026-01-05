@@ -85,6 +85,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     if (widget.windowController != null) {
       HardwareKeyboard.instance.addHandler(onKeyEvent);
     }
+
     _loadDecoded();
   }
 
@@ -490,7 +491,8 @@ class _BodyState extends State<_Body> {
         ? _DecodedHttpMessage(widget.message!, parent!.decoded!)
         : widget.message;
 
-    if (message?.isWebSocket == true || (message?.contentType == ContentType.sse && message?.messages.isNotEmpty == true)) {
+    if (message?.isWebSocket == true ||
+        (message?.contentType == ContentType.sse && message?.messages.isNotEmpty == true)) {
       List<Widget>? list = message?.messages
           .map((e) => Container(
               margin: const EdgeInsets.only(top: 2, bottom: 2),
@@ -523,9 +525,7 @@ class _BodyState extends State<_Body> {
     }
 
     if (type == ViewType.image) {
-      return Center(
-          child: Image.memory(
-              Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
+      return Center(child: Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
     }
     if (type == ViewType.video) {
       return const Center(child: Text("video not support preview"));
@@ -541,8 +541,7 @@ class _BodyState extends State<_Body> {
           contextMenuBuilder: contextMenu);
     }
 
-    return futureWidget(message!.decodeBodyString(),
-        initialData: message!.getBodyString(), (body) {
+    return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
       try {
         if (type == ViewType.jsonText) {
           var jsonObject = json.decode(body);
@@ -702,4 +701,7 @@ class _DecodedHttpMessage extends HttpMessage {
 
   @override
   Map<String, dynamic> toJson() => original.toJson();
+
+  @override
+  String? get requestUrl => original.requestUrl;
 }

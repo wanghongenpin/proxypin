@@ -47,13 +47,9 @@ class RequestCryptoPage extends StatefulWidget {
 }
 
 class _RequestCryptoPageState extends State<RequestCryptoPage> {
-  final Map<int, bool> selected = {};
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   RequestCryptoManager get manager => widget.manager;
-  bool isPressed = false;
-  Offset? lastPressPosition;
-
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   void initState() {
@@ -68,6 +64,11 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
   }
 
   bool _onKeyEvent(KeyEvent event) {
+    if (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.escape) && Navigator.canPop(context)) {
+      Navigator.maybePop(context);
+      return true;
+    }
+
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       if (Navigator.canPop(context)) {
@@ -82,6 +83,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isEN = Localizations.localeOf(context).languageCode == 'en';
     return Scaffold(
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
@@ -94,7 +96,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     SizedBox(
-                        width: 225,
+                        width: isEN ? 310 : 225,
                         child: ListTile(
                             title: Text("${localizations.enable} ${localizations.requestCrypto}"),
                             trailing: SwitchWidget(
@@ -118,101 +120,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
                     const SizedBox(width: 15)
                   ]),
                   const SizedBox(height: 16),
-                  _buildRuleList()
-                ]))));
-  }
-
-  Widget _buildRuleList() {
-    final theme = Theme.of(context);
-    return GestureDetector(
-        onSecondaryTapDown: (details) => _showGlobalMenu(details.globalPosition),
-        child: Listener(
-            onPointerUp: (_) => isPressed = false,
-            onPointerDown: (event) {
-              lastPressPosition = event.localPosition;
-              if (event.buttons == kPrimaryButton) {
-                isPressed = true;
-              }
-            },
-            child: Container(
-                padding: const EdgeInsets.only(top: 10),
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withAlpha((0.2 * 255).round()))),
-                child: Column(children: [
-                  Padding(
-                      padding: EdgeInsets.only(left: 5, bottom: 5),
-                      child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                        Container(width: 80, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
-                        SizedBox(width: 80, child: Text(localizations.enable, textAlign: TextAlign.center)),
-                        const VerticalDivider(width: 24),
-                        const Expanded(child: Text('URL')),
-                        SizedBox(width: 220, child: Text(localizations.cryptoRuleField, textAlign: TextAlign.center)),
-                        SizedBox(width: 120, child: Text(localizations.action, textAlign: TextAlign.center))
-                      ])),
-                  const Divider(thickness: 0.5, height: 5),
-                  ...List.generate(manager.rules.length, (index) {
-                    final rule = manager.rules[index];
-                    final selectedState = selected[index] == true;
-                    return InkWell(
-                        highlightColor: Colors.transparent,
-                        splashColor: Colors.transparent,
-                        hoverColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        onSecondaryTapDown: (details) => _showRowMenu(details.globalPosition, index),
-                        onDoubleTap: () => _editRule(index),
-                        onHover: (hover) {
-                          if (isPressed && !selectedState) {
-                            setState(() => selected[index] = true);
-                          }
-                        },
-                        onTap: () {
-                          if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
-                            setState(() => selected[index] = !(selected[index] ?? false));
-                            return;
-                          }
-                          if (selected.isEmpty) {
-                            return;
-                          }
-                          setState(() => selected.clear());
-                        },
-                        child: Container(
-                            color: selectedState
-                                ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                                : index.isEven
-                                    ? Colors.grey.withAlpha((0.06 * 255).round())
-                                    : null,
-                            height: 42,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(children: [
-                              SizedBox(
-                                  width: 80,
-                                  child: Text(rule.name,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
-                              SizedBox(
-                                  width: 80,
-                                  child: SwitchWidget(
-                                      scale: 0.7, value: rule.enabled, onChanged: (val) => _toggleRule(index, val))),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                  child: Text(rule.urlPattern.isEmpty ? localizations.emptyMatchAll : rule.urlPattern,
-                                      overflow: TextOverflow.ellipsis)),
-                              SizedBox(
-                                  width: 220,
-                                  child: Text(rule.field ?? '',
-                                      overflow: TextOverflow.ellipsis, textAlign: TextAlign.center)),
-                              SizedBox(
-                                  width: 120,
-                                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                    IconButton(
-                                        icon: const Icon(Icons.edit, size: 18),
-                                        tooltip: localizations.edit,
-                                        onPressed: () => _editRule(index)),
-                                    IconButton(
-                                        icon: const Icon(Icons.delete_outline, size: 18),
-                                        tooltip: localizations.delete,
-                                        onPressed: () => _removeRules([index]))
-                                  ]))
-                            ])));
-                  })
+                  CryptoRuleList(manager: manager, windowId: widget.windowId),
                 ]))));
   }
 
@@ -222,62 +130,6 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
     if (newRule == null) return;
     await manager.addRule(newRule);
     setState(() {});
-    _refreshConfig(force: true);
-  }
-
-  Future<void> _editRule(int index) async {
-    final rule = manager.rules[index];
-    final updated = await showDialog<CryptoRule>(context: context, builder: (_) => CryptoRuleDialog(rule: rule));
-    if (updated == null) return;
-    await manager.updateRule(index, updated);
-    _refreshConfig(force: true);
-    setState(() {});
-  }
-
-  Future<void> _toggleRule(int index, bool value) async {
-    await manager.updateRule(index, manager.rules[index].copyWith(enabled: value));
-    _refreshConfig(force: true);
-    setState(() {});
-  }
-
-  void _showRowMenu(Offset position, int index) {
-    showContextMenu(context, position, items: [
-      PopupMenuItem(height: 35, child: Text(localizations.edit), onTap: () => _editRule(index)),
-      PopupMenuItem(height: 35, child: Text(localizations.delete), onTap: () => _removeRules([index]))
-    ]);
-  }
-
-  void _showGlobalMenu(Offset offset) {
-    showContextMenu(context, offset, items: [
-      PopupMenuItem(height: 35, onTap: _addRule, child: Text(localizations.newBuilt)),
-      PopupMenuItem(height: 35, child: Text(localizations.export), onTap: () => _export(selected.keys.toList())),
-      const PopupMenuDivider(),
-      PopupMenuItem(height: 35, child: Text(localizations.enableSelect), onTap: () => _enableStatus(true)),
-      PopupMenuItem(height: 35, child: Text(localizations.disableSelect), onTap: () => _enableStatus(false)),
-      const PopupMenuDivider(),
-      PopupMenuItem(
-          height: 35, child: Text(localizations.deleteSelect), onTap: () => _removeRules(selected.keys.toList()))
-    ]);
-  }
-
-  Future<void> _removeRules(List<int> indexes) async {
-    if (indexes.isEmpty) return;
-    indexes.sort((a, b) => b.compareTo(a));
-    for (final index in indexes) {
-      await manager.removeRule(index);
-    }
-    selected.clear();
-    _refreshConfig(force: true);
-  }
-
-  Future<void> _enableStatus(bool enable) async {
-    if (selected.isEmpty) return;
-    for (final entry in selected.entries) {
-      if (entry.value) {
-        await manager.updateRule(entry.key, manager.rules[entry.key].copyWith(enabled: enable));
-      }
-    }
-    selected.clear();
     _refreshConfig(force: true);
   }
 
@@ -304,11 +156,225 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
       if (mounted) FlutterToastr.show(localizations.importSuccess, context);
     } catch (e) {
       logger.e('导入失败 $path', error: e);
-      if (mounted) FlutterToastr.show("${localizations.importFailed} $e", context);
+      if (mounted) FlutterToastr.show('${localizations.importFailed} $e', context);
     }
   }
+}
 
-  Future<void> _export(List<int> indexes) async {
+// Reusable rule list component extracted from _RequestCryptoPageState
+class CryptoRuleList extends StatefulWidget {
+  final int? windowId;
+  final RequestCryptoManager manager;
+
+  const CryptoRuleList({
+    required this.manager,
+    super.key,
+    this.windowId,
+  });
+
+  @override
+  State<CryptoRuleList> createState() => _CryptoRuleListState();
+}
+
+class _CryptoRuleListState extends State<CryptoRuleList> {
+  RequestCryptoManager get manager => widget.manager;
+  Set<int> selected = {};
+  bool isPressed = false;
+  Offset? lastPressPosition;
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onSecondaryTap: () {
+        if (lastPressPosition == null) {
+          return;
+        }
+        showGlobalMenu(lastPressPosition!);
+      },
+      onTapDown: (details) {
+        if (selected.isEmpty) {
+          return;
+        }
+        if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
+          return;
+        }
+        setState(() {
+          selected.clear();
+        });
+      },
+      child: Listener(
+        onPointerUp: (event) => isPressed = false,
+        onPointerDown: (event) {
+          lastPressPosition = event.localPosition;
+          if (event.buttons == kPrimaryMouseButton) {
+            isPressed = true;
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.only(top: 10),
+          constraints: const BoxConstraints(minHeight: 200, maxHeight: 600),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withAlpha((0.2 * 255).round()))),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 5, bottom: 5),
+                child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  Container(width: 80, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
+                  SizedBox(width: 80, child: Text(localizations.enable, textAlign: TextAlign.center)),
+                  const VerticalDivider(width: 24),
+                  const Expanded(child: Text('URL', textAlign: TextAlign.center)),
+                  SizedBox(width: 120, child: Text(localizations.cryptoRuleField, textAlign: TextAlign.center)),
+                  SizedBox(width: 220, child: Text('AES Key', textAlign: TextAlign.center)),
+                ]),
+              ),
+              const Divider(thickness: 0.5, height: 5),
+              Column(children: rows(manager.rules))
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> rows(List<CryptoRule> rules) {
+    var primaryColor = Theme.of(context).colorScheme.primary;
+
+    return List.generate(rules.length, (index) {
+      final rule = rules[index];
+      return InkWell(
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        hoverColor: primaryColor.withOpacity(0.3),
+        onDoubleTap: () => showEdit(index),
+        onSecondaryTapDown: (details) => showMenus(details, index),
+        onHover: (hover) {
+          if (isPressed && !selected.contains(index)) {
+            setState(() {
+              selected.add(index);
+            });
+          }
+        },
+        onTap: () {
+          if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
+            setState(() {
+              selected.contains(index) ? selected.remove(index) : selected.add(index);
+            });
+            return;
+          }
+          if (selected.isEmpty) {
+            return;
+          }
+          setState(() {
+            selected.clear();
+          });
+        },
+        child: Container(
+          color: selected.contains(index)
+              ? primaryColor.withOpacity(0.6)
+              : index.isEven
+                  ? Colors.grey.withOpacity(0.1)
+                  : null,
+          height: 32,
+          padding: const EdgeInsets.all(5),
+          child: Row(children: [
+            SizedBox(
+              width: 80,
+              child: Text(rule.name,
+                  overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            ),
+            SizedBox(
+                width: 80,
+                child: SwitchWidget(
+                    scale: 0.7,
+                    value: rule.enabled,
+                    onChanged: (val) {
+                      rules[index].enabled = val;
+                      _refreshConfig();
+                    })),
+            const SizedBox(width: 8),
+            Expanded(
+                child: Text(rule.urlPattern.isEmpty ? localizations.emptyMatchAll : rule.urlPattern,
+                    overflow: TextOverflow.ellipsis)),
+            SizedBox(
+                width: 120,
+                child: Text(rule.field ?? '', overflow: TextOverflow.ellipsis, textAlign: TextAlign.center)),
+            SizedBox(
+                width: 220,
+                child: Text(_formatKey(rule.config.key), overflow: TextOverflow.ellipsis, textAlign: TextAlign.center)),
+          ]),
+        ),
+      );
+    });
+  }
+
+  Future<void> showEdit([int? index]) async {
+    final rule = index == null ? null : manager.rules[index];
+    if (!mounted) {
+      return;
+    }
+
+    final updated = await showDialog<CryptoRule>(context: context, builder: (_) => CryptoRuleDialog(rule: rule));
+    if (updated == null) return;
+    if (index == null) {
+      await manager.addRule(updated);
+    } else {
+      await manager.updateRule(index, updated);
+    }
+    _refreshConfig(force: true);
+    setState(() {});
+  }
+
+  Future<void> removeRules(List<int> indexes) async {
+    if (indexes.isEmpty) return;
+    showConfirmDialog(context, content: localizations.confirmContent, onConfirm: () async {
+      indexes.sort((a, b) => b.compareTo(a));
+      for (final index in indexes) {
+        await manager.removeRule(index);
+      }
+      selected.clear();
+      _refreshConfig(force: true);
+    });
+  }
+
+  void showMenus(TapDownDetails details, int index) {
+    if (selected.length > 1) {
+      showGlobalMenu(details.globalPosition);
+      return;
+    }
+    setState(() {
+      selected.add(index);
+    });
+
+    showContextMenu(context, details.globalPosition, items: [
+      PopupMenuItem(height: 35, child: Text(localizations.edit), onTap: () => showEdit(index)),
+      PopupMenuItem(height: 35, child: Text(localizations.delete), onTap: () => removeRules([index]))
+    ]);
+  }
+
+  void showGlobalMenu(Offset offset) {
+    showContextMenu(context, offset, items: [
+      PopupMenuItem(height: 35, onTap: showEdit, child: Text(localizations.newBuilt)),
+      PopupMenuItem(height: 35, child: Text(localizations.export), onTap: () => export(selected.toList())),
+      const PopupMenuDivider(),
+      PopupMenuItem(height: 35, child: Text(localizations.enableSelect), onTap: () => enableStatus(true)),
+      PopupMenuItem(height: 35, child: Text(localizations.disableSelect), onTap: () => enableStatus(false)),
+      const PopupMenuDivider(),
+      PopupMenuItem(height: 35, child: Text(localizations.deleteSelect), onTap: () => removeRules(selected.toList()))
+    ]);
+  }
+
+  Future<void> enableStatus(bool enable) async {
+    if (selected.isEmpty) return;
+    for (final entry in selected) {
+      manager.rules[entry].enabled = enable;
+    }
+    setState(() {});
+    _refreshConfig(force: true);
+  }
+
+  Future<void> export(List<int> indexes) async {
     if (indexes.isEmpty) return;
     indexes.sort();
     final data = indexes.map((i) => manager.rules[i].toJson()).toList();
@@ -321,7 +387,18 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
     }
     if (path == null) return;
     await File(path).writeAsString(jsonEncode(data));
-    FlutterToastr.show(localizations.exportSuccess, context);
+    if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
+  }
+
+  // Format AES key for display: strip optional 'base64:' prefix and truncate long values
+  String _formatKey(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '';
+    var k = raw.trim();
+    if (k.startsWith('base64:')) {
+      k = k.substring(7);
+    }
+    if (k.length > 40) return '${k.substring(0, 40)}...';
+    return k;
   }
 }
 
@@ -478,22 +555,80 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text("AES", style: theme.textTheme.titleSmall),
                       const SizedBox(height: 12),
-                      // Key input and format selector in a single row for nicer UI
                       Row(children: [
-                        Expanded(
-                          child: SizedBox(
-                            child: TextFormField(
-                              controller: keyController,
-                              maxLength: 128,
-                              decoration: decorate(context, "Key").copyWith(counterText: ''),
-                              validator: (val) => val == null || val.trim().isEmpty ? l10n.cannotBeEmpty : null,
+                        Text("Mode", style: theme.textTheme.labelMedium),
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: mode,
+                              items: const [
+                                DropdownMenuItem(value: 'ECB', child: Text('ECB')),
+                                DropdownMenuItem(value: 'CBC', child: Text('CBC')),
+                              ],
+                              onChanged: (v) => setState(() => mode = v ?? 'ECB'),
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Text('Padding', style: theme.textTheme.labelMedium),
                         const SizedBox(width: 8),
                         Container(
-                          height: 44,
+                          height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: padding,
+                              items: const [
+                                DropdownMenuItem(value: 'PKCS7', child: Text('PKCS7')),
+                                DropdownMenuItem(value: 'ZeroPadding', child: Text('ZeroPadding')),
+                              ],
+                              onChanged: (v) => setState(() => padding = v ?? 'PKCS7'),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text('Key Length', style: theme.textTheme.labelMedium),
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<int>(
+                              value: length,
+                              items: const [
+                                DropdownMenuItem(value: 128, child: Text('128')),
+                                DropdownMenuItem(value: 192, child: Text('192')),
+                                DropdownMenuItem(value: 256, child: Text('256')),
+                              ],
+                              onChanged: (v) => setState(() => length = v ?? 128),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: 12),
+                      // Key input and format selector in a single row for nicer UI
+                      Row(children: [
+                        Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
                             border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
                             borderRadius: BorderRadius.circular(6),
@@ -508,33 +643,56 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                               onChanged: (v) => setState(() => keyFormat = v ?? 'text'),
                               style: Theme.of(context).textTheme.bodyMedium,
                               iconEnabledColor: Theme.of(context).colorScheme.primary,
-                              itemHeight: 48,
                             ),
                           ),
-                        )
+                        ),
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: SizedBox(
+                            child: TextFormField(
+                              controller: keyController,
+                              maxLength: 128,
+                              decoration: decorate(context, "Key").copyWith(counterText: ''),
+                              validator: (val) => val == null || val.trim().isEmpty ? l10n.cannotBeEmpty : null,
+                            ),
+                          ),
+                        ),
+
                       ]),
                       const SizedBox(height: 12),
                       // Compact single-line IV controls for CBC
                       if (mode == 'CBC')
                         Row(children: [
-                          // small segmented control
-                          SegmentedButton<String>(
-                            segments: const [
-                              ButtonSegment(value: 'manual', label: Text('输入')),
-                              ButtonSegment(value: 'prefix', label: Text('从密文取')),
-                            ],
-                            selected: {ivSource},
-                            onSelectionChanged: (selection) => setState(() => ivSource = selection.first),
+                          Container(
+                            height: 42,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: ivSource,
+                                items: [
+                                  DropdownMenuItem(value: 'manual', child: Text(l10n.manual)),
+                                  DropdownMenuItem(value: 'prefix', child: Text(l10n.cryptoIvPrefixLabel)),
+                                ],
+                                onChanged: (v) => setState(() => ivSource = v ?? 'manual'),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                iconEnabledColor: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           // narrow IV input when manual (fixed width for compactness)
                           if (ivSource == 'manual')
                             SizedBox(
-                              width: 220,
-                              height: 40,
+                              width: 260,
+                              height: 42,
                               child: TextFormField(
                                 controller: ivController,
-                                decoration: decorate(context, 'IV', hint: l10n.optional).copyWith(
+                                decoration: decorate(context, 'IV').copyWith(
                                     isDense: true,
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10)),
                                 validator: (val) => (ivSource == 'manual' && (val == null || val.trim().isEmpty))
@@ -545,7 +703,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           if (ivSource == 'manual') const SizedBox(width: 8),
                           if (ivSource == 'prefix')
                             Tooltip(
-                                message: '从密文的前 N 字节提取 IV（通常为 16）',
+                                message: l10n.cryptoIvPrefixTooltip,
                                 child: Icon(Icons.info_outline, size: 16, color: theme.dividerColor)),
                           if (ivSource == 'prefix') const SizedBox(width: 8),
                           // compact numeric stepper (prefix length)
@@ -578,76 +736,6 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                               ]),
                             ),
                         ]),
-                      const SizedBox(height: 12),
-                      // Compact row: Mode | Padding | Key Length
-                      Row(children: [
-                        Text("Mode", style: theme.textTheme.labelMedium),
-                        const SizedBox(width: 8),
-                        Container(
-                          height: 36,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: mode,
-                              items: const [
-                                DropdownMenuItem(value: 'ECB', child: Text('ECB')),
-                                DropdownMenuItem(value: 'CBC', child: Text('CBC')),
-                              ],
-                              onChanged: (v) => setState(() => mode = v ?? 'ECB'),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text('Padding', style: theme.textTheme.labelMedium),
-                        const SizedBox(width: 8),
-                        Container(
-                          height: 36,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: padding,
-                              items: const [
-                                DropdownMenuItem(value: 'PKCS7', child: Text('PKCS7')),
-                                DropdownMenuItem(value: 'ZeroPadding', child: Text('ZeroPadding')),
-                              ],
-                              onChanged: (v) => setState(() => padding = v ?? 'PKCS7'),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text('Key Length', style: theme.textTheme.labelMedium),
-                        const SizedBox(width: 8),
-                        Container(
-                          height: 36,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<int>(
-                              value: length,
-                              items: const [
-                                DropdownMenuItem(value: 128, child: Text('128')),
-                                DropdownMenuItem(value: 192, child: Text('192')),
-                                DropdownMenuItem(value: 256, child: Text('256')),
-                              ],
-                              onChanged: (v) => setState(() => length = v ?? 128),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ),
-                      ]),
                     ]),
                   ),
                 ),

@@ -363,5 +363,8 @@
   "cryptoDecoded": "已解密",
   "cryptoDecodeToggle": "解密",
   "optional": "可选",
-  "cryptoRuleField": "字段"
+  "cryptoRuleField": "字段名称",
+
+  "cryptoIvPrefixLabel": "IV 前缀",
+  "cryptoIvPrefixTooltip": "使用响应体前 N 个字节作为 IV"
 }

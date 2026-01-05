@@ -2123,6 +2123,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Field Name'**
   String get cryptoRuleField;
+
+  /// No description provided for @cryptoIvPrefixLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'IV Prefix'**
+  String get cryptoIvPrefixLabel;
+
+  /// No description provided for @cryptoIvPrefixTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the first N bytes of the response body as IV'**
+  String get cryptoIvPrefixTooltip;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
