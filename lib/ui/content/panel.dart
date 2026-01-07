@@ -200,8 +200,11 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
 
     return SingleChildScrollView(
         controller: scrollController,
-        child:
-            Column(children: [RowWidget("Path", path), ...message(widget.request.get(), "Request", scrollController)]));
+        child: Column(children: [
+          RowWidget("Path", path),
+          RequestParams(widget.request),
+          ...message(widget.request.get(), "Request", scrollController)
+        ]));
   }
 
   Widget response() {
@@ -229,14 +232,49 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   }
 }
 
-Widget expansionTile(String title, List<Widget> content) {
+Widget expansionTile(String title, List<Widget> content,
+    {bool initiallyExpanded = true, ValueChanged<bool>? onExpansionChanged}) {
   return ExpansionTile(
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
       tilePadding: const EdgeInsets.only(left: 0),
       expandedAlignment: Alignment.topLeft,
-      initiallyExpanded: true,
+      initiallyExpanded: initiallyExpanded,
+      onExpansionChanged: onExpansionChanged,
       shape: const Border(),
       children: content);
+}
+
+class RequestParams extends StatelessWidget {
+  static bool initiallyExpanded = false;
+
+  final ValueWrap<HttpRequest> request;
+
+  const RequestParams(this.request, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var request = this.request.get();
+    if (request == null) {
+      return const SizedBox();
+    }
+    var params = request.requestUri?.queryParametersAll;
+    if (params == null || params.isEmpty) {
+      return const SizedBox();
+    }
+    var content = <Widget>[];
+    params.forEach((name, values) {
+      for (var val in values) {
+        content.add(RowWidget(name, val));
+        content.add(const Divider(thickness: 0.1, height: 10));
+      }
+    });
+
+    return expansionTile("Request Params", content, initiallyExpanded: initiallyExpanded,
+        onExpansionChanged: (expanded) {
+      //保存展开状态
+      initiallyExpanded = expanded;
+    });
+  }
 }
 
 class General extends StatelessWidget {
