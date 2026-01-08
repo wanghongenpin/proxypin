@@ -652,7 +652,7 @@ class _ScriptListState extends State<ScriptList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        persistentFooterButtons: [multiple ? globalMenu() : const SizedBox()],
+        persistentFooterButtons: multiple ? [globalMenu()] : null,
         body: Container(
             padding: const EdgeInsets.only(top: 10, bottom: 30),
             decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),

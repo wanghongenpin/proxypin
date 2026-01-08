@@ -30,6 +30,7 @@ import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/ui/mobile/request/favorite.dart';
 import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/setting/request_block.dart';
+import 'package:proxypin/ui/mobile/setting/request_crypto.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
@@ -142,6 +143,12 @@ class _ConfigPageState extends State<ConfigPage> {
                   leading: Icon(Icons.swap_horiz_outlined, color: color),
                   trailing: arrow,
                   onTap: () => navigator(context, MobileRequestMapPage())),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              ListTile(
+                  title: Text(localizations.requestCrypto),
+                  leading: Icon(Icons.lock_outline, color: color),
+                  trailing: arrow,
+                  onTap: () => navigator(context, const MobileRequestCryptoPage())),
               Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
               ListTile(
                   title: Text(localizations.script),

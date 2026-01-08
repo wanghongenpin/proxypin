@@ -34,6 +34,7 @@ import 'package:proxypin/ui/mobile/setting/app_filter.dart';
 import 'package:proxypin/ui/mobile/setting/filter.dart';
 import 'package:proxypin/ui/mobile/setting/request_block.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
+import 'package:proxypin/ui/mobile/setting/request_crypto.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
@@ -133,6 +134,10 @@ class DrawerWidget extends StatelessWidget {
                 title: Text(localizations.requestMap),
                 leading: Icon(Icons.swap_horiz_outlined),
                 onTap: () => navigator(context, MobileRequestMapPage())),
+            ListTile(
+                title: Text(localizations.requestCrypto),
+                leading: const Icon(Icons.lock_outline),
+                onTap: () => navigator(context, const MobileRequestCryptoPage())),
             ListTile(
                 title: Text(localizations.script),
                 leading: const Icon(Icons.code),

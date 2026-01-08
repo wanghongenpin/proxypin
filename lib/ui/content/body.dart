@@ -230,52 +230,49 @@ class HttpBodyState extends State<HttpBodyWidget> {
     bool isImage = widget.httpMessage?.contentType == ContentType.image;
     VisualDensity visualDensity = Platforms.isMobile() ? VisualDensity.compact : VisualDensity.standard;
 
-    var list = [
-      Text('$type Body', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      const SizedBox(width: 18),
-      InkWell(
-        key: searchIconKey,
-        child: Icon(Icons.search, size: 20),
-        // tooltip: localizations.search,
-        onTap: () {
-          if (searchController.isSearchOverlayVisible) {
-            searchController.removeSearchOverlay();
-          } else {
-            RenderBox renderBox = searchIconKey.currentContext?.findRenderObject() as RenderBox;
-            Offset position = renderBox.localToGlobal(Offset.zero); // 获取搜索图标的位置
-            searchController.showSearchOverlay(context, top: position.dy + renderBox.size.height + 50, right: 10);
-          }
-        },
-      ),
-      const SizedBox(width: 5),
-      isImage
-          ? downloadImageButton()
-          : IconButton(
-              visualDensity: visualDensity,
-              iconSize: 16,
-              icon: Icon(Icons.copy),
-              tooltip: localizations.copy,
-              onPressed: () async {
-                var body = await bodyKey.currentState?.getBody();
-                if (body == null) {
-                  return;
-                }
-                Clipboard.setData(ClipboardData(text: body)).then((value) {
-                  if (mounted) FlutterToastr.show(localizations.copied, context);
-                });
-              }),
-    ];
+    final isMobile = Platforms.isMobile();
 
-    if (!widget.hideRequestRewrite) {
-      list.add(IconButton(
-          visualDensity: visualDensity,
-          iconSize: 16,
-          icon: const Icon(Icons.edit_document),
-          tooltip: localizations.requestRewrite,
-          onPressed: showRequestRewrite));
-    }
+    // Build common actions as widgets so we can either display them inline (desktop)
+    // or move them into an overflow menu (mobile) to avoid hiding important buttons.
+    final searchBtn = InkWell(
+      key: searchIconKey,
+      child: const Icon(Icons.search, size: 20),
+      onTap: () {
+        if (searchController.isSearchOverlayVisible) {
+          searchController.removeSearchOverlay();
+        } else {
+          RenderBox renderBox = searchIconKey.currentContext?.findRenderObject() as RenderBox;
+          Offset position = renderBox.localToGlobal(Offset.zero);
+          searchController.showSearchOverlay(context, top: position.dy + renderBox.size.height + 50, right: 10);
+        }
+      },
+    );
 
-    list.add(IconButton(
+    final copyBtn = isImage
+        ? downloadImageButton()
+        : IconButton(
+            visualDensity: visualDensity,
+            iconSize: 16,
+            icon: const Icon(Icons.copy),
+            tooltip: localizations.copy,
+            onPressed: () async {
+              var body = await bodyKey.currentState?.getBody();
+              if (body == null) return;
+              Clipboard.setData(ClipboardData(text: body)).then((_) {
+                if (mounted) FlutterToastr.show(localizations.copied, context);
+              });
+            },
+          );
+
+    final rewriteBtn = IconButton(
+      visualDensity: visualDensity,
+      iconSize: 16,
+      icon: const Icon(Icons.edit_document),
+      tooltip: localizations.requestRewrite,
+      onPressed: showRequestRewrite,
+    );
+
+    final encodeBtn = IconButton(
         visualDensity: visualDensity,
         iconSize: 20,
         icon: const Icon(Icons.text_format),
@@ -285,33 +282,92 @@ class HttpBodyState extends State<HttpBodyWidget> {
           if (mounted) {
             encodeWindow(EncoderType.base64, context, body);
           }
-        }));
-    if (!inNewWindow) {
-      list.add(IconButton(
-          visualDensity: visualDensity,
-          iconSize: 16,
-          icon: const Icon(Icons.open_in_new),
-          tooltip: localizations.newWindow,
-          onPressed: () => openNew()));
-    }
+        });
 
+    final openNewBtn = IconButton(
+        visualDensity: visualDensity,
+        iconSize: 16,
+        icon: const Icon(Icons.open_in_new),
+        tooltip: localizations.newWindow,
+        onPressed: () => openNew());
+
+    Widget? cryptoToggle;
     if (decoded != null) {
-      list.add(Row(children: [
-        TextButton.icon(
-            onPressed: () {
-              setState(() {
-                showDecoded = !showDecoded;
-              });
-            },
-            icon: Icon(showDecoded ? Icons.lock_open : Icons.lock),
-            label: Text(showDecoded ? localizations.cryptoDecoded : localizations.cryptoDecodeToggle)),
-      ]));
+      cryptoToggle = TextButton.icon(
+        onPressed: () {
+          setState(() {
+            showDecoded = !showDecoded;
+          });
+        },
+        icon: Icon(showDecoded ? Icons.lock_open : Icons.lock, size: 18),
+        label: Text(showDecoded ? localizations.cryptoDecoded : localizations.cryptoDecodeToggle),
+      );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(children: list),
-    );
+    // Mobile UX:
+    // - If there is NO crypto result, keep the original (previous) horizontal-scroll title bar.
+    // - Only when crypto is available, switch to the compact overflow-menu layout to keep
+    //   the crypto toggle visible.
+    if (isMobile && cryptoToggle != null) {
+      final overflowItems = <PopupMenuEntry<String>>[];
+      if (!widget.hideRequestRewrite) {
+        overflowItems.add(PopupMenuItem(value: 'rewrite', child: Text(localizations.requestRewrite)));
+      }
+      overflowItems.add(PopupMenuItem(value: 'encode', child: Text(localizations.encode)));
+      if (!inNewWindow) {
+        overflowItems.add(PopupMenuItem(value: 'new_window', child: Text(localizations.newWindow)));
+      }
+
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$type Body', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          const SizedBox(width: 8),
+          searchBtn,
+          const SizedBox(width: 4),
+          copyBtn,
+          const SizedBox(width: 4),
+          Flexible(child: cryptoToggle),
+          if (overflowItems.isNotEmpty)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 20),
+              onSelected: (v) {
+                if (v == 'rewrite') showRequestRewrite();
+                if (v == 'encode') {
+                  bodyKey.currentState?.getBody().then((body) {
+                    if (mounted) encodeWindow(EncoderType.base64, context, body);
+                  });
+                }
+                if (v == 'new_window') openNew();
+              },
+              itemBuilder: (_) => overflowItems,
+            ),
+        ],
+      );
+    }
+
+    // Default (desktop + mobile without crypto): keep the previous full inline actions
+    // (horizontal scroll when needed).
+    final list = <Widget>[
+      Text('$type Body', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      const SizedBox(width: 18),
+      searchBtn,
+      const SizedBox(width: 4),
+      copyBtn,
+    ];
+
+    if (!widget.hideRequestRewrite) {
+      list.add(rewriteBtn);
+    }
+    list.add(encodeBtn);
+    if (!inNewWindow) {
+      list.add(openNewBtn);
+    }
+    if (cryptoToggle != null) {
+      list.add(cryptoToggle);
+    }
+
+    return SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: list));
   }
 
   ///下载图片
@@ -520,28 +576,28 @@ class _BodyState extends State<_Body> {
       );
     }
 
-    if (message == null || message?.body == null) {
+    if (message == null || message.body == null) {
       return const SizedBox();
     }
 
     if (type == ViewType.image) {
-      return Center(child: Image.memory(Uint8List.fromList(message?.body ?? []), fit: BoxFit.scaleDown));
+      return Center(child: Image.memory(Uint8List.fromList(message.body ?? []), fit: BoxFit.scaleDown));
     }
     if (type == ViewType.video) {
       return const Center(child: Text("video not support preview"));
     }
     if (type == ViewType.hex) {
-      return HexViewer(data: Uint8List.fromList(message!.body!), searchController: widget.searchController);
+      return HexViewer(data: Uint8List.fromList(message.body!), searchController: widget.searchController);
     }
 
     if (type == ViewType.formUrl) {
       return HighlightTextWidget(
-          text: Uri.decodeFull(message!.getBodyString()),
+          text: Uri.decodeFull(message.getBodyString()),
           searchController: widget.searchController,
           contextMenuBuilder: contextMenu);
     }
 
-    return futureWidget(message!.decodeBodyString(), initialData: message!.getBodyString(), (body) {
+    return futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
       try {
         if (type == ViewType.jsonText) {
           var jsonObject = json.decode(body);

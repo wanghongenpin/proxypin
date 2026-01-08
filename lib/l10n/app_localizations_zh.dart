@@ -992,10 +992,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestMapDescribe => '不请求远程服务，使用本地配置或脚本进行响应';
 
   @override
-  String get automatic => '自动安装';
+  String get automatic => '自动';
 
   @override
-  String get manual => '手动安装';
+  String get manual => '手动';
 
   @override
   String get certNotInstalled => '证书未安装';
