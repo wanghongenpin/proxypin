@@ -3,10 +3,16 @@ import 'package:flutter/services.dart';
 class InstalledApps {
   static const MethodChannel _methodChannel = MethodChannel('com.proxy/installedApps');
 
-  static Future<List<AppInfo>> getInstalledApps(bool withIcon, {String? packageNamePrefix}) {
-    return _methodChannel
-        .invokeListMethod<Map>('getInstalledApps', {"withIcon": withIcon, "packageNamePrefix": packageNamePrefix}).then(
-            (value) => value?.map((e) => AppInfo.formJson(e)).toList() ?? []);
+  static Future<List<AppInfo>> getInstalledApps(
+    bool withIcon, {
+    String? packageNamePrefix,
+    bool includeSystemApps = false,
+  }) {
+    return _methodChannel.invokeListMethod<Map>('getInstalledApps', {
+      "withIcon": withIcon,
+      "packageNamePrefix": packageNamePrefix,
+      "includeSystemApps": includeSystemApps,
+    }).then((value) => value?.map((e) => AppInfo.formJson(e)).toList() ?? []);
   }
 
   static Future<AppInfo> getAppInfo(String packageName) async {

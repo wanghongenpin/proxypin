@@ -16,12 +16,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/native/installed_apps.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/task.dart';
 
 ///应用白名单 目前只支持安卓 ios没办法获取安装的列表
 ///@author wang
@@ -317,9 +319,40 @@ class InstalledAppsWidget extends StatefulWidget {
 }
 
 class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
-  static Future<List<AppInfo>> apps = InstalledApps.getInstalledApps(true);
+  static List<AppInfo>? apps;
+  static bool includeSystemApps = false;
+
+  RxBool loading = false.obs;
 
   String? keyword;
+
+  @override
+  void initState() {
+    super.initState();
+    DelayedTask().cancel("InstalledAppsWidget_release");
+    if (apps != null) {
+      return;
+    }
+    refreshApps();
+  }
+
+  @override
+  void dispose() {
+    DelayedTask().debounce("InstalledAppsWidget_release", const Duration(seconds: 10), () {
+      apps = null;
+      includeSystemApps = false;
+    });
+    super.dispose();
+  }
+
+  void refreshApps() async {
+    try {
+      loading.value = true;
+      apps = await InstalledApps.getInstalledApps(true, includeSystemApps: includeSystemApps);
+    } finally {
+      loading.value = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +364,18 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
           decoration: InputDecoration(
             hintText: isCN ? "请输入应用名或包名" : "Please enter the application or package name",
             border: InputBorder.none,
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+            suffixIcon: IconButton(
+              color: includeSystemApps ? Theme.of(context).colorScheme.primary : null,
+              icon: const Icon(Icons.visibility_outlined),
+              tooltip: isCN ? "显示系统应用" : "Show system apps",
+              onPressed: () {
+                setState(() {
+                  includeSystemApps = !includeSystemApps;
+                });
+                refreshApps();
+              },
+            ),
           ),
           onChanged: (String value) {
             keyword = value.toLowerCase();
@@ -340,45 +385,42 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          apps = InstalledApps.getInstalledApps(true);
-          await apps;
-          setState(() {});
+          refreshApps();
         },
-        child: FutureBuilder(
-          future: apps,
-          builder: (BuildContext context, AsyncSnapshot<List<AppInfo>> snapshot) {
-            if (snapshot.hasData) {
-              List<AppInfo> appInfoList = snapshot.data!;
-              appInfoList = appInfoList.toSet().difference(widget.addedList.toSet()).toList();
-              if (keyword != null && keyword!.trim().isNotEmpty) {
-                appInfoList = appInfoList
-                    .where((element) =>
-                        element.name!.toLowerCase().contains(keyword!) ||
-                        element.packageName!.toLowerCase().contains(keyword!))
-                    .toList();
-              }
-
-              return ListView.builder(
-                  itemCount: appInfoList.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    AppInfo appInfo = appInfoList[index];
-                    return ListTile(
-                      leading: Image.memory(appInfo.icon ?? Uint8List(0)),
-                      title: Text(appInfo.name ?? ""),
-                      subtitle: Text(appInfo.packageName ?? ""),
-                      onTap: () async {
-                        Navigator.of(context).pop(appInfo.packageName);
-                      },
-                    );
-                  });
-            } else {
-              return const Center(
+        child: Obx(() => loading.value
+            ? const Center(
                 child: CircularProgressIndicator(),
-              );
-            }
-          },
-        ),
+              )
+            : buildAppListView()),
       ),
     );
+  }
+
+  ListView buildAppListView() {
+    if (apps == null) {
+      return ListView();
+    }
+    List<AppInfo> appInfoList = apps!;
+    appInfoList = appInfoList.toSet().difference(widget.addedList.toSet()).toList();
+    if (keyword != null && keyword!.trim().isNotEmpty) {
+      appInfoList = appInfoList
+          .where((element) =>
+              element.name!.toLowerCase().contains(keyword!) || element.packageName!.toLowerCase().contains(keyword!))
+          .toList();
+    }
+
+    return ListView.builder(
+        itemCount: appInfoList.length,
+        itemBuilder: (BuildContext context, int index) {
+          AppInfo appInfo = appInfoList[index];
+          return ListTile(
+            leading: Image.memory(appInfo.icon ?? Uint8List(0)),
+            title: Text(appInfo.name ?? ""),
+            subtitle: Text(appInfo.packageName ?? ""),
+            onTap: () async {
+              Navigator.of(context).pop(appInfo.packageName);
+            },
+          );
+        });
   }
 }

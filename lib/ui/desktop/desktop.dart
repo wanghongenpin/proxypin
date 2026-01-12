@@ -179,6 +179,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                               '2. 增加请求解密，可配置AES自动解密消息体；\n'
                               '3. HTTP Header 展示增加文本和表格切换；\n'
                               '4. 增加 Request Param 列表展示；\n'
+                              '5. 应用过滤列表增加是否显示系统应用；\n'
+                              '6. 更新JSON深色主题色，以提高可见度和美观度；\n'
                               '8. bug修复和改进；\n'
                           : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
                               '1. Added WebSocket request testing in the Toolbox.\n'
