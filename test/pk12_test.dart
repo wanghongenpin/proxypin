@@ -3,6 +3,12 @@ import 'dart:io';
 import 'package:proxypin/network/util/cert/pkcs12.dart';
 
 void main() {
+  const testPath = r"C:\Users\wanghongen\Downloads\new_key.p12";
+  if (!File(testPath).existsSync()) {
+    print('pk12_test local file missing - skipped');
+    return;
+  }
+
   File file = File('C:\\Users\\wanghongen\\Downloads\\new_key.p12');
   parsePKCS12([file], '01');
 

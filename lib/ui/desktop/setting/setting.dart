@@ -77,7 +77,7 @@ class _SettingState extends State<Setting> {
         item(localizations.requestMap, onPressed: requestMap),
         item(localizations.requestCrypto, onPressed: showRequestCrypto),
         item(localizations.script,
-            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 730))),
+            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
         item(localizations.externalProxy, onPressed: setExternalProxy),
         item(localizations.about, onPressed: showAbout),
       ],
