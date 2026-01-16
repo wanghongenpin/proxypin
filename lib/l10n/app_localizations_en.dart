@@ -1058,4 +1058,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cryptoIvPrefixTooltip => 'Use the first N bytes of the response body as IV';
+
+  @override
+  String get local => 'Local';
+
+  @override
+  String get remoteUrl => 'Remote URL';
+
+  @override
+  String get view => 'View';
 }

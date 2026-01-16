@@ -366,5 +366,9 @@
   "cryptoRuleField": "Field Name",
 
   "cryptoIvPrefixLabel": "IV Prefix",
-  "cryptoIvPrefixTooltip": "Use the first N bytes of the response body as IV"
+  "cryptoIvPrefixTooltip": "Use the first N bytes of the response body as IV",
+
+  "local": "Local",
+  "remoteUrl": "Remote URL",
+  "view": "View"
 }

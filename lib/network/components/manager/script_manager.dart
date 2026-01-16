@@ -20,6 +20,7 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/ui/component/device.dart';
@@ -60,7 +61,7 @@ async function onResponse(context, request, response) {
   bool enabled = true;
   List<ScriptItem> list = [];
 
-  final Map<ScriptItem, String> _scriptMap = {};
+  final ExpiringCache<ScriptItem, String> _scriptMap = ExpiringCache<ScriptItem, String>(Duration(minutes: 15));
 
   static late JavascriptRuntime flutterJs;
 

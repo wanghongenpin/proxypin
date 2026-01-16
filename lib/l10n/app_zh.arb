@@ -366,5 +366,9 @@
   "cryptoRuleField": "字段名称",
 
   "cryptoIvPrefixLabel": "IV 前缀",
-  "cryptoIvPrefixTooltip": "使用响应体前 N 个字节作为 IV"
+  "cryptoIvPrefixTooltip": "使用响应体前 N 个字节作为 IV",
+
+  "local": "本地",
+  "remoteUrl": "远程URL",
+  "view": "查看"
 }

@@ -362,13 +362,13 @@ class _ScriptEditState extends State<ScriptEdit> {
     if (_fetchingRemoteScript.value) return;
     final remoteUrl = remoteUrlController.text.trim();
     if (remoteUrl.isEmpty) {
-      FlutterToastr.show("Remote URL ${localizations.cannotBeEmpty}", context, position: FlutterToastr.top);
+      FlutterToastr.show("${localizations.remoteUrl} ${localizations.cannotBeEmpty}", context, position: FlutterToastr.top);
       return;
     }
 
     final uri = Uri.tryParse(remoteUrl);
     if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
-      FlutterToastr.show("Remote URL invalid", context, position: FlutterToastr.top);
+      FlutterToastr.show("${localizations.remoteUrl} ${localizations.fail}", context, position: FlutterToastr.top);
       return;
     }
 
@@ -381,7 +381,6 @@ class _ScriptEditState extends State<ScriptEdit> {
       }
       script.text = resp.body;
       if (mounted) {
-        FlutterToastr.show("Fetched", context, position: FlutterToastr.top);
         setState(() {});
       }
     } catch (e) {
@@ -394,6 +393,7 @@ class _ScriptEditState extends State<ScriptEdit> {
   }
 
   void _resetScript() {
+    script.text = ScriptManager.template;
     script.text = ScriptManager.template;
   }
 
@@ -471,7 +471,7 @@ class _ScriptEditState extends State<ScriptEdit> {
               final remoteUrl = _useRemote ? remoteUrlController.text.trim() : '';
               final hasRemote = remoteUrl.isNotEmpty;
               if (_useRemote && !hasRemote) {
-                FlutterToastr.show("Remote URL ${localizations.cannotBeEmpty}", context, position: FlutterToastr.top);
+                FlutterToastr.show("${localizations.remoteUrl} ${localizations.cannotBeEmpty}", context, position: FlutterToastr.top);
                 return;
               }
 
@@ -585,9 +585,9 @@ class _ScriptEditState extends State<ScriptEdit> {
                             height: 34,
                             child: DropdownButtonFormField<bool>(
                               initialValue: _useRemote,
-                              items: const [
-                                DropdownMenuItem(value: false, child: Text('Local')),
-                                DropdownMenuItem(value: true, child: Text('Remote URL')),
+                              items: [
+                                DropdownMenuItem(value: false, child: Text(localizations.local)),
+                                DropdownMenuItem(value: true, child: Text(localizations.remoteUrl)),
                               ],
                               onChanged: (val) {
                                 if (val == null) return;
@@ -637,7 +637,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                           height: 16,
                                           child: CircularProgressIndicator(strokeWidth: 2),
                                         )
-                                      : const Text('Fetch'),
+                                      : Text(localizations.view),
                                 )),
                           ],
 

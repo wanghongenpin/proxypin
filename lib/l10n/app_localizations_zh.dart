@@ -1045,6 +1045,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cryptoIvPrefixTooltip => '使用响应体前 N 个字节作为 IV';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get remoteUrl => '远程URL';
+
+  @override
+  String get view => '查看';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2089,4 +2098,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get cryptoIvPrefixTooltip => '使用回應內容的前 N 個字節作為 IV';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get remoteUrl => '遠端URL';
+
+  @override
+  String get view => '檢視';
 }

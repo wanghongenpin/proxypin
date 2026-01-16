@@ -2135,6 +2135,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use the first N bytes of the response body as IV'**
   String get cryptoIvPrefixTooltip;
+
+  /// No description provided for @local.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get local;
+
+  /// No description provided for @remoteUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote URL'**
+  String get remoteUrl;
+
+  /// No description provided for @view.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
