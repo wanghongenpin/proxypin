@@ -35,7 +35,7 @@ dependencies:
       ref: secure-keyboard
   flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
-  device_info_plus: ^11.5.0
+  device_info_plus: ^12.3.0
   shared_preferences: ^2.5.4
   url_launcher: ^6.3.2
   toastification: ^3.0.2

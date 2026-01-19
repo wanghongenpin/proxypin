@@ -502,10 +502,11 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
           padding: const EdgeInsets.all(12),
           children: [
             Card(
+              color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
-                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -543,10 +544,11 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
             ),
             const SizedBox(height: 12),
             Card(
+              color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
-                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12),

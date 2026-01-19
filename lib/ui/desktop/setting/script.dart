@@ -429,7 +429,6 @@ class _ScriptEditState extends State<ScriptEdit> {
   Widget build(BuildContext context) {
     GlobalKey formKey = GlobalKey<FormState>();
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-    final showRemoteUrl = _useRemote;
 
     return AlertDialog(
       scrollable: true,
@@ -605,7 +604,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                           ),
 
                           // Put Remote URL right after type selector.
-                          if (showRemoteUrl) ...[
+                          if (_useRemote) ...[
                             const SizedBox(width: 10),
                             Expanded(
                               flex: 6,
@@ -894,7 +893,14 @@ class _ScriptListState extends State<ScriptList> {
   }
 
   Future<void> showEdit([int? index]) async {
-    String? script = index == null ? null : await (await ScriptManager.instance).getScript(widget.scripts[index]);
+    String? script;
+    if (index != null) {
+      var scriptManager = await ScriptManager.instance;
+      var scriptItem = widget.scripts[index];
+      if (scriptItem.remoteUrl == null || scriptItem.remoteUrl?.isEmpty == true) {
+        script = await scriptManager.getScript(scriptItem);
+      }
+    }
     if (!mounted) {
       return;
     }
@@ -931,10 +937,11 @@ class _ScriptListState extends State<ScriptList> {
       var item = widget.scripts[idx];
       var map = item.toJson();
       map.remove("scriptPath");
-      // For remote scripts, embed cached content too.
-      map['script'] = await scriptManager.getScript(item).onError((e, t) {
-        return '';
-      });
+
+      if (item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty) {
+        map['script'] = await scriptManager.getScript(item);
+      }
+
       json.add(map);
     }
 

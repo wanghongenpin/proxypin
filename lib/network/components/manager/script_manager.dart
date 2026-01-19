@@ -97,7 +97,10 @@ async function onResponse(context, request, response) {
   }
 
   static void registerLogHandler(LogHandler logHandler) {
-    if (!_logHandlers.any((it) => it.channelId == logHandler.channelId)) _logHandlers.add(logHandler);
+    if (_logHandlers.any((it) => it.channelId == logHandler.channelId)) {
+       _logHandlers.removeWhere((it) => it.channelId == logHandler.channelId);
+    }
+    _logHandlers.add(logHandler);
   }
 
   static void removeLogHandler(int channelId) {
@@ -207,13 +210,14 @@ async function onResponse(context, request, response) {
   }
 
   ///添加脚本
-  Future<void> addScript(ScriptItem item, String script) async {
+  Future<void> addScript(ScriptItem item, String? script) async {
     // Remote script: script is treated as initial cache (optional)
     if (item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty) {
       list.add(item);
       return;
     }
 
+    script ??= template;
     final path = await homePath();
     String scriptPath = "${separator}scripts$separator${RandomUtil.randomString(16)}.js";
     var file = File(path + scriptPath);
@@ -416,7 +420,6 @@ class ScriptItem {
       'name': name,
       'url': urls.length == 1 ? urls[0] : urls,
       'scriptPath': scriptPath,
-      // remote
       if (remoteUrl != null) 'remoteUrl': remoteUrl,
     };
   }
