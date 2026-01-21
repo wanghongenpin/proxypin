@@ -117,7 +117,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV23) {
+    if (widget.appConfiguration.upgradeNoticeV24) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -287,26 +287,24 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 工具箱增加 WebSocket 请求测试；\n'
-            '2. 支持数据上报服务器；\n'
-            '3. 支持 SSE（event-stream）请求；\n'
-            '4. 增加保存HTTP请求；\n'
-            '5. 请求重写支持 请求方法匹配；\n'
-            '6. Android 系统导航栏颜色适配；\n'
-            '7. 修复 ios26 分享 bug；\n'
-            '8. bug修复和改进；\n'
+            '1. 增加收藏导出和导入；\n'
+            '2. 增加请求解密，可配置AES自动解密消息体；\n'
+            '3. 脚本支持远程URL获取执行；\n'
+            '4. HTTP Header 展示增加文本和表格切换；\n'
+            '5. 增加 Request Param 列表展示；\n'
+            '6. 应用过滤列表增加是否显示系统应用；\n'
+            '7. 更新JSON深色主题色，以提高可见度和美观度；\n'
         : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
-            '1. Added WebSocket request testing in the Toolbox.\n'
-            '2. Added support for data-reporting servers.\n'
-            '3. Added support for Server-Sent Events (SSE / event-stream).\n'
-            '4. Added the ability to save HTTP requests.\n'
-            "5. Request rewrite rules now support matching by HTTP method.\n"
-            '6. Improved Android navigation bar color handling.\n'
-            '7. Fixed a sharing bug on iOS 26.\n'
-            '8. Various bug fixes and improvements.\n';
+            '1. Added import/export for Favorites.\n'
+            '2. Added request decryption with configurable AES automatic body decryption.\n'
+            '3. Scripts can now be fetched from remote URLs and executed.\n'
+            '4. HTTP header view now supports switching between text and table modes.\n'
+            '5. Added a Request Params list view.\n'
+            '6. App filter list now includes an option to show system apps.\n'
+            '7. Updated JSON dark-theme colors for better visibility and appearance.\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV23 = false;
+      widget.appConfiguration.upgradeNoticeV24 = false;
       widget.appConfiguration.flushConfig();
     });
   }
