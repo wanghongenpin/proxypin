@@ -172,10 +172,8 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
                                     })),
                             const SizedBox(width: 20),
                             Expanded(
-                                child: Text(
-                                    rule.urlPattern.isEmpty ? l10n.emptyMatchAll : rule.urlPattern,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 13))),
+                                child: Text(rule.urlPattern.isEmpty ? l10n.emptyMatchAll : rule.urlPattern,
+                                    overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                           ])));
                 }))
               ])),
@@ -214,9 +212,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
                         icon: const Icon(Icons.share, size: 18),
                         label: Text(l10n.export, style: const TextStyle(fontSize: 14))),
                     TextButton.icon(
-                        onPressed: selected.isEmpty
-                            ? null
-                            : () => _removeSelected(),
+                        onPressed: selected.isEmpty ? null : () => _removeSelected(),
                         icon: const Icon(Icons.delete, size: 18),
                         label: Text(l10n.delete, style: const TextStyle(fontSize: 14))),
                     TextButton.icon(
@@ -233,9 +229,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
   }
 
   Future<void> _addRule(RequestCryptoManager manager) async {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const MobileCryptoRuleEditPage()))
-        .then((value) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MobileCryptoRuleEditPage())).then((value) {
       if (value != null && mounted) {
         setState(() {});
         _refreshConfig(force: true);
@@ -245,9 +239,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
 
   Future<void> _editRule(RequestCryptoManager manager, int index) async {
     final rule = manager.rules[index];
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => MobileCryptoRuleEditPage(rule: rule)))
-        .then((value) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => MobileCryptoRuleEditPage(rule: rule))).then((value) {
       if (value != null && mounted) {
         setState(() {});
         _refreshConfig(force: true);
@@ -348,7 +340,8 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
 
   Future<void> _import(RequestCryptoManager manager) async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       final path = result?.files.single.path;
       if (path == null) return;
       final content = await File(path).readAsString();
@@ -384,7 +377,6 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
     }
   }
 }
-
 
 /// Mobile editor page for a single crypto rule.
 ///
@@ -635,12 +627,12 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
                           Expanded(
                             child: ivSource == 'manual'
                                 ? TextFormField(
-                              controller: ivController,
-                              decoration: _decorate('IV'),
-                              validator: (val) => (ivSource == 'manual' && (val == null || val.trim().isEmpty))
-                                  ? l10n.cannotBeEmpty
-                                  : null,
-                            )
+                                    controller: ivController,
+                                    decoration: _decorate('IV'),
+                                    validator: (val) => (ivSource == 'manual' && (val == null || val.trim().isEmpty))
+                                        ? l10n.cannotBeEmpty
+                                        : null,
+                                  )
                                 : _ivPrefixLengthEditor(),
                           ),
                         ],
@@ -691,11 +683,11 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
   }) {
     return Container(
       height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      constraints: const BoxConstraints(minWidth: 95),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
-        borderRadius: BorderRadius.circular(8),
-      ),
+          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
+          borderRadius: BorderRadius.circular(6)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
@@ -785,4 +777,3 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
     Navigator.of(context).pop(updated);
   }
 }
-

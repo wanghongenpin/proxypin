@@ -628,6 +628,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                       Row(children: [
                         Container(
                           height: 42,
+                          width: 92,
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
                             border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
@@ -647,7 +648,6 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           ),
                         ),
                         const SizedBox(width: 12),
-
                         Expanded(
                           child: SizedBox(
                             child: TextFormField(
@@ -658,7 +658,6 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                             ),
                           ),
                         ),
-
                       ]),
                       const SizedBox(height: 12),
                       // Compact single-line IV controls for CBC
@@ -666,6 +665,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                         Row(children: [
                           Container(
                             height: 42,
+                            constraints:  const BoxConstraints(minWidth: 92),
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             decoration: BoxDecoration(
                               border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
