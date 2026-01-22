@@ -51,7 +51,7 @@ class Har {
       "cache": {},
       'timings': {
         'send': 0,
-        'wait': request.response?.responseTime.difference(request.requestTime).inMilliseconds,
+        'wait': request.response?.responseTime.difference(request.requestTime).inMilliseconds ?? -1,
         'receive': 0,
       },
       'serverIPAddress': request.response?.remoteHost ?? '', // 服务器IP地址
@@ -66,7 +66,7 @@ class Har {
       "content": {
         "size": request.response?.body?.length ?? -1, // 响应体大小
         "mimeType": _getContentType(request.response?.headers.contentType), // 响应体类型
-        "text": request.response?.bodyAsString, // 响应体内容
+        "text": request.response?.bodyAsString ?? '', // 响应体内容
       },
       "redirectURL": '', // 重定向地址
       "headersSize": -1, // 响应头大小
@@ -185,13 +185,13 @@ class Har {
     if (request.contentType == ContentType.formData || request.contentType == ContentType.formUrl) {
       return {
         "mimeType": request.headers.contentType, // 请求体类型
-        "text": request.body == null ? null : String.fromCharCodes(request.body!), // 请求体内容
+        if (request.body != null) "text": String.fromCharCodes(request.body!), // 请求体内容
         "params": [], // 请求体内容
       };
     }
     return {
       "mimeType": request.headers.contentType, // 请求体类型
-      "text": request.body == null ? null : String.fromCharCodes(request.body!), // 请求体内容
+      if (request.body != null) "text": String.fromCharCodes(request.body!), // 请求体内容
     };
   }
 
