@@ -36,16 +36,14 @@ import 'package:url_launcher/url_launcher.dart';
 
 class MobileSslWidget extends StatefulWidget {
   final ProxyServer proxyServer;
-  final Function(bool val)? onEnableChange;
 
-  const MobileSslWidget({super.key, required this.proxyServer, this.onEnableChange});
+  const MobileSslWidget({super.key, required this.proxyServer});
 
   @override
   State<MobileSslWidget> createState() => _MobileSslState();
 }
 
 class _MobileSslState extends State<MobileSslWidget> {
-  bool changed = false;
 
   // iOS CA status
   bool _loading = false;
@@ -84,9 +82,6 @@ class _MobileSslState extends State<MobileSslWidget> {
 
   @override
   void dispose() {
-    if (changed) {
-      widget.proxyServer.configuration.flushConfig();
-    }
     super.dispose();
   }
 
@@ -121,10 +116,9 @@ class _MobileSslState extends State<MobileSslWidget> {
                 value: widget.proxyServer.enableSsl,
                 onChanged: (val) {
                   widget.proxyServer.enableSsl = val;
-                  widget.onEnableChange?.call(val);
                   CertificateManager.cleanCache();
                   setState(() {
-                    changed = true;
+                    widget.proxyServer.configuration.flushConfig();
                   });
                 }),
             Divider(height: 0, thickness: 0.3, color: dividerColor),

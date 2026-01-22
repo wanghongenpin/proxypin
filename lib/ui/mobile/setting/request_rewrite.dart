@@ -46,24 +46,11 @@ class MobileRequestRewrite extends StatefulWidget {
 }
 
 class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
-  bool enabled = false;
-
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   void initState() {
     super.initState();
-    enabled = widget.requestRewrites.enabled;
-  }
-
-  @override
-  void dispose() {
-    if (enabled != widget.requestRewrites.enabled) {
-      widget.requestRewrites.enabled = enabled;
-      widget.requestRewrites.flushRequestRewriteConfig();
-    }
-
-    super.dispose();
   }
 
   @override
@@ -78,7 +65,13 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
                 Row(
                   children: [
                     Text(localizations.requestRewriteEnable),
-                    SwitchWidget(value: enabled, scale: 0.8, onChanged: (val) => enabled = val),
+                    SwitchWidget(
+                        value: widget.requestRewrites.enabled,
+                        scale: 0.8,
+                        onChanged: (val) {
+                          widget.requestRewrites.enabled = val;
+                          widget.requestRewrites.flushRequestRewriteConfig();
+                        }),
                   ],
                 ),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
