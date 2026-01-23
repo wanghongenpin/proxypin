@@ -33,7 +33,7 @@ class Har {
   static Map toHar(HttpRequest request) {
     Map har = {
       "startedDateTime": request.requestTime.toUtc().toIso8601String(), // 请求发出的时间(ISO 8601)
-      "time": request.response?.responseTime.difference(request.requestTime).inMilliseconds,
+      "time": request.response?.responseTime.difference(request.requestTime).inMilliseconds ?? -1, // 请求耗时，单位毫秒
       "pageref": "ProxyPin", // 页面标识
       "_id": request.requestId, // 页面标识
       '_app': request.processInfo?.toJson(),
