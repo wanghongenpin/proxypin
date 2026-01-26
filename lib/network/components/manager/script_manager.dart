@@ -20,10 +20,12 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/ui/component/device.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 import '../js/script_engine.dart';
 
@@ -32,7 +34,6 @@ import '../js/script_engine.dart';
 /// js脚本
 class ScriptManager {
   static String template = """
-// 在请求到达服务器之前,调用此函数,您可以在此处修改请求数据
 // e.g. Add/Update/Remove：Queries、Headers、Body
 async function onRequest(context, request) {
   console.log(request.url);
@@ -46,8 +47,6 @@ async function onRequest(context, request) {
 
 //You can modify the Response Data here before it goes to the client
 async function onResponse(context, request, response) {
-   //Update or add Header
-  // response.headers["Name"] = "Value";
   // response.statusCode = 200;
 
   //var body = JSON.parse(response.body);
@@ -62,7 +61,7 @@ async function onResponse(context, request, response) {
   bool enabled = true;
   List<ScriptItem> list = [];
 
-  final Map<ScriptItem, String> _scriptMap = {};
+  final ExpiringCache<ScriptItem, String> _scriptMap = ExpiringCache<ScriptItem, String>(Duration(minutes: 15));
 
   static late JavascriptRuntime flutterJs;
 
@@ -98,7 +97,10 @@ async function onResponse(context, request, response) {
   }
 
   static void registerLogHandler(LogHandler logHandler) {
-    if (!_logHandlers.any((it) => it.channelId == logHandler.channelId)) _logHandlers.add(logHandler);
+    if (_logHandlers.any((it) => it.channelId == logHandler.channelId)) {
+       _logHandlers.removeWhere((it) => it.channelId == logHandler.channelId);
+    }
+    _logHandlers.add(logHandler);
   }
 
   static void removeLogHandler(int channelId) {
@@ -164,18 +166,58 @@ async function onResponse(context, request, response) {
     return file;
   }
 
-  Future<String> getScript(ScriptItem item) async {
+  Future<String?> getScript(ScriptItem item) async {
+    // Local script (existing behavior)
     if (_scriptMap.containsKey(item)) {
       return _scriptMap[item]!;
     }
+
+    // Remote script
+    if (item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty) {
+      var script = await _fetchRemoteScript(item);
+      if (script != null) {
+        _scriptMap[item] = script;
+      }
+      return script;
+    }
+
     final home = await homePath();
     var script = await File(home + item.scriptPath!).readAsString();
     _scriptMap[item] = script;
     return script;
   }
 
+  Future<String?> _fetchRemoteScript(ScriptItem item) async {
+    final url = item.remoteUrl!.trim();
+    if (!_isHttpUrl(url)) {
+      return null;
+    }
+
+    final resp = await http.get(Uri.parse(url));
+
+    final bytes = resp.bodyBytes;
+
+    final content = utf8.decode(bytes);
+    _scriptMap[item] = content;
+
+    return content;
+  }
+
+  bool _isHttpUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    return uri.scheme == 'http' || uri.scheme == 'https';
+  }
+
   ///添加脚本
-  Future<void> addScript(ScriptItem item, String script) async {
+  Future<void> addScript(ScriptItem item, String? script) async {
+    // Remote script: script is treated as initial cache (optional)
+    if (item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty) {
+      list.add(item);
+      return;
+    }
+
+    script ??= template;
     final path = await homePath();
     String scriptPath = "${separator}scripts$separator${RandomUtil.randomString(16)}.js";
     var file = File(path + scriptPath);
@@ -188,9 +230,16 @@ async function onResponse(context, request, response) {
 
   ///更新脚本
   Future<void> updateScript(ScriptItem item, String script) async {
+    // Remote scripts: update cache file (treat as local override of cache)
+    if (item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty) {
+      _scriptMap[item] = script;
+      return;
+    }
+
     if (_scriptMap[item] == script) {
       return;
     }
+
     final home = await homePath();
     File(home + item.scriptPath!).writeAsString(script);
     _scriptMap[item] = script;
@@ -199,15 +248,22 @@ async function onResponse(context, request, response) {
   ///删除脚本
   Future<void> removeScript(int index) async {
     var item = list.removeAt(index);
-    final home = await homePath();
-    File(home + item.scriptPath!).delete();
+    _scriptMap.remove(item);
+
+    if (item.scriptPath != null) {
+      final home = await homePath();
+      File(home + item.scriptPath!).delete();
+    }
   }
 
   Future<void> clean() async {
+    _scriptMap.clear();
     while (list.isNotEmpty) {
       var item = list.removeLast();
-      final home = await homePath();
-      File(home + item.scriptPath!).delete();
+      if (item.scriptPath != null) {
+        final home = await homePath();
+        File(home + item.scriptPath!).delete();
+      }
     }
     await flushConfig();
   }
@@ -234,7 +290,11 @@ async function onResponse(context, request, response) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(scriptContext(item));
         var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
-        String script = await getScript(item);
+        String? script = await getScript(item);
+        if (script == null) {
+          continue;
+        }
+
         var jsResult = await flutterJs.evaluateAsync(
             """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
         var result = await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
@@ -262,7 +322,11 @@ async function onResponse(context, request, response) {
         var context = jsonEncode(request.attributes['scriptContext'] ?? scriptContext(item));
         var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
         var jsResponse = jsonEncode(await JavaScriptEngine.convertJsResponse(response));
-        String script = await getScript(item);
+        String? script = await getScript(item);
+        if (script == null) {
+          continue;
+        }
+
         var jsResult = await flutterJs.evaluateAsync(
             """var response = $jsResponse, context = $context;  response['scriptContext'] = context; $script
             \n  onResponse(context, $jsRequest, response);""");
@@ -314,7 +378,9 @@ class ScriptItem {
   String? scriptPath;
   List<RegExp?>? urlRegs;
 
-  ScriptItem(this.enabled, this.name, dynamic urls, {this.scriptPath})
+  String? remoteUrl;
+
+  ScriptItem(this.enabled, this.name, dynamic urls, {this.scriptPath, this.remoteUrl})
       : urls = urls is String
             ? (urls.contains(',') ? urls.split(',').map((e) => e.trim()).toList() : [urls])
             : (urls is List<String> ? urls : <String>[]);
@@ -338,7 +404,14 @@ class ScriptItem {
     } else {
       urls = <String>[];
     }
-    return ScriptItem(json['enabled'], json['name'], urls, scriptPath: json['scriptPath']);
+
+    return ScriptItem(
+      json['enabled'],
+      json['name'],
+      urls,
+      scriptPath: json['scriptPath'],
+      remoteUrl: json['remoteUrl'],
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -346,12 +419,13 @@ class ScriptItem {
       'enabled': enabled,
       'name': name,
       'url': urls.length == 1 ? urls[0] : urls,
-      'scriptPath': scriptPath
+      'scriptPath': scriptPath,
+      if (remoteUrl != null) 'remoteUrl': remoteUrl,
     };
   }
 
   @override
   String toString() {
-    return 'ScriptItem{enabled: $enabled, name: $name, url: $urls, scriptPath: $scriptPath}';
+    return 'ScriptItem{enabled: $enabled, name: $name, url: $urls, scriptPath: $scriptPath, remoteUrl: $remoteUrl}';
   }
 }

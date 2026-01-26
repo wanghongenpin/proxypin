@@ -75,8 +75,9 @@ class _SettingState extends State<Setting> {
         item(localizations.requestBlock, onPressed: showRequestBlock),
         item(localizations.requestRewrite, onPressed: requestRewrite),
         item(localizations.requestMap, onPressed: requestMap),
+        item(localizations.requestCrypto, onPressed: showRequestCrypto),
         item(localizations.script,
-            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 700))),
+            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
         item(localizations.externalProxy, onPressed: setExternalProxy),
         item(localizations.about, onPressed: showAbout),
       ],
@@ -139,6 +140,10 @@ class _SettingState extends State<Setting> {
         barrierDismissible: false,
         context: context,
         builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
+  }
+
+  void showRequestCrypto() {
+    MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
   }
 }
 

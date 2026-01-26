@@ -1,4 +1,3 @@
-import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/app_update/app_update_repository.dart';
@@ -44,18 +43,11 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
                   child: Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software",
                       textAlign: TextAlign.center, style: const TextStyle(height: 1.3))),
               const SizedBox(height: 10),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Text("Version ${AppConfiguration.version}",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.primary,
-                          fontFeatures: const [FontFeature.tabularFigures()])),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  "Version ${AppConfiguration.version}",
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
               const SizedBox(height: 12),
@@ -95,16 +87,15 @@ class _AppUpdateStateChecking extends State<DesktopAbout> {
                   onTap: () {
                     showDialog(
                         context: context,
-                        builder: (ctx) => ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 385),
-                              child: AlertDialog(
-                                title: Text(localizations.privacyPolicy),
-                                content: SingleChildScrollView(
-                                    child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35))),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
-                                ],
-                              ),
+                        builder: (ctx) => AlertDialog(
+                              title: Text(localizations.privacyPolicy),
+                              content: SingleChildScrollView(
+                                  child: ConstrainedBox(
+                                      constraints: const BoxConstraints(maxWidth: 385),
+                                      child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35)))),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                              ],
                             ));
                   }),
               ListTile(

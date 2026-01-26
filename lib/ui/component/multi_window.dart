@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/manager/request_crypto_manager.dart';
 import 'package:proxypin/network/components/manager/request_map_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
@@ -41,6 +42,7 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../desktop/setting/request_crypto.dart';
 import '../desktop/setting/request_map.dart';
 import '../toolbox/cert_hash.dart';
 import '../toolbox/encoder.dart';
@@ -95,6 +97,12 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
     return futureWidget(
         RequestRewriteManager.instance, (data) => RequestRewriteWidget(windowId: windowId, requestRewrites: data));
   }
+
+  // 请求加密
+  if (argument['name'] == 'RequestCryptoPage') {
+    return futureWidget(RequestCryptoManager.instance, (data) => RequestCryptoPage(windowId: windowId, manager: data));
+  }
+  // 请求映射
   if (argument['name'] == 'RequestMapPage') {
     return RequestMapPage(windowId: windowId);
   }
@@ -244,6 +252,13 @@ void registerMethodHandler() {
 
     if (call.method == 'refreshRequestMap') {
       await RequestMapManager.instance.then((value) {
+        return value.reloadConfig();
+      });
+      return 'done';
+    }
+
+    if (call.method == 'refreshRequestCrypto') {
+      await RequestCryptoManager.instance.then((value) {
         return value.reloadConfig();
       });
       return 'done';

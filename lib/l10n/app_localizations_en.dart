@@ -1019,4 +1019,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privacyContent =>
       'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.';
+
+  @override
+  String get requestCrypto => 'Request Crypto';
+
+  @override
+  String get cryptoDecoded => 'Decoded';
+
+  @override
+  String get cryptoDecodeToggle => 'Decrypt';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get cryptoRuleField => 'Field Name';
+
+  @override
+  String get cryptoIvPrefixLabel => 'IV Prefix';
+
+  @override
+  String get cryptoIvPrefixTooltip => 'Use the first N bytes of the response body as IV';
+
+  @override
+  String get local => 'Local';
+
+  @override
+  String get remoteUrl => 'Remote URL';
+
+  @override
+  String get view => 'View';
 }

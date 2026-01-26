@@ -46,24 +46,11 @@ class MobileRequestRewrite extends StatefulWidget {
 }
 
 class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
-  bool enabled = false;
-
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   void initState() {
     super.initState();
-    enabled = widget.requestRewrites.enabled;
-  }
-
-  @override
-  void dispose() {
-    if (enabled != widget.requestRewrites.enabled) {
-      widget.requestRewrites.enabled = enabled;
-      widget.requestRewrites.flushRequestRewriteConfig();
-    }
-
-    super.dispose();
   }
 
   @override
@@ -78,7 +65,13 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
                 Row(
                   children: [
                     Text(localizations.requestRewriteEnable),
-                    SwitchWidget(value: enabled, scale: 0.8, onChanged: (val) => enabled = val),
+                    SwitchWidget(
+                        value: widget.requestRewrites.enabled,
+                        scale: 0.8,
+                        onChanged: (val) {
+                          widget.requestRewrites.enabled = val;
+                          widget.requestRewrites.flushRequestRewriteConfig();
+                        }),
                   ],
                 ),
                 Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -172,7 +165,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        persistentFooterButtons: [multiple ? globalMenu() : const SizedBox()],
+        persistentFooterButtons: multiple ? [globalMenu()] : null,
         body: Container(
             padding: const EdgeInsets.only(top: 10, bottom: 30),
             decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
@@ -568,6 +561,7 @@ class _RewriteRuleState extends State<RewriteRule> {
                             height: 50,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
+                              value: ruleType,
                               decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   errorStyle: TextStyle(height: 0, fontSize: 0),

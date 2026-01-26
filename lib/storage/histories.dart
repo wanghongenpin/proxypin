@@ -78,7 +78,7 @@ class HistoryStorage {
     return _histories.source;
   }
 
-  addListener(ListenerListEvent<HistoryItem> listener) {
+  addListener(ListenerListEvent<HistoryItem> listener) async {
     _histories.addListener(listener);
   }
 

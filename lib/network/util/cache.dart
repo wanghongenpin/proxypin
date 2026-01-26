@@ -44,6 +44,10 @@ class ExpiringCache<K, V> {
     return value;
   }
 
+  bool containsKey(K key) {
+    return _cache.containsKey(key);
+  }
+  
   V? get(K key) {
     return _cache[key];
   }

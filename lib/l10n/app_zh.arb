@@ -345,8 +345,8 @@
   "requestMap": "请求映射",
   "requestMapDescribe": "不请求远程服务，使用本地配置或脚本进行响应",
 
-  "automatic": "自动安装",
-  "manual": "手动安装",
+  "automatic": "自动",
+  "manual": "手动",
   "certNotInstalled": "证书未安装",
 
   "openNewWindow": "新窗口打开",
@@ -357,5 +357,18 @@
   "sponsorBuyMeCoffee": "Buy Me a Coffee",
 
   "privacyPolicy": "隐私协议",
-  "privacyContent": "本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。"
+  "privacyContent": "本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。",
+
+  "requestCrypto": "请求解密",
+  "cryptoDecoded": "已解密",
+  "cryptoDecodeToggle": "解密",
+  "optional": "可选",
+  "cryptoRuleField": "字段名称",
+
+  "cryptoIvPrefixLabel": "IV 前缀",
+  "cryptoIvPrefixTooltip": "使用响应体前 N 个字节作为 IV",
+
+  "local": "本地",
+  "remoteUrl": "远程URL",
+  "view": "查看"
 }

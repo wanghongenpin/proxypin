@@ -2,7 +2,7 @@ name: proxypin
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.2.3+26
+version: 1.2.4+27
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -33,6 +33,7 @@ dependencies:
     git:
       url: https://github.com/wanghongenpin/flutter-code-editor.git
       ref: secure-keyboard
+  flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^10.1.2
   shared_preferences: ^2.2.3

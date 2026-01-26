@@ -52,7 +52,7 @@ class _AboutState extends State<About> {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(localizations.proxyPinSoftware, textAlign: TextAlign.center))),
           const SizedBox(height: 8),
-          Center(child: Text("${localizations.version} ${AppConfiguration.version}")),
+          Center(child: Text("Version ${AppConfiguration.version}")),
           const SizedBox(height: 12),
           Card(
               color: Colors.transparent,
@@ -94,7 +94,26 @@ class _AboutState extends State<About> {
                       final url = "$gitHub/releases";
                       _safeLaunch(Uri.parse(url));
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                ListTile(
+                    title: Text(localizations.privacyPolicy),
+                    trailing: const Icon(Icons.privacy_tip_outlined, size: 22),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text(localizations.privacyPolicy),
+                          content: SingleChildScrollView(
+                              child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 385),
+                                  child: Text(localizations.privacyContent, style: const TextStyle(height: 1.35)))),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(localizations.close))
+                          ],
+                        ),
+                      );
+                    }),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 // Sponsor / Donate entry
                 ListTile(
                   title: Text(localizations.sponsorDonate),

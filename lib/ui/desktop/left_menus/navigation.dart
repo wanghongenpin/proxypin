@@ -85,6 +85,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
                       message: localizations.preference,
                       preferBelow: false,
                       child: IconButton(
+                          iconSize: 22,
                           onPressed: () {
                             showDialog(
                                 context: context,
@@ -96,6 +97,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
                       preferBelow: true,
                       message: localizations.feedback,
                       child: IconButton(
+                        iconSize: 22,
                         onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin/issues")),
                         icon: Icon(Icons.feedback_outlined, color: Colors.grey.shade500),
                       )),

@@ -149,7 +149,7 @@ class _AesWidgetState extends State<AesPage> {
                           height: 45,
                           child: TextField(
                               controller: keyController,
-                              maxLength: 32,
+                              maxLength: 64,
                               onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
                               style: TextStyle(fontSize: 14),
                               decoration: InputDecoration(

@@ -94,6 +94,12 @@ class _RequestWidgetState extends State<RequestWidget> {
   }
 
   @override
+  void dispose() {
+    autoReadRequests.remove(widget.request.requestId);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     var request = widget.request;
     var response = widget.response.get() ?? request.response;

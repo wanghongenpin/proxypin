@@ -20,6 +20,7 @@ import 'dart:io';
 
 import 'package:date_format/date_format.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +29,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -78,12 +80,15 @@ class _FavoritesState extends State<Favorites> {
             }
 
             return ListView.separated(
-              itemCount: favorites.length,
+              itemCount: favorites.length + 1,
               itemBuilder: (_, index) {
-                var request = favorites.elementAt(index);
+                if (index == 0) {
+                  return _FavoritesActions(onChanged: () => setState(() {}));
+                }
+                var request = favorites.elementAt(index - 1);
                 return _FavoriteItem(
                   request,
-                  index: index,
+                  index: index - 1,
                   panel: widget.panel,
                   onRemove: (Favorite favorite) {
                     FavoriteStorage.removeFavorite(favorite);
@@ -92,7 +97,8 @@ class _FavoritesState extends State<Favorites> {
                   },
                 );
               },
-              separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.3),
+              separatorBuilder: (_, idx) =>
+                  idx == 0 ? const SizedBox(height: 4) : const Divider(height: 1, thickness: 0.3),
             );
           } else {
             return const SizedBox();
@@ -285,5 +291,87 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     }
     selectedState = this;
     widget.panel.change(request, request.response);
+  }
+}
+
+class _FavoritesActions extends StatelessWidget {
+  final VoidCallback onChanged;
+
+  const _FavoritesActions({required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 36,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Text(
+                  localizations.favorites,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.82),
+                  ),
+                ),
+                const Spacer(),
+                // IconButton(
+                //   tooltip: '${localizations.export} HAR',
+                //   padding: const EdgeInsets.symmetric(horizontal: 6),
+                //   constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                //   icon: const Icon(Icons.upload, size: 18),
+                //   onPressed: () async {
+                //     final path = await FilePicker.platform.saveFile(fileName: 'favorites.har');
+                //     if (path == null) return;
+                //     await FavoriteStorage.exportToHarFile(path, title: localizations.favorites);
+                //     FlutterToastr.show(localizations.exportSuccess, context);
+                //   },
+                // ),
+                IconButton(
+                  tooltip: localizations.export,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  icon: const Icon(Icons.upload_file, size: 18),
+                  onPressed: () async {
+                    final path = await FilePicker.platform.saveFile(fileName: 'favorites.json');
+                    if (path == null) return;
+                    await FavoriteStorage.exportToFile(path);
+                    if (context.mounted) CustomToast.success(localizations.exportSuccess).show(context);
+                    onChanged();
+                  },
+                ),
+                const SizedBox(width: 3),
+                IconButton(
+                  tooltip: localizations.import,
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  icon: const Icon(Icons.download_for_offline_outlined, size: 18),
+                  onPressed: () async {
+                    final result =
+                        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
+                    final file = result?.files.isNotEmpty == true ? result!.files.first : null;
+                    if (file?.path == null) return;
+
+                    try {
+                      await FavoriteStorage.importFromFile(file!.path!);
+                      if (context.mounted) CustomToast.success(localizations.importSuccess).show(context);
+                      onChanged();
+                    } catch (e) {
+                      logger.e('Import favorites failed: $e');
+                      if (context.mounted) CustomToast.error('${localizations.importFailed}: $e').show(context);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        const Divider(height: 1, thickness: 0.4),
+      ],
+    );
   }
 }

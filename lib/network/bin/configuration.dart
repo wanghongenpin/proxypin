@@ -29,7 +29,7 @@ class Configuration {
   int port = 9099;
 
   //是否启用https抓包
-  bool enableSsl = false;
+  bool enableSsl = Platforms.isMobile();
 
   //是否设置系统代理
   bool enableSystemProxy = true;

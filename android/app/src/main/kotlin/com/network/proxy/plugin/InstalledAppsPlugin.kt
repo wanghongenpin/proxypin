@@ -28,7 +28,16 @@ class InstalledAppsPlugin : AndroidFlutterPlugin() {
                 "getInstalledApps" -> {
                     val withIcon = call.argument<Boolean>("withIcon") ?: false
                     val packageNamePrefix = call.argument<String>("packageNamePrefix") ?: ""
-                    result.success(getInstalledApps(withIcon, packageNamePrefix))
+                    val includeSystemApps = call.argument<Boolean>("includeSystemApps") ?: false
+                    Thread {
+                        result.success(
+                            getInstalledApps(
+                                withIcon,
+                                packageNamePrefix,
+                                includeSystemApps
+                            )
+                        )
+                    }.start()
                 }
 
                 "getAppInfo" -> {
@@ -48,27 +57,33 @@ class InstalledAppsPlugin : AndroidFlutterPlugin() {
         }
     }
 
+    private fun isSystemApp(applicationInfo: ApplicationInfo?): Boolean {
+        if (applicationInfo == null) return false
+        return (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+    }
+
     private fun getInstalledApps(
         withIcon: Boolean,
-        packageNamePrefix: String
+        packageNamePrefix: String,
+        includeSystemApps: Boolean
     ): List<ProcessInfo> {
         val packageManager = activity.packageManager
         var installedApps = packageManager.getInstalledApplications(0)
-        installedApps =
-            installedApps.filter { app ->
-                (app.flags and ApplicationInfo.FLAG_SYSTEM) <= 0
-                        || (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                        || packageManager.getLaunchIntentForPackage(app.packageName) != null
-            }
 
-        if (packageNamePrefix.isNotEmpty())
+        if (!includeSystemApps) {
+            installedApps =
+                installedApps.filter { app -> !isSystemApp(app) }
+        }
+
+        if (packageNamePrefix.isNotEmpty()) {
             installedApps = installedApps.filter { app ->
                 app.packageName.startsWith(
                     packageNamePrefix.lowercase(Locale.ENGLISH)
                 )
             }
+        }
 
-        val threadPoolExecutor = Executors.newFixedThreadPool(6)
+        val threadPoolExecutor = Executors.newFixedThreadPool(4)
         installedApps.map { app ->
             val task: Callable<ProcessInfo> = Callable {
                 ProcessInfo.create(packageManager, app, withIcon)
@@ -84,4 +99,3 @@ class InstalledAppsPlugin : AndroidFlutterPlugin() {
     }
 
 }
-

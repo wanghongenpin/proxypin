@@ -79,7 +79,7 @@ class SystemProxy {
       return;
     }
 
-    instance._setProxyEnable(enable, sslSetting);
+    await instance._setProxyEnable(enable, sslSetting);
   }
 
   ///设置代理忽略地址
@@ -146,17 +146,20 @@ class MacSystemProxy implements SystemProxy {
   @override
   Future<bool> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) async {
     _hardwarePort = _hardwarePort ?? await hardwarePort();
-    var results = await Process.run('bash', [
-      '-c',
-      _concatCommands([
-        'networksetup -setwebproxy $_hardwarePort 127.0.0.1 $port',
-        sslSetting == true ? 'networksetup -setsecurewebproxy $_hardwarePort 127.0.0.1 $port' : '',
-        'networksetup -setproxybypassdomains $_hardwarePort ${proxyPassDomains.replaceAll(";", " ")}',
-        'networksetup -setsocksfirewallproxystate $_hardwarePort off',
-      ])
-    ]);
+    List<String> commands = [
+      'networksetup -setwebproxy $_hardwarePort 127.0.0.1 $port',
+      sslSetting == true ? 'networksetup -setsecurewebproxy $_hardwarePort 127.0.0.1 $port' : '',
+      'networksetup -setproxybypassdomains $_hardwarePort ${proxyPassDomains.replaceAll(";", " ")}',
+      'networksetup -setsocksfirewallproxystate $_hardwarePort off',
+    ];
+    var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
     logger.d('set proxyServer, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
-    return results.exitCode == 0;
+    bool success = results.exitCode == 0;
+    if (!success) {
+      logger.e('setSystemProxy failed, stderr: ${results.stderr}');
+      return setProxyWithAuth(commands);
+    }
+    return success;
   }
 
   ///设置Https代理
@@ -164,13 +167,19 @@ class MacSystemProxy implements SystemProxy {
   Future<bool> _setSslProxyEnable(bool proxyEnable, port) async {
     var name = _hardwarePort ?? await hardwarePort();
 
-    var results = await Process.run('bash', [
-      '-c',
+    List<String> commands = [
       proxyEnable
           ? 'networksetup -setsecurewebproxy $name 127.0.0.1 $port'
           : 'networksetup -setsecurewebproxystate $name off'
-    ]);
-    return results.exitCode == 0;
+    ];
+
+    var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
+    bool success = results.exitCode == 0;
+    if (!success) {
+      logger.e('setSystemProxy failed, stderr: ${results.stderr}');
+      return setProxyWithAuth(commands);
+    }
+    return success;
   }
 
   ///mac获取当前网络名称
@@ -198,17 +207,36 @@ class MacSystemProxy implements SystemProxy {
     var proxyMode = proxyEnable ? 'on' : 'off';
     _hardwarePort ??= await hardwarePort();
     logger.d('set proxyEnable: $proxyEnable, name: $_hardwarePort');
+    List<String> commands = [
+      'networksetup -setwebproxystate $_hardwarePort $proxyMode',
+      sslSetting ? 'networksetup -setsecurewebproxystate $_hardwarePort $proxyMode' : ''
+    ];
 
-    await Process.run('bash', [
-      '-c',
-      _concatCommands([
-        'networksetup -setwebproxystate $_hardwarePort $proxyMode',
-        sslSetting ? 'networksetup -setsecurewebproxystate $_hardwarePort $proxyMode' : ''
-      ])
-    ]);
+    var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
+
+    if (results.exitCode != 0) {
+      logger.e('setProxyEnable failed, stderr: ${results.stderr}');
+      await setProxyWithAuth(commands);
+    }
   }
 
-  static _concatCommands(List<String> commands) {
+  Future<bool> setProxyWithAuth(List<String> commands) async {
+    // 使用 quoted form of 确保 shell 指令被 AppleScript 正确转义
+    String script = 'do shell script "${commands.join('; ')}" with administrator privileges';
+    try {
+      final result = await Process.run('osascript', ['-e', script]);
+      bool success = result.exitCode == 0;
+      if (!success) {
+        logger.e("操作失败或用户取消: ${result.stderr}");
+      }
+      return success;
+    } catch (e) {
+      logger.e("执行 AppleScript 出错: $e");
+      return false;
+    }
+  }
+
+  static String _concatCommands(List<String> commands) {
     return commands.where((element) => element.isNotEmpty).join(' && ');
   }
 }

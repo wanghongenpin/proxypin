@@ -13,12 +13,12 @@ class ColorTheme {
       );
 
   static ColorTheme dark(ColorScheme colorScheme) => ColorTheme(
-        background: const Color(0xff2b2b2b),
-        propertyKey: const Color(0xff9876aa),
-        colon: const Color(0xffcc7832),
-        string: const Color(0xff6a8759),
-        number: const Color(0xff6897bb),
-        keyword: const Color(0xffcc7832),
+        background: const Color(0XFF1E1F22),
+        propertyKey: const Color(0XFFC77DBB),
+        colon: const Color(0XFFBCBEC4),
+        string: const Color(0XFF6AAB73),
+        number: const Color(0XFF2AACB8),
+        keyword: const Color(0XFFCF8E6D),
         searchMatchColor: colorScheme.inversePrimary,
         searchMatchCurrentColor: colorScheme.primary,
       );

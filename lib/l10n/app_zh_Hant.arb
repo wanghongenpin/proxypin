@@ -312,6 +312,13 @@
   "encrypt": "加密",
   "decrypt": "解密",
   "cipher": "密文",
+  "requestCrypto": "請求解密",
+  "cryptoDecoded": "已解密",
+  "cryptoDecodeToggle": "解密",
+  "optional": "可選",
+  "cryptoRuleField": "字段",
+  "cryptoIvPrefixLabel": "IV 前綴",
+  "cryptoIvPrefixTooltip": "使用回應內容的前 N 個字節作為 IV",
   "appUpdateCheckVersion": "檢查更新",
   "appUpdateNotAvailableMsg": "已是最新版本",
   "appUpdateDialogTitle": "有可用更新",
@@ -336,5 +343,9 @@
   "sponsorBuyMeCoffee": "Buy Me a Coffee",
 
   "privacyPolicy": "隱私協議",
-  "privacyContent": "本專案為開源抓包工具，所有功能均在本機裝置上運行；無任何後端伺服器，不會蒐集、儲存或上傳任何使用者資訊。擷取的網路資料僅在本機處理，除非您主動使用遠端轉發功能。所需權限（如網路、儲存、相機用於掃碼）僅用於實現相應功能。您可在公開的原始碼中稽核其行為。"
+  "privacyContent": "本專案為開源抓包工具，所有功能均在本機裝置上運行；無任何後端伺服器，不會蒐集、儲存或上傳任何使用者資訊。擷取的網路資料僅在本機處理，除非您主動使用遠端轉發功能。所需權限（如網路、儲存、相機用於掃碼）僅用於實現相應功能。您可在公開的原始碼中稽核其行為。",
+
+  "local": "本地",
+  "remoteUrl": "遠端URL",
+  "view": "檢視"
 }

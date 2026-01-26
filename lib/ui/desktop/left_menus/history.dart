@@ -153,11 +153,25 @@ class _HistoryListState extends State<_HistoryListWidget> {
 
     return Scaffold(
         appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(38),
+            preferredSize: const Size.fromHeight(36),
             child: AppBar(
-              title: Text(localizations.historyRecord, style: const TextStyle(fontSize: 14)),
+              toolbarHeight: 36,
+              titleSpacing: 8,
+              centerTitle: false,
+              title: Text(
+                localizations.historyRecord,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.82),
+                ),
+              ),
+              bottom: const PreferredSize(preferredSize: Size.fromHeight(1), child: Divider(height: 1, thickness: 0.4)),
               actions: [
-                IconButton(onPressed: import, icon: const Icon(Icons.input, size: 18), tooltip: localizations.import),
+                IconButton(
+                    onPressed: import,
+                    icon: const Icon(Icons.input, size: 18),
+                    constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                    tooltip: localizations.import),
                 const SizedBox(width: 3),
                 HistoryCacheTime(proxyServer.configuration, onSelected: (val) {
                   if (val == 0) {

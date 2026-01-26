@@ -76,7 +76,7 @@ class RequestRowState extends State<RequestRow> {
 
   AppLocalizations get localizations => AppLocalizations.of(availableContext)!;
 
-  change(HttpResponse response) {
+  void change(HttpResponse response) {
     setState(() {
       this.response = response;
     });
@@ -87,6 +87,12 @@ class RequestRowState extends State<RequestRow> {
     request = widget.request;
     response = request.response;
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    autoReadRequests.remove(widget.request.requestId);
+    super.dispose();
   }
 
   Color? color(String url) {

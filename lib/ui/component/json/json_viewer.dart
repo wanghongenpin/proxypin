@@ -339,7 +339,7 @@ Widget _getValueWidget(dynamic value, ColorTheme colorTheme,
     style = TextStyle(color: colorTheme.keyword);
   } else if (value is num) {
     valueStr = value.toString();
-    style = TextStyle(color: colorTheme.keyword);
+    style = TextStyle(color: colorTheme.number);
   } else if (value is String) {
     valueStr = '"$value"';
     style = TextStyle(color: colorTheme.string);

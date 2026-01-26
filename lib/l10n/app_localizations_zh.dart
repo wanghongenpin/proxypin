@@ -987,10 +987,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestMapDescribe => '不请求远程服务，使用本地配置或脚本进行响应';
 
   @override
-  String get automatic => '自动安装';
+  String get automatic => '自动';
 
   @override
-  String get manual => '手动安装';
+  String get manual => '手动';
 
   @override
   String get certNotInstalled => '证书未安装';
@@ -1019,6 +1019,36 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get privacyContent =>
       '本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。';
+
+  @override
+  String get requestCrypto => '请求解密';
+
+  @override
+  String get cryptoDecoded => '已解密';
+
+  @override
+  String get cryptoDecodeToggle => '解密';
+
+  @override
+  String get optional => '可选';
+
+  @override
+  String get cryptoRuleField => '字段名称';
+
+  @override
+  String get cryptoIvPrefixLabel => 'IV 前缀';
+
+  @override
+  String get cryptoIvPrefixTooltip => '使用响应体前 N 个字节作为 IV';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get remoteUrl => '远程URL';
+
+  @override
+  String get view => '查看';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2040,4 +2070,34 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get privacyContent =>
       '本專案為開源抓包工具，所有功能均在本機裝置上運行；無任何後端伺服器，不會蒐集、儲存或上傳任何使用者資訊。擷取的網路資料僅在本機處理，除非您主動使用遠端轉發功能。所需權限（如網路、儲存、相機用於掃碼）僅用於實現相應功能。您可在公開的原始碼中稽核其行為。';
+
+  @override
+  String get requestCrypto => '請求解密';
+
+  @override
+  String get cryptoDecoded => '已解密';
+
+  @override
+  String get cryptoDecodeToggle => '解密';
+
+  @override
+  String get optional => '可選';
+
+  @override
+  String get cryptoRuleField => '字段';
+
+  @override
+  String get cryptoIvPrefixLabel => 'IV 前綴';
+
+  @override
+  String get cryptoIvPrefixTooltip => '使用回應內容的前 N 個字節作為 IV';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get remoteUrl => '遠端URL';
+
+  @override
+  String get view => '檢視';
 }
