@@ -494,10 +494,10 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
           padding: const EdgeInsets.all(12),
           children: [
             Card(
-              color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
+              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
@@ -536,10 +536,10 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
             ),
             const SizedBox(height: 12),
             Card(
-              color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
+              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Padding(
@@ -667,7 +667,7 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.25)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: DropdownButtonHideUnderline(child: child),
@@ -686,7 +686,7 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
       constraints: const BoxConstraints(minWidth: 95),
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
+          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.25)),
           borderRadius: BorderRadius.circular(6)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
@@ -703,7 +703,7 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.25)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.25)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

@@ -47,7 +47,7 @@ class DesktopHomePage extends StatefulWidget {
   final Configuration configuration;
   final AppConfiguration appConfiguration;
 
-  const DesktopHomePage(this.configuration, this.appConfiguration, {super.key, required});
+  const DesktopHomePage(this.configuration, this.appConfiguration, {super.key});
 
   @override
   State<DesktopHomePage> createState() => _DesktopHomePagePageState();
@@ -120,7 +120,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               // color: Theme.of(context).brightness == Brightness.dark ? null : Color(0xFFF9F9F9),
               border: Border(
                   bottom: BorderSide(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                      color: Theme.of(context).dividerColor.withOpacity(0.3),
                       width: Platform.isMacOS ? 0.2 : 0.55))),
           child: Platform.isMacOS
               ? Toolbar(proxyServer, requestListStateKey)

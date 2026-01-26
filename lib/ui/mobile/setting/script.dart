@@ -550,7 +550,7 @@ class _ScriptEditState extends State<ScriptEdit> {
               children: [
                 // Name section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
@@ -561,7 +561,7 @@ class _ScriptEditState extends State<ScriptEdit> {
 
                 // URLs section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
@@ -615,7 +615,7 @@ class _ScriptEditState extends State<ScriptEdit> {
 
                 // Source section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
@@ -626,7 +626,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                           SizedBox(width: 55, child: Text('${localizations.type}:')),
                           Expanded(
                               child: DropdownButtonFormField<bool>(
-                            initialValue: _useRemote,
+                            value: _useRemote,
                             items: [
                               DropdownMenuItem(value: false, child: Text(localizations.local)),
                               DropdownMenuItem(value: true, child: Text(localizations.remoteUrl)),
@@ -649,7 +649,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                 // Remote URL section
                 if (_useRemote)
                   Card(
-                      color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
@@ -702,7 +702,7 @@ class _ScriptEditState extends State<ScriptEdit> {
 
                 // Script section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                         side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),

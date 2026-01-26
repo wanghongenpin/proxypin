@@ -94,7 +94,7 @@ class _AboutState extends State<About> {
                       final url = "$gitHub/releases";
                       _safeLaunch(Uri.parse(url));
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 ListTile(
                     title: Text(localizations.privacyPolicy),
                     trailing: const Icon(Icons.privacy_tip_outlined, size: 22),
@@ -113,7 +113,7 @@ class _AboutState extends State<About> {
                         ),
                       );
                     }),
-                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 // Sponsor / Donate entry
                 ListTile(
                   title: Text(localizations.sponsorDonate),

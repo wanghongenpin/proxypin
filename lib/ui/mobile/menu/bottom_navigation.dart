@@ -149,7 +149,7 @@ class _ConfigPageState extends State<ConfigPage> {
                   leading: Icon(Icons.lock_outline, color: color),
                   trailing: arrow,
                   onTap: () => navigator(context, const MobileRequestCryptoPage())),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                   title: Text(localizations.script),
                   leading: Icon(Icons.javascript_outlined, color: color),

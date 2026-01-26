@@ -583,7 +583,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                             width: 155,
                             height: 34,
                             child: DropdownButtonFormField<bool>(
-                              initialValue: _useRemote,
+                              value: _useRemote,
                               items: [
                                 DropdownMenuItem(value: false, child: Text(localizations.local)),
                                 DropdownMenuItem(value: true, child: Text(localizations.remoteUrl)),

@@ -574,8 +574,6 @@ class _RewriteRuleState extends State<RewriteRule> {
                                   rule.type = val!;
                                 });
                               },
-                              // use `value` for compatibility with older SDKs
-                              value: rule.type,
                             )),
                         const SizedBox(width: 10),
                       ]),

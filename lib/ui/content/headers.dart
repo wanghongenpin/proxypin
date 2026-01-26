@@ -132,7 +132,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
     return [
       CodeTheme(
         data: CodeThemeData(
-            styles: Theme.brightnessOf(context) == Brightness.light ? atomOneLightTheme : atomOneDarkTheme),
+            styles: Theme.of(context).brightness == Brightness.light ? atomOneLightTheme : atomOneDarkTheme),
         child: CodeField(
           background: Colors.transparent,
           readOnly: Platforms.isMobile(),

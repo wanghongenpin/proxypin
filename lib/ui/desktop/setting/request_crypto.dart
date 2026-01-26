@@ -215,7 +215,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
         child: Container(
           padding: const EdgeInsets.only(top: 10),
           constraints: const BoxConstraints(minHeight: 200, maxHeight: 600),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withAlpha((0.2 * 255).round()))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
           child: Column(
             children: [
               Padding(
@@ -508,10 +508,10 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                    side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
@@ -544,10 +544,10 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                 ),
                 const SizedBox(height: 12),
                 Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                    side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
@@ -562,7 +562,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -584,7 +584,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -606,7 +606,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -631,7 +631,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           width: 92,
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -668,7 +668,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                             constraints:  const BoxConstraints(minWidth: 92),
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: DropdownButtonHideUnderline(
@@ -710,7 +710,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           if (ivSource == 'prefix')
                             Container(
                               decoration: BoxDecoration(
-                                  border: Border.all(color: theme.dividerColor.withAlpha(0x40)),
+                                  border: Border.all(color: theme.dividerColor.withOpacity(0.25)),
                                   borderRadius: BorderRadius.circular(4)),
                               child: Row(children: [
                                 IconButton(

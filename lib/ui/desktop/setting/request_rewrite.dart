@@ -616,8 +616,6 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                                       child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 14))))
                                   .toList(),
                               onChanged: onChangeType,
-                              // older Flutter versions expect `value` instead of `initialValue`
-                              value: ruleType,
                             )),
                         const SizedBox(width: 10),
                       ]),
