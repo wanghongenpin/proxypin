@@ -125,12 +125,15 @@ abstract class HttpMessage {
     charset ??= this.charset;
     try {
       List<int> rawBody = body!;
-      if (headers.contentEncoding == 'br') {
-        rawBody = brDecode(body!);
-      }
 
       if (headers.isGzip) {
         rawBody = gzipDecode(body!);
+      }else
+
+      if (headers.contentEncoding == 'br') {
+        rawBody = brDecode(body!);
+      } else if  (headers.contentEncoding == 'deflate') {
+        rawBody = zlibDecode(body!);
       }
 
       if (charset == 'utf-8' || charset == 'utf8') {
