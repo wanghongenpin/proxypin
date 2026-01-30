@@ -40,3 +40,15 @@ Future<List<int>?> zstdDecode(List<int> byteBuffer) async {
   // }
   return byteBuffer;
 }
+
+
+///zlib
+List<int> zlibDecode(List<int> byteBuffer) {
+  try {
+    final rawDeflateDecoder = ZLibDecoder(raw: true);
+    return rawDeflateDecoder.convert(byteBuffer);
+  } catch (e) {
+    logger.e("zlibDecode error: $e");
+    return byteBuffer;
+  }
+}

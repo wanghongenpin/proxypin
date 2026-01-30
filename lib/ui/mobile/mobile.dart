@@ -117,7 +117,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
 
-    if (widget.appConfiguration.upgradeNoticeV24) {
+    if (widget.appConfiguration.upgradeNoticeV25) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -292,19 +292,21 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
             '3. 脚本支持远程URL获取执行；\n'
             '4. HTTP Header 展示增加文本和表格切换；\n'
             '5. 增加 Request Param 列表展示；\n'
-            '6. 应用过滤列表增加是否显示系统应用；\n'
-            '7. 更新JSON深色主题色，以提高可见度和美观度；\n'
+            '6. 添加zlib解码支持\n'
+            '7. 应用过滤列表增加是否显示系统应用；\n'
+            '8. 更新JSON深色主题色，以提高可见度和美观度；\n'
         : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
             '1. Added import/export for Favorites.\n'
             '2. Added request decryption with configurable AES automatic body decryption.\n'
             '3. Scripts can now be fetched from remote URLs and executed.\n'
             '4. HTTP header view now supports switching between text and table modes.\n'
             '5. Added a Request Params list view.\n'
-            '6. App filter list now includes an option to show system apps.\n'
-            '7. Updated JSON dark-theme colors for better visibility and appearance.\n';
+            '6. Added zlib decoding support.\n'
+            '7. App filter list now includes an option to show system apps.\n'
+            '8. Updated JSON dark-theme colors for better visibility and appearance.\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV24 = false;
+      widget.appConfiguration.upgradeNoticeV25 = false;
       widget.appConfiguration.flushConfig();
     });
   }

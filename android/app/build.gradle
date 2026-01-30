@@ -1,3 +1,7 @@
+import java.util.Properties
+import java.io.FileInputStream
+import java.io.File
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -94,6 +98,23 @@ android {
 
 flutter {
     source '../..'
+}
+
+// Set a fixed APK name for release builds
+// Use the older ApplicationVariants API which is compatible across AGP versions
+android.applicationVariants.all { variant ->
+    if (variant.buildType.name == 'release') {
+        variant.outputs.all { output ->
+            def apkName = "proxypin-android.apk"
+            try {
+                // Newer output API
+                output.outputFileName = apkName
+            } catch (Exception e) {
+                // Fallback for older API
+                output.outputFile = new File(output.outputFile.parent, apkName)
+            }
+        }
+    }
 }
 
 dependencies {
