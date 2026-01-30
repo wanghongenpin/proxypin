@@ -938,7 +938,7 @@ class _ScriptListState extends State<ScriptList> {
       var map = item.toJson();
       map.remove("scriptPath");
 
-      if (item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty) {
+      if (item.remoteUrl == null || item.remoteUrl!.trim().isEmpty) {
         map['script'] = await scriptManager.getScript(item);
       }
 
