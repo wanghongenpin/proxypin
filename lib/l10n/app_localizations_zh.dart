@@ -1,4 +1,8 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
 
 /// The translations for Chinese (`zh`).
 class AppLocalizationsZh extends AppLocalizations {
@@ -627,7 +631,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get androidRoot => '系统证书 (ROOT设备)';
 
   @override
-  String get androidRootMagisk => 'Magisk模块: \n安卓ROOT设备可以使用Magisk ProxyPinCA系统证书模块, 安装完重启手机后 在系统证书查看是否有ProxyPinCA证书，如果有说明证书安装成功。';
+  String get androidRootMagisk =>
+      'Magisk模块: \n安卓ROOT设备可以使用Magisk ProxyPinCA系统证书模块, 安装完重启手机后 在系统证书查看是否有ProxyPinCA证书，如果有说明证书安装成功。';
 
   @override
   String androidRootRename(Object name) {
@@ -1053,7 +1058,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
 class AppLocalizationsZhHant extends AppLocalizationsZh {
-  AppLocalizationsZhHant(): super('zh_Hant');
+  AppLocalizationsZhHant() : super('zh_Hant');
 
   @override
   String get requests => '抓包';
@@ -1678,7 +1683,8 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get androidRoot => '系統憑證 (ROOT裝置)';
 
   @override
-  String get androidRootMagisk => 'Magisk模組: \n安卓ROOT裝置可以使用Magisk ProxyPinCA系統憑證模組, 安裝完重新開機後 在系統憑證檢視是否有ProxyPinCA憑證，如果有說明憑證安裝成功。';
+  String get androidRootMagisk =>
+      'Magisk模組: \n安卓ROOT裝置可以使用Magisk ProxyPinCA系統憑證模組, 安裝完重新開機後 在系統憑證檢視是否有ProxyPinCA憑證，如果有說明憑證安裝成功。';
 
   @override
   String androidRootRename(Object name) {
@@ -1906,7 +1912,8 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get material3 => 'Material3是Google開源設計系統的最新版本';
 
   @override
-  String get iosVpnBackgroundAudio => '開啟抓包後，退出到背景。為了維護主UI執行緒的網路通信，將啟用靜音音訊播放以保持主執行緒運作。否則，它將只在背景運作30秒。您同意在啟用抓包後在背景播放音訊嗎?';
+  String get iosVpnBackgroundAudio =>
+      '開啟抓包後，退出到背景。為了維護主UI執行緒的網路通信，將啟用靜音音訊播放以保持主執行緒運作。否則，它將只在背景運作30秒。您同意在啟用抓包後在背景播放音訊嗎?';
 
   @override
   String get markRead => '標記已讀';

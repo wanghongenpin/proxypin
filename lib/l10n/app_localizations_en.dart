@@ -1,4 +1,8 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
 
 /// The translations for English (`en`).
 class AppLocalizationsEn extends AppLocalizations {
@@ -382,7 +386,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appWhitelist => 'App Whitelist';
 
   @override
-  String get appWhitelistDescribe => 'Only proxy Apps on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
+  String get appWhitelistDescribe =>
+      'Only proxy Apps on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
 
   @override
   String get appBlacklist => 'App Blacklist';
@@ -582,19 +587,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadRootCa => 'Download Certificate';
 
   @override
-  String get downloadRootCaNote => 'Note: If you set the default browser to other than Safari, click this line to copy and paste the link to Safari browser';
+  String get downloadRootCaNote =>
+      'Note: If you set the default browser to other than Safari, click this line to copy and paste the link to Safari browser';
 
   @override
   String get generateCA => 'Generate new root certificate';
 
   @override
-  String get generateCADescribe => 'Are you sure you want to generate a new root certificate? If confirmed,\nYou need to reinstall and trust the new certificate';
+  String get generateCADescribe =>
+      'Are you sure you want to generate a new root certificate? If confirmed,\nYou need to reinstall and trust the new certificate';
 
   @override
   String get resetDefaultCA => 'Reset Default Root Certificate';
 
   @override
-  String get resetDefaultCADescribe => 'Are you sure you want to reset to the default root certificate?\nProxyPin default root certificate is the same for all users.';
+  String get resetDefaultCADescribe =>
+      'Are you sure you want to reset to the default root certificate?\nProxyPin default root certificate is the same for all users.';
 
   @override
   String get exportCaP12 => 'Export Root Certificate(.p12)';
@@ -627,7 +635,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get androidRoot => 'System Certificate (ROOT Device)';
 
   @override
-  String get androidRootMagisk => 'Magisk module: \nAndroid ROOT devices can be used Magisk ProxyPinCA System Certificate Module, After installing and restarting the phone Check the system certificate to see if there is a ProxyPinCA certificate. If there is, it indicates that the certificate has been successfully installed。';
+  String get androidRootMagisk =>
+      'Magisk module: \nAndroid ROOT devices can be used Magisk ProxyPinCA System Certificate Module, After installing and restarting the phone Check the system certificate to see if there is a ProxyPinCA certificate. If there is, it indicates that the certificate has been successfully installed。';
 
   @override
   String androidRootRename(Object name) {
@@ -644,10 +653,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get androidUserCATips => 'Tips: Android7+ many apps will not trust user certificates';
 
   @override
-  String get androidUserCAInstall => 'Open settings -> Security -> Encryption and credentials -> Install certificate -> CA certificate';
+  String get androidUserCAInstall =>
+      'Open settings -> Security -> Encryption and credentials -> Install certificate -> CA certificate';
 
   @override
-  String get androidUserXposed => 'It is recommended to use the Xposed module for packet capture (no need for ROOT), click to view wiki';
+  String get androidUserXposed =>
+      'It is recommended to use the Xposed module for packet capture (no need for ROOT), click to view wiki';
 
   @override
   String get configWifiProxy => 'Configure mobile Wi-Fi proxy';
@@ -742,7 +753,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ipLayerProxy => 'IP Layer Proxy(Beta)';
 
   @override
-  String get ipLayerProxyDesc => 'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR';
+  String get ipLayerProxyDesc =>
+      'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR';
 
   @override
   String get inputAddress => 'Input Address';
@@ -760,7 +772,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidQRCode => 'Unrecognized QR code';
 
   @override
-  String get remoteConnectFail => 'Connection failed，Please check if it is allowed on the same LAN and firewall, iOS needs to enable local network permissions';
+  String get remoteConnectFail =>
+      'Connection failed，Please check if it is allowed on the same LAN and firewall, iOS needs to enable local network permissions';
 
   @override
   String get remoteConnectSuccessTips => 'Your phone needs to enable packet capture in order to capture requests';
@@ -793,7 +806,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memoryCleanup => 'Memory Cleanup';
 
   @override
-  String get memoryCleanupSubtitle => 'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning';
+  String get memoryCleanupSubtitle =>
+      'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning';
 
   @override
   String get unlimited => 'Unlimited';
@@ -811,7 +825,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get externalProxyConnectFailure => 'External Proxy Connect failure';
 
   @override
-  String get externalProxyFailureConfirm => 'Access to all http will fail due to network connectivity issues，Do you want to continue setting up external proxies。';
+  String get externalProxyFailureConfirm =>
+      'Access to all http will fail due to network connectivity issues，Do you want to continue setting up external proxies。';
 
   @override
   String get mobileDisplayPacketCapture => 'Mobile Display Packet Capture:';
@@ -828,7 +843,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxyIgnoreDomain => 'Proxy ignores domain';
 
   @override
-  String get domainWhitelistDescribe => 'Only proxy domain names on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
+  String get domainWhitelistDescribe =>
+      'Only proxy domain names on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
 
   @override
   String get domainBlacklistDescribe => 'Domain names on the blacklist will not be proxied';
@@ -855,7 +871,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get material3 => 'Material 3 is the latest version of Google’s open-source design system';
 
   @override
-  String get iosVpnBackgroundAudio => 'After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?';
+  String get iosVpnBackgroundAudio =>
+      'After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?';
 
   @override
   String get markRead => 'Mark as read';
@@ -1005,7 +1022,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sponsorSupport => 'Support ongoing development';
 
   @override
-  String get sponsorThanks => 'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
+  String get sponsorThanks =>
+      'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
 
   @override
   String get sponsorAfdian => 'AFDIAN';
