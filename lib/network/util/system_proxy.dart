@@ -119,23 +119,52 @@ class SystemProxy {
 class MacSystemProxy implements SystemProxy {
   static String? _hardwarePort;
 
+  // Helper to safely quote a string for sh (single-quote and escape any internal single quotes)
+  static String _shellQuote(String s) {
+    // Replace ' with '\'' which is the safe way to include single quotes inside single-quoted strings in shell
+    return "'${s.replaceAll("'", "'\\''")}'";
+  }
+
   ///获取系统代理
   @override
   Future<ProxyInfo?> _getSystemProxy(ProxyTypes proxyTypes) async {
     _hardwarePort = _hardwarePort ?? await hardwarePort();
 
+    // ensure we have a name
+    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
+      logger.e('hardwarePort is empty, cannot get system proxy');
+      return null;
+    }
+
+    final quotedName = _shellQuote(_hardwarePort!);
+
     var result = await Process.run('bash', [
       '-c',
-      'networksetup ${proxyTypes == ProxyTypes.http ? '-getwebproxy' : '-getsecurewebproxy'} $_hardwarePort'
+      'networksetup ${proxyTypes == ProxyTypes.http ? '-getwebproxy' : '-getsecurewebproxy'} $quotedName'
     ]).then((results) => results.stdout.toString().split('\n'));
 
-    var proxyEnable = result.firstWhere((item) => item.contains('Enabled')).trim().split(": ")[1];
+    // defensive parsing: find lines safely
+    String enabledLine = result.firstWhere((item) => item.contains('Enabled'), orElse: () => '');
+    if (enabledLine.isEmpty) {
+      logger.e('Failed to parse Enabled line from networksetup output: ${result.join('\n')}');
+      return null;
+    }
+
+    var proxyEnableParts = enabledLine.trim().split(RegExp(r":\s*"));
+    var proxyEnable = proxyEnableParts.length > 1 ? proxyEnableParts[1] : 'No';
     if (proxyEnable == 'No') {
       return null;
     }
 
-    var proxyServer = result.firstWhere((item) => item.contains('Server')).trim().split(": ")[1];
-    var proxyPort = result.firstWhere((item) => item.contains('Port')).trim().split(": ")[1];
+    String serverLine = result.firstWhere((item) => item.contains('Server'), orElse: () => '');
+    String portLine = result.firstWhere((item) => item.contains('Port'), orElse: () => '');
+    if (serverLine.isEmpty || portLine.isEmpty) {
+      logger.e('Failed to parse Server/Port from networksetup output: ${result.join('\n')}');
+      return null;
+    }
+
+    var proxyServer = serverLine.trim().split(RegExp(r":\s*"))[1];
+    var proxyPort = portLine.trim().split(RegExp(r":\s*"))[1];
     if (proxyEnable == 'Yes' && proxyServer.isNotEmpty) {
       return ProxyInfo.of(proxyServer, int.parse(proxyPort));
     }
@@ -146,11 +175,18 @@ class MacSystemProxy implements SystemProxy {
   @override
   Future<bool> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) async {
     _hardwarePort = _hardwarePort ?? await hardwarePort();
+    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
+      logger.e('hardwarePort is empty, cannot set system proxy');
+      return false;
+    }
+
+    final quotedName = _shellQuote(_hardwarePort!);
+
     List<String> commands = [
-      'networksetup -setwebproxy $_hardwarePort 127.0.0.1 $port',
-      sslSetting == true ? 'networksetup -setsecurewebproxy $_hardwarePort 127.0.0.1 $port' : '',
-      'networksetup -setproxybypassdomains $_hardwarePort ${proxyPassDomains.replaceAll(";", " ")}',
-      'networksetup -setsocksfirewallproxystate $_hardwarePort off',
+      'networksetup -setwebproxy $quotedName 127.0.0.1 $port',
+      sslSetting == true ? 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port' : '',
+      'networksetup -setproxybypassdomains $quotedName ${proxyPassDomains.replaceAll(";", " ")}',
+      'networksetup -setsocksfirewallproxystate $quotedName off',
     ];
     var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
     logger.d('set proxyServer, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
@@ -166,11 +202,16 @@ class MacSystemProxy implements SystemProxy {
   @override
   Future<bool> _setSslProxyEnable(bool proxyEnable, port) async {
     var name = _hardwarePort ?? await hardwarePort();
+    if (name.isEmpty) {
+      logger.e('hardwarePort is empty, cannot set ssl proxy state');
+      return false;
+    }
+    final quotedName = _shellQuote(name);
 
     List<String> commands = [
       proxyEnable
-          ? 'networksetup -setsecurewebproxy $name 127.0.0.1 $port'
-          : 'networksetup -setsecurewebproxystate $name off'
+          ? 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port'
+          : 'networksetup -setsecurewebproxystate $quotedName off'
     ];
 
     var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
@@ -185,19 +226,28 @@ class MacSystemProxy implements SystemProxy {
   ///mac获取当前网络名称
   static Future<String> hardwarePort() async {
     var name = await networkName();
-    var results = await Process.run('bash', [
-      '-c',
-      'networksetup -listnetworkserviceorder |grep "Device: $name" -A 1 |grep "Hardware Port" |awk -F ": " \'{print \$2}\''
-    ]);
-    return results.stdout.toString().split(", ")[0];
+    // Use a safer pipeline that avoids embedding awk's $2 (which complicates Dart string quoting).
+    // This command finds the Device line, takes the following Hardware Port line, and extracts the part after ':'
+    var cmd = 'networksetup -listnetworkserviceorder | grep "Device: ${name}" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
+    var results = await Process.run('bash', ['-c', cmd]);
+    var out = results.stdout.toString().trim();
+    if (out.isEmpty) return '';
+    // split on newlines or commas and take the first non-empty token
+    var parts = out.split(RegExp(r"[\r\n,]+"));
+    return parts.first.trim();
   }
 
   ///设置代理忽略地址
   @override
   Future<void> _setProxyPassDomains(String proxyPassDomains) async {
     _hardwarePort ??= await hardwarePort();
+    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
+      logger.e('hardwarePort is empty, cannot set proxy bypass domains');
+      return;
+    }
+    final quotedName = _shellQuote(_hardwarePort!);
     var results = await Process.run(
-        'bash', ['-c', 'networksetup -setproxybypassdomains $_hardwarePort ${proxyPassDomains.replaceAll(";", " ")}']);
+        'bash', ['-c', 'networksetup -setproxybypassdomains $quotedName ${proxyPassDomains.replaceAll(";", " ")}']);
     logger.d('set proxyPassDomains, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
   }
 
@@ -206,10 +256,15 @@ class MacSystemProxy implements SystemProxy {
   Future<void> _setProxyEnable(bool proxyEnable, bool sslSetting) async {
     var proxyMode = proxyEnable ? 'on' : 'off';
     _hardwarePort ??= await hardwarePort();
+    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
+      logger.e('hardwarePort is empty, cannot set proxy enable state');
+      return;
+    }
     logger.d('set proxyEnable: $proxyEnable, name: $_hardwarePort');
+    final quotedName = _shellQuote(_hardwarePort!);
     List<String> commands = [
-      'networksetup -setwebproxystate $_hardwarePort $proxyMode',
-      sslSetting ? 'networksetup -setsecurewebproxystate $_hardwarePort $proxyMode' : ''
+      'networksetup -setwebproxystate $quotedName $proxyMode',
+      sslSetting ? 'networksetup -setsecurewebproxystate $quotedName $proxyMode' : ''
     ];
 
     var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
