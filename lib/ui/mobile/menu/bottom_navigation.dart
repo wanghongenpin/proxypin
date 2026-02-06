@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -225,6 +227,18 @@ class SettingPage extends StatelessWidget {
                     title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
                     textStyle: const TextStyle(fontSize: 16)),
                 Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                if (Platform.isAndroid)
+                  ListTile(
+                      title: Text(localizations.systemProxy),
+                      trailing: SwitchWidget(
+                          value: configuration.enableSystemProxy,
+                          scale: 0.8,
+                          onChanged: (value) {
+                            configuration.enableSystemProxy = value;
+                            proxyServer.configuration.flushConfig();
+                          })),
+                if (Platform.isAndroid)
+                  Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(
                     title: const Text("SOCKS5"),
                     trailing: SwitchWidget(

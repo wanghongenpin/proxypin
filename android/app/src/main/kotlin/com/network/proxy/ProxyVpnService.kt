@@ -35,6 +35,7 @@ class ProxyVpnService : VpnService(), ProtectSocket {
         const val PROXY_PORT_KEY = "ProxyPort"
         const val ALLOW_APPS_KEY = "AllowApps" //允许的名单
         const val DISALLOW_APPS_KEY = "DisallowApps" //禁止的名单
+        const val SET_SYSTEM_PROXY_KEY = "SetSystemProxy"
 
         /**
          * 动作：断开连接
@@ -53,6 +54,7 @@ class ProxyVpnService : VpnService(), ProtectSocket {
         var port: Int = 9099
         var allowApps: ArrayList<String>? = null
         var disallowApps: ArrayList<String>? = null
+        var setSystemProxy: Boolean = true
 
         fun stopVpnIntent(context: Context): Intent {
             return Intent(context, ProxyVpnService::class.java).also {
@@ -65,13 +67,15 @@ class ProxyVpnService : VpnService(), ProtectSocket {
             proxyHost: String? = host,
             proxyPort: Int? = port,
             allowApps: ArrayList<String>? = this.allowApps,
-            disallowApps: ArrayList<String>? = this.disallowApps
+            disallowApps: ArrayList<String>? = this.disallowApps,
+            setSystemProxy: Boolean = true
         ): Intent {
             return Intent(context, ProxyVpnService::class.java).also {
                 it.putExtra(PROXY_HOST_KEY, proxyHost)
                 it.putExtra(PROXY_PORT_KEY, proxyPort)
                 it.putStringArrayListExtra(ALLOW_APPS_KEY, allowApps)
                 it.putStringArrayListExtra(DISALLOW_APPS_KEY, disallowApps)
+                it.putExtra(SET_SYSTEM_PROXY_KEY, setSystemProxy)
             }
         }
 
@@ -84,7 +88,8 @@ class ProxyVpnService : VpnService(), ProtectSocket {
             host: String,
             port: Int,
             allowApps: ArrayList<String>?,
-            disallowApps: ArrayList<String>?
+            disallowApps: ArrayList<String>?,
+            setSystemProxy: Boolean = true
         ): Boolean {
             val intent = prepare(activity)
             if (intent != null) {
@@ -92,6 +97,7 @@ class ProxyVpnService : VpnService(), ProtectSocket {
                 ProxyVpnService.port = port
                 ProxyVpnService.allowApps = allowApps
                 ProxyVpnService.disallowApps = disallowApps
+                ProxyVpnService.setSystemProxy = setSystemProxy
                 activity.startActivityForResult(intent, REQUEST_CODE)
                 return false
             }
@@ -117,7 +123,8 @@ class ProxyVpnService : VpnService(), ProtectSocket {
             val proxyPort = intent.getIntExtra(PROXY_PORT_KEY, port)
             val allowPackages = intent.getStringArrayListExtra(ALLOW_APPS_KEY) ?: allowApps ?: ArrayList()
             val disallowPackages = intent.getStringArrayListExtra(DISALLOW_APPS_KEY) ?: disallowApps ?: ArrayList()
-            connect(proxyHost, proxyPort, allowPackages, disallowPackages)
+            val setSystemProxy = intent.getBooleanExtra(SET_SYSTEM_PROXY_KEY, setSystemProxy)
+            connect(proxyHost, proxyPort, allowPackages, disallowPackages, setSystemProxy)
             START_STICKY
         }
     }
@@ -136,15 +143,16 @@ class ProxyVpnService : VpnService(), ProtectSocket {
         proxyHost: String,
         proxyPort: Int,
         allowPackages: ArrayList<String>?,
-        disallowPackages: ArrayList<String>?
+        disallowPackages: ArrayList<String>?,
+        setSystemProxy: Boolean = true
     ) {
-        Log.i("ProxyVpnService", "startVpn $proxyHost:$proxyPort $allowPackages")
+        Log.i("ProxyVpnService", "startVpn $proxyHost:$proxyPort systemProxy: ${setSystemProxy} allowPackages: $allowPackages")
 
         host = proxyHost
         port = proxyPort
         allowApps = allowPackages
         disallowApps = disallowPackages
-        vpnInterface = createVpnInterface(proxyHost, proxyPort, allowPackages, disallowPackages)
+        vpnInterface = createVpnInterface(proxyHost, proxyPort, allowPackages, disallowPackages, setSystemProxy)
         if (vpnInterface == null) {
             val alertDialog = Intent(applicationContext, VpnAlertDialog::class.java)
                 .setAction("com.network.proxy.ProxyVpnService")
@@ -199,7 +207,8 @@ class ProxyVpnService : VpnService(), ProtectSocket {
         proxyHost: String,
         proxyPort: Int,
         allowPackages: List<String>?,
-        disallowApps: ArrayList<String>?
+        disallowApps: ArrayList<String>?,
+        setSystemProxy: Boolean = true
     ):
             ParcelFileDescriptor? {
         val build = Builder()
@@ -236,7 +245,8 @@ class ProxyVpnService : VpnService(), ProtectSocket {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 setMetered(false)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (setSystemProxy && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Log.d("ProxyVpnService", "set system proxy $proxyHost:$proxyPort")
                 setHttpProxy(ProxyInfo.buildDirectProxy(proxyHost, proxyPort))
             }
         }.establish()

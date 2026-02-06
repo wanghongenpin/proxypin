@@ -14,8 +14,14 @@ class Vpn {
       disallowApps = configuration.appBlacklist ?? [];
     }
 
-    proxyVpnChannel.invokeMethod("startVpn",
-        {"proxyHost": host, "proxyPort": port, "allowApps": appList, "disallowApps": disallowApps, "ipProxy": ipProxy});
+    proxyVpnChannel.invokeMethod("startVpn", {
+      "proxyHost": host,
+      "proxyPort": port,
+      "allowApps": appList,
+      "disallowApps": disallowApps,
+      "ipProxy": ipProxy,
+      "setSystemProxy": configuration.enableSystemProxy
+    });
     isVpnStarted = true;
   }
 
@@ -32,8 +38,14 @@ class Vpn {
     if (appList.isEmpty) {
       disallowApps = configuration.appBlacklist ?? [];
     }
-    proxyVpnChannel.invokeMethod("restartVpn",
-        {"proxyHost": host, "proxyPort": port, "allowApps": appList, "disallowApps": disallowApps, "ipProxy": ipProxy});
+    proxyVpnChannel.invokeMethod("restartVpn", {
+      "proxyHost": host,
+      "proxyPort": port,
+      "allowApps": appList,
+      "disallowApps": disallowApps,
+      "ipProxy": ipProxy,
+      "setSystemProxy": configuration.enableSystemProxy
+    });
 
     isVpnStarted = true;
   }

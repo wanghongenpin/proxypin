@@ -192,10 +192,16 @@ abstract class AppLocalizations {
   /// **'Proxy Setting'**
   String get proxySetting;
 
+  /// No description provided for @setAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as '**
+  String get setAs;
+
   /// No description provided for @systemProxy.
   ///
   /// In en, this message translates to:
-  /// **'Set as System Proxy'**
+  /// **'System Proxy'**
   String get systemProxy;
 
   /// No description provided for @enabledHTTP2.

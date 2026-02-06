@@ -273,7 +273,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
       Expanded(
           child: Padding(
               padding: const EdgeInsets.only(left: 15, right: 20),
-              child: Text(localizations.systemProxy, style: const TextStyle(fontSize: 14)))),
+              child: Text(localizations.setAs + localizations.systemProxy, style: const TextStyle(fontSize: 14)))),
       Transform.scale(
           scale: 0.75,
           child: Switch(

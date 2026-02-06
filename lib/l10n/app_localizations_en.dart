@@ -57,7 +57,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxySetting => 'Proxy Setting';
 
   @override
-  String get systemProxy => 'Set as System Proxy';
+  String get setAs => 'Set as ';
+
+  @override
+  String get systemProxy => 'System Proxy';
 
   @override
   String get enabledHTTP2 => 'Enable HTTP2';

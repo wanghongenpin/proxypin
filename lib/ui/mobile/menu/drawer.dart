@@ -40,6 +40,10 @@ import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
+import '../../component/proxy_port_setting.dart';
+import '../../component/widgets.dart';
+import '../../desktop/setting/external_proxy.dart';
+
 ///左侧抽屉
 class DrawerWidget extends StatelessWidget {
   final ProxyServer proxyServer;
@@ -150,7 +154,7 @@ class DrawerWidget extends StatelessWidget {
                     futureWidget(
                         AppConfiguration.instance,
                         (appConfiguration) =>
-                            Preference(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
+                            _SettingPage(proxyServer: proxyServer, appConfiguration: appConfiguration)))),
             ListTile(
                 title: Text(localizations.about),
                 leading: const Icon(Icons.info_outline),
@@ -169,6 +173,110 @@ void navigator(BuildContext context, Widget widget) {
     }),
   );
 }
+
+
+class _SettingPage extends StatelessWidget {
+  final ProxyServer proxyServer;
+  final AppConfiguration appConfiguration;
+
+  const _SettingPage({super.key, required this.proxyServer, required this.appConfiguration});
+
+  @override
+  Widget build(BuildContext context) {
+    final configuration = proxyServer.configuration;
+
+    AppLocalizations localizations = AppLocalizations.of(context)!;
+    bool isEn = appConfiguration.language?.languageCode == 'en';
+
+    Widget section(List<Widget> tiles) => Card(
+      color: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+          side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+          borderRadius: BorderRadius.circular(10)),
+      child: Column(children: tiles),
+    );
+
+    return Scaffold(
+        appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(42),
+            child: AppBar(
+              title: Text(localizations.setting, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
+              centerTitle: true,
+            )),
+        body: ListView(padding: const EdgeInsets.all(12), children: [
+          // Port and switches
+          Card(
+              color: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Column(children: [
+                PortWidget(
+                    proxyServer: proxyServer,
+                    title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
+                    textStyle: const TextStyle(fontSize: 16)),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                if (Platform.isAndroid)
+                  ListTile(
+                      title: Text(localizations.systemProxy),
+                      trailing: SwitchWidget(
+                          value: configuration.enableSystemProxy,
+                          scale: 0.8,
+                          onChanged: (value) {
+                            configuration.enableSystemProxy = value;
+                            proxyServer.configuration.flushConfig();
+                          })),
+                if (Platform.isAndroid)
+                  Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                ListTile(
+                    title: const Text("SOCKS5"),
+                    trailing: SwitchWidget(
+                        value: configuration.enableSocks5,
+                        scale: 0.8,
+                        onChanged: (value) {
+                          configuration.enableSocks5 = value;
+                          proxyServer.configuration.flushConfig();
+                        })),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                ListTile(
+                    title: Text(localizations.enabledHTTP2),
+                    trailing: SwitchWidget(
+                        value: configuration.enabledHttp2,
+                        scale: 0.8,
+                        onChanged: (value) {
+                          configuration.enabledHttp2 = value;
+                          proxyServer.configuration.flushConfig();
+                        })),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                ListTile(
+                    title: Text(localizations.externalProxy),
+                    trailing: const Icon(Icons.keyboard_arrow_right),
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (_) => ExternalProxyDialog(configuration: proxyServer.configuration));
+                    }),
+              ])),
+          const SizedBox(height: 12),
+          section([
+            ListTile(
+                title: Text(localizations.preference),
+                trailing: const Icon(Icons.keyboard_arrow_right),
+                onTap: () =>
+                    navigator(context, Preference(proxyServer: proxyServer, appConfiguration: appConfiguration))),
+            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+            ListTile(
+                title: Text(localizations.about),
+                trailing: const Icon(Icons.keyboard_arrow_right),
+                onTap: () => navigator(context, const About())),
+          ]),
+          const SizedBox(height: 8),
+        ]));
+  }
+}
+
 
 ///抓包过滤菜单
 class FilterMenu extends StatelessWidget {

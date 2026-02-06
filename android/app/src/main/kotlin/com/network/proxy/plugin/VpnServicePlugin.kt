@@ -23,9 +23,10 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                     val port = call.argument<Int>("proxyPort")
                     val allowApps = call.argument<ArrayList<String>>("allowApps")
                     val disallowApps = call.argument<ArrayList<String>>("disallowApps")
+                    val setSystemProxy = call.argument<Boolean>("setSystemProxy") ?: true
                     val prepareVpn = ProxyVpnService.prepareVpn(activity, host!!, port!!, allowApps, disallowApps)
                     if (prepareVpn) {
-                        startVpn(host, port, allowApps, disallowApps)
+                        startVpn(host, port, allowApps, disallowApps, setSystemProxy)
                     }
                     result.success(prepareVpn)
                 }
@@ -40,8 +41,10 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                     val port = call.argument<Int>("proxyPort")
                     val allowApps = call.argument<ArrayList<String>>("allowApps")
                     val disallowApps = call.argument<ArrayList<String>>("disallowApps")
+                    val setSystemProxy = call.argument<Boolean>("setSystemProxy") ?: true
                     stopVpn()
-                    startVpn(host!!, port!!, allowApps, disallowApps)
+                    startVpn(host!!, port!!, allowApps, disallowApps, setSystemProxy)
+                    result.success(null)
                 }
 
                 else -> {
@@ -59,8 +62,9 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
         port: Int,
         allowApps: ArrayList<String>? = arrayListOf(),
         disallowApps: ArrayList<String>? = arrayListOf(),
+        setSystemProxy: Boolean = true
     ) {
-        val intent = ProxyVpnService.startVpnIntent(activity, host, port, allowApps, disallowApps)
+        val intent = ProxyVpnService.startVpnIntent(activity, host, port, allowApps, disallowApps, setSystemProxy)
         activity.startService(intent)
     }
 

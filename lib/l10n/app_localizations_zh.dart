@@ -57,7 +57,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proxySetting => '代理设置';
 
   @override
-  String get systemProxy => '设置为系统代理';
+  String get setAs => '设置为';
+
+  @override
+  String get systemProxy => '系统代理';
 
   @override
   String get enabledHTTP2 => '启用HTTP2';
@@ -1109,7 +1112,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get proxySetting => '代理設定';
 
   @override
-  String get systemProxy => '設定為系統代理';
+  String get setAs => '設定為';
+
+  @override
+  String get systemProxy => '系統代理';
 
   @override
   String get enabledHTTP2 => '啟用HTTP2';
