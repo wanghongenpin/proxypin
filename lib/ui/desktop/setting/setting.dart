@@ -189,6 +189,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
 
   @override
   Widget build(BuildContext context) {
+    bool isEn = localizations.localeName.startsWith("en");
     return SubmenuButton(
       menuChildren: [
         PortWidget(proxyServer: widget.proxyServer, textStyle: const TextStyle(fontSize: 13)),
@@ -234,7 +235,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                 children: [
                   Text(localizations.proxyIgnoreDomain, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 3),
-                  Text("多个使用;分割", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                  Text(isEn ? "Use ';' to separate multiple entries": "多个使用;分割", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                 ],
               ),
               Padding(

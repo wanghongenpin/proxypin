@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 class Vpn {
   static const MethodChannel proxyVpnChannel = MethodChannel('com.proxy/proxyVpn');
@@ -14,13 +15,15 @@ class Vpn {
       disallowApps = configuration.appBlacklist ?? [];
     }
 
+    logger.d("Starting VPN with host: $host, port: $port,  proxyPassDomains: ${configuration.proxyPassDomains.split(';')}");
     proxyVpnChannel.invokeMethod("startVpn", {
       "proxyHost": host,
       "proxyPort": port,
       "allowApps": appList,
       "disallowApps": disallowApps,
       "ipProxy": ipProxy,
-      "setSystemProxy": configuration.enableSystemProxy
+      "setSystemProxy": configuration.enableSystemProxy,
+      "proxyPassDomains": configuration.proxyPassDomains.split(';'),
     });
     isVpnStarted = true;
   }
@@ -44,7 +47,8 @@ class Vpn {
       "allowApps": appList,
       "disallowApps": disallowApps,
       "ipProxy": ipProxy,
-      "setSystemProxy": configuration.enableSystemProxy
+      "setSystemProxy": configuration.enableSystemProxy,
+      "proxyPassDomains": configuration.proxyPassDomains.split(';'),
     });
 
     isVpnStarted = true;

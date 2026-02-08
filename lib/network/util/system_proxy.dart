@@ -51,6 +51,11 @@ class SystemProxy {
     if (Platform.isWindows) {
       return '192.168.0.*;10.0.0.*;172.16.0.*;127.0.0.1;localhost;*.local;<local>';
     }
+
+    if (Platform.isAndroid) {
+      return '192.168.0.0/16;10.0.0.0/8;172.16.0.0/12;127.0.0.1;localhost';
+    }
+
     return '';
   }
 

@@ -24,9 +24,19 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                     val allowApps = call.argument<ArrayList<String>>("allowApps")
                     val disallowApps = call.argument<ArrayList<String>>("disallowApps")
                     val setSystemProxy = call.argument<Boolean>("setSystemProxy") ?: true
-                    val prepareVpn = ProxyVpnService.prepareVpn(activity, host!!, port!!, allowApps, disallowApps)
+                    val proxyPassDomains = call.argument<ArrayList<String>>("proxyPassDomains")
+
+                    val prepareVpn = ProxyVpnService.prepareVpn(
+                        activity,
+                        host!!,
+                        port!!,
+                        allowApps,
+                        disallowApps,
+                        setSystemProxy,
+                        proxyPassDomains
+                    )
                     if (prepareVpn) {
-                        startVpn(host, port, allowApps, disallowApps, setSystemProxy)
+                        startVpn(host, port, allowApps, disallowApps, setSystemProxy, proxyPassDomains)
                     }
                     result.success(prepareVpn)
                 }
@@ -42,8 +52,10 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                     val allowApps = call.argument<ArrayList<String>>("allowApps")
                     val disallowApps = call.argument<ArrayList<String>>("disallowApps")
                     val setSystemProxy = call.argument<Boolean>("setSystemProxy") ?: true
+                    val proxyPassDomains = call.argument<ArrayList<String>>("proxyPassDomains")
+
                     stopVpn()
-                    startVpn(host!!, port!!, allowApps, disallowApps, setSystemProxy)
+                    startVpn(host!!, port!!, allowApps, disallowApps, setSystemProxy, proxyPassDomains)
                     result.success(null)
                 }
 
@@ -62,9 +74,18 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
         port: Int,
         allowApps: ArrayList<String>? = arrayListOf(),
         disallowApps: ArrayList<String>? = arrayListOf(),
-        setSystemProxy: Boolean = true
+        setSystemProxy: Boolean = true,
+        proxyPassDomains: ArrayList<String>? = null
     ) {
-        val intent = ProxyVpnService.startVpnIntent(activity, host, port, allowApps, disallowApps, setSystemProxy)
+        val intent = ProxyVpnService.startVpnIntent(
+            activity,
+            host,
+            port,
+            allowApps,
+            disallowApps,
+            setSystemProxy,
+            proxyPassDomains
+        )
         activity.startService(intent)
     }
 
