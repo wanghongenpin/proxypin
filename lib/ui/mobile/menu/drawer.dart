@@ -289,6 +289,10 @@ class _SettingPage extends StatelessWidget {
                         textInputAction: TextInputAction.done,
                         style: const TextStyle(fontSize: 13),
                         controller: textEditingController,
+                        onSubmitted: (_) {
+                          configuration.proxyPassDomains = textEditingController.text;
+                          proxyServer.configuration.flushConfig();
+                        },
                         decoration: const InputDecoration(
                             contentPadding: EdgeInsets.all(10),
                             border: OutlineInputBorder()),

@@ -280,7 +280,8 @@ class SettingPage extends StatelessWidget {
                         children: [
                           Text(localizations.proxyIgnoreDomain, style: const TextStyle(fontSize: 14)),
                           const SizedBox(height: 3),
-                          Text(isEn ? "Use ';' to separate multiple entries": "多个使用;分割", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                          Text(isEn ? "Use ';' to separate multiple entries" : "多个使用;分割",
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                         ],
                       ),
                       Padding(
@@ -299,10 +300,14 @@ class SettingPage extends StatelessWidget {
                         textInputAction: TextInputAction.done,
                         style: const TextStyle(fontSize: 13),
                         controller: textEditingController,
+                        onSubmitted: (_) {
+                          configuration.proxyPassDomains = textEditingController.text;
+                          proxyServer.configuration.flushConfig();
+                        },
                         decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(10),
-                            border: OutlineInputBorder(),
-                           ),
+                          contentPadding: EdgeInsets.all(10),
+                          border: OutlineInputBorder(),
+                        ),
                         maxLines: 5,
                         minLines: 1)),
                 // const SizedBox(height: 10),
