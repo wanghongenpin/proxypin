@@ -219,7 +219,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     HttpClients.proxyRequest(httpRequest, proxyInfo: proxyInfo);
 
     if (mounted) {
-      CustomToast.success(localizations.reSendRequest).show(context);
+      FlutterToastr.show(localizations.reSendRequest, context);
     }
   }
 

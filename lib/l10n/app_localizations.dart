@@ -96,6 +96,24 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant')
   ];
 
+  /// No description provided for @breakpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakpoint'**
+  String get breakpoint;
+
+  /// No description provided for @breakpointRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakpoint Rule'**
+  String get breakpointRule;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
   /// No description provided for @requests.
   ///
   /// In en, this message translates to:
@@ -1103,12 +1121,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Favorite deleted'**
   String get deleteFavoriteSuccess;
-
-  /// No description provided for @name.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get name;
 
   /// No description provided for @historyRecord.
   ///

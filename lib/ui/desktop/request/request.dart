@@ -360,8 +360,7 @@ class _RequestWidgetState extends State<RequestWidget> {
     var request = httpRequest.copy(uri: httpRequest.requestUrl);
     var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo);
-
-    CustomToast.success(localizations.reSendRequest).show(context);
+    FlutterToastr.show(localizations.reSendRequest, context, rootNavigator: true);
   }
 
   PopupMenuItem popupItem(String text, {VoidCallback? onTap}) {

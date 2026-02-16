@@ -34,6 +34,7 @@ import '../channel/network.dart';
 import '../util/logger.dart';
 import '../util/system_proxy.dart';
 import 'listener.dart';
+import 'package:proxypin/network/components/request_breakpoint.dart';
 
 Future<void> main() async {
   var configuration = await Configuration.instance;
@@ -86,6 +87,7 @@ class ProxyServer {
       RequestRewriteInterceptor.instance,
       ScriptInterceptor(),
       RequestBlockInterceptor(),
+      RequestBreakpointInterceptor.instance, // Register the interceptor
       ReportServerInterceptor()
     ];
 

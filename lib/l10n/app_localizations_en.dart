@@ -9,6 +9,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get breakpoint => 'Breakpoint';
+
+  @override
+  String get breakpointRule => 'Breakpoint Rule';
+
+  @override
+  String get name => 'Name';
+
+  @override
   String get requests => 'Requests';
 
   @override
@@ -516,9 +525,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteFavoriteSuccess => 'Favorite deleted';
-
-  @override
-  String get name => 'Name';
 
   @override
   String get historyRecord => 'History';

@@ -1,4 +1,7 @@
 {
+  "breakpoint": "Breakpoint",
+  "breakpointRule": "Breakpoint Rule",
+  "name": "Name",
   "requests": "Requests",
   "favorites": "Favorites",
   "history": "History",
@@ -176,7 +179,6 @@
   "deleteFavorite": "Delete Favorite",
   "emptyFavorite": "Empty Favorite",
   "deleteFavoriteSuccess": "Favorite deleted",
-  "name": "Name",
 
   "historyRecord": "History",
   "historyCacheTime": "Cache Time",

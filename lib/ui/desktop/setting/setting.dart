@@ -78,6 +78,7 @@ class _SettingState extends State<Setting> {
         item(localizations.requestCrypto, onPressed: showRequestCrypto),
         item(localizations.script,
             onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
+        item(localizations.breakpoint, onPressed: requestBreakpoint),
         item(localizations.externalProxy, onPressed: setExternalProxy),
         item(localizations.about, onPressed: showAbout),
       ],
@@ -109,8 +110,11 @@ class _SettingState extends State<Setting> {
 
   ///请求重写Dialog
   void requestRewrite() async {
-    if (!mounted) return;
     MultiWindow.openWindow(localizations.requestRewrite, 'RequestRewriteWidget', size: const Size(800, 750));
+  }
+
+  void requestBreakpoint() async {
+    MultiWindow.openWindow(localizations.breakpoint, 'RequestBreakpointPage', size: const Size(800, 750));
   }
 
   ///请求本地映射

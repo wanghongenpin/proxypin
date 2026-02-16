@@ -24,6 +24,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/request_crypto_manager.dart';
+import 'package:proxypin/network/components/manager/request_breakpoint_manager.dart';
 import 'package:proxypin/network/components/manager/request_map_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
@@ -42,6 +43,7 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../desktop/setting/request_breakpoint.dart';
 import '../desktop/setting/request_crypto.dart';
 import '../desktop/setting/request_map.dart';
 import '../toolbox/cert_hash.dart';
@@ -105,6 +107,11 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
   // 请求映射
   if (argument['name'] == 'RequestMapPage') {
     return RequestMapPage(windowId: windowId);
+  }
+
+  // 请求拦截
+  if (argument['name'] == 'RequestBreakpointPage') {
+    return RequestBreakpointPage(windowId: windowId);
   }
 
   if (argument['name'] == 'QrCodePage') {
@@ -260,6 +267,13 @@ void registerMethodHandler() {
     if (call.method == 'refreshRequestCrypto') {
       await RequestCryptoManager.instance.then((value) {
         return value.reloadConfig();
+      });
+      return 'done';
+    }
+
+    if (call.method == 'refreshRequestBreakpoint') {
+      await RequestBreakpointManager.instance.then((value) {
+        return value.load();
       });
       return 'done';
     }
