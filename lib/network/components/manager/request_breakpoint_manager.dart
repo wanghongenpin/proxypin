@@ -91,21 +91,21 @@ class RequestBreakpointManager {
   Future<void> load() async {
     try {
       var home = await homePath();
-      var file = File('$home${Platform.pathSeparator}request_intercept.json');
+      var file = File('$home${Platform.pathSeparator}request_breakpoint.json');
       if (await file.exists()) {
         var json = jsonDecode(await file.readAsString());
         enabled = json['enabled'] ?? false;
         list = (json['list'] as List? ?? []).map((e) => RequestBreakpointRule.fromJson(e)).toList();
       }
     } catch (e) {
-      logger.e('Failed to load request intercept config', error: e);
+      logger.e('Failed to load request breakpoint config', error: e);
     }
   }
 
   Future<void> save() async {
     try {
       var home = await homePath();
-      var file = File('$home${Platform.pathSeparator}request_intercept.json');
+      var file = File('$home${Platform.pathSeparator}request_breakpoint.json');
       if (!await file.exists()) {
         await file.create(recursive: true);
       }
@@ -115,7 +115,7 @@ class RequestBreakpointManager {
       };
       await file.writeAsString(jsonEncode(json));
     } catch (e) {
-      logger.e('Failed to save request intercept config', error: e);
+      logger.e('Failed to save request breakpoint config', error: e);
     }
   }
 

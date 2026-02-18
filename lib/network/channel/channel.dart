@@ -173,7 +173,7 @@ class Channel {
     //   await _socket.flush();
     // }
     await _socket.close();
-    _socket.destroy();
+    // _socket.destroy();
   }
 
   ///返回此channel是否打开

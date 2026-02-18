@@ -83,7 +83,7 @@ class ProxyHelper {
   }
 
   ///异常处理
-  static exceptionHandler(
+  static Future<void> exceptionHandler(
       ChannelContext channelContext, Channel channel, EventListener? listener, HttpRequest? request, error) async {
     HostAndPort? hostAndPort = channelContext.host;
     hostAndPort ??= HostAndPort.host(

@@ -10,6 +10,7 @@ import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/proxy_helper.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/uri.dart';
@@ -110,6 +111,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
           return;
         }
       }
+      channelContext.currentRequest = request;
 
       listener?.onRequest(channel, request!);
 
@@ -266,12 +268,16 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
     for (var interceptor in interceptors) {
       response = await interceptor.onResponse(request!, response!);
       if (response == null) {
+        logger.d("[${clientChannel.id}] Interceptor returned null, stopping processing");
+        // Interceptor returned null, stopping processing
         listener?.onResponse(channelContext, msg);
         channel.close();
         return;
       }
     }
 
+    // Ensure request is linked if not present
+    response?.request ??= request;
     listener?.onResponse(channelContext, response!);
     //发送给客户端
     await clientChannel.write(channelContext, response!);

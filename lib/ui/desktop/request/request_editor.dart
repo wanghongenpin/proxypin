@@ -36,12 +36,30 @@ import 'package:proxypin/utils/lang.dart';
 
 import '../../component/http_method_popup.dart';
 
+enum RequestEditorSource {
+  editor,
+  breakpointRequest,
+  breakpointResponse,
+}
+
 /// @author wanghongen
 class RequestEditor extends StatefulWidget {
   final WindowController? windowController;
   final HttpRequest? request;
+  final RequestEditorSource source;
+  final Function(HttpRequest request)? onExecuteRequest;
+  final Function(HttpResponse response)? onExecuteResponse;
+  final HttpResponse? response;
 
-  const RequestEditor({super.key, this.request, this.windowController});
+  const RequestEditor({
+    super.key,
+    this.request,
+    this.response,
+    this.windowController,
+    this.source = RequestEditorSource.editor,
+    this.onExecuteRequest,
+    this.onExecuteResponse,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -67,6 +85,10 @@ class RequestEditorState extends State<RequestEditor> {
   void initState() {
     super.initState();
     request = widget.request;
+    response = widget.response;
+    if (response != null) {
+      responseChange.value = 1;
+    }
     HardwareKeyboard.instance.addHandler(onKeyEvent);
     if (widget.request == null) {
       curlParse();
@@ -110,14 +132,36 @@ class RequestEditorState extends State<RequestEditor> {
 
   @override
   Widget build(BuildContext context) {
+    var title = localizations.httpRequest;
+    var buttonText = localizations.send;
+    IconData icon = Icons.send;
+
+    if (widget.source == RequestEditorSource.breakpointRequest) {
+      title = "Breakpoint Request";
+      buttonText = "Execute";
+      icon = Icons.play_arrow;
+    } else if (widget.source == RequestEditorSource.breakpointResponse) {
+      title = "Breakpoint Response";
+      buttonText = "Execute";
+      icon = Icons.play_arrow;
+    }
+
     return Scaffold(
         appBar: AppBar(
-          title: Text(localizations.httpRequest, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           toolbarHeight: Platform.isWindows ? 36 : null,
           centerTitle: true,
           actions: [
             TextButton.icon(
-                onPressed: () async => sendRequest(), icon: const Icon(Icons.send), label: Text(localizations.send)),
+                onPressed: () async {
+                  if (widget.source == RequestEditorSource.editor) {
+                    sendRequest();
+                  } else {
+                    executeBreakpoint();
+                  }
+                },
+                icon: Icon(icon),
+                label: Text(buttonText)),
             const SizedBox(width: 10)
           ],
         ),
@@ -131,6 +175,7 @@ class RequestEditorState extends State<RequestEditor> {
               title: const Text("Request", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               message: request,
               urlQueryNotifier: _queryNotifier,
+              readOnly: widget.source == RequestEditorSource.breakpointResponse,
             ),
             right: ValueListenableBuilder(
                 valueListenable: responseChange,
@@ -163,7 +208,7 @@ class RequestEditorState extends State<RequestEditor> {
                                 ]))
                               ]),
                               message: response,
-                              readOnly: true))
+                              readOnly: widget.source == RequestEditorSource.breakpointRequest))
                     ],
                   );
                 }),
@@ -198,6 +243,33 @@ class RequestEditorState extends State<RequestEditor> {
       responseChange.value = -1;
       if (mounted) FlutterToastr.show('${localizations.fail}$e', context);
     });
+  }
+
+  void executeBreakpoint() {
+    if (widget.source == RequestEditorSource.breakpointRequest) {
+      var currentState = requestLineKey.currentState!;
+      var headers = requestKey.currentState?.getHeaders();
+      var requestBody = requestKey.currentState?.getBody();
+      String url = currentState.requestUrl.text;
+
+      if (request == null) return;
+      HttpRequest newRequest = request!.copy(uri: url);
+      newRequest.method = currentState.requestMethod;
+      newRequest.headers.clear();
+      newRequest.headers.addAll(headers);
+      newRequest.body = requestBody == null ? null : utf8.encode(requestBody);
+      widget.onExecuteRequest?.call(newRequest);
+    } else if (widget.source == RequestEditorSource.breakpointResponse) {
+      var headers = responseKey.currentState?.getHeaders();
+      var responseBody = responseKey.currentState?.getBody();
+
+      if (response == null) return;
+      HttpResponse newResponse = response!.copy();
+      newResponse.headers.clear();
+      newResponse.headers.addAll(headers);
+      newResponse.body = responseBody == null ? null : utf8.encode(responseBody);
+      widget.onExecuteResponse?.call(newResponse);
+    }
   }
 
   Future<void> curlParse() async {
