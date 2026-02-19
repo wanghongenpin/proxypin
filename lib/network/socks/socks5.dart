@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel.dart';
@@ -33,6 +34,8 @@ class Socks5 {
   static const int cmdConnect = 1;
 
   static const int atypIpv4 = 1;
+  static const int atypDomain = 3;
+  static const int atypIpv6 = 4;
 
   static const int repSuccess = 0;
   static const int repCommandNotSupported = 7;
@@ -43,7 +46,10 @@ class Socks5 {
   static const int repSocks5ServerAtypIpv6 = 0x04;
 
   static bool isSocks5(Uint8List data) {
-    return data.length == 3 && data[0] == version && data[1] == 1 && data[2] == methodNoAuth;
+    return (data.length == 3 || data.length == 4) &&
+        data[0] == version &&
+        (data[1] == 1 || data[1] == 2) &&
+        data[2] == methodNoAuth;
   }
 }
 
@@ -87,14 +93,28 @@ class SocksServerHandler extends ChannelHandler<Uint8List> {
       idx++;
 
       final int dstAddrType = msg[idx++];
-      if (dstAddrType != Socks5.atypIpv4) {
+      String host;
+
+      if (dstAddrType == Socks5.atypIpv4) {
+        host = '${msg[idx++]}.${msg[idx++]}.${msg[idx++]}.${msg[idx++]}';
+      } else if (dstAddrType == Socks5.atypDomain) {
+        int len = msg[idx++];
+        host = utf8.decode(msg.sublist(idx, idx + len));
+        idx += len;
+      } else if (dstAddrType == Socks5.atypIpv6) {
+        List<String> parts = [];
+        for (int i = 0; i < 8; i++) {
+          int part = msg[idx++] << 8 | msg[idx++];
+          parts.add(part.toRadixString(16));
+        }
+        host = parts.join(':');
+      } else {
         var out = encodeCommandResponse(Socks5.repAddressTypeNotSupported);
         await channel.writeBytes(out);
         channel.dispatcher.exceptionCaught(channelContext, channel, Exception('Unsupported SOCKS atyp: $dstAddrType'));
         return;
       }
 
-      final host = '${msg[idx++]}.${msg[idx++]}.${msg[idx++]}.${msg[idx++]}';
       final int port = msg[idx++] << 8 | msg[idx++];
       final proxyInfo = ProxyInfo.of(host, port);
 
