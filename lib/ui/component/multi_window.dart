@@ -174,6 +174,8 @@ enum Operation {
 }
 
 class MultiWindow {
+  static Function(String widgetName, Map<String, dynamic>? args)? onOpenWindow;
+
   /// 刷新请求重写
   static Future<void> invokeRefreshRewrite(Operation operation,
       {int? index, RequestRewriteRule? rule, List<RewriteItem>? items, bool? enabled}) async {
@@ -188,6 +190,11 @@ class MultiWindow {
 
   static Future<WindowController> openWindow(String title, String widgetName,
       {Size size = const Size(800, 680), Map<String, dynamic>? args}) async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      onOpenWindow?.call(widgetName, args);
+      return WindowController.fromWindowId(0); // Dummy controller
+    }
+
     var ratio = 1.0;
     if (Platform.isWindows) {
       ratio = WindowManager.instance.getDevicePixelRatio();

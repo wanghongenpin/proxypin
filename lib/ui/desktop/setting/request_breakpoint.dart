@@ -221,7 +221,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
         child: Row(children: [
           SizedBox(
             width: 150,
-            child: Text(rule.name?.isNotEmpty == true ? rule.name! : rule.url,
+            child: Text(rule.name ?? "",
                 overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
           ),
           SizedBox(

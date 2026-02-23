@@ -38,6 +38,7 @@ import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
+import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 
 import '../../component/widgets.dart';
 import '../setting/proxy.dart';
@@ -158,6 +159,12 @@ class _ConfigPageState extends State<ConfigPage> {
                   leading: Icon(Icons.javascript_outlined, color: color),
                   trailing: arrow,
                   onTap: () => navigator(context, const MobileScript())),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              ListTile(
+                  title: Text(localizations.breakpoint),
+                  leading: Icon(Icons.bug_report_outlined, color: color),
+                  trailing: arrow,
+                  onTap: () => navigator(context, const MobileRequestBreakpointPage())),
             ]),
             const SizedBox(height: 16)
           ],

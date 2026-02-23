@@ -30,14 +30,29 @@ import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
 
+import 'package:proxypin/ui/mobile/request/request_editor_source.dart';
+
 import '../../component/http_method_popup.dart';
+
 
 /// @author wanghongen
 class MobileRequestEditor extends StatefulWidget {
   final HttpRequest? request;
   final ProxyServer? proxyServer;
+  final RequestEditorSource source;
+  final Function(HttpRequest request)? onExecuteRequest;
+  final Function(HttpResponse response)? onExecuteResponse;
+  final HttpResponse? response;
 
-  const MobileRequestEditor({super.key, this.request, required this.proxyServer});
+  const MobileRequestEditor({
+    super.key,
+    this.request,
+    this.response,
+    required this.proxyServer,
+    this.source = RequestEditorSource.editor,
+    this.onExecuteRequest,
+    this.onExecuteResponse,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -79,6 +94,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
 
     tabController = TabController(length: tabs.length, vsync: this);
     request = widget.request;
+    response = widget.response;
     if (widget.request == null) {
       curlParse();
     }
@@ -134,6 +150,14 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
       ];
     }
 
+    var buttonText = localizations.send;
+    IconData icon = Icons.send;
+    if (widget.source == RequestEditorSource.breakpointRequest ||
+        widget.source == RequestEditorSource.breakpointResponse) {
+      buttonText = "Execute";
+      icon = Icons.play_arrow;
+    }
+
     return Scaffold(
         appBar: AppBar(
             title: Text(localizations.httpRequest, style: const TextStyle(fontSize: 16)),
@@ -143,7 +167,16 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                 onPressed: () => Navigator.pop(context),
                 child: Text(localizations.cancel, style: Theme.of(context).textTheme.bodyMedium)),
             actions: [
-              TextButton.icon(icon: const Icon(Icons.send), label: Text(localizations.send), onPressed: sendRequest)
+              TextButton.icon(
+                  icon: Icon(icon),
+                  label: Text(buttonText),
+                  onPressed: () {
+                    if (widget.source == RequestEditorSource.editor) {
+                      sendRequest();
+                    } else {
+                      executeBreakpoint();
+                    }
+                  })
             ],
             bottom: TabBar(controller: tabController, tabs: tabs)),
         body: GestureDetector(
@@ -156,6 +189,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                   message: request,
                   key: requestKey,
                   urlQueryNotifier: _queryNotifier,
+                  readOnly: widget.source == RequestEditorSource.breakpointResponse,
                 ),
                 ValueListenableBuilder(
                     valueListenable: responseChange,
@@ -176,7 +210,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
                                 style: TextStyle(
                                     color: response?.status.isSuccessful() == true ? Colors.blue : Colors.red))
                           ]),
-                          readOnly: true,
+                          readOnly: widget.source == RequestEditorSource.breakpointRequest,
                           message: response);
                     }),
               ],
@@ -214,6 +248,32 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     });
 
     tabController.animateTo(1);
+  }
+
+  void executeBreakpoint() {
+    if (widget.source == RequestEditorSource.breakpointRequest) {
+      var currentState = requestLineKey.currentState!;
+      var headers = requestKey.currentState?.getHeaders();
+      var requestBody = requestKey.currentState?.getBody();
+      String url = currentState.requestUrl.text;
+
+      HttpRequest newRequest = request!.copy(uri: url);
+      newRequest.method = currentState.requestMethod;
+      newRequest.headers.clear();
+      newRequest.headers.addAll(headers);
+      newRequest.body = requestBody == null ? null : utf8.encode(requestBody);
+      widget.onExecuteRequest?.call(newRequest);
+    } else if (widget.source == RequestEditorSource.breakpointResponse) {
+      var headers = responseKey.currentState?.getHeaders();
+      var responseBody = responseKey.currentState?.getBody();
+
+      if (response == null) return;
+      HttpResponse newResponse = response!.copy();
+      newResponse.headers.clear();
+      newResponse.headers.addAll(headers);
+      newResponse.body = responseBody == null ? null : utf8.encode(responseBody);
+      widget.onExecuteResponse?.call(newResponse);
+    }
   }
 }
 

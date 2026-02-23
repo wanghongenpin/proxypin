@@ -15,6 +15,7 @@
  */
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -50,6 +51,8 @@ import 'package:proxypin/utils/listenable_list.dart';
 import 'package:proxypin/utils/navigator.dart';
 
 import '../app_update/app_update_repository.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/mobile/debug/breakpoint_executor.dart';
 
 ///移动端首页
 ///@author wanghongen
@@ -124,6 +127,26 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     } else if (Platform.isAndroid) {
       AppUpdateRepository.checkUpdate(context);
     }
+
+    // Handle breakpoint window on mobile
+    MultiWindow.onOpenWindow = (widgetName, args) async {
+      if (widgetName == 'BreakpointExecutor' && args != null) {
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BreakpointExecutor(
+              requestId: args['requestId'],
+              request: HttpRequest.fromJson(jsonDecode(jsonEncode(args['request']))),
+              response: args['response'] == null
+                  ? null
+                  : HttpResponse.fromJson(jsonDecode(jsonEncode(args['response']))),
+              isResponse: args['type'] == 'response',
+            ),
+          ),
+        );
+      }
+    };
   }
 
   @override
