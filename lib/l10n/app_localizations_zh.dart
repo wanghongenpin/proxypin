@@ -141,7 +141,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoStartupDescribe => '程序启动时自动开始记录流量';
 
   @override
-  String get copied => '已复制到剪贴板';
+  String get copied => '已复制到剪切板';
+
+  @override
+  String get execute => '执行';
 
   @override
   String get cancel => '取消';
@@ -1202,7 +1205,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get autoStartupDescribe => '程式啟動時自動開始記錄流量';
 
   @override
-  String get copied => '已複製到剪貼簿';
+  String get copied => '已複製到剪切板';
+
+  @override
+  String get execute => '執行';
 
   @override
   String get cancel => '取消';

@@ -47,6 +47,7 @@
   "autoStartupDescribe": "Automatically start recording traffic when the program starts",
 
   "copied": "Copied to clipboard",
+  "execute": "Execute",
   "cancel": "Cancel",
   "close": "Close",
   "save": "Save",

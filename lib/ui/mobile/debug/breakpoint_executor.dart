@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/components/request_breakpoint.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/mobile/request/request_editor_source.dart';
@@ -48,6 +49,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       onExecuteRequest: (newRequest) async {
         if (Navigator.canPop(context)) {
           Navigator.pop(context, newRequest);
+          RequestBreakpointInterceptor.instance.resumeRequest(widget.requestId, newRequest);
         }
       },
     );
@@ -62,6 +64,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       onExecuteResponse: (newResponse) async {
         if (Navigator.canPop(context)) {
           Navigator.pop(context, newResponse);
+          RequestBreakpointInterceptor.instance.resumeResponse(widget.requestId, newResponse);
         }
       },
     );

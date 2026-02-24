@@ -138,11 +138,11 @@ class RequestEditorState extends State<RequestEditor> {
 
     if (widget.source == RequestEditorSource.breakpointRequest) {
       title = "Breakpoint Request";
-      buttonText = "Execute";
+      buttonText = localizations.execute;
       icon = Icons.play_arrow;
     } else if (widget.source == RequestEditorSource.breakpointResponse) {
       title = "Breakpoint Response";
-      buttonText = "Execute";
+      buttonText = localizations.execute;
       icon = Icons.play_arrow;
     }
 

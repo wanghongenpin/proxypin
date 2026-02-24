@@ -366,6 +366,12 @@ abstract class AppLocalizations {
   /// **'Copied to clipboard'**
   String get copied;
 
+  /// No description provided for @execute.
+  ///
+  /// In en, this message translates to:
+  /// **'Execute'**
+  String get execute;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:

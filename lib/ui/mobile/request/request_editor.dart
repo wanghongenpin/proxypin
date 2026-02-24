@@ -92,7 +92,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   void initState() {
     super.initState();
 
-    tabController = TabController(length: tabs.length, vsync: this);
+    tabController = TabController(length: tabs.length, vsync: this, initialIndex: widget.source == RequestEditorSource.breakpointResponse ? 1 : 0);
     request = widget.request;
     response = widget.response;
     if (widget.request == null) {
@@ -154,7 +154,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     IconData icon = Icons.send;
     if (widget.source == RequestEditorSource.breakpointRequest ||
         widget.source == RequestEditorSource.breakpointResponse) {
-      buttonText = "Execute";
+      buttonText = localizations.execute;
       icon = Icons.play_arrow;
     }
 
