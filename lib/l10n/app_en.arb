@@ -62,6 +62,7 @@
   "importFailed": "Import failed",
   "export": "Export",
   "exportSuccess": "Export successful",
+  "exportFailed": "Export failed",
   "deleteSuccess": "Delete successful",
   "send": "Send",
   "fail": "fail",

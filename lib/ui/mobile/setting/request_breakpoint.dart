@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +66,7 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     SizedBox(
-                        width: isEN ? 280 : 250,
+                        width: isEN ? 230 : 160,
                         child: ListTile(
                             title: Text("${localizations.enable} ${localizations.breakpoint}"),
                             contentPadding: const EdgeInsets.only(left: 2),
@@ -82,8 +83,15 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
                     const SizedBox(width: 10),
                     Expanded(
                         child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                      TextButton.icon(
-                          icon: const Icon(Icons.add, size: 18), label: Text(localizations.add), onPressed: _editRule),
+                      IconButton(
+                          icon: Icon(Icons.add, size: 22, color: Theme.of(context).colorScheme.primary),
+                          onPressed: _editRule,
+                          tooltip: localizations.add),
+                      const SizedBox(width: 5),
+                      IconButton(
+                          icon: Icon(Icons.input_rounded, size: 22, color: Theme.of(context).colorScheme.primary),
+                          onPressed: _import,
+                          tooltip: localizations.import),
                     ])),
                     const SizedBox(width: 15)
                   ]),
@@ -192,6 +200,32 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
     } catch (e) {
       logger.e('导出失败', error: e);
       if (mounted) FlutterToastr.show('Export failed: $e', context);
+    }
+  }
+
+  Future<void> _import() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result == null || result.files.isEmpty) return;
+      File file = File(result.files.single.path!);
+      String content = await file.readAsString();
+      List<dynamic> list = jsonDecode(content);
+      var newRules = list.map((e) => RequestBreakpointRule.fromJson(e)).toList();
+      for (var rule in newRules) {
+        manager?.list.add(rule);
+      }
+      await _save();
+      setState(() {
+        rules = manager!.list;
+      });
+
+      if (mounted) FlutterToastr.show(localizations.importSuccess, context);
+    } catch (e) {
+      logger.e('Import failed', error: e);
+      if (mounted) FlutterToastr.show(localizations.importFailed, context);
     }
   }
 

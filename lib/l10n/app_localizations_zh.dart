@@ -189,6 +189,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exportSuccess => '导出成功';
 
   @override
+  String get exportFailed => '导出失败';
+
+  @override
   String get deleteSuccess => '删除成功';
 
   @override

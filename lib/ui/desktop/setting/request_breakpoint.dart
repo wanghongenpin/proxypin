@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +43,60 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   Future<void> _save() async {
     await manager?.save();
     await _refreshConfig();
+  }
+
+  Future<void> _import() async {
+
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+        "allowedExtensions": ['json']
+      });
+      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      FilePickerResult? result =
+      await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      path = result?.files.single.path;
+    }
+    if (path == null) return;
+    File file = File(path);
+    try {
+      String content = await file.readAsString();
+      List<dynamic> list = jsonDecode(content);
+      var rules = list.map((e) => RequestBreakpointRule.fromJson(e)).toList();
+      for (var rule in rules) {
+        manager?.list.add(rule);
+      }
+      await _save();
+      setState(() {
+        this.rules = manager!.list;
+      });
+
+      if (mounted) CustomToast.success(localizations.importSuccess).show(context);
+    } catch (e) {
+      if (mounted) CustomToast.error(localizations.importFailed).show(context);
+    }
+  }
+
+  Future<void> _export(List<RequestBreakpointRule> exportRules) async {
+    if (exportRules.isEmpty) return;
+
+    String? outputFile;
+    if (Platform.isMacOS) {
+      outputFile = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_breakpoint_rules.json'});
+      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      outputFile = await FilePicker.platform.saveFile(fileName: 'request_breakpoint_rules.json');
+    }
+    if (outputFile == null) return;
+    File file = File(outputFile);
+    try {
+      var json = exportRules.map((e) => e.toJson()).toList();
+      await file.writeAsString(jsonEncode(json));
+      if (mounted) CustomToast.success(localizations.exportSuccess).show(context);
+    } catch (e) {
+      if (mounted) CustomToast.error(localizations.exportFailed).show(context);
+    }
   }
 
   @override
@@ -114,7 +172,12 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
                     Expanded(
                         child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                       TextButton.icon(
-                          icon: const Icon(Icons.add, size: 18), label: Text(localizations.add), onPressed: _editRule)
+                          icon: const Icon(Icons.add, size: 18), label: Text(localizations.add), onPressed: _editRule),
+                      const SizedBox(width: 5),
+                      TextButton.icon(
+                          icon: const Icon(Icons.input_rounded, size: 18),
+                          onPressed: _import,
+                          label: Text(localizations.import)),
                     ])),
                     const SizedBox(width: 15)
                   ]),
@@ -264,6 +327,22 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
           if (selected.length == 1) {
             _editRule(rule: rules[selected.first]);
           }
+        },
+      ),
+      PopupMenuItem(
+        height: 32,
+        child: Text(localizations.export),
+        onTap: () async {
+          if (selected.isEmpty) return;
+          var list = selected.toList();
+          List<RequestBreakpointRule> exportRules = [];
+          for (var i in list) {
+            exportRules.add(rules[i]);
+          }
+          await _export(exportRules);
+          setState(() {
+            selected.clear();
+          });
         },
       ),
       PopupMenuItem(

@@ -189,6 +189,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportSuccess => 'Export successful';
 
   @override
+  String get exportFailed => 'Export failed';
+
+  @override
   String get deleteSuccess => 'Delete successful';
 
   @override

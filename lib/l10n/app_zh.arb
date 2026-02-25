@@ -63,6 +63,7 @@
   "importFailed": "导入失败",
   "export": "导出",
   "exportSuccess": "导出成功",
+  "exportFailed": "导出失败",
   "deleteSuccess": "删除成功",
   "send": "发送",
   "fail": "失败",

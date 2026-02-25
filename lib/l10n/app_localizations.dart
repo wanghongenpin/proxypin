@@ -456,6 +456,12 @@ abstract class AppLocalizations {
   /// **'Export successful'**
   String get exportSuccess;
 
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed'**
+  String get exportFailed;
+
   /// No description provided for @deleteSuccess.
   ///
   /// In en, this message translates to:
