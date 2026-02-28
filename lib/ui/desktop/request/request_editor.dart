@@ -47,8 +47,8 @@ class RequestEditor extends StatefulWidget {
   final WindowController? windowController;
   final HttpRequest? request;
   final RequestEditorSource source;
-  final Function(HttpRequest request)? onExecuteRequest;
-  final Function(HttpResponse response)? onExecuteResponse;
+  final Function(HttpRequest? request)? onExecuteRequest;
+  final Function(HttpResponse? response)? onExecuteResponse;
   final HttpResponse? response;
 
   const RequestEditor({
@@ -78,6 +78,7 @@ class RequestEditorState extends State<RequestEditor> {
   HttpResponse? response;
 
   bool showCURLDialog = false;
+  bool executed = false;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -125,6 +126,16 @@ class RequestEditorState extends State<RequestEditor> {
 
   @override
   void dispose() {
+    if ((widget.source == RequestEditorSource.breakpointRequest ||
+            widget.source == RequestEditorSource.breakpointResponse) &&
+        !executed) {
+      if (widget.source == RequestEditorSource.breakpointRequest) {
+        widget.onExecuteRequest?.call(null);
+      } else {
+        widget.onExecuteResponse?.call(null);
+      }
+    }
+
     HardwareKeyboard.instance.removeHandler(onKeyEvent);
     responseChange.dispose();
     super.dispose();
@@ -162,6 +173,20 @@ class RequestEditorState extends State<RequestEditor> {
                 },
                 icon: Icon(icon),
                 label: Text(buttonText)),
+            if (widget.source == RequestEditorSource.breakpointRequest ||
+                widget.source == RequestEditorSource.breakpointResponse)
+              TextButton.icon(
+                  onPressed: () {
+                    // ignore breakpoint
+                    if (widget.source == RequestEditorSource.breakpointRequest) {
+                      widget.onExecuteRequest?.call(null);
+                    } else {
+                      widget.onExecuteResponse?.call(null);
+                    }
+                    widget.windowController?.close();
+                  },
+                  icon: const Icon(Icons.cancel),
+                  label: Text(localizations.cancel)),
             const SizedBox(width: 10)
           ],
         ),
@@ -246,6 +271,7 @@ class RequestEditorState extends State<RequestEditor> {
   }
 
   void executeBreakpoint() {
+    executed = true;
     if (widget.source == RequestEditorSource.breakpointRequest) {
       var currentState = requestLineKey.currentState!;
       var headers = requestKey.currentState?.getHeaders();

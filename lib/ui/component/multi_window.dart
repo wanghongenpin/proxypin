@@ -329,14 +329,20 @@ void registerMethodHandler() {
     }
 
     if (call.method == 'resumeRequest') {
-      var request = HttpRequest.fromJson(jsonDecode(jsonEncode(call.arguments['request'])));
+      var request = call.arguments['request'] == null
+          ? null
+          : HttpRequest.fromJson(jsonDecode(jsonEncode(call.arguments['request'])));
       RequestBreakpointInterceptor.instance.resumeRequest(call.arguments['requestId'], request);
       return 'done';
     }
 
     if (call.method == 'resumeResponse') {
-      var response = HttpResponse.fromJson(jsonDecode(jsonEncode(call.arguments['response'])));
-      response.requestId = call.arguments['requestId'];
+      var response = call.arguments['response'] == null
+          ? null
+          : HttpResponse.fromJson(jsonDecode(jsonEncode(call.arguments['response'])));
+      if (response != null) {
+        response.requestId = call.arguments['requestId'];
+      }
       RequestBreakpointInterceptor.instance.resumeResponse(call.arguments['requestId'], response);
       return 'done';
     }

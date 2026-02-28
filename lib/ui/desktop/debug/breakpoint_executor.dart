@@ -48,7 +48,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       onExecuteRequest: (newRequest) async {
         await DesktopMultiWindow.invokeMethod(0, 'resumeRequest', {
           'requestId': widget.requestId,
-          'request': newRequest.toJson(),
+          'request': newRequest?.toJson(),
         });
         if (widget.windowId != null) {
           WindowController.fromWindowId(widget.windowId!).close();
@@ -65,7 +65,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       onExecuteResponse: (newResponse) async {
         await DesktopMultiWindow.invokeMethod(0, 'resumeResponse', {
           'requestId': widget.requestId,
-          'response': newResponse.toJson(),
+          'response': newResponse?.toJson(),
         });
         if (widget.windowId != null) {
           WindowController.fromWindowId(widget.windowId!).close();

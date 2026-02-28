@@ -36,6 +36,7 @@ class RequestBreakpointInterceptor extends Interceptor {
 
         return completer.future.then((req) {
           if (req == null) {
+            logger.d('Request ${request.requestId} was resumed null, aborting request');
             return null;
           }
 
