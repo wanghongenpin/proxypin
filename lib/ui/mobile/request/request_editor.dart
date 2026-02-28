@@ -39,8 +39,8 @@ class MobileRequestEditor extends StatefulWidget {
   final HttpRequest? request;
   final ProxyServer? proxyServer;
   final RequestEditorSource source;
-  final Function(HttpRequest request)? onExecuteRequest;
-  final Function(HttpResponse response)? onExecuteResponse;
+  final Function(HttpRequest? request)? onExecuteRequest;
+  final Function(HttpResponse? response)? onExecuteResponse;
   final HttpResponse? response;
 
   const MobileRequestEditor({
@@ -72,6 +72,8 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   HttpRequest? request;
   HttpResponse? response;
 
+  bool executed = false;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   var tabs = const [
@@ -81,6 +83,16 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
 
   @override
   void dispose() {
+    if ((widget.source == RequestEditorSource.breakpointRequest ||
+            widget.source == RequestEditorSource.breakpointResponse) &&
+        !executed) {
+      if (widget.source == RequestEditorSource.breakpointRequest) {
+        widget.onExecuteRequest?.call(null);
+      } else {
+        widget.onExecuteResponse?.call(null);
+      }
+    }
+
     tabController.dispose();
     responseChange.dispose();
     _expanded.clear();
@@ -253,6 +265,7 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   }
 
   void executeBreakpoint() {
+    executed = true;
     if (widget.source == RequestEditorSource.breakpointRequest) {
       var currentState = requestLineKey.currentState!;
       var headers = requestKey.currentState?.getHeaders();

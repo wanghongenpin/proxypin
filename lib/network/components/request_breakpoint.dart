@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:proxypin/network/components/interceptor.dart';
 import 'package:proxypin/network/components/manager/request_breakpoint_manager.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 
@@ -13,8 +14,8 @@ class RequestBreakpointInterceptor extends Interceptor {
 
   final manager = RequestBreakpointManager.instance;
 
-  final Map<String, Completer<HttpRequest?>> _pausedRequests = {};
-  final Map<String, Completer<HttpResponse?>> _pausedResponses = {};
+  final ExpiringCache<String, Completer<HttpRequest?>> _pausedRequests = ExpiringCache(Duration(minutes: 10));
+  final ExpiringCache<String, Completer<HttpResponse?>> _pausedResponses = ExpiringCache(Duration(minutes: 10));
 
   RequestBreakpointInterceptor._();
 
@@ -34,24 +35,25 @@ class RequestBreakpointInterceptor extends Interceptor {
             args: {'type': 'request', 'request': request.toJson(), 'requestId': request.requestId});
 
         return completer.future.then((req) {
-          if (req != null) {
-            request.method = req.method;
-            Uri uri = req.requestUri!;
-            if (uri.isScheme('https')) {
-              request.uri = uri.path + (uri.hasQuery ? "?${uri.query}" : "");
-            } else {
-              request.uri = uri.toString();
-            }
-
-            request.headers.clear();
-            request.headers.addAll(req.headers);
-            request.headers.remove(HttpHeaders.CONTENT_ENCODING);
-
-            request.body = req.body;
-            logger.d('Resuming request ${request.requestId} with modified request');
-            return request;
+          if (req == null) {
+            return null;
           }
-          return req;
+
+          request.method = req.method;
+          Uri uri = req.requestUri!;
+          if (uri.isScheme('https')) {
+            request.uri = uri.path + (uri.hasQuery ? "?${uri.query}" : "");
+          } else {
+            request.uri = uri.toString();
+          }
+
+          request.headers.clear();
+          request.headers.addAll(req.headers);
+          request.headers.remove(HttpHeaders.CONTENT_ENCODING);
+
+          request.body = req.body;
+          logger.d('Resuming request ${request.requestId} with modified request');
+          return request;
         });
       }
     }
@@ -78,18 +80,19 @@ class RequestBreakpointInterceptor extends Interceptor {
         });
 
         return completer.future.then((res) {
-          if (res != null) {
-            response.status = res.status;
-            response.headers.clear();
-            response.headers.addAll(res.headers);
-            response.headers.remove(HttpHeaders.CONTENT_ENCODING);
-
-            response.body = res.body;
-
-            logger.d('Resuming response for request ${request.requestId} with modified response');
-            return response;
+          if (res == null) {
+            return null;
           }
-          return res;
+
+          response.status = res.status;
+          response.headers.clear();
+          response.headers.addAll(res.headers);
+          response.headers.remove(HttpHeaders.CONTENT_ENCODING);
+
+          response.body = res.body;
+
+          logger.d('Resuming response for request ${request.requestId} with modified response');
+          return response;
         });
       }
     }
