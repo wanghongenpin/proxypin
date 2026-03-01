@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import java.io.ByteArrayOutputStream
+import androidx.core.graphics.createBitmap
 
 class ProcessInfo(name: CharSequence, packageName: String, icon: ByteArray?, versionName: String?) :
     HashMap<String, Any?>() {
@@ -55,11 +56,16 @@ class ProcessInfo(name: CharSequence, packageName: String, icon: ByteArray?, ver
             if (drawable is BitmapDrawable) {
                 return drawable.bitmap
             }
-            val bitmap = Bitmap.createBitmap(
-                drawable.intrinsicWidth,
-                drawable.intrinsicHeight,
-                Bitmap.Config.ARGB_8888
-            )
+
+            // 获取宽度和高度，如果无效则使用默认值 96dp
+            var width = drawable.intrinsicWidth
+            var height = drawable.intrinsicHeight
+
+            // 如果宽度或高度无效（≤ 0），使用默认的 96 作为大小
+            if (width <= 0) width = 96
+            if (height <= 0) height = 96
+
+            val bitmap = createBitmap(width, height)
             val canvas = Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)

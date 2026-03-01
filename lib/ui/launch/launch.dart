@@ -193,6 +193,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
         });
         widget.onStart?.call();
       }).catchError((e) {
+        logger.e("启动代理服务器失败", error: e);
         String message = localizations.proxyPortRepeat(widget.proxyServer.port);
         FlutterToastr.show(message, context, duration: 3);
       });
