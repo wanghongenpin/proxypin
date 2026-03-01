@@ -20,6 +20,33 @@ and easy to use.
 
 **Mac will prompt untrusted developers when first opened, you need to go to System Preferences-Security & Privacy-Allow any source.**
 
+## MCP Integration
+
+ProxyPin MCP Server exposes local capture history to MCP-capable clients (Windsurf / Cursor / Claude Desktop / Codex).
+
+Repo: https://github.com/ElonJask/proxypin-mcp
+
+Run:
+`npx -y @elonjask/proxypin-mcp@latest`
+
+MCP config:
+```json
+{
+  "mcpServers": {
+    "proxypin": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@elonjask/proxypin-mcp@latest"]
+    }
+  }
+}
+```
+
+Notes:
+* Enable “Cache Date” in ProxyPin History (required)
+* Ensure some capture history exists
+* `uv` must be installed (the launcher calls `uvx --from proxypin-mcp proxypin-mcp`)
+
 ## Sponsors
 
 If ProxyPin is helpful to you, you are welcome to support us in the following ways to help the project develop in the long term:
