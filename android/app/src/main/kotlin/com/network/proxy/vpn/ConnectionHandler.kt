@@ -1,6 +1,5 @@
 package com.network.proxy.vpn
 
-import android.os.Build
 import android.util.Log
 import com.network.proxy.vpn.Connection.Companion.getConnectionKey
 import com.network.proxy.vpn.socket.ClientPacketWriter
@@ -134,16 +133,139 @@ class ConnectionHandler(
     private fun getProxyAddress(
         packetData: ByteBuffer, destinationIP: Int, destinationPort: Int
     ): InetSocketAddress {
+        val ips = intToIPAddress(destinationIP)
+
+        // 检查是否在代理过滤列表中
+        if (shouldBypassProxy(ips)) {
+            Log.d(TAG, "Bypassing proxy for $ips (in proxyPassDomains)")
+            return InetSocketAddress(ips, destinationPort)
+        }
+
         val supperProtocol = supperProtocol(packetData)
         var socketAddress: InetSocketAddress? = null
         if (supperProtocol) {
             socketAddress = manager.proxyAddress
         }
         if (socketAddress == null) {
-            val ips = intToIPAddress(destinationIP)
             socketAddress = InetSocketAddress(ips, destinationPort)
         }
         return socketAddress
+    }
+
+    /**
+     * 检查是否应该绕过代理
+     * 支持 CIDR 格式（如 192.168.0.0/16）、IP地址、localhost 和域名（带通配符）匹配
+     */
+    private fun shouldBypassProxy(destinationIP: String): Boolean {
+        val proxyPassDomains = manager.proxyPassDomains ?: return false
+
+        for (domain in proxyPassDomains) {
+            try {
+                val trimmedDomain = domain.trim()
+
+                // 处理 localhost
+                if (trimmedDomain == "localhost" && (destinationIP == "127.0.0.1" || destinationIP == "localhost")) {
+                    return true
+                }
+
+                // 处理 CIDR 格式，如 192.168.0.0/16
+                if (trimmedDomain.contains("/")) {
+                    if (matchesCIDR(destinationIP, trimmedDomain)) {
+                        return true
+                    }
+                } else if (trimmedDomain.startsWith("*.")) {
+                    // 支持通配符匹配，如 *.example.com
+                    val suffix = trimmedDomain.substring(1) // 去掉 *
+                    if (destinationIP.endsWith(suffix)) {
+                        return true
+                    }
+                } else if (trimmedDomain.contains("*")) {
+                    // 支持其他通配符模式
+                    val pattern = trimmedDomain.replace(".", "\\.").replace("*", ".*")
+                    if (destinationIP.matches(Regex(pattern))) {
+                        return true
+                    }
+                } else {
+                    // 精确匹配 IP 或域名
+                    if (destinationIP == trimmedDomain) {
+                        return true
+                    }
+
+                    // 尝试解析域名为IP地址进行比较
+                    try {
+                        val address = InetAddress.getByName(trimmedDomain)
+                        if (address.hostAddress == destinationIP) {
+                            return true
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error resolving domain $trimmedDomain: ${e.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error matching domain $domain: ${e.message}")
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * 检查 IP 地址是否匹配 CIDR 格式
+     * @param ip 目标 IP 地址，如 "192.168.1.1"
+     * @param cidr CIDR 格式，如 "192.168.0.0/16"
+     * @return 是否匹配
+     */
+    private fun matchesCIDR(ip: String, cidr: String): Boolean {
+        try {
+            val parts = cidr.split("/")
+            if (parts.size != 2) return false
+
+            val networkAddress = parts[0]
+            val prefixLength = parts[1].toIntOrNull() ?: return false
+
+            val ipBytes = ipToBytes(ip)
+            val networkBytes = ipToBytes(networkAddress)
+
+            if (ipBytes == null || networkBytes == null) return false
+
+            // 计算掩码
+            val mask = (-1L shl (32 - prefixLength)).toInt()
+
+            // 将 IP 地址转换为整数进行比较
+            val ipInt = bytesToInt(ipBytes)
+            val networkInt = bytesToInt(networkBytes)
+
+            return (ipInt and mask) == (networkInt and mask)
+        } catch (e: Exception) {
+            Log.w(TAG, "Error matching CIDR $cidr for IP $ip: ${e.message}")
+            return false
+        }
+    }
+
+    /**
+     * 将 IP 地址字符串转换为字节数组
+     */
+    private fun ipToBytes(ip: String): ByteArray? {
+        try {
+            val parts = ip.split(".")
+            if (parts.size != 4) return null
+
+            return ByteArray(4) { i ->
+                parts[i].toInt().toByte()
+            }
+        } catch (_: Exception) {
+            return null
+        }
+    }
+
+    /**
+     * 将字节数组转换为整数
+     */
+    private fun bytesToInt(bytes: ByteArray): Int {
+        return ((bytes[0].toInt() and 0xFF) shl 24) or
+               ((bytes[1].toInt() and 0xFF) shl 16) or
+               ((bytes[2].toInt() and 0xFF) shl 8) or
+               (bytes[3].toInt() and 0xFF)
     }
 
     @Throws(IOException::class)
@@ -262,7 +384,7 @@ class ConnectionHandler(
             connection.isConnected = connected
             nioService.registerSession(connection)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && proxyAddress == manager.proxyAddress) {
+            if (proxyAddress == manager.proxyAddress) {
                 //获取进程信息
                 ProcessInfoManager.instance.setConnectionOwnerUid(connection)
                 Log.d(
@@ -504,7 +626,7 @@ class ConnectionHandler(
             private fun isReachable(ipAddress: String): Boolean {
                 return try {
                     InetAddress.getByName(ipAddress).isReachable(10000)
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     false
                 }
             }

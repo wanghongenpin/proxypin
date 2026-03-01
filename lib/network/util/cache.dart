@@ -47,17 +47,17 @@ class ExpiringCache<K, V> {
   bool containsKey(K key) {
     return _cache.containsKey(key);
   }
-  
+
   V? get(K key) {
     return _cache[key];
   }
 
   V? operator [](K key) => get(key);
 
-  void remove(K key) {
+  V? remove(K key) {
     _expirationTimes[key]?.cancel();
     _expirationTimes.remove(key);
-    _cache.remove(key);
+    return _cache.remove(key);
   }
 
   void clear() {

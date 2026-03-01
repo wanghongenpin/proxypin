@@ -22,11 +22,13 @@ import java.util.concurrent.ConcurrentMap
 class ConnectionManager private constructor() : CloseableConnection {
     //单例
     companion object {
+        private const val TAG = "ConnectionManager"
         val instance = ConnectionManager()
     }
 
     private val table: ConcurrentMap<String, Connection> = ConcurrentHashMap()
     var proxyAddress: InetSocketAddress? = null
+    var proxyPassDomains: ArrayList<String>? = null
 
     private val DEFAULT_PORTS: List<Int> = listOf(
         80,  // HTTP

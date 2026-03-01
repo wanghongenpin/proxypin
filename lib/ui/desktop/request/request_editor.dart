@@ -36,12 +36,30 @@ import 'package:proxypin/utils/lang.dart';
 
 import '../../component/http_method_popup.dart';
 
+enum RequestEditorSource {
+  editor,
+  breakpointRequest,
+  breakpointResponse,
+}
+
 /// @author wanghongen
 class RequestEditor extends StatefulWidget {
   final WindowController? windowController;
   final HttpRequest? request;
+  final RequestEditorSource source;
+  final Function(HttpRequest? request)? onExecuteRequest;
+  final Function(HttpResponse? response)? onExecuteResponse;
+  final HttpResponse? response;
 
-  const RequestEditor({super.key, this.request, this.windowController});
+  const RequestEditor({
+    super.key,
+    this.request,
+    this.response,
+    this.windowController,
+    this.source = RequestEditorSource.editor,
+    this.onExecuteRequest,
+    this.onExecuteResponse,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -60,6 +78,7 @@ class RequestEditorState extends State<RequestEditor> {
   HttpResponse? response;
 
   bool showCURLDialog = false;
+  bool executed = false;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -67,6 +86,10 @@ class RequestEditorState extends State<RequestEditor> {
   void initState() {
     super.initState();
     request = widget.request;
+    response = widget.response;
+    if (response != null) {
+      responseChange.value = 1;
+    }
     HardwareKeyboard.instance.addHandler(onKeyEvent);
     if (widget.request == null) {
       curlParse();
@@ -103,6 +126,16 @@ class RequestEditorState extends State<RequestEditor> {
 
   @override
   void dispose() {
+    if ((widget.source == RequestEditorSource.breakpointRequest ||
+            widget.source == RequestEditorSource.breakpointResponse) &&
+        !executed) {
+      if (widget.source == RequestEditorSource.breakpointRequest) {
+        widget.onExecuteRequest?.call(null);
+      } else {
+        widget.onExecuteResponse?.call(null);
+      }
+    }
+
     HardwareKeyboard.instance.removeHandler(onKeyEvent);
     responseChange.dispose();
     super.dispose();
@@ -110,14 +143,50 @@ class RequestEditorState extends State<RequestEditor> {
 
   @override
   Widget build(BuildContext context) {
+    var title = localizations.httpRequest;
+    var buttonText = localizations.send;
+    IconData icon = Icons.send;
+
+    if (widget.source == RequestEditorSource.breakpointRequest) {
+      title = "Breakpoint Request";
+      buttonText = localizations.execute;
+      icon = Icons.play_arrow;
+    } else if (widget.source == RequestEditorSource.breakpointResponse) {
+      title = "Breakpoint Response";
+      buttonText = localizations.execute;
+      icon = Icons.play_arrow;
+    }
+
     return Scaffold(
         appBar: AppBar(
-          title: Text(localizations.httpRequest, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           toolbarHeight: Platform.isWindows ? 36 : null,
           centerTitle: true,
           actions: [
             TextButton.icon(
-                onPressed: () async => sendRequest(), icon: const Icon(Icons.send), label: Text(localizations.send)),
+                onPressed: () async {
+                  if (widget.source == RequestEditorSource.editor) {
+                    sendRequest();
+                  } else {
+                    executeBreakpoint();
+                  }
+                },
+                icon: Icon(icon),
+                label: Text(buttonText)),
+            if (widget.source == RequestEditorSource.breakpointRequest ||
+                widget.source == RequestEditorSource.breakpointResponse)
+              TextButton.icon(
+                  onPressed: () {
+                    // ignore breakpoint
+                    if (widget.source == RequestEditorSource.breakpointRequest) {
+                      widget.onExecuteRequest?.call(null);
+                    } else {
+                      widget.onExecuteResponse?.call(null);
+                    }
+                    widget.windowController?.close();
+                  },
+                  icon: const Icon(Icons.cancel),
+                  label: Text(localizations.cancel)),
             const SizedBox(width: 10)
           ],
         ),
@@ -131,6 +200,7 @@ class RequestEditorState extends State<RequestEditor> {
               title: const Text("Request", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               message: request,
               urlQueryNotifier: _queryNotifier,
+              readOnly: widget.source == RequestEditorSource.breakpointResponse,
             ),
             right: ValueListenableBuilder(
                 valueListenable: responseChange,
@@ -163,7 +233,7 @@ class RequestEditorState extends State<RequestEditor> {
                                 ]))
                               ]),
                               message: response,
-                              readOnly: true))
+                              readOnly: widget.source != RequestEditorSource.breakpointResponse))
                     ],
                   );
                 }),
@@ -198,6 +268,34 @@ class RequestEditorState extends State<RequestEditor> {
       responseChange.value = -1;
       if (mounted) FlutterToastr.show('${localizations.fail}$e', context);
     });
+  }
+
+  void executeBreakpoint() {
+    executed = true;
+    if (widget.source == RequestEditorSource.breakpointRequest) {
+      var currentState = requestLineKey.currentState!;
+      var headers = requestKey.currentState?.getHeaders();
+      var requestBody = requestKey.currentState?.getBody();
+      String url = currentState.requestUrl.text;
+
+      if (request == null) return;
+      HttpRequest newRequest = request!.copy(uri: url);
+      newRequest.method = currentState.requestMethod;
+      newRequest.headers.clear();
+      newRequest.headers.addAll(headers);
+      newRequest.body = requestBody == null ? null : utf8.encode(requestBody);
+      widget.onExecuteRequest?.call(newRequest);
+    } else if (widget.source == RequestEditorSource.breakpointResponse) {
+      var headers = responseKey.currentState?.getHeaders();
+      var responseBody = responseKey.currentState?.getBody();
+
+      if (response == null) return;
+      HttpResponse newResponse = response!.copy();
+      newResponse.headers.clear();
+      newResponse.headers.addAll(headers);
+      newResponse.body = responseBody == null ? null : utf8.encode(responseBody);
+      widget.onExecuteResponse?.call(newResponse);
+    }
   }
 
   Future<void> curlParse() async {
@@ -305,7 +403,7 @@ class _HttpState extends State<_HttpWidget> {
     }
   }
 
-  change(HttpMessage? message) {
+  void change(HttpMessage? message) {
     this.message = message;
     body?.text = message?.bodyAsString ?? '';
     headerKey.currentState?.refreshParam(message?.headers.getHeaders());
@@ -344,7 +442,8 @@ class _HttpState extends State<_HttpWidget> {
                           KeyValWidget(
                               key: headerKey,
                               params: message?.headers.getHeaders() ?? initHeader,
-                              readOnly: widget.readOnly),
+                              readOnly: widget.readOnly,
+                              suggestions: HttpHeaders.commonHeaderKeys),
                           _body()
                         ],
                       )),
@@ -449,6 +548,8 @@ class KeyVal {
   bool enabled = true;
   TextEditingController key;
   TextEditingController value;
+  FocusNode? keyFocusNode;
+  FocusNode? valueFocusNode;
 
   KeyVal(this.key, this.value);
 }
@@ -458,8 +559,9 @@ class KeyValWidget extends StatefulWidget {
   final Map<String, List<String>>? params;
   final bool readOnly; //只读
   final UrlQueryNotifier? paramNotifier;
+  final List<String>? suggestions;
 
-  const KeyValWidget({super.key, this.params, this.readOnly = false, this.paramNotifier});
+  const KeyValWidget({super.key, this.params, this.readOnly = false, this.paramNotifier, this.suggestions});
 
   @override
   State<StatefulWidget> createState() => KeyValState();
@@ -498,7 +600,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
   }
 
   //监听url发生变化 更改表单
-  onChange(String value) {
+  void onChange(String value) {
     var query = value.split("&");
     int index = 0;
     while (index < query.length) {
@@ -519,7 +621,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
     setState(() {});
   }
 
-  notifierChange() {
+  void notifierChange() {
     if (widget.paramNotifier == null) return;
     String query = _params
         .where((e) => e.enabled && e.key.text.isNotEmpty)
@@ -528,7 +630,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
     widget.paramNotifier?.onParamChange(query);
   }
 
-  clear() {
+  void clear() {
     for (var element in _params) {
       element.key.dispose();
       element.value.dispose();
@@ -537,7 +639,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
   }
 
   //刷新param
-  refreshParam(Map<String, List<String>>? headers) {
+  void refreshParam(Map<String, List<String>>? headers) {
     clear();
     setState(() {
       headers?.forEach((name, values) {
@@ -620,13 +722,103 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
     return list;
   }
 
-  Widget _cell(TextEditingController val, {bool isKey = false}) {
+  Widget _cell(KeyVal keyVal,
+      {bool isKey = false,
+      FocusNode? focusNode,
+      List<String>? suggestions,
+      Map<String, List<String>>? valueSuggestions}) {
+    TextEditingController textController = isKey ? keyVal.key : keyVal.value;
+
+    if (!widget.readOnly && (suggestions != null || valueSuggestions != null)) {
+      return Container(
+          padding: const EdgeInsets.only(right: 5),
+          child: RawAutocomplete<String>(
+            textEditingController: textController,
+            focusNode: focusNode,
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<String>.empty();
+              }
+
+              var currentSuggestions = suggestions;
+              if (!isKey && valueSuggestions?.containsKey(keyVal.key.text) == true) {
+                currentSuggestions = valueSuggestions![keyVal.key.text];
+              }
+
+              if (currentSuggestions == null) {
+                return const Iterable<String>.empty();
+              }
+
+              return currentSuggestions.where((String option) {
+                return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+              });
+            },
+            onSelected: (String selection) {
+              textController.text = selection;
+              notifierChange();
+            },
+            fieldViewBuilder: (BuildContext context, TextEditingController textEditingController,
+                FocusNode fieldFocusNode, VoidCallback onFieldSubmitted) {
+              return TextFormField(
+                  controller: textEditingController,
+                  focusNode: fieldFocusNode,
+                  onFieldSubmitted: (String value) {
+                    onFieldSubmitted();
+                  },
+                  onChanged: (val) {
+                    if (isKey) setState(() {});
+                    notifierChange();
+                  },
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  minLines: 1,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                      isDense: true,
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      contentPadding: const EdgeInsets.fromLTRB(5, 13, 5, 13),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
+                      border: InputBorder.none,
+                      hintText: isKey ? "Key" : "Value"));
+            },
+            optionsViewBuilder:
+                (BuildContext context, AutocompleteOnSelected<String> onSelected, Iterable<String> options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200, maxWidth: 300),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final String option = options.elementAt(index);
+                        return InkWell(
+                          onTap: () {
+                            onSelected(option);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(10.0),
+                            child: _buildHighlightText(option, textController.text),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          ));
+    }
+
     return Container(
         padding: const EdgeInsets.only(right: 5),
         child: TextFormField(
             readOnly: widget.readOnly,
             style: TextStyle(fontSize: 13, fontWeight: isKey ? FontWeight.w500 : null),
-            controller: val,
+            controller: textController,
             onChanged: (val) => notifierChange(),
             minLines: 1,
             maxLines: 3,
@@ -643,6 +835,16 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
   }
 
   Widget _row(KeyVal keyVal, Widget? op) {
+    if (widget.suggestions != null) {
+      keyVal.keyFocusNode ??= FocusNode();
+    }
+
+    Map<String, List<String>>? valueSuggestions;
+    if (widget.suggestions != null) {
+      keyVal.valueFocusNode ??= FocusNode();
+      valueSuggestions = HttpHeaders.commonHeaderValues;
+    }
+
     return Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
       if (op != null)
         Checkbox(
@@ -654,11 +856,31 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
               notifierChange();
             }),
       Container(width: 5),
-      Expanded(flex: 4, child: _cell(keyVal.key, isKey: true)),
+      Expanded(
+          flex: 4, child: _cell(keyVal, isKey: true, suggestions: widget.suggestions, focusNode: keyVal.keyFocusNode)),
       const Text(":", style: TextStyle(color: Colors.deepOrangeAccent)),
       const SizedBox(width: 8),
-      Expanded(flex: 6, child: _cell(keyVal.value)),
+      Expanded(flex: 6, child: _cell(keyVal, focusNode: keyVal.valueFocusNode, valueSuggestions: valueSuggestions)),
       op ?? const SizedBox()
     ]);
+  }
+
+  Widget _buildHighlightText(String text, String query) {
+    if (query.isEmpty) {
+      return Text(text);
+    }
+
+    int index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index < 0) {
+      return Text(text);
+    }
+
+    return Text.rich(TextSpan(children: [
+      TextSpan(text: text.substring(0, index)),
+      TextSpan(
+          text: text.substring(index, index + query.length),
+          style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+      TextSpan(text: text.substring(index + query.length))
+    ]));
   }
 }

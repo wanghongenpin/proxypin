@@ -1,4 +1,8 @@
 {
+
+  "breakpoint": "断点",
+  "breakpointRule": "断点规则",
+  "name": "名称",
   "requests": "抓包",
   "favorites": "收藏",
   "history": "历史",
@@ -15,7 +19,8 @@
   "username": "用户名",
   "password": "密码",
   "proxySetting": "代理设置",
-  "systemProxy": "设置为系统代理",
+  "setAs": "设置为",
+  "systemProxy": "系统代理",
   "enabledHTTP2": "启用HTTP2",
   "serverNotStart": "未开启抓包",
   "download": "下载",
@@ -42,7 +47,8 @@
   "autoStartup": "自动开启抓包",
   "autoStartupDescribe": "程序启动时自动开始记录流量",
 
-  "copied": "已复制到剪贴板",
+  "copied": "已复制到剪切板",
+  "execute": "执行",
   "cancel": "取消",
   "close": "关闭",
   "save": "保存",
@@ -57,6 +63,7 @@
   "importFailed": "导入失败",
   "export": "导出",
   "exportSuccess": "导出成功",
+  "exportFailed": "导出失败",
   "deleteSuccess": "删除成功",
   "send": "发送",
   "fail": "失败",
@@ -175,7 +182,6 @@
   "deleteFavorite": "删除收藏",
   "emptyFavorite": "暂无收藏",
   "deleteFavoriteSuccess": "已删除收藏",
-  "name": "名称",
 
   "historyRecord": "历史记录",
   "historyManualSave": "手动保存",

@@ -24,6 +24,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         let proxyPort = conf["proxyPort"] as! Int
         let ipProxy = conf["ipProxy"] as! Bool? ?? false
 
+        // parse proxyPassDomains: accept either [String] or comma-separated String
+        var proxyPassDomains: [String]? = nil
+        if let arr = conf["proxyPassDomains"] as? [String] {
+            proxyPassDomains = arr.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        } else if let csv = conf["proxyPassDomains"] as? String {
+            let list = csv.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+            proxyPassDomains = list.isEmpty ? nil : list
+        }
+
 //        let networkSettings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
         let networkSettings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: host)
         NSLog(conf.debugDescription)
@@ -57,8 +66,12 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         proxySettings.httpServer = NEProxyServer(address: host, port: proxyPort)
         proxySettings.httpsEnabled = true
         proxySettings.httpsServer = NEProxyServer(address: host, port: proxyPort)
+        // If a proxyPassDomains list was provided, use it as the exceptionList so these domains bypass the proxy.
+        if let pass = proxyPassDomains {
+            proxySettings.exceptionList = pass
+        } 
+
         proxySettings.matchDomains = [""]
-        
         networkSettings.proxySettings =  proxySettings
 
         networkSettings.ipv4Settings = ipv4Settings

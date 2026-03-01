@@ -264,11 +264,9 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
                   setState(() => selectionMode = true);
                 }),
             const Divider(thickness: 0.5, height: 5),
-            ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: Text(l10n.edit),
-                onTap: () {
-                  Navigator.pop(ctx);
+            BottomSheetItem(
+                text: l10n.edit,
+                onPressed: () {
                   _editRule(manager, index);
                 }),
             const Divider(thickness: 0.5, height: 5),
@@ -286,7 +284,6 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
             BottomSheetItem(
                 text: l10n.delete,
                 onPressed: () {
-                  Navigator.pop(ctx);
                   _removeRule(manager, index);
                 }),
             Container(color: Theme.of(ctx).hoverColor, height: 8),
@@ -367,9 +364,9 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
           ? List<int>.generate(manager.rules.length, (i) => i)
           : (indexes.toList()..sort());
       final data = keys.map((i) => manager.rules[i].toJson()).toList();
-      final path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json');
+      var bytes = utf8.encode(jsonEncode(data));
+      final path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json', bytes: bytes);
       if (path == null) return;
-      await File(path).writeAsString(jsonEncode(data));
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     } catch (e) {
       logger.e('导出失败', error: e);

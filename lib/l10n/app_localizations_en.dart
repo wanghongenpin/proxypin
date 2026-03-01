@@ -9,6 +9,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get breakpoint => 'Breakpoint';
+
+  @override
+  String get breakpointRule => 'Breakpoint Rule';
+
+  @override
+  String get name => 'Name';
+
+  @override
   String get requests => 'Requests';
 
   @override
@@ -57,7 +66,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxySetting => 'Proxy Setting';
 
   @override
-  String get systemProxy => 'Set as System Proxy';
+  String get setAs => 'Set as ';
+
+  @override
+  String get systemProxy => 'System Proxy';
 
   @override
   String get enabledHTTP2 => 'Enable HTTP2';
@@ -132,6 +144,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copied => 'Copied to clipboard';
 
   @override
+  String get execute => 'Execute';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
@@ -172,6 +187,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportSuccess => 'Export successful';
+
+  @override
+  String get exportFailed => 'Export failed';
 
   @override
   String get deleteSuccess => 'Delete successful';
@@ -513,9 +531,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteFavoriteSuccess => 'Favorite deleted';
-
-  @override
-  String get name => 'Name';
 
   @override
   String get historyRecord => 'History';

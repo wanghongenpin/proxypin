@@ -20,6 +20,7 @@ class ProxyVpnThread(
     vpnInterface: ParcelFileDescriptor,
     proxyHost: String,
     proxyPort: Int,
+    proxyPassDomains: ArrayList<String>? = null,
 ) : Thread("Vpn thread") {
     companion object {
         const val TAG = "ProxyVpnThread"
@@ -42,6 +43,7 @@ class ProxyVpnThread(
     private val manager = ConnectionManager.instance.apply {
         //流量转发到代理地址
         this.proxyAddress = InetSocketAddress(proxyHost, proxyPort)
+        this.proxyPassDomains = proxyPassDomains
     }
 
     private val handler = ConnectionHandler(manager, nioService, vpnPacketWriter)

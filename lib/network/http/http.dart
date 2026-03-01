@@ -309,6 +309,15 @@ class HttpResponse extends HttpMessage {
 
   HttpResponse(this.status, {String protocolVersion = "HTTP/1.1"}) : super(protocolVersion);
 
+  /// 复制响应
+  HttpResponse copy() {
+    var response = HttpResponse(status, protocolVersion: protocolVersion);
+    response.headers.addAll(headers);
+    response.body = body;
+    response.request = request;
+    return response;
+  }
+
   String costTime() {
     if (request == null) {
       return '';
