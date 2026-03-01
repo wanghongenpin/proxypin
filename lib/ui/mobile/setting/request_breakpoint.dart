@@ -14,7 +14,9 @@ import 'package:proxypin/ui/component/widgets.dart';
 import '../../component/http_method_popup.dart';
 
 class MobileRequestBreakpointPage extends StatefulWidget {
-  const MobileRequestBreakpointPage({super.key});
+  final RequestBreakpointManager manager;
+
+  const MobileRequestBreakpointPage({super.key, required this.manager});
 
   @override
   State<MobileRequestBreakpointPage> createState() => _RequestBreakpointPageState();
@@ -24,25 +26,21 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   List<RequestBreakpointRule> rules = [];
   bool enabled = false;
-  RequestBreakpointManager? manager;
+
+  RequestBreakpointManager get manager => widget.manager;
 
   bool selectionMode = false;
   final Set<int> selected = HashSet<int>();
 
   Future<void> _save() async {
-    await manager?.save();
+    await manager.save();
   }
 
   @override
   void initState() {
     super.initState();
-    RequestBreakpointManager.instance.then((value) {
-      manager = value;
-      setState(() {
-        enabled = value.enabled;
-        rules = value.list;
-      });
-    });
+    enabled = manager.enabled;
+    rules = manager.list;
   }
 
   @override
@@ -74,7 +72,7 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
                                 value: enabled,
                                 scale: 0.8,
                                 onChanged: (val) async {
-                                  manager?.enabled = val;
+                                  manager.enabled = val;
                                   await _save();
                                   setState(() {
                                     enabled = val;
@@ -215,11 +213,11 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
       List<dynamic> list = jsonDecode(content);
       var newRules = list.map((e) => RequestBreakpointRule.fromJson(e)).toList();
       for (var rule in newRules) {
-        manager?.list.add(rule);
+        manager.list.add(rule);
       }
       await _save();
       setState(() {
-        rules = manager!.list;
+        rules = manager.list;
       });
 
       if (mounted) FlutterToastr.show(localizations.importSuccess, context);

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright 2023 Hongen Wang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -113,7 +113,8 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
 
   // 请求拦截
   if (argument['name'] == 'RequestBreakpointPage') {
-    return RequestBreakpointPage(windowId: windowId);
+    return futureWidget(
+        RequestBreakpointManager.instance, (manager) => RequestBreakpointPage(windowId: windowId, manager: manager));
   }
 
   if (argument['name'] == 'QrCodePage') {
@@ -387,4 +388,3 @@ Future<void> openScriptConsoleWindow() async {
     ..center();
   window.show();
 }
-

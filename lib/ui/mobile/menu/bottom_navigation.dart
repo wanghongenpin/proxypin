@@ -40,6 +40,7 @@ import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
 import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 
+import '../../../network/components/manager/request_breakpoint_manager.dart';
 import '../../component/widgets.dart';
 import '../setting/proxy.dart';
 import '../setting/request_map.dart';
@@ -164,7 +165,12 @@ class _ConfigPageState extends State<ConfigPage> {
                   title: Text(localizations.breakpoint),
                   leading: Icon(Icons.bug_report_outlined, color: color),
                   trailing: arrow,
-                  onTap: () => navigator(context, const MobileRequestBreakpointPage())),
+                  onTap: () async {
+                    var manager = await RequestBreakpointManager.instance;
+                    if (context.mounted) {
+                      navigator(context, MobileRequestBreakpointPage(manager: manager));
+                    }
+                  })
             ]),
             const SizedBox(height: 16)
           ],

@@ -16,9 +16,10 @@ import '../../component/app_dialog.dart' show CustomToast;
 import '../../component/http_method_popup.dart';
 
 class RequestBreakpointPage extends StatefulWidget {
+  final RequestBreakpointManager manager;
   final int? windowId;
 
-  const RequestBreakpointPage({super.key, this.windowId});
+  const RequestBreakpointPage({super.key, this.windowId, required this.manager});
 
   @override
   State<RequestBreakpointPage> createState() => _RequestBreakpointPageState();
@@ -28,7 +29,8 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   List<RequestBreakpointRule> rules = [];
   bool enabled = false;
-  RequestBreakpointManager? manager;
+
+  RequestBreakpointManager get manager => widget.manager;
 
   Set<int> selected = {};
   bool isPressed = false;
@@ -41,12 +43,11 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   }
 
   Future<void> _save() async {
-    await manager?.save();
+    await manager.save();
     await _refreshConfig();
   }
 
   Future<void> _import() async {
-
     String? path;
     if (Platform.isMacOS) {
       path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
@@ -55,7 +56,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
       FilePickerResult? result =
-      await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
     if (path == null) return;
@@ -65,11 +66,11 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       List<dynamic> list = jsonDecode(content);
       var rules = list.map((e) => RequestBreakpointRule.fromJson(e)).toList();
       for (var rule in rules) {
-        manager?.list.add(rule);
+        manager.list.add(rule);
       }
       await _save();
       setState(() {
-        this.rules = manager!.list;
+        this.rules = manager.list;
       });
 
       if (mounted) CustomToast.success(localizations.importSuccess).show(context);
@@ -102,14 +103,9 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   @override
   void initState() {
     super.initState();
+    enabled = manager.enabled;
+    rules = manager.list;
     HardwareKeyboard.instance.addHandler(onKeyEvent);
-    RequestBreakpointManager.instance.then((value) {
-      manager = value;
-      setState(() {
-        enabled = value.enabled;
-        rules = value.list;
-      });
-    });
   }
 
   @override
@@ -162,11 +158,9 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
                                 value: enabled,
                                 scale: 0.8,
                                 onChanged: (val) async {
-                                  manager?.enabled = val;
+                                  manager.enabled = val;
                                   await _save();
-                                  setState(() {
-                                    enabled = val;
-                                  });
+                                  enabled = val;
                                 }))),
                     const SizedBox(width: 10),
                     Expanded(

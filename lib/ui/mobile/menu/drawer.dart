@@ -20,10 +20,12 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
+import 'package:proxypin/network/components/manager/request_breakpoint_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -83,9 +85,7 @@ class DrawerWidget extends StatelessWidget {
                         Text('ProxyPin', style: Theme.of(context).textTheme.titleLarge),
                         const SizedBox(height: 4),
                         Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software",
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall)
+                            maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)
                       ])
                 ])),
             // Favorites & History
@@ -149,6 +149,15 @@ class DrawerWidget extends StatelessWidget {
                 title: Text(localizations.script),
                 leading: const Icon(Icons.code),
                 onTap: () => navigator(context, const MobileScript())),
+            ListTile(
+                title: Text(localizations.breakpoint),
+                leading: const Icon(Icons.bug_report_outlined),
+                onTap: () async {
+                  var manager = await RequestBreakpointManager.instance;
+                  if (context.mounted) {
+                    navigator(context, MobileRequestBreakpointPage(manager: manager));
+                  }
+                }),
             ListTile(
                 title: Text(localizations.setting),
                 leading: const Icon(Icons.settings),
@@ -270,7 +279,8 @@ class _SettingPage extends StatelessWidget {
                         children: [
                           Text(localizations.proxyIgnoreDomain, style: const TextStyle(fontSize: 14)),
                           const SizedBox(height: 3),
-                          Text(isEn ? "Use ';' to separate multiple entries": "多个使用;分割", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                          Text(isEn ? "Use ';' to separate multiple entries" : "多个使用;分割",
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                         ],
                       ),
                       Padding(
@@ -293,9 +303,8 @@ class _SettingPage extends StatelessWidget {
                           configuration.proxyPassDomains = textEditingController.text;
                           proxyServer.configuration.flushConfig();
                         },
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(10),
-                            border: OutlineInputBorder()),
+                        decoration:
+                            const InputDecoration(contentPadding: EdgeInsets.all(10), border: OutlineInputBorder()),
                         maxLines: 5,
                         minLines: 1)),
                 const SizedBox(height: 10),
