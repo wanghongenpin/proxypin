@@ -11,6 +11,9 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 
+// Compat helpers (withValues extension)
+import 'package:proxypin/utils/flutter_compat.dart';
+
 import '../../component/http_method_popup.dart';
 
 class MobileRequestBreakpointPage extends StatefulWidget {

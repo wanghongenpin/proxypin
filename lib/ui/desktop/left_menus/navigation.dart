@@ -20,6 +20,9 @@ import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/preference.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Compat helpers (withValues extension)
+import 'package:proxypin/utils/flutter_compat.dart';
+
 ///左侧导航栏
 /// @author wanghongen
 /// 2024/8/6

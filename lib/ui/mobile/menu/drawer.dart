@@ -41,6 +41,9 @@ import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
+// Compat helpers (withValues extension)
+import 'package:proxypin/utils/flutter_compat.dart';
+
 import '../../component/proxy_port_setting.dart';
 import '../../component/widgets.dart';
 import '../../desktop/setting/external_proxy.dart';

@@ -44,6 +44,9 @@ import '../../component/widgets.dart';
 import '../setting/proxy.dart';
 import '../setting/request_map.dart';
 
+// Add compatibility helpers (withValues extension, BuildContext.colorScheme)
+import 'package:proxypin/utils/flutter_compat.dart';
+
 /// @author wanghongen
 /// 2024/9/30
 class ConfigPage extends StatefulWidget {
@@ -159,7 +162,7 @@ class _ConfigPageState extends State<ConfigPage> {
                   leading: Icon(Icons.javascript_outlined, color: color),
                   trailing: arrow,
                   onTap: () => navigator(context, const MobileScript())),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(alpha: 0.22)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
               ListTile(
                   title: Text(localizations.breakpoint),
                   leading: Icon(Icons.bug_report_outlined, color: color),
@@ -236,7 +239,7 @@ class SettingPage extends StatelessWidget {
                     proxyServer: proxyServer,
                     title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
                     textStyle: const TextStyle(fontSize: 16)),
-                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(alpha: 0.22)),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withOpacity(0.22)),
                 if (Platform.isAndroid)
                   ListTile(
                       title: Text(localizations.systemProxy),

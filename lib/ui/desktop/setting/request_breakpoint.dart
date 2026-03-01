@@ -15,6 +15,9 @@ import 'package:proxypin/ui/component/widgets.dart';
 import '../../component/app_dialog.dart' show CustomToast;
 import '../../component/http_method_popup.dart';
 
+// Compat helpers (withValues extension)
+import 'package:proxypin/utils/flutter_compat.dart';
+
 class RequestBreakpointPage extends StatefulWidget {
   final int? windowId;
 
@@ -215,7 +218,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
         },
         child: Container(
           padding: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
           child: Column(
             children: [
               Padding(
@@ -249,7 +252,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
     return InkWell(
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
-      hoverColor: primaryColor.withValues(alpha: 0.3),
+      hoverColor: primaryColor.withOpacity(0.3),
       onDoubleTap: () => _editRule(rule: rule),
       onSecondaryTapDown: (details) => _showMenu(details.globalPosition, index: index),
       onHover: (hover) {
@@ -275,9 +278,9 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       },
       child: Container(
         color: selected.contains(index)
-            ? primaryColor.withValues(alpha: 0.5)
+            ? primaryColor.withOpacity(0.5)
             : index.isEven
-                ? Colors.grey.withValues(alpha: 0.1)
+                ? Colors.grey.withOpacity(0.1)
                 : null,
         height: 32,
         padding: const EdgeInsets.all(5),
