@@ -30,7 +30,14 @@ class _PortState extends State<PortWidget> {
     portFocus.addListener(() async {
       //失去焦点
       if (!portFocus.hasFocus && textController.text != widget.proxyServer.port.toString()) {
-        widget.proxyServer.configuration.port = int.parse(textController.text);
+        final port = int.tryParse(textController.text) ?? -1;
+        if (port < 0 || port > 65535) {
+          textController.text = widget.proxyServer.port.toString();
+          FlutterToastr.show("Port out of range 0-65535", context, duration: 3);
+          return;
+        }
+
+        widget.proxyServer.configuration.port = port;
 
         if (widget.proxyServer.isRunning) {
           String message = localizations.proxyPortRepeat(widget.proxyServer.port);
