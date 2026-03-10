@@ -6,7 +6,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 
-
 class RequestBreakpointRule {
   bool enabled;
   String? name;
@@ -30,7 +29,7 @@ class RequestBreakpointRule {
   bool match(String url, {HttpMethod? method}) {
     if (!enabled) return false;
     if (this.method != null && method != null && this.method != method) return false;
-    return url.contains(this.url);
+    return RegExp(this.url).hasMatch(url);
   }
 
   factory RequestBreakpointRule.fromJson(Map<dynamic, dynamic> map) {
