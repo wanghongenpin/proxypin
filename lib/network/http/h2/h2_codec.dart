@@ -451,10 +451,24 @@ class Http2RequestDecoder extends Http2Codec<HttpRequest> {
       // 解析 authority，提取主机和端口
       String host = authority;
       int port = (scheme == 'https' ? 443 : 80);
-      if (authority.contains(':')) {
-        var parts = authority.split(':');
-        host = parts[0];
-        port = int.tryParse(parts[1]) ?? (scheme == 'https' ? 443 : 80);
+
+      if (authority.startsWith("[")) {
+        int closeBracketIndex = authority.indexOf(']');
+        if (closeBracketIndex != -1) {
+          host = authority.substring(0, closeBracketIndex + 1);
+          if (authority.length > closeBracketIndex + 1 && authority[closeBracketIndex + 1] == ':') {
+            port = int.tryParse(authority.substring(closeBracketIndex + 2)) ?? port;
+          }
+        }
+      } else {
+        int lastColonIndex = authority.lastIndexOf(':');
+        if (lastColonIndex != -1) {
+          var p = int.tryParse(authority.substring(lastColonIndex + 1));
+          if (p != null) {
+            host = authority.substring(0, lastColonIndex);
+            port = p;
+          }
+        }
       }
       httpRequest.hostAndPort = HostAndPort("$scheme://", host, port);
     }

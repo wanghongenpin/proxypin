@@ -228,6 +228,7 @@ class HttpRequest extends HttpMessage {
       _requestUri ??= Uri.parse(requestUrl);
       return _requestUri;
     } catch (e) {
+      logger.w('parse uri error $requestUrl  ${hostAndPort?.scheme} ${hostAndPort?.host}: $e');
       return null;
     }
   }
