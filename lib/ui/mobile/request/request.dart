@@ -190,7 +190,7 @@ class RequestRowState extends State<RequestRow> {
   }
 
   ///菜单
-  menu(details) {
+  void menu(details) {
     setState(() {
       selected = true;
     });
