@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/storage/path.dart';
 import 'package:proxypin/utils/har.dart';
@@ -26,6 +27,10 @@ import 'package:proxypin/utils/har.dart';
 /// @author WangHongEn
 class FavoriteStorage {
   static Queue<Favorite>? list;
+
+  // Keep only recent websocket/sse messages per favorite to control favorites.json size.
+  static const int maxWebSocketMessagesPerFavorite = 200;
+  static const int maxWebSocketPayloadBytesPerFavorite = 1 * 1024 * 1024; //  1 MB
 
   static Function()? addNotifier;
 
@@ -55,14 +60,23 @@ class FavoriteStorage {
   /// 添加收藏
   static Future<void> addFavorite(HttpRequest request) async {
     var favorites = await FavoriteStorage.favorites;
-    if (favorites.any((element) => element.request == request)) {
+    if (favorites.any((element) => element.request.requestId == request.requestId)) {
       return;
     }
 
-    favorites.addFirst(Favorite(request));
+    // Snapshot to avoid mutating the live request/response when trimming persisted messages.
+    final favorite = _snapshotFavorite(request);
+    trimFavoriteMessages(favorite);
+    favorites.addFirst(favorite);
     flushConfig();
     //通知
     addNotifier?.call();
+  }
+
+  static Favorite _snapshotFavorite(HttpRequest request) {
+    final copiedRequest = request.copy();
+    final copiedResponse = request.response?.copy();
+    return Favorite(copiedRequest, response: copiedResponse);
   }
 
   static Future<void> removeFavorite(Favorite favorite) async {
@@ -127,6 +141,7 @@ class FavoriteStorage {
       if (existingIds.contains(rid)) {
         continue;
       }
+      trimFavoriteMessages(fav);
       existingIds.add(rid);
       current.addFirst(fav);
     }
@@ -134,6 +149,55 @@ class FavoriteStorage {
     await flushConfig();
     addNotifier?.call();
   }
+
+  static bool trimFavoriteMessages(Favorite favorite) {
+    final response = favorite.response;
+    final requestFrames = List.of(favorite.request.messages);
+    final responseFrames = List.of(response?.messages ?? const []);
+
+    if (requestFrames.isEmpty && responseFrames.isEmpty) {
+      return false;
+    }
+
+    final refs = <_FrameRef>[
+      ...requestFrames.map((e) => _FrameRef(isRequest: true, frame: e)),
+      ...responseFrames.map((e) => _FrameRef(isRequest: false, frame: e)),
+    ]..sort((a, b) => a.frame.time.compareTo(b.frame.time));
+
+    final totalBytes = refs.fold<int>(0, (sum, e) => sum + e.frame.payloadData.length);
+    if (refs.length <= maxWebSocketMessagesPerFavorite && totalBytes <= maxWebSocketPayloadBytesPerFavorite) {
+      return false;
+    }
+
+    final kept = <_FrameRef>[];
+    int keptBytes = 0;
+    for (int i = refs.length - 1; i >= 0; i--) {
+      final ref = refs[i];
+      final bytes = ref.frame.payloadData.length;
+      final hitCount = kept.length >= maxWebSocketMessagesPerFavorite;
+      final hitBytes = kept.isNotEmpty && (keptBytes + bytes > maxWebSocketPayloadBytesPerFavorite);
+      if (hitCount || hitBytes) {
+        continue;
+      }
+      kept.add(ref);
+      keptBytes += bytes;
+      if (kept.length >= maxWebSocketMessagesPerFavorite) {
+        break;
+      }
+    }
+
+    kept.sort((a, b) => a.frame.time.compareTo(b.frame.time));
+    favorite.request.messages = kept.where((e) => e.isRequest).map((e) => e.frame).toList(growable: false);
+    response?.messages = kept.where((e) => !e.isRequest).map((e) => e.frame).toList(growable: false);
+    return true;
+  }
+}
+
+class _FrameRef {
+  final bool isRequest;
+  final WebSocketFrame frame;
+
+  _FrameRef({required this.isRequest, required this.frame});
 }
 
 class Favorite {
@@ -159,4 +223,6 @@ class Favorite {
       'response': response?.toJson(),
     };
   }
+
+  int get websocketMessageCount => request.messages.length + (response?.messages.length ?? 0);
 }
