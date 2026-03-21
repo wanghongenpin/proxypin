@@ -1068,6 +1068,12 @@ abstract class AppLocalizations {
   /// **'View Export'**
   String get viewExport;
 
+  /// No description provided for @exportDomainHar.
+  ///
+  /// In en, this message translates to:
+  /// **'Export This Domain HAR'**
+  String get exportDomainHar;
+
   /// No description provided for @timeDesc.
   ///
   /// In en, this message translates to:

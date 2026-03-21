@@ -169,6 +169,7 @@
   "editRequest": "编辑请求",
   "reSendRequest": "已重新发送请求",
   "viewExport": "视图导出",
+  "exportDomainHar": "导出该域名 HAR",
   "timeDesc": "按时间降序",
   "timeAsc": "按时间升序",
 

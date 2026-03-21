@@ -500,6 +500,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewExport => 'View Export';
 
   @override
+  String get exportDomainHar => 'Export This Domain HAR';
+
+  @override
   String get timeDesc => 'Descending by time';
 
   @override

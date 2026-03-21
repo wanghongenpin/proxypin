@@ -499,6 +499,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewExport => '视图导出';
 
   @override
+  String get exportDomainHar => '导出该域名 HAR';
+
+  @override
   String get timeDesc => '按时间降序';
 
   @override
@@ -1561,6 +1564,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get viewExport => '檢視匯出';
+
+  @override
+  String get exportDomainHar => '匯出該網域名稱 HAR';
 
   @override
   String get timeDesc => '按時間降序';

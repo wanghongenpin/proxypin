@@ -17,6 +17,7 @@
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
@@ -34,7 +35,9 @@ import 'package:proxypin/ui/component/transition.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
+import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../component/model/search_model.dart';
@@ -78,6 +81,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   late VoidCallback highlightListener;
 
   bool sortDesc = true;
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   void changeState() {
     if (!changing) {
@@ -198,6 +203,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
         proxyServer: widget.proxyServer,
         trailing: appIcon(request),
         onDelete: deleteHost,
+        onExportHar: exportDomainHar,
         onRequestRemove: (req) {
           widget.onRemove?.call([req]);
           changeState();
@@ -281,8 +287,41 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     return container.expand((list) => list.body.map((it) => it.request)).toList();
   }
 
+  Future<void> exportDomainHar(String domain) async {
+    var requests = containerMap[domain]?.body.map((it) => it.request).toList() ?? [];
+    if (requests.isEmpty) {
+      if (mounted) FlutterToastr.show(localizations.emptyData, context);
+      return;
+    }
+
+    var fileName = _domainHarFileName(domain);
+    var path = await FilePicker.platform.saveFile(fileName: fileName);
+    if (path == null) {
+      return;
+    }
+
+    try {
+      var file = await File(path).create(recursive: true);
+      await Har.writeFile(requests, file, title: fileName);
+      if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
+    } catch (e) {
+      if (mounted) FlutterToastr.show('${localizations.exportFailed} $e', context);
+    }
+  }
+
+  String _domainHarFileName(String domain) {
+    var uri = Uri.tryParse(domain);
+    var host = (uri?.host.isNotEmpty == true) ? uri!.host : domain;
+    var suffix = uri?.hasPort == true ? '_${uri!.port}' : '';
+    var safeDomain = '$host$suffix'.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    if (safeDomain.isEmpty) {
+      safeDomain = 'domain';
+    }
+    return 'ProxyPin_${safeDomain}_${DateTime.now().dateFormat()}.har';
+  }
+
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     sortDesc = desc;
     containerMap.forEach((key, request) {
       var reversed = request.body.toList().reversed;
@@ -310,10 +349,16 @@ class DomainRequests extends StatefulWidget {
 
   //移除回调
   final Function(String host)? onDelete;
+  final Function(String host)? onExportHar;
   final Function(HttpRequest request)? onRequestRemove;
 
   DomainRequests(this.domain,
-      {this.selected = false, this.onDelete, required this.proxyServer, this.onRequestRemove, this.trailing})
+      {this.selected = false,
+      this.onDelete,
+      this.onExportHar,
+      required this.proxyServer,
+      this.onRequestRemove,
+      this.trailing})
       : super(key: GlobalKey<_DomainRequestsState>());
 
   ///添加请求
@@ -368,6 +413,7 @@ class DomainRequests extends StatefulWidget {
         trailing: trailing,
         selected: selected ?? state.currentState?.selected == true,
         onDelete: onDelete,
+        onExportHar: onExportHar,
         onRequestRemove: onRequestRemove,
         proxyServer: proxyServer);
     if (body != null) {
@@ -479,6 +525,8 @@ class _DomainRequestsState extends State<DomainRequests> {
         submenu: hostFilterMenu(),
       ),
       MenuItem.separator(),
+      MenuItem(label: localizations.exportDomainHar, onClick: (_) => exportDomainHar()),
+      MenuItem.separator(),
       MenuItem(label: localizations.repeatDomainRequests, onClick: (_) => repeatDomainRequests()),
       MenuItem.separator(),
       MenuItem(label: localizations.delete, onClick: (_) => _delete()),
@@ -500,6 +548,10 @@ class _DomainRequestsState extends State<DomainRequests> {
         if (mounted) FlutterToastr.show('${localizations.fail}$e', rootNavigator: true, context);
       }
     }
+  }
+
+  void exportDomainHar() {
+    widget.onExportHar?.call(widget.domain);
   }
 
   Menu hostFilterMenu() {

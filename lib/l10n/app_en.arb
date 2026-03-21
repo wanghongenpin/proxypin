@@ -168,6 +168,7 @@
   "editRequest": "Edit and Request",
   "reSendRequest": "The request has been resent",
   "viewExport": "View Export",
+  "exportDomainHar": "Export This Domain HAR",
   "timeDesc": "Descending by time",
   "timeAsc": "Ascending by time",
 

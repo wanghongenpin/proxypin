@@ -161,6 +161,7 @@
   "editRequest": "編輯請求",
   "reSendRequest": "已重新傳送請求",
   "viewExport": "檢視匯出",
+  "exportDomainHar": "匯出該網域名稱 HAR",
   "timeDesc": "按時間降序",
   "timeAsc": "按時間升序",
   "search": "搜尋",
