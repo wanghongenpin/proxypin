@@ -266,7 +266,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///清理
-  clean() {
+  void clean() {
     setState(() {
       containerMap.clear();
       searchView.clear();

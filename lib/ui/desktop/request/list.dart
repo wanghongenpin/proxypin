@@ -28,6 +28,7 @@ import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/request_sequence.dart';
+import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/ui/desktop/request/search.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -76,6 +77,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
 
   @override
   void dispose() {
+    RequestWidget.removeAutoReadByIds(container.map((request) => request.requestId));
     super.dispose();
   }
 
@@ -183,12 +185,14 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   void domainListRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     requestSequenceKey.currentState?.remove(list);
+    RequestWidget.removeAutoReadByIds(list.map((request) => request.requestId));
   }
 
   ///全部请求删除
   void sequenceRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     domainListKey.currentState?.remove(list);
+    RequestWidget.removeAutoReadByIds(list.map((request) => request.requestId));
   }
 
   void search(SearchModel searchModel) {
@@ -203,6 +207,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   ///清理
   void clean() {
     setState(() {
+      RequestWidget.removeAutoReadByIds(container.map((request) => request.requestId));
       container.clear();
       domainListKey.currentState?.clean();
       requestSequenceKey.currentState?.clean();
@@ -216,10 +221,12 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
       return;
     }
 
-    container.removeRange(0, list.length - retain);
+    var removeRange = container.removeRange(0, list.length - retain);
 
     domainListKey.currentState?.clean();
     requestSequenceKey.currentState?.clean();
+
+    RequestWidget.removeAutoReadByIds(removeRange.map((request) => request.requestId));
   }
 
   ///导出

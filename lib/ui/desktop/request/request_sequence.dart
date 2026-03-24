@@ -74,7 +74,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     KeywordHighlights.addListener(highlightListener);
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
