@@ -23,6 +23,7 @@ import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/mobile/request/domians.dart';
+import 'package:proxypin/ui/mobile/request/request.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/listenable_list.dart';
@@ -63,6 +64,12 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   @override
+  void dispose() {
+    RequestRowState.removeAutoReadByIds(container.map((request) => request.requestId));
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     List<Widget> tabs = [Tab(child: Text(localizations.sequence)), Tab(child: Text(localizations.domainList))];
 
@@ -93,31 +100,33 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///添加请求
-  add(Channel channel, HttpRequest request) {
+  void add(Channel channel, HttpRequest request) {
     container.add(request);
     requestSequenceKey.currentState?.add(request);
     domainListKey.currentState?.add(request);
   }
 
   ///添加响应
-  addResponse(ChannelContext channelContext, HttpResponse response) {
+  void addResponse(ChannelContext channelContext, HttpResponse response) {
     requestSequenceKey.currentState?.addResponse(response);
     domainListKey.currentState?.addResponse(response);
   }
 
   ///移除
-  domainListRemove(List<HttpRequest> list) {
+  void domainListRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     requestSequenceKey.currentState?.remove(list);
+    RequestRowState.removeAutoReadByIds(list.map((request) => request.requestId));
   }
 
   ///全部请求删除
-  sequenceRemove(List<HttpRequest> list) {
+  void sequenceRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     domainListKey.currentState?.remove(list);
+    RequestRowState.removeAutoReadByIds(list.map((request) => request.requestId));
   }
 
-  search(SearchModel searchModel) {
+  void search(SearchModel searchModel) {
     requestSequenceKey.currentState?.search(searchModel);
     domainListKey.currentState?.search(searchModel.keyword?.trim());
   }
@@ -127,8 +136,9 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///清理
-  clean() {
+  void clean() {
     setState(() {
+      RequestRowState.removeAutoReadByIds(container.map((request) => request.requestId));
       container.clear();
       domainListKey.currentState?.clean();
       requestSequenceKey.currentState?.clean();
@@ -136,20 +146,21 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   ///清理早期数据
-  cleanupEarlyData(int retain) {
+  void cleanupEarlyData(int retain) {
     var list = container.source;
     if (list.length <= retain) {
       return;
     }
 
-    container.removeRange(0, list.length - retain);
+    var removeRange = container.removeRange(0, list.length - retain);
 
     domainListKey.currentState?.clean();
     requestSequenceKey.currentState?.clean();
+    RequestRowState.removeAutoReadByIds(removeRange.map((request) => request.requestId));
   }
 
   //导出har
-  export(BuildContext context, String title) async {
+  Future<void> export(BuildContext context, String title) async {
     //文件名称
     String fileName =
         '${title.contains("ProxyPin") ? '' : 'ProxyPin'}$title.har'.replaceAll(" ", "_").replaceAll(":", "_");
@@ -167,7 +178,7 @@ class RequestListState extends State<RequestListWidget> {
         sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
   }
 
-  sort(bool sortDesc) {
+  void sort(bool sortDesc) {
     requestSequenceKey.currentState?.sort(sortDesc);
     domainListKey.currentState?.sort(sortDesc);
   }

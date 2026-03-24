@@ -16,7 +16,8 @@ void main() {
       maskingKey: 0,
       payloadData: Uint8List.fromList('hello'.codeUnits),
       time: DateTime.fromMillisecondsSinceEpoch(1710000000000),
-    )..isFromClient = true;
+    )
+      ..isFromClient = true;
 
     request.messages.add(frame);
 
@@ -38,7 +39,8 @@ void main() {
       maskingKey: 0,
       payloadData: Uint8List.fromList([1, 2, 3]),
       time: DateTime.fromMillisecondsSinceEpoch(1710000001000),
-    )..isFromClient = false;
+    )
+      ..isFromClient = false;
 
     response.messages.add(frame);
 
@@ -48,4 +50,4 @@ void main() {
     expect(restored.messages.first.payloadData, [1, 2, 3]);
     expect(restored.messages.first.time.millisecondsSinceEpoch, 1710000001000);
   });
-
+}

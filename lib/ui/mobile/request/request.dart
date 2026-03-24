@@ -67,7 +67,16 @@ class RequestRow extends StatefulWidget {
 
 class RequestRowState extends State<RequestRow> {
   static ExpiringCache<String, Image> imageCache = ExpiringCache<String, Image>(const Duration(minutes: 5));
-  static Set<String> autoReadRequests = <String>{};
+  static const int maxAutoReadEntries = 5000;
+  static LruCacheSet<String> autoReadRequests = LruCacheSet<String>(5000);
+
+  static bool markAutoRead(String requestId) {
+    return autoReadRequests.add(requestId);
+  }
+
+  static void removeAutoReadByIds(Iterable<String> requestIds) {
+    autoReadRequests.removeAll(requestIds);
+  }
 
   late HttpRequest request;
   HttpResponse? response;
@@ -87,12 +96,6 @@ class RequestRowState extends State<RequestRow> {
     request = widget.request;
     response = request.response;
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    autoReadRequests.remove(widget.request.requestId);
-    super.dispose();
   }
 
   Color? color(String url) {
@@ -148,7 +151,7 @@ class RequestRowState extends State<RequestRow> {
               Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
           onTap: () {
             if (AppConfiguration.current?.autoReadEnabled == true) {
-              if (autoReadRequests.add(request.requestId)) {
+              if (markAutoRead(request.requestId)) {
                 setState(() {});
               }
             }
@@ -379,7 +382,7 @@ class RequestRowState extends State<RequestRow> {
     return TextButton.icon(
         onPressed: onPressed,
         label: Text(label, style: style),
-        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withOpacity(0.65)));
+        icon: Icon(icon, size: iconSize, color: theme.colorScheme.primary.withValues(alpha: 0.65)));
   }
 
   Widget menuItem({required Widget left, required Widget right}) {
