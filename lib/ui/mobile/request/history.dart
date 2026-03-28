@@ -37,6 +37,7 @@ import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:proxypin/utils/quick_share.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../utils/har.dart';
@@ -45,8 +46,14 @@ class MobileHistory extends StatefulWidget {
   final ProxyServer proxyServer;
   final HistoryTask historyTask;
   final ListenableList<HttpRequest> container;
+  final String? autoOpenHistoryPath;
 
-  const MobileHistory({super.key, required this.proxyServer, required this.container, required this.historyTask});
+  const MobileHistory(
+      {super.key,
+      required this.proxyServer,
+      required this.container,
+      required this.historyTask,
+      this.autoOpenHistoryPath});
 
   @override
   State<StatefulWidget> createState() {
@@ -79,14 +86,59 @@ class _MobileHistoryState extends State<MobileHistory> {
   static bool _sessionSaved = false;
   late Configuration configuration;
   var storageInstance = HistoryStorage.instance;
+  late final OnchangeListEvent<HistoryItem> _historyListener;
+  bool _autoOpened = false;
 
   @override
   void initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
+    _historyListener = OnchangeListEvent<HistoryItem>(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    storageInstance.then((storage) => storage.addListener(_historyListener));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openImportedHistoryIfNeeded());
+  }
+
+  @override
+  void dispose() {
+    storageInstance.then((storage) => storage.removeListener(_historyListener));
+    super.dispose();
   }
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  Future<void> _openImportedHistoryIfNeeded() async {
+    if (_autoOpened || !mounted) {
+      return;
+    }
+
+    final targetPath = widget.autoOpenHistoryPath;
+    if (targetPath == null || targetPath.isEmpty) {
+      return;
+    }
+
+    final storage = await storageInstance;
+    if (!mounted) {
+      return;
+    }
+
+    HistoryItem? target;
+    for (final history in storage.histories) {
+      if (history.path == targetPath) {
+        target = history;
+        break;
+      }
+    }
+    if (target == null) {
+      return;
+    }
+
+    _autoOpened = true;
+    toRequestsView(target, storage);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +208,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //导入har
-  import(HistoryStorage storage) async {
+  Future<void> import(HistoryStorage storage) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
@@ -186,10 +238,22 @@ class _MobileHistoryState extends State<MobileHistory> {
           setState(() {
             selectIndex = index;
           });
-          showContextMenu(context, detail.globalPosition.translate(-50, index == 0 ? -100 : 100), items: [
+
+          final menuItems = <PopupMenuEntry>[
             PopupMenuItem(child: Text(localizations.rename), onTap: () => renameHistory(storage, item)),
             PopupMenuItem(
                 child: Text(localizations.share), onTap: () => export(storage, item, offset: detail.globalPosition)),
+          ];
+
+          if (QuickShareService.isRemoteConnected(widget.proxyServer) && item.requestLength > 0) {
+            menuItems.addAll([
+              PopupMenuItem(
+                  child: Text('${localizations.send} ${localizations.remoteDevice}'),
+                  onTap: () => sendToRemote(storage, item)),
+            ]);
+          }
+
+          menuItems.addAll([
             const PopupMenuDivider(height: 0.3),
             PopupMenuItem(
                 child: Text(localizations.repeatAllRequests),
@@ -200,7 +264,10 @@ class _MobileHistoryState extends State<MobileHistory> {
                 }),
             const PopupMenuDivider(height: 0.3),
             PopupMenuItem(child: Text(localizations.delete), onTap: () => deleteHistory(storage, index))
-          ]).whenComplete(() {
+          ]);
+
+          final popupOffset = detail.globalPosition.translate(-50, index == 0 ? -100 : 100);
+          showContextMenu(context, popupOffset, items: menuItems).whenComplete(() {
             setState(() {
               selectIndex = -1;
             });
@@ -215,7 +282,7 @@ class _MobileHistoryState extends State<MobileHistory> {
         ));
   }
 
-  toRequestsView(HistoryItem item, HistoryStorage storage) {
+  void toRequestsView(HistoryItem item, HistoryStorage storage) {
     Navigator.of(context)
         .push(MaterialPageRoute(
             builder: (BuildContext context) => HistoryRecord(history: item, proxyServer: widget.proxyServer)))
@@ -229,7 +296,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //导出har
-  export(HistoryStorage storage, HistoryItem item, {Offset? offset}) async {
+  Future<void> export(HistoryStorage storage, HistoryItem item, {Offset? offset}) async {
     //文件名称
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");
@@ -243,12 +310,38 @@ class _MobileHistoryState extends State<MobileHistory> {
       rect = Rect.fromCenter(center: offset, width: 1, height: 1);
     }
 
-    Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: rect);
+    SharePlus.instance.share(ShareParams(files: [file], fileNameOverrides: [fileName], sharePositionOrigin: rect));
+    Future.delayed(const Duration(seconds: 30), () => item.requests = null);
+  }
+
+  Future<void> sendToRemote(HistoryStorage storage, HistoryItem item) async {
+    if (!QuickShareService.isRemoteConnected(widget.proxyServer)) {
+      if (mounted) {
+        FlutterToastr.show('${localizations.notConnected} ${localizations.remoteDevice}', context);
+      }
+      return;
+    }
+
+    final requests = await storage.getRequests(item);
+    if (requests.isEmpty) {
+      if (mounted) {
+        FlutterToastr.show(localizations.emptyData, context);
+      }
+      return;
+    }
+
+    final result = await QuickShareService.sendHistoryToRemote(widget.proxyServer, requests, historyName: item.name);
+    if (mounted) {
+      FlutterToastr.show(
+          '${localizations.send}: ${localizations.success} ${result.success}, ${localizations.fail} ${result.failed}',
+          context);
+    }
+
     Future.delayed(const Duration(seconds: 30), () => item.requests = null);
   }
 
   //重命名
-  renameHistory(HistoryStorage storage, HistoryItem item) {
+  void renameHistory(HistoryStorage storage, HistoryItem item) {
     String name = "";
     showDialog(
         context: context,
@@ -280,7 +373,7 @@ class _MobileHistoryState extends State<MobileHistory> {
   }
 
   //删除
-  deleteHistory(HistoryStorage storage, int index) {
+  void deleteHistory(HistoryStorage storage, int index) {
     showDialog(
         context: context,
         builder: (context) {
@@ -390,7 +483,7 @@ class _HistoryRecordState extends State<HistoryRecord> {
   }
 
   //导出har
-  export(BuildContext context) async {
+  Future<void> export(BuildContext context) async {
     var item = widget.history;
     requestStateKey.currentState?.export(context, item.name);
   }

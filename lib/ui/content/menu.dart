@@ -10,6 +10,7 @@ import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:proxypin/utils/quick_share.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../utils/export_request.dart';
@@ -41,7 +42,7 @@ class ShareWidget extends StatelessWidget {
             child: Text(localizations.shareUrl),
             onTap: () async {
               if (request == null) {
-                FlutterToastr.show("Request is empty", context);
+                FlutterToastr.show(localizations.emptyData, context);
                 return;
               }
               Share.share(request!.requestUrl,
@@ -53,7 +54,7 @@ class ShareWidget extends StatelessWidget {
               child: Text(localizations.shareRequestResponse),
               onTap: () async {
                 if (request == null) {
-                  FlutterToastr.show("Request is empty", context);
+                  FlutterToastr.show(localizations.emptyData, context);
                   return;
                 }
                 var file = XFile.fromData(utf8.encode(copyRequest(request!, response)),
@@ -79,9 +80,38 @@ class ShareWidget extends StatelessWidget {
                     text: localizations.proxyPinSoftware,
                     sharePositionOrigin: await _sharePositionOrigin(context));
               }),
+          PopupMenuItem(
+            enabled: QuickShareService.isRemoteConnected(proxyServer),
+            padding: const EdgeInsets.only(left: 10, right: 2),
+            child: Text('${localizations.share} ${localizations.connectRemote}'),
+            onTap: () => _quickShareToRemote(context, localizations),
+          ),
         ];
       },
     );
+  }
+
+  Future<void> _quickShareToRemote(BuildContext context, AppLocalizations localizations) async {
+    if (request == null) {
+      FlutterToastr.show(localizations.emptyData, context);
+      return;
+    }
+
+    if (!QuickShareService.isRemoteConnected(proxyServer)) {
+      FlutterToastr.show('${localizations.notConnected} ${localizations.remoteDevice}', context);
+      return;
+    }
+
+    final success = await QuickShareService.sendRequestToRemote(proxyServer!, request!);
+    if (!context.mounted) {
+      return;
+    }
+
+    if (success) {
+      FlutterToastr.show(localizations.requestSuccess, context);
+    } else {
+      FlutterToastr.show('${localizations.send}${localizations.fail}', context);
+    }
   }
 
   Future<Rect?> _sharePositionOrigin(BuildContext context) async {

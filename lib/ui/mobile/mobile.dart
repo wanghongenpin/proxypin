@@ -33,6 +33,7 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -41,6 +42,7 @@ import 'package:proxypin/ui/launch/launch.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
 import 'package:proxypin/ui/mobile/menu/menu.dart';
+import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
 import 'package:proxypin/ui/mobile/widgets/pip.dart';
@@ -83,6 +85,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   /// 选择索引
   final ValueNotifier<int> _selectIndex = ValueNotifier(0);
 
+  StreamSubscription<HistoryItem>? _remoteHistorySubscription;
+
   late ProxyServer proxyServer;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -119,6 +123,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer = ProxyServer(widget.configuration);
     proxyServer.addListener(this);
     proxyServer.start();
+    _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
 
     if (widget.appConfiguration.upgradeNoticeV26) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -151,7 +156,26 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   @override
   void dispose() {
     AppLifecycleBinding.instance.removeListener(this);
+    _remoteHistorySubscription?.cancel();
     super.dispose();
+  }
+
+  void toRequestsView(HistoryItem item, HistoryStorage storage) {}
+
+  void _openHistoryPage(HistoryItem item) {
+    _selectIndex.value = 2;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context)
+          .push(MaterialPageRoute(
+              builder: (BuildContext context) => HistoryRecord(history: item, proxyServer: proxyServer)))
+          .then((value) async {
+        Future.delayed(const Duration(seconds: 60), () => item.requests = null);
+      });
+    });
   }
 
   int exitTime = 0;

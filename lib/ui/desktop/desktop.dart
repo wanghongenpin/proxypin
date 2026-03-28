@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -25,6 +26,7 @@ import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
+import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -59,6 +61,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   static final GlobalKey<DesktopRequestListState> requestListStateKey = GlobalKey<DesktopRequestListState>();
 
   final ValueNotifier<int> _selectIndex = ValueNotifier(0);
+  StreamSubscription<HistoryItem>? _remoteHistorySubscription;
 
   late ProxyServer proxyServer = ProxyServer(widget.configuration);
   late NetworkTabController panel;
@@ -68,6 +71,11 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   @override
   void onRequest(Channel channel, HttpRequest request) {
     requestListStateKey.currentState!.add(channel, request);
+
+    if (request.attributes['quickShare'] == true) {
+      _selectIndex.value = 0;
+      panel.change(request, request.response);
+    }
 
     //监控内存 到达阈值清理
     MemoryCleanupMonitor.onMonitor(onCleanup: () {
@@ -92,6 +100,11 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     super.initState();
     proxyServer.addListener(this);
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
+    _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((_) {
+      if (mounted) {
+        _selectIndex.value = 2;
+      }
+    });
 
     if (widget.appConfiguration.upgradeNoticeV26) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,6 +113,12 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
     } else {
       AppUpdateRepository.checkUpdate(context);
     }
+  }
+
+  @override
+  void dispose() {
+    _remoteHistorySubscription?.cancel();
+    super.dispose();
   }
 
   @override

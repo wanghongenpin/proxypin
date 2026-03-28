@@ -35,6 +35,7 @@ import 'package:share_plus/share_plus.dart';
 class HistoryStorage {
   static HistoryStorage? _instance;
   final File _storageFile;
+  static final StreamController<HistoryItem> _remoteImportedController = StreamController<HistoryItem>.broadcast();
 
   HistoryStorage._internal(this._storageFile);
 
@@ -78,8 +79,16 @@ class HistoryStorage {
     return _histories.source;
   }
 
+  static Stream<HistoryItem> get onRemoteImported => _remoteImportedController.stream;
+
+  static const String remoteHistoryPrefix = '[Remote] ';
+
   void addListener(ListenerListEvent<HistoryItem> listener) {
     _histories.addListener(listener);
+  }
+
+  void removeListener(ListenerListEvent<HistoryItem> listener) {
+    _histories.removeListener(listener);
   }
 
   ///打开文件
@@ -157,6 +166,35 @@ class HistoryStorage {
     await refresh();
   }
 
+  Future<HistoryItem> addRequests(Iterable<HttpRequest> requests,
+      {String? name, bool notifyRemoteImported = false}) async {
+    final list = requests.toList();
+    final historyFile = await HistoryStorage.openFile("${DateTime.now().millisecondsSinceEpoch}.txt");
+    final open = await historyFile.open(mode: FileMode.append);
+    try {
+      for (var request in list) {
+        await open.writeString(jsonEncode(Har.toHar(request)));
+        await open.writeString(",\n");
+      }
+    } finally {
+      await open.close();
+    }
+
+    var historyName =
+        (name == null || name.trim().isEmpty) ? formatDate(DateTime.now(), [mm, '-', d, ' ', HH, ':', nn, ':', ss]) : name;
+    if (notifyRemoteImported) {
+      final hasRemotePrefix = historyName.startsWith(remoteHistoryPrefix) || historyName.startsWith('【远程】');
+      if (!hasRemotePrefix) {
+        historyName = '$remoteHistoryPrefix$historyName';
+      }
+    }
+    final historyItem = addHistory(historyName, historyFile, list.length);
+    if (notifyRemoteImported) {
+      _remoteImportedController.add(historyItem);
+    }
+    return historyItem;
+  }
+
   //添加历史
   Future<HistoryItem> addHarFile(XFile file) async {
     var readAsBytes = await file.readAsString();
@@ -172,14 +210,7 @@ class HistoryStorage {
     List entries = log['entries'];
     var list = entries.map((e) => Har.toRequest(e)).toList();
 
-    //保存文件
-    var historyFile = await HistoryStorage.openFile("${DateTime.now().millisecondsSinceEpoch}.txt");
-    var open = await historyFile.open(mode: FileMode.append);
-    for (var request in list) {
-      await open.writeString(jsonEncode(Har.toHar(request)));
-      await open.writeString(",\n");
-    }
-    return addHistory(name, historyFile, list.length);
+    return addRequests(list, name: name);
   }
 }
 
