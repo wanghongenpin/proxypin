@@ -99,8 +99,8 @@ class HistoryStorage {
   }
 
   /// 添加历史记录
-  HistoryItem addHistory(String name, File file, int requestLength) {
-    var historyItem = HistoryItem(name, file.path, requestLength, 0);
+  Future<HistoryItem> addHistory(String name, File file, int requestLength) async {
+    var historyItem = HistoryItem(name, file.path, requestLength, await file.length());
     _histories.add(historyItem);
     refresh();
     return historyItem;
@@ -180,15 +180,16 @@ class HistoryStorage {
       await open.close();
     }
 
-    var historyName =
-        (name == null || name.trim().isEmpty) ? formatDate(DateTime.now(), [mm, '-', d, ' ', HH, ':', nn, ':', ss]) : name;
+    var historyName = (name == null || name.trim().isEmpty)
+        ? formatDate(DateTime.now(), [mm, '-', d, ' ', HH, ':', nn, ':', ss])
+        : name;
     if (notifyRemoteImported) {
       final hasRemotePrefix = historyName.startsWith(remoteHistoryPrefix) || historyName.startsWith('【远程】');
       if (!hasRemotePrefix) {
         historyName = '$remoteHistoryPrefix$historyName';
       }
     }
-    final historyItem = addHistory(historyName, historyFile, list.length);
+    final historyItem = await addHistory(historyName, historyFile, list.length);
     if (notifyRemoteImported) {
       _remoteImportedController.add(historyItem);
     }
@@ -304,7 +305,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
     HistoryStorage storage = await HistoryStorage.instance;
     var name = formatDate(DateTime.now(), [mm, '-', d, ' ', HH, ':', nn, ':', ss]);
     File file = await HistoryStorage.openFile("${DateTime.now().millisecondsSinceEpoch}.txt");
-    history = storage.addHistory(name, file, 0);
+    history = await storage.addHistory(name, file, 0);
     writeList.clear();
     writeList.addAll(sourceList.source);
     locked = false;

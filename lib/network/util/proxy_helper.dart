@@ -35,6 +35,9 @@ import 'package:proxypin/utils/har.dart';
 import '../components/host_filter.dart';
 
 class ProxyHelper {
+  static const Duration _remoteHistoryBatchTtl = Duration(minutes: 5);
+  static final Map<String, _RemoteHistoryBatchState> _remoteHistoryBatchStates = {};
+
   //请求本服务
   static Future<void> localRequest(ChannelContext channelContext, HttpRequest msg, Channel channel,
       {EventListener? listener}) async {
@@ -76,8 +79,44 @@ class ProxyHelper {
               .map((entry) => Har.toRequest(Map<String, dynamic>.from(entry)))
               .toList();
           final historyName = payload['historyName']?.toString();
-          await (await HistoryStorage.instance)
-              .addRequests(entries, name: historyName, notifyRemoteImported: true);
+
+          final batchId = payload['batchId']?.toString();
+          final batchIndex = _toPositiveInt(payload['batchIndex']);
+          final batchTotal = _toPositiveInt(payload['batchTotal']);
+          final isBatched = batchId != null && batchId.isNotEmpty && batchIndex != null && batchTotal != null;
+
+          if (!isBatched || batchTotal <= 1) {
+            await (await HistoryStorage.instance)
+                .addRequests(entries, name: historyName, notifyRemoteImported: true);
+            response.body = utf8.encode('ok');
+            channel.writeAndClose(channelContext, response);
+            return;
+          }
+
+          _cleanupExpiredRemoteHistoryBatchStates();
+          final state = _remoteHistoryBatchStates.putIfAbsent(
+            batchId,
+            () => _RemoteHistoryBatchState(historyName: historyName, batchTotal: batchTotal),
+          );
+          if (state.batchTotal != batchTotal) {
+            _remoteHistoryBatchStates[batchId] = _RemoteHistoryBatchState(historyName: historyName, batchTotal: batchTotal)
+              ..addBatch(batchIndex, entries);
+          } else {
+            state.addBatch(batchIndex, entries);
+            if ((state.historyName == null || state.historyName!.trim().isEmpty) &&
+                historyName != null &&
+                historyName.trim().isNotEmpty) {
+              state.historyName = historyName;
+            }
+          }
+
+          final currentState = _remoteHistoryBatchStates[batchId]!;
+          if (currentState.isCompleted) {
+            final merged = currentState.mergedRequests;
+            _remoteHistoryBatchStates.remove(batchId);
+            await (await HistoryStorage.instance)
+                .addRequests(merged, name: currentState.historyName, notifyRemoteImported: true);
+          }
           response.body = utf8.encode('ok');
           channel.writeAndClose(channelContext, response);
           return;
@@ -109,6 +148,22 @@ class ProxyHelper {
     response.headers.set("os", Platform.operatingSystem);
     response.headers.set("hostname", Platform.isAndroid ? Platform.operatingSystem : Platform.localHostname);
     channel.writeAndClose(channelContext, response);
+  }
+
+  static int? _toPositiveInt(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    final parsed = int.tryParse(value.toString());
+    if (parsed == null || parsed <= 0) {
+      return null;
+    }
+    return parsed;
+  }
+
+  static void _cleanupExpiredRemoteHistoryBatchStates() {
+    final now = DateTime.now();
+    _remoteHistoryBatchStates.removeWhere((_, state) => now.difference(state.updatedAt) > _remoteHistoryBatchTtl);
   }
 
   /// 下载证书
@@ -178,3 +233,34 @@ class ProxyHelper {
     listener?.onResponse(channelContext, request.response!);
   }
 }
+
+class _RemoteHistoryBatchState {
+  String? historyName;
+  final int batchTotal;
+  final Map<int, List<HttpRequest>> _batches = {};
+  DateTime updatedAt = DateTime.now();
+
+  _RemoteHistoryBatchState({required this.historyName, required this.batchTotal});
+
+  void addBatch(int batchIndex, List<HttpRequest> requests) {
+    if (batchIndex <= 0 || batchIndex > batchTotal) {
+      return;
+    }
+    updatedAt = DateTime.now();
+    _batches.putIfAbsent(batchIndex, () => requests);
+  }
+
+  bool get isCompleted => _batches.length == batchTotal;
+
+  List<HttpRequest> get mergedRequests {
+    final merged = <HttpRequest>[];
+    for (var i = 1; i <= batchTotal; i++) {
+      final part = _batches[i];
+      if (part != null) {
+        merged.addAll(part);
+      }
+    }
+    return merged;
+  }
+}
+
