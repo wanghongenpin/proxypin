@@ -690,6 +690,12 @@ abstract class AppLocalizations {
   /// **'Click'**
   String get click;
 
+  /// No description provided for @loadRemoteScript.
+  ///
+  /// In en, this message translates to:
+  /// **'load remote script'**
+  String get loadRemoteScript;
+
   /// No description provided for @replace.
   ///
   /// In en, this message translates to:

@@ -98,6 +98,7 @@
   "useGuide": "使用文件",
   "pleaseEnter": "請輸入",
   "click": "點選",
+  "loadRemoteScript": "載入遠端腳本",
   "replace": "替換",
   "clickEdit": "點選編輯",
   "refresh": "重新整理",

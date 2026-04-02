@@ -308,6 +308,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get click => 'Click';
 
   @override
+  String get loadRemoteScript => 'load remote script';
+
+  @override
   String get replace => 'Replace';
 
   @override

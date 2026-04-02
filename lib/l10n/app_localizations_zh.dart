@@ -308,6 +308,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get click => '点击';
 
   @override
+  String get loadRemoteScript => '加载远程脚本';
+
+  @override
   String get replace => '替换';
 
   @override
@@ -1373,6 +1376,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get click => '點選';
+
+  @override
+  String get loadRemoteScript => '載入遠端腳本';
 
   @override
   String get replace => '替換';

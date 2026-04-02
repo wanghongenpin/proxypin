@@ -103,6 +103,7 @@
   "useGuide": "使用文档",
   "pleaseEnter": "请输入",
   "click": "点击",
+  "loadRemoteScript": "加载远程脚本",
   "replace": "替换",
   "clickEdit": "点击编辑",
   "refresh": "刷新",
