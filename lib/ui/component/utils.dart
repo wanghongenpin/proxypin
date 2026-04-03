@@ -30,6 +30,7 @@ import '../../utils/platform.dart';
 const contentMap = {
   ContentType.json: Icons.data_object,
   ContentType.html: Icons.html,
+  ContentType.xml: Icons.code,
   ContentType.js: Icons.javascript,
   ContentType.image: Icons.image,
   ContentType.video: Icons.video_call,

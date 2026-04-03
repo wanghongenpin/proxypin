@@ -38,6 +38,10 @@ abstract class HttpMessage {
     "text/css": ContentType.css,
     "font-woff": ContentType.font,
     "text/html": ContentType.html,
+    "application/xhtml+xml": ContentType.html,
+    "+xml": ContentType.xml,
+    "application/xml": ContentType.xml,
+    "text/xml": ContentType.xml,
     "text/plain": ContentType.text,
     "application/x-www-form-urlencoded": ContentType.formUrl,
     "form-data": ContentType.formData,
@@ -128,11 +132,9 @@ abstract class HttpMessage {
 
       if (headers.isGzip) {
         rawBody = gzipDecode(body!);
-      }else
-
-      if (headers.contentEncoding == 'br') {
+      } else if (headers.contentEncoding == 'br') {
         rawBody = brDecode(body!);
-      } else if  (headers.contentEncoding == 'deflate') {
+      } else if (headers.contentEncoding == 'deflate') {
         rawBody = zlibDecode(body!);
       }
 

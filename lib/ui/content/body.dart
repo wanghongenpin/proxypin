@@ -36,9 +36,11 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/utils/crypto_body_decoder.dart';
+import 'package:proxypin/utils/html_formatter.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/num.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:proxypin/utils/xml_formatter.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../component/json/json_text.dart';
@@ -509,43 +511,61 @@ class _BodyState extends State<_Body> {
     return _getBody(viewType);
   }
 
+  HttpMessage? _effectiveMessage(HttpBodyState? parent) {
+    if (parent?.showDecoded == true && parent?.decoded != null && message != null) {
+      return _DecodedHttpMessage(message!, parent!.decoded!);
+    }
+    return message;
+  }
+
+  String _formatTextBody(ViewType type, String body) {
+    try {
+      if (type == ViewType.formUrl) {
+        return Uri.decodeFull(body);
+      }
+
+      if (type == ViewType.html) {
+        return HTML.pretty(body);
+      }
+
+      if (type == ViewType.xml) {
+        return XML.pretty(body);
+      }
+
+      if (type == ViewType.jsonText || type == ViewType.json) {
+        var jsonObject = json.decode(body);
+        return const JsonEncoder.withIndent("  ").convert(jsonObject);
+      }
+    } catch (_) {}
+
+    return body;
+  }
+
   Future<String?> getBody() async {
     final parent = context.findAncestorStateOfType<HttpBodyState>();
-    if (parent?.showDecoded == true && parent?.decoded?.text != null) {
-      return parent!.decoded!.text;
+    final currentMessage = _effectiveMessage(parent);
+
+    if (currentMessage?.isWebSocket == true) {
+      return currentMessage?.messages.map((e) => e.payloadDataAsString).join("\n");
     }
 
-    if (message?.isWebSocket == true) {
-      return message?.messages.map((e) => e.payloadDataAsString).join("\n");
-    }
-
-    if (message == null || message?.body == null) {
+    if (currentMessage == null || currentMessage.body == null) {
       return null;
     }
 
     if (viewType == ViewType.hex) {
-      return message!.body!.map(intToHex).join(" ");
+      return currentMessage.body!.map(intToHex).join(" ");
     }
 
-    try {
-      if (viewType == ViewType.formUrl) {
-        return Uri.decodeFull(message!.bodyAsString);
-      }
-
-      if (viewType == ViewType.jsonText || viewType == ViewType.json) {
-        //json格式化
-        var jsonObject = json.decode(await message!.decodeBodyString());
-        return const JsonEncoder.withIndent("  ").convert(jsonObject);
-      }
-    } catch (_) {}
-    return message!.decodeBodyString();
+    final body = parent?.showDecoded == true && parent?.decoded?.text != null
+        ? parent!.decoded!.text!
+        : await currentMessage.decodeBodyString();
+    return _formatTextBody(viewType, body);
   }
 
   Widget _getBody(ViewType type) {
     final parent = context.findAncestorStateOfType<HttpBodyState>();
-    final message = parent?.showDecoded == true && parent?.decoded != null
-        ? _DecodedHttpMessage(widget.message!, parent!.decoded!)
-        : widget.message;
+    final message = _effectiveMessage(parent);
 
     if (message?.isWebSocket == true ||
         (message?.contentType == ContentType.sse && message?.messages.isNotEmpty == true)) {
@@ -592,12 +612,16 @@ class _BodyState extends State<_Body> {
 
     if (type == ViewType.formUrl) {
       return HighlightTextWidget(
-          text: Uri.decodeFull(message.getBodyString()),
+          text: _formatTextBody(type, message.getBodyString()),
           searchController: widget.searchController,
           contextMenuBuilder: contextMenu);
     }
 
-    return futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
+    final initialData = (type == ViewType.html || type == ViewType.xml)
+        ? _formatTextBody(type, message.getBodyString())
+        : message.getBodyString();
+
+    return futureWidget(message.decodeBodyString(), initialData: initialData, (body) {
       try {
         if (type == ViewType.jsonText) {
           var jsonObject = json.decode(body);
@@ -615,7 +639,9 @@ class _BodyState extends State<_Body> {
         }
 
         return HighlightTextWidget(
-            text: body, searchController: widget.searchController, contextMenuBuilder: contextMenu);
+            text: _formatTextBody(type, body),
+            searchController: widget.searchController,
+            contextMenuBuilder: contextMenu);
       } catch (e) {
         logger.e(e, stackTrace: StackTrace.current);
       }
@@ -653,7 +679,10 @@ class Tabs {
       tabs.list.add(ViewType.json);
     }
 
-    if (contentType == ContentType.formUrl || contentType == ContentType.json) {
+    if (contentType == ContentType.formUrl ||
+        contentType == ContentType.json ||
+        contentType == ContentType.html ||
+        contentType == ContentType.xml) {
       tabs.list.add(ViewType.text);
     }
 
@@ -672,6 +701,7 @@ enum ViewType {
   json("JSON"),
   jsonText("JSON Text"),
   html("HTML"),
+  xml("XML"),
   image("Image"),
   video("Video"),
   css("CSS"),
