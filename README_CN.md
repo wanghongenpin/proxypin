@@ -20,6 +20,33 @@
 
 **Mac首次打开会提示不受信任开发者，需要到系统偏好设置-安全性与隐私-允许任何来源。**
 
+## MCP 集成
+
+ProxyPin MCP Server 将本地抓包历史提供给 MCP 客户端（Windsurf / Cursor / Claude Desktop / Codex）。
+
+项目地址：https://github.com/ElonJask/proxypin-mcp
+
+启动方式：
+`npx -y @elonjask/proxypin-mcp@latest`
+
+MCP 配置：
+```json
+{
+  "mcpServers": {
+    "proxypin": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@elonjask/proxypin-mcp@latest"]
+    }
+  }
+}
+```
+
+说明：
+* 在 ProxyPin 的“历史”设置中开启“缓存日期”（必须）
+* 确保已有抓包历史数据
+* 本机需安装 `uv`（启动器会调用 `uvx --from proxypin-mcp proxypin-mcp`）
+
 ## 赞助 
 
 如果您觉得ProxyPin对您有帮助，欢迎通过以下方式支持我们，帮助项目长期发展：
@@ -44,4 +71,3 @@ TG: https://t.me/proxypin_tg
 **接下来会持续完善功能和体验，UI优化。**
 
 <img alt="image"  width="580px" height="420px"  src="https://github.com/user-attachments/assets/80f30d64-f2b5-473c-98f5-bae50b309278">.<img alt="image"  height="500px" src="https://github.com/user-attachments/assets/3c5572b0-a9e5-497c-8b42-f935e836c164">
-
