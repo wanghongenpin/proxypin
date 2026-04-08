@@ -189,26 +189,71 @@ void unSelect(EditableTextState editableTextState) {
   );
 }
 
-///Future
+///Future — skips rebuild when the resolved value equals [initialData].
 Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {T? initialData, bool loading = false}) {
-  return FutureBuilder<T>(
+  return _FutureWidget<T>(
     future: future,
+    toWidget: toWidget,
     initialData: initialData,
-    builder: (BuildContext context, AsyncSnapshot<T> snapshot) {
-      if (snapshot.data != null) {
-        return toWidget(snapshot.requireData);
-      }
-
-      if (snapshot.connectionState == ConnectionState.done) {
-        if (snapshot.hasError) {
-          logger.e(snapshot.error);
-        }
-        return toWidget(snapshot.requireData);
-      }
-      //加载效果
-      return loading ? const Center(child: CircularProgressIndicator()) : const SizedBox();
-    },
+    loading: loading,
   );
+}
+
+class _FutureWidget<T> extends StatefulWidget {
+  final Future<T> future;
+  final Widget Function(T data) toWidget;
+  final T? initialData;
+  final bool loading;
+
+  const _FutureWidget({
+    required this.future,
+    required this.toWidget,
+    this.initialData,
+    this.loading = false,
+  });
+
+  @override
+  State<_FutureWidget<T>> createState() => _FutureWidgetState<T>();
+}
+
+class _FutureWidgetState<T> extends State<_FutureWidget<T>> {
+  T? _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _data = widget.initialData;
+    _subscribe();
+  }
+
+  @override
+  void didUpdateWidget(covariant _FutureWidget<T> old) {
+    super.didUpdateWidget(old);
+    if (old.future != widget.future || old.initialData != widget.initialData) {
+      _data = widget.initialData;
+      _subscribe();
+    }
+  }
+
+  void _subscribe() {
+    final captured = widget.future;
+    captured.then((result) {
+      if (!mounted || widget.future != captured) return;
+      // Result unchanged — no rebuild needed.
+      if (result == _data) return;
+      setState(() => _data = result);
+    }).catchError((error) {
+      if (mounted) logger.e(error);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_data != null) {
+      return widget.toWidget(_data as T);
+    }
+    return widget.loading ? const Center(child: CircularProgressIndicator()) : const SizedBox();
+  }
 }
 
 Future showContextMenu(BuildContext context, Offset offset, {required List<PopupMenuEntry> items}) {
