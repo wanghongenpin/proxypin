@@ -5,6 +5,24 @@ import 'package:proxypin/ui/component/search/search_controller.dart';
 
 void main() {
   group('HighlightTextWidget', () {
+    testWidgets('does not apply root style when language is empty', (tester) async {
+      final controller = SearchTextController();
+
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HighlightTextWidget(
+            text: 'plain text body',
+            searchController: controller,
+          ),
+        ),
+      ));
+
+      final selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      expect(selectable.style, isNull);
+
+      await _disposeController(tester, controller);
+    });
+
     testWidgets('keeps syntax highlighting while search is active', (tester) async {
       final controller = SearchTextController();
       BuildContext? hostContext;

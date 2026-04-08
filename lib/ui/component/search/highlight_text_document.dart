@@ -7,7 +7,7 @@ import 'search_controller.dart';
 
 class HighlightTextDocument {
   final String text;
-  final TextStyle rootStyle;
+  final TextStyle? rootStyle;
   final List<HighlightStyledSegment> segments;
   final List<HighlightSearchMatch> matches;
   final List<HighlightDocumentLine> lines;
@@ -113,9 +113,12 @@ class HighlightTextDocument {
         final overlapEnd = match.end < segmentEnd ? match.end : segmentEnd;
         final matchText = segment.text.substring(localStart, overlapEnd - segmentStart);
         final isCurrentMatch = match.index == currentMatchIndex;
-        final highlightedStyle = (segment.style ?? const TextStyle()).copyWith(
+
+        // 复用样式计算，减少对象创建
+        final baseStyle = segment.style ?? const TextStyle();
+        final highlightedStyle = baseStyle.copyWith(
           backgroundColor: isCurrentMatch ? colorScheme.primary : colorScheme.inversePrimary,
-          color: isCurrentMatch ? colorScheme.onPrimary : segment.style?.color,
+          color: isCurrentMatch ? colorScheme.onPrimary : baseStyle.color,
         );
 
         _appendTextSpan(spans, matchText, highlightedStyle);
@@ -131,7 +134,7 @@ class HighlightTextDocument {
 
   List<InlineSpan> _plainLineSpans(HighlightDocumentLine line) {
     if (line.segments.isEmpty) {
-      return [const TextSpan(text: '\u200B', style: TextStyle(color: Colors.transparent))];
+      return [const TextSpan(text: '', style: TextStyle(color: Colors.transparent))];
     }
 
     return [for (final segment in line.segments) TextSpan(text: segment.text, style: segment.style)];
@@ -183,16 +186,6 @@ List<HighlightStyledSegment> buildHighlightBaseSegments(
   } catch (_) {}
 
   return [HighlightStyledSegment(text: text, style: _stripBackground(style))];
-}
-
-Color highlightSelectionColor(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final configured = Theme.of(context).textSelectionTheme.selectionColor;
-  // Enforce minimum contrast for syntax-colored text selection.
-  if (configured != null && configured.alpha >= 140) {
-    return configured;
-  }
-  return scheme.primary.withValues(alpha: 0.55);
 }
 
 List<HighlightSearchMatch> buildSearchMatches(String text, SearchTextController searchController) {
@@ -351,4 +344,3 @@ TextStyle? _stripBackground(TextStyle? style) {
   }
   return style.copyWith(backgroundColor: null, background: null);
 }
-

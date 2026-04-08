@@ -36,7 +36,9 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/utils/crypto_body_decoder.dart';
+import 'package:proxypin/utils/css_formatter.dart';
 import 'package:proxypin/utils/html_formatter.dart';
+import 'package:proxypin/utils/js_formatter.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/num.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -117,7 +119,9 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final message = widget.httpMessage;
     if (message == null) return;
     decoded = await CryptoBodyDecoder.maybeDecode(message);
-    if (mounted) setState(() {});
+    if (mounted && decoded != null && decoded!.hasText) {
+      setState(() {});
+    }
   }
 
   @override
@@ -489,6 +493,8 @@ class _Body extends StatefulWidget {
 }
 
 class _BodyState extends State<_Body> {
+  static const int _virtualizedThreshold = 100000;
+
   late ViewType viewType;
   HttpMessage? message;
 
@@ -530,6 +536,14 @@ class _BodyState extends State<_Body> {
 
       if (type == ViewType.xml) {
         return XML.pretty(body);
+      }
+
+      if (type == ViewType.css) {
+        return CSS.pretty(body);
+      }
+
+      if (type == ViewType.js) {
+        return JS.pretty(body);
       }
 
       if (type == ViewType.jsonText || type == ViewType.json) {
@@ -673,28 +687,21 @@ class _BodyState extends State<_Body> {
     HttpMessage? message,
   }) {
     final language = _languageForViewType(type, message);
-
-    // bool showVirtualized = text.length > 12000;
+    final formattedText = language != null ? _formatTextBody(type, text) : text;
+    // final showVirtualized = formattedText.length > _virtualizedThreshold;
     // if (showVirtualized) {
-    //   logger.d(
-    //       "Using virtualized viewer for type $type with length ${text.length} and line count ${'\n'.allMatches(text).length + 1}");
     //   return VirtualizedHighlightText(
-    //     text: text,
+    //     text: formattedText,
     //     language: language,
-    //     searchController: widget.searchController,
     //     contextMenuBuilder: contextMenu,
+    //     searchController: widget.searchController,
     //     scrollController: widget.scrollController,
     //   );
     // }
 
-    if (type == ViewType.text) {
-      return HighlightTextWidget(
-          text: text, searchController: widget.searchController, contextMenuBuilder: contextMenu);
-    }
-
     return HighlightTextWidget(
         language: language,
-        text: _formatTextBody(type, text),
+        text: formattedText,
         searchController: widget.searchController,
         contextMenuBuilder: contextMenu);
   }
@@ -719,6 +726,13 @@ class Tabs {
       tabs.list.add(ViewType.jsonText);
     }
 
+    if (contentType == ContentType.html ||
+        contentType == ContentType.xml ||
+        contentType == ContentType.js ||
+        contentType == ContentType.css) {
+      tabs.list.add(ViewType.text);
+    }
+
     tabs.list.add(ViewType.of(contentType) ?? ViewType.text);
 
     //为json时，增加json格式化
@@ -727,10 +741,7 @@ class Tabs {
       tabs.list.add(ViewType.json);
     }
 
-    if (contentType == ContentType.formUrl ||
-        contentType == ContentType.json ||
-        contentType == ContentType.html ||
-        contentType == ContentType.xml) {
+    if (contentType == ContentType.formUrl || contentType == ContentType.json) {
       tabs.list.add(ViewType.text);
     }
 
