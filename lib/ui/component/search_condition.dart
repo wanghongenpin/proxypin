@@ -49,10 +49,10 @@ class SearchConditionsState extends State<SearchConditions> {
     'JSON': ContentType.json,
     'IMAGE': ContentType.image,
     'HTML': ContentType.html,
+    'XML': ContentType.xml,
     'JS': ContentType.js,
     'CSS': ContentType.css,
     'TEXT': ContentType.text,
-    'XML': ContentType.xml,
   };
 
   late SearchModel searchModel;

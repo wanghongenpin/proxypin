@@ -21,9 +21,9 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:image_pickers/image_pickers.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/content_type.dart';
@@ -560,6 +560,11 @@ class _BodyState extends State<_Body> {
     final body = parent?.showDecoded == true && parent?.decoded?.text != null
         ? parent!.decoded!.text!
         : await currentMessage.decodeBodyString();
+
+    if (viewType == ViewType.text) {
+      return body;
+    }
+
     return _formatTextBody(viewType, body);
   }
 
@@ -617,11 +622,7 @@ class _BodyState extends State<_Body> {
           contextMenuBuilder: contextMenu);
     }
 
-    final initialData = (type == ViewType.html || type == ViewType.xml)
-        ? _formatTextBody(type, message.getBodyString())
-        : message.getBodyString();
-
-    return futureWidget(message.decodeBodyString(), initialData: initialData, (body) {
+    return futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
       try {
         if (type == ViewType.jsonText) {
           var jsonObject = json.decode(body);
@@ -638,10 +639,7 @@ class _BodyState extends State<_Body> {
               colorTheme: ColorTheme.of(context), searchController: widget.searchController);
         }
 
-        return HighlightTextWidget(
-            text: _formatTextBody(type, body),
-            searchController: widget.searchController,
-            contextMenuBuilder: contextMenu);
+        return _buildTextBodyViewer(type, body, message: message);
       } catch (e) {
         logger.e(e, stackTrace: StackTrace.current);
       }
@@ -649,6 +647,56 @@ class _BodyState extends State<_Body> {
       return HighlightTextWidget(
           text: body, searchController: widget.searchController, contextMenuBuilder: contextMenu);
     });
+  }
+
+  String? _languageForViewType(ViewType type, HttpMessage? message) {
+    switch (type) {
+      case ViewType.html:
+        return 'html';
+      case ViewType.xml:
+        return 'xml';
+      case ViewType.css:
+        return 'css';
+      case ViewType.js:
+        return 'javascript';
+      case ViewType.json:
+      case ViewType.jsonText:
+        return 'json';
+      default:
+        return null;
+    }
+  }
+
+  Widget _buildTextBodyViewer(
+    ViewType type,
+    String text, {
+    HttpMessage? message,
+  }) {
+    final language = _languageForViewType(type, message);
+
+    // bool showVirtualized = text.length > 12000;
+    // if (showVirtualized) {
+    //   logger.d(
+    //       "Using virtualized viewer for type $type with length ${text.length} and line count ${'\n'.allMatches(text).length + 1}");
+    //   return VirtualizedHighlightText(
+    //     text: text,
+    //     language: language,
+    //     searchController: widget.searchController,
+    //     contextMenuBuilder: contextMenu,
+    //     scrollController: widget.scrollController,
+    //   );
+    // }
+
+    if (type == ViewType.text) {
+      return HighlightTextWidget(
+          text: text, searchController: widget.searchController, contextMenuBuilder: contextMenu);
+    }
+
+    return HighlightTextWidget(
+        language: language,
+        text: _formatTextBody(type, text),
+        searchController: widget.searchController,
+        contextMenuBuilder: contextMenu);
   }
 }
 

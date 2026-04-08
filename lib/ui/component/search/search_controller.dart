@@ -41,8 +41,13 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
 
   void updateMatchCount(int count) {
     totalMatchCount.value = count;
-    if (currentMatchIndex.value > count) {
-      currentMatchIndex.value = count;
+    if (count == 0) {
+      currentMatchIndex.value = 0;
+      return;
+    }
+
+    if (currentMatchIndex.value >= count) {
+      currentMatchIndex.value = count - 1;
     }
   }
 
