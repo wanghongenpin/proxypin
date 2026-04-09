@@ -48,6 +48,7 @@ import 'package:window_manager/window_manager.dart';
 import '../component/json/json_text.dart';
 import '../component/search/highlight_text.dart';
 import '../component/search/search_controller.dart';
+import '../component/search/virtualized_highlight_text.dart';
 import '../toolbox/encoder.dart';
 
 ///请求响应的body部分
@@ -688,16 +689,16 @@ class _BodyState extends State<_Body> {
   }) {
     final language = _languageForViewType(type, message);
     final formattedText = language != null ? _formatTextBody(type, text) : text;
-    // final showVirtualized = formattedText.length > _virtualizedThreshold;
-    // if (showVirtualized) {
-    //   return VirtualizedHighlightText(
-    //     text: formattedText,
-    //     language: language,
-    //     contextMenuBuilder: contextMenu,
-    //     searchController: widget.searchController,
-    //     scrollController: widget.scrollController,
-    //   );
-    // }
+    final showVirtualized = formattedText.length > _virtualizedThreshold;
+    if (showVirtualized) {
+      return VirtualizedHighlightText(
+        text: formattedText,
+        language: language,
+        contextMenuBuilder: contextMenu,
+        searchController: widget.searchController,
+        scrollController: widget.scrollController,
+      );
+    }
 
     return HighlightTextWidget(
         language: language,
