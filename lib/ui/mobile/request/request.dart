@@ -42,6 +42,7 @@ import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/navigator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 ///请求行
 class RequestRow extends StatefulWidget {

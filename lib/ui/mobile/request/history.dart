@@ -310,7 +310,7 @@ class _MobileHistoryState extends State<MobileHistory> {
       rect = Rect.fromCenter(center: offset, width: 1, height: 1);
     }
 
-    SharePlus.instance.share(ShareParams(files: [file], fileNameOverrides: [fileName], sharePositionOrigin: rect));
+    await Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: rect);
     Future.delayed(const Duration(seconds: 30), () => item.requests = null);
   }
 

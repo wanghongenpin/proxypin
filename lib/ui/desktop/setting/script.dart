@@ -35,6 +35,7 @@ import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 bool _refresh = false;
 
@@ -585,7 +586,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                             width: 155,
                             height: 34,
                             child: DropdownButtonFormField<bool>(
-                              initialValue: _useRemote,
+                              value: _useRemote,
                               items: [
                                 DropdownMenuItem(value: false, child: Text(localizations.local)),
                                 DropdownMenuItem(value: true, child: Text(localizations.remoteUrl)),

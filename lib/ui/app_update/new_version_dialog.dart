@@ -73,7 +73,8 @@ class NewVersionDialog extends StatelessWidget {
           if (canIgnore)
             TextButton(
               onPressed: () async {
-                SharedPreferencesAsync().setString(Constants.ignoreReleaseVersionKey, newVersion.version);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString(Constants.ignoreReleaseVersionKey, newVersion.version);
                 logger.i("ignored release [${newVersion.version}]");
                 if (context.mounted) Navigator.pop(context);
               },

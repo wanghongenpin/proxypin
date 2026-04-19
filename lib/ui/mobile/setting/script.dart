@@ -33,6 +33,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/widgets/floating_window.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -626,7 +627,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                           SizedBox(width: 55, child: Text('${localizations.type}:')),
                           Expanded(
                               child: DropdownButtonFormField<bool>(
-                            initialValue: _useRemote,
+                            value: _useRemote,
                             items: [
                               DropdownMenuItem(value: false, child: Text(localizations.local)),
                               DropdownMenuItem(value: true, child: Text(localizations.remoteUrl)),
@@ -1066,12 +1067,7 @@ class _ScriptListState extends State<ScriptList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(json)), mimeType: 'json');
-    final shareParams = ShareParams(
-      files: [file],
-      fileNameOverrides: [fileName],
-      sharePositionOrigin: box?.paintBounds,
-    );
-    SharePlus.instance.share(shareParams);
+    await Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
   }
 
   void enableStatus(bool enable) {

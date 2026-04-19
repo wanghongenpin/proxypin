@@ -4,6 +4,7 @@ import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:highlight/highlight.dart' show Node, highlight;
 
 import 'search_controller.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 class HighlightTextDocument {
   final String text;
@@ -81,7 +82,7 @@ class HighlightTextDocument {
     }
 
     final spans = <InlineSpan>[];
-    final colorScheme = ColorScheme.of(context);
+    final colorScheme = context.colorScheme;
     var matchIndex = 0;
     var consumed = 0;
 
@@ -142,7 +143,7 @@ class HighlightTextDocument {
 }
 
 TextStyle highlightRootStyle(BuildContext context, [TextStyle? style]) {
-  final theme = Theme.brightnessOf(context) == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
+  final theme = Theme.of(context).brightness == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
   return _stripBackground((theme['root'] ?? const TextStyle(fontFamily: 'monospace', fontSize: 14.5)).merge(style)) ??
       const TextStyle(fontFamily: 'monospace', fontSize: 14.5);
 }
@@ -159,7 +160,7 @@ List<HighlightStyledSegment> buildHighlightBaseSegments(
 
   try {
     final parsed = highlight.parse(text, language: language).nodes ?? const <Node>[];
-    final theme = Theme.brightnessOf(context) == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
+    final theme = Theme.of(context).brightness == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
 
     List<HighlightStyledSegment> convert(List<Node> nodes, [TextStyle? inheritedStyle]) {
       final spans = <HighlightStyledSegment>[];

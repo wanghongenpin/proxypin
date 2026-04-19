@@ -48,3 +48,6 @@ app.*.map.json
 l10n_errors.txt
 pubspec.lock
 /dist/
+
+# FVM Version Cache
+.fvm/
