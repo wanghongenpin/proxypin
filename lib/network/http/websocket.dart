@@ -40,7 +40,7 @@ class WebSocketFrame {
   final Uint8List payloadData;
 
   bool isFromClient = false;
-  final DateTime time = DateTime.now();
+  DateTime time;
 
   WebSocketFrame({
     required this.fin,
@@ -49,7 +49,8 @@ class WebSocketFrame {
     required this.payloadLength,
     required this.maskingKey,
     required this.payloadData,
-  });
+    DateTime? time,
+  }) : time = time ?? DateTime.now();
 
   bool get isText => opcode == 0x01;
 
@@ -67,6 +68,37 @@ class WebSocketFrame {
     } catch (e) {
       return String.fromCharCodes(payloadData);
     }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fin': fin,
+      'opcode': opcode,
+      'mask': mask,
+      'maskingKey': maskingKey,
+      'payloadLength': payloadLength,
+      // use base64 to avoid binary corruption in JSON
+      'payloadData': base64Encode(payloadData),
+      'isFromClient': isFromClient,
+      'time': time.millisecondsSinceEpoch,
+    };
+  }
+
+  factory WebSocketFrame.fromJson(Map<String, dynamic> json) {
+    final payload = base64Decode(json['payloadData']?.toString() ?? '');
+    final frame = WebSocketFrame(
+      fin: json['fin'] == true,
+      opcode: (json['opcode'] ?? 0) as int,
+      mask: json['mask'] == true,
+      payloadLength: (json['payloadLength'] ?? payload.length) as int,
+      maskingKey: (json['maskingKey'] ?? 0) as int,
+      payloadData: Uint8List.fromList(payload),
+      time: json['time'] == null
+          ? DateTime.now()
+          : DateTime.fromMillisecondsSinceEpoch((json['time'] as num).toInt()),
+    );
+    frame.isFromClient = json['isFromClient'] == true;
+    return frame;
   }
 }
 

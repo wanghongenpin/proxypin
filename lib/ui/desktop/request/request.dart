@@ -28,8 +28,8 @@ import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/storage/favorites.dart';
-import 'package:proxypin/ui/component/app_dialog.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
@@ -74,13 +74,26 @@ class RequestWidget extends StatefulWidget {
     var state = key as GlobalKey<_RequestWidgetState>;
     state.currentState?.changeState();
   }
+
+  static void removeAutoReadByIds(Iterable<String> requestIds) {
+    _RequestWidgetState.removeAutoReadByIds(requestIds);
+  }
+
 }
 
 class _RequestWidgetState extends State<RequestWidget> {
   //选择的节点
   static _RequestWidgetState? selectedState;
 
-  static Set<String> autoReadRequests = <String>{};
+  static LruCacheSet<String> autoReadRequests = LruCacheSet<String>(5000);
+
+  static bool markAutoRead(String requestId) {
+    return autoReadRequests.add(requestId);
+  }
+
+  static void removeAutoReadByIds(Iterable<String> requestIds) {
+    autoReadRequests.removeAll(requestIds);
+  }
 
   bool selected = false;
 
@@ -91,12 +104,6 @@ class _RequestWidgetState extends State<RequestWidget> {
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    autoReadRequests.remove(widget.request.requestId);
-    super.dispose();
   }
 
   @override
@@ -118,7 +125,7 @@ class _RequestWidgetState extends State<RequestWidget> {
             minLeadingWidth: 5,
             textColor: requestColor,
             selectedColor: requestColor,
-            selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             leading: getIcon(widget.response.get() ?? widget.request.response, color: requestColor),
             trailing: widget.trailing,
             title: Text(title.fixAutoLines(), overflow: TextOverflow.ellipsis, maxLines: 2),
@@ -408,7 +415,7 @@ class _RequestWidgetState extends State<RequestWidget> {
     }
 
     if (AppConfiguration.current?.autoReadEnabled == true) {
-      autoReadRequests.add(widget.request.requestId);
+      markAutoRead(widget.request.requestId);
     }
 
     //切换选中的节点

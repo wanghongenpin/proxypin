@@ -102,6 +102,7 @@
   "useGuide": "Use Guide",
   "pleaseEnter": "Please Enter",
   "click": "Click",
+  "loadRemoteScript": "load remote script",
   "replace": "Replace",
   "clickEdit": "Click Edit",
   "refresh": "Refresh",
@@ -168,6 +169,7 @@
   "editRequest": "Edit and Request",
   "reSendRequest": "The request has been resent",
   "viewExport": "View Export",
+  "exportDomainHar": "Export This Domain HAR",
   "timeDesc": "Descending by time",
   "timeAsc": "Ascending by time",
 

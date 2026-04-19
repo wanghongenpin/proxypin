@@ -15,8 +15,10 @@
  */
 
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:date_format/date_format.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -29,6 +31,8 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
+import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 ///域名列表
@@ -298,6 +302,12 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
                   }),
               const Divider(thickness: 0.5, height: 5),
               BottomSheetItem(
+                  text: localizations.exportDomainHar,
+                  onPressed: () {
+                    exportDomainHar(hostAndPort);
+                  }),
+              const Divider(thickness: 0.5, height: 5),
+              BottomSheetItem(
                   text: localizations.delete,
                   onPressed: () {
                     setState(() {
@@ -344,5 +354,33 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
         if (mounted) FlutterToastr.show('${localizations.fail}$e', rootNavigator: true, context);
       }
     }
+  }
+
+  Future<void> exportDomainHar(HostAndPort hostAndPort) async {
+    var requests = containerMap[hostAndPort] ?? [];
+    if (requests.isEmpty) {
+      if (mounted) FlutterToastr.show(localizations.emptyData, context);
+      return;
+    }
+
+    var fileName = _domainHarFileName(hostAndPort);
+    var json = await Har.writeJson(requests, title: fileName);
+    var bytes = utf8.encode(json);
+
+    var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: bytes);
+    if (path == null) {
+      return;
+    }
+
+    if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
+  }
+
+  String _domainHarFileName(HostAndPort hostAndPort) {
+    var suffix = (hostAndPort.port == 80 || hostAndPort.port == 443) ? '' : '_${hostAndPort.port}';
+    var safeDomain = '${hostAndPort.host}$suffix'.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    if (safeDomain.isEmpty) {
+      safeDomain = 'domain';
+    }
+    return 'ProxyPin_${safeDomain}_${DateTime.now().dateFormat()}.har';
   }
 }

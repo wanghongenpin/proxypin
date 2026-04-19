@@ -38,6 +38,10 @@ abstract class HttpMessage {
     "text/css": ContentType.css,
     "font-woff": ContentType.font,
     "text/html": ContentType.html,
+    "application/xhtml+xml": ContentType.html,
+    "+xml": ContentType.xml,
+    "application/xml": ContentType.xml,
+    "text/xml": ContentType.xml,
     "text/plain": ContentType.text,
     "application/x-www-form-urlencoded": ContentType.formUrl,
     "form-data": ContentType.formData,
@@ -128,11 +132,9 @@ abstract class HttpMessage {
 
       if (headers.isGzip) {
         rawBody = gzipDecode(body!);
-      }else
-
-      if (headers.contentEncoding == 'br') {
+      } else if (headers.contentEncoding == 'br') {
         rawBody = brDecode(body!);
-      } else if  (headers.contentEncoding == 'deflate') {
+      } else if (headers.contentEncoding == 'deflate') {
         rawBody = zlibDecode(body!);
       }
 
@@ -228,6 +230,7 @@ class HttpRequest extends HttpMessage {
       _requestUri ??= Uri.parse(requestUrl);
       return _requestUri;
     } catch (e) {
+      logger.w('parse uri error $requestUrl  ${hostAndPort?.scheme} ${hostAndPort?.host}: $e');
       return null;
     }
   }
@@ -259,6 +262,7 @@ class HttpRequest extends HttpMessage {
     request.hostAndPort ??= hostAndPort;
     request.streamId = streamId;
     request.body = body;
+    request.messages = messages;
     return request;
   }
 
@@ -274,6 +278,7 @@ class HttpRequest extends HttpMessage {
       'headers': headers.toJson(),
       'body': body == null ? null : String.fromCharCodes(body!),
       'requestTime': requestTime.millisecondsSinceEpoch,
+      'messages': messages.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -286,6 +291,13 @@ class HttpRequest extends HttpMessage {
     request.body = json['body']?.toString().codeUnits;
     if (json['requestTime'] != null) {
       request.requestTime = DateTime.fromMillisecondsSinceEpoch(json['requestTime']);
+    }
+
+    if (json['messages'] is List) {
+      request.messages = (json['messages'] as List)
+          .whereType<Map>()
+          .map((e) => WebSocketFrame.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     }
     request.packageSize = json['packageSize'];
     return request;
@@ -315,6 +327,7 @@ class HttpResponse extends HttpMessage {
     response.headers.addAll(headers);
     response.body = body;
     response.request = request;
+    response.messages = messages;
     return response;
   }
 
@@ -338,6 +351,12 @@ class HttpResponse extends HttpMessage {
     if (json['responseTime'] != null) {
       httpResponse.responseTime = DateTime.fromMillisecondsSinceEpoch(json['responseTime']);
     }
+    if (json['messages'] is List) {
+      httpResponse.messages = (json['messages'] as List)
+          .where((e) => e is Map)
+          .map((e) => WebSocketFrame.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
     httpResponse.packageSize = json['packageSize'];
     httpResponse._requestUrl = json['requestUrl'];
     return httpResponse;
@@ -357,6 +376,7 @@ class HttpResponse extends HttpMessage {
       'headers': headers.toJson(),
       'body': body == null ? null : String.fromCharCodes(body!),
       'responseTime': responseTime.millisecondsSinceEpoch,
+      'messages': messages.map((e) => e.toJson()).toList(),
     };
   }
 

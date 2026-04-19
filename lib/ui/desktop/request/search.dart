@@ -155,7 +155,7 @@ class ContentTypeState extends State<ContentTypeSelect> {
   @override
   Widget build(BuildContext context) {
     value ??= localizations.all;
-    types ??= ["JSON", "HTML", "JS", "CSS", "TEXT", "IMAGE", localizations.all];
+    types ??= ["JSON", "IMAGE", "HTML", "XML", "JS", "CSS", "TEXT",  localizations.all];
 
     return PopupMenuButton(
       initialValue: value,

@@ -69,25 +69,27 @@ class NewVersionDialog extends StatelessWidget {
             ],
           ))),
       actions: [
-        if (canIgnore)
+        Wrap(alignment: WrapAlignment.end, children: [
+          if (canIgnore)
+            TextButton(
+              onPressed: () async {
+                SharedPreferencesAsync().setString(Constants.ignoreReleaseVersionKey, newVersion.version);
+                logger.i("ignored release [${newVersion.version}]");
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: Text(localizations.appUpdateIgnoreBtnTxt),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(localizations.appUpdateLaterBtnTxt),
+          ),
           TextButton(
             onPressed: () async {
-              (await SharedPreferences.getInstance()).setString(Constants.ignoreReleaseVersionKey, newVersion.version);
-              logger.i("ignored release [${newVersion.version}]");
-              if (context.mounted) Navigator.pop(context);
+              await launchUrl(Uri.parse(newVersion.url), mode: LaunchMode.externalApplication);
             },
-            child: Text(localizations.appUpdateIgnoreBtnTxt),
+            child: Text(localizations.appUpdateUpdateNowBtnTxt),
           ),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(localizations.appUpdateLaterBtnTxt),
-        ),
-        TextButton(
-          onPressed: () async {
-            await launchUrl(Uri.parse(newVersion.url), mode: LaunchMode.externalApplication);
-          },
-          child: Text(localizations.appUpdateUpdateNowBtnTxt),
-        ),
+        ])
       ],
     );
   }

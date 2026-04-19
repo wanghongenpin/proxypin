@@ -49,7 +49,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   late VoidCallback highlightListener;
 
   @override
-  initState() {
+ void initState() {
     super.initState();
     sortDesc = widget.sortDesc ?? true;
     view.addAll(widget.container.source.reversed);
@@ -63,13 +63,13 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   @override
-  dispose() {
+  void dispose() {
     KeywordHighlights.removeListener(highlightListener);
     super.dispose();
   }
 
   ///添加请求
-  add(HttpRequest request) {
+  void add(HttpRequest request) {
     ///过滤
     if (searchModel?.isNotEmpty == true && !searchModel!.filter(request, request.response)) {
       return;
@@ -85,7 +85,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///添加响应
-  addResponse(HttpResponse response) {
+  void addResponse(HttpResponse response) {
     var state = indexes.remove(response.request?.requestId);
     state?.currentState?.change(response);
 
@@ -102,7 +102,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     }
   }
 
-  clean() {
+  void clean() {
     setState(() {
       view.clear();
       indexes.clear();
@@ -111,9 +111,13 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     });
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
+    final removedRequestIds = list.map((request) => request.requestId).toList();
     setState(() {
       view.removeWhere((element) => list.contains(element));
+      for (final requestId in removedRequestIds) {
+        indexes.remove(requestId);
+      }
     });
   }
 
@@ -187,7 +191,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     if (sortDesc == desc) {
       return;
     }

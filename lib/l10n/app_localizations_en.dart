@@ -308,6 +308,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get click => 'Click';
 
   @override
+  String get loadRemoteScript => 'load remote script';
+
+  @override
   String get replace => 'Replace';
 
   @override
@@ -498,6 +501,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewExport => 'View Export';
+
+  @override
+  String get exportDomainHar => 'Export This Domain HAR';
 
   @override
   String get timeDesc => 'Descending by time';

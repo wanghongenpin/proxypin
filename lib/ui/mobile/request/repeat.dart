@@ -17,6 +17,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -44,7 +45,7 @@ class _CustomRepeatState extends State<MobileCustomRepeat> {
   bool fixed = true;
   bool keepSetting = true;
 
-  TimeOfDay? time;
+  DateTime? time;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -132,20 +133,36 @@ class _CustomRepeatState extends State<MobileCustomRepeat> {
                   const SizedBox(height: 6),
                   field(
                       localizations.scheduleTime,
-                      Row(children: [
-                        Text(time?.format(context) ?? ''),
-                        TextButton(
-                            onPressed: () {
-                              showTimePicker(context: context, initialTime: time ?? TimeOfDay.now()).then((value) {
-                                if (value != null) {
-                                  setState(() {
-                                    time = value;
-                                  });
-                                }
-                              });
-                            },
-                            child: Text(MaterialLocalizations.of(context).timePickerDialHelpText))
-                      ])), //指定时间
+                      InkWell(
+                          onTap: _pickScheduleDateTime,
+                          child: Container(
+                            height: 42,
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Theme.of(context).colorScheme.primary.withAlpha((0.5 * 255).round()),
+                                    width: 1.0),
+                                borderRadius: BorderRadius.circular(4)),
+                            child: Row(
+                              children: [
+                                Text(time == null
+                                    ? ''
+                                    : "${time!.year}-${_two(time!.month)}-${_two(time!.day)} ${_two(time!.hour)}:${_two(time!.minute)}"),
+                                const Expanded(child: SizedBox()),
+                                if (time != null)
+                                  InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        time = null;
+                                      });
+                                    },
+                                    child: const Icon(Icons.clear, size: 18),
+                                  ),
+                                if (time == null)
+                                  Icon(Icons.access_time, size: 18, color: Theme.of(context).colorScheme.primary),
+                              ],
+                            ),
+                          ))), //指定时间
                   const SizedBox(height: 6),
                   //记录选择
                   Row(children: [
@@ -164,8 +181,10 @@ class _CustomRepeatState extends State<MobileCustomRepeat> {
             )));
   }
 
+  String _two(int v) => v.toString().padLeft(2, '0');
+
   //定时重放
-  submitTask(int counter) {
+  void submitTask(int counter) {
     if (counter <= 0) {
       return;
     }
@@ -235,6 +254,62 @@ class _CustomRepeatState extends State<MobileCustomRepeat> {
         ])),
       ],
     );
+  }
+
+
+  Future<void> _pickScheduleDateTime() async {
+    DateTime now = DateTime.now();
+    DateTime temp = time ?? now;
+    if (temp.isBefore(now)) {
+      temp = now;
+    }
+
+    DateTime? selected = await showModalBottomSheet<DateTime>(
+      context: context,
+      builder: (BuildContext context) {
+        DateTime current = temp;
+        return SafeArea(
+          child: SizedBox(
+            height: 300,
+            child: Column(
+              children: [
+                Expanded(
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.dateAndTime,
+                    use24hFormat: true,
+                    initialDateTime: temp,
+                    minimumDate: now,
+                    maximumDate: now.add(const Duration(days: 365)),
+                    onDateTimeChanged: (DateTime value) {
+                      current = value;
+                    },
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(localizations.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, current),
+                      child: Text(localizations.done),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        time = selected;
+      });
+    }
   }
 
   Widget field(String label, Widget child) {

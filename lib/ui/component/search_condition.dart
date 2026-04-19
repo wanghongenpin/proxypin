@@ -47,11 +47,12 @@ class SearchConditionsState extends State<SearchConditions> {
 
   final Map<String, ContentType?> responseContentMap = {
     'JSON': ContentType.json,
+    'IMAGE': ContentType.image,
     'HTML': ContentType.html,
+    'XML': ContentType.xml,
     'JS': ContentType.js,
     'CSS': ContentType.css,
     'TEXT': ContentType.text,
-    'IMAGE': ContentType.image
   };
 
   late SearchModel searchModel;

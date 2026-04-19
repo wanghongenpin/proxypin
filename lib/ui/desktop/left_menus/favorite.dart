@@ -141,6 +141,16 @@ class _FavoriteItemState extends State<_FavoriteItem> {
             minLeadingWidth: 25,
             leading: getIcon(response),
             title: Text(widget.favorite.name ?? title, overflow: TextOverflow.ellipsis, maxLines: 2),
+            trailing: request.isWebSocket
+                ? Text(
+                    'WS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  )
+                : null,
             subtitle: Text.rich(
                 style: const TextStyle(fontSize: 12),
                 maxLines: 1,

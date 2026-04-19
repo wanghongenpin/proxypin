@@ -17,6 +17,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -44,7 +45,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
   bool fixed = true;
   bool keepSetting = true;
 
-  TimeOfDay? time;
+  DateTime? time;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -74,6 +75,9 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
     delay.dispose();
     super.dispose();
   }
+
+
+  String _two(int v) => v.toString().padLeft(2, '0');
 
   @override
   Widget build(BuildContext context) {
@@ -111,8 +115,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                                           fixed = true;
                                         });
                                       }))),
-                          SizedBox(
-                              width: 152, height: 32, child: textField(interval, style: const TextStyle(fontSize: 13))),
+                          SizedBox(width: 152, height: 32, child: textField(interval, style: const TextStyle(fontSize: 13))),
                         ]),
                         Row(children: [
                           SizedBox(
@@ -130,15 +133,9 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                                           fixed = false;
                                         });
                                       }))),
-                          SizedBox(
-                              width: 65,
-                              height: 32,
-                              child: textField(minInterval, style: const TextStyle(fontSize: 13))),
+                          SizedBox(width: 65, height: 32, child: textField(minInterval, style: const TextStyle(fontSize: 13))),
                           const Padding(padding: EdgeInsets.symmetric(horizontal: 5), child: Text("-")),
-                          SizedBox(
-                              width: 70,
-                              height: 32,
-                              child: textField(maxInterval, style: const TextStyle(fontSize: 13))),
+                          SizedBox(width: 70, height: 32, child: textField(maxInterval, style: const TextStyle(fontSize: 13))),
                         ]),
                       ]),
                     ],
@@ -148,34 +145,48 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                   const SizedBox(height: 8),
                   field(
                       localizations.scheduleTime,
-                      Row(children: [
-                        Text(time?.format(context) ?? ''),
-                        TextButton(
-                            onPressed: () {
-                              showTimePicker(
-                                      context: context, initialTime: time ?? TimeOfDay.now(), initialEntryMode: TimePickerEntryMode.input)
-                                  .then((value) {
-                                if (value != null) {
-                                  setState(() {
-                                    time = value;
-                                  });
-                                }
-                              });
-                            },
-                            child: Text(MaterialLocalizations.of(context).timePickerDialHelpText))
-                      ])), //指定时间
+                      InkWell(
+                        onTap: _pickScheduleDateTime,
+                        child: Container(
+                          height: 42,
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                              decoration: BoxDecoration(
+                              border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha((0.5 * 255).round()), width: 1.0),
+                              borderRadius: BorderRadius.circular(4)),
+                          child: Row(
+                            children: [
+                              Text(time == null
+                                  ? ''
+                                  : "${time!.year}-${_two(time!.month)}-${_two(time!.day)} ${_two(time!.hour)}:${_two(time!.minute)}"),
+                              const Expanded(child: SizedBox()),
+                              if (time != null)
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      time = null;
+                                    });
+                                  },
+                                  child: const Icon(Icons.clear, size: 18),
+                                ),
+                              if (time == null) Icon(Icons.access_time, size: 18, color: Theme.of(context).colorScheme.primary),
+                            ],
+                          ),
+                        ),
+                      )), //指定时间
                   const SizedBox(height: 8),
                   //记录选择
                   Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                     Text(localizations.keepCustomSettings),
                     Expanded(
-                        child: Checkbox(
-                            value: keepSetting,
-                            onChanged: (val) {
-                              setState(() {
-                                keepSetting = val == true;
-                              });
-                            })),
+                      child: Checkbox(
+                        value: keepSetting,
+                        onChanged: (val) {
+                          setState(() {
+                            keepSetting = val == true;
+                          });
+                        },
+                      ),
+                    ),
                   ])
                 ],
               ))),
@@ -208,11 +219,10 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
             int delayValue = int.parse(delay.text);
             if (time != null) {
               DateTime now = DateTime.now();
-              DateTime schedule = DateTime(now.year, now.month, now.day, time!.hour, time!.minute);
-              if (schedule.isBefore(now)) {
-                schedule = schedule.add(const Duration(days: 1));
+              if (time!.isBefore(now)) {
+                time = time!.add(const Duration(days: 1));
               }
-              delayValue += schedule.difference(now).inMilliseconds;
+              delayValue += time!.difference(now).inMilliseconds;
             }
 
             //定时发起请求
@@ -225,7 +235,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
   }
 
   //定时重放
-  submitTask(int counter) {
+  void submitTask(int counter) {
     if (counter <= 0) {
       return;
     }
@@ -244,6 +254,59 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
         submitTask(counter - 1);
       }
     });
+  }
+
+  Future<void> _pickScheduleDateTime() async {
+    DateTime now = DateTime.now();
+
+    // Normalize minimum date to minute precision to avoid millisecond/second mismatches
+    DateTime minDate = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+    DateTime initial = time ?? minDate;
+    if (initial.isBefore(minDate)) initial = minDate;
+
+    DateTime temp = initial;
+
+    var date = await showDialog<DateTime>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            contentPadding: const EdgeInsets.all(16.0),
+            content: SizedBox(
+              height: 250,
+              width: 300,
+              child: CupertinoTheme(
+                data: CupertinoThemeData(brightness: Theme.of(context).brightness),
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.dateAndTime,
+                  initialDateTime: initial,
+                  minimumDate: minDate,
+                  maximumDate: minDate.add(const Duration(days: 365)),
+                  use24hFormat: true,
+                  onDateTimeChanged: (val) {
+                    temp = val;
+                  },
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: Text(localizations.cancel)),
+              TextButton(onPressed: () => Navigator.pop(context, temp), child: Text(localizations.done)),
+            ],
+          );
+        });
+
+    if (date != null) {
+      setState(() {
+        // ensure selected date is not before now (safety)
+        DateTime now2 = DateTime.now();
+        if (date.isBefore(now2)) {
+          // clamp to now to avoid scheduling into the past
+          time = now2;
+        } else {
+          time = date;
+        }
+      });
+    }
   }
 
   Widget field(String label, Widget child) {
@@ -268,8 +331,8 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
           decoration: InputDecoration(
               errorStyle: const TextStyle(height: 2, fontSize: 0),
               contentPadding: const EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
-              border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withOpacity(0.3))),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.5, color: color.withOpacity(0.5))),
+              border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withAlpha((0.3 * 255).round()))),
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(width: 1.5, color: color.withAlpha((0.5 * 255).round()))),
               focusedBorder: OutlineInputBorder(borderSide: BorderSide(width: 2, color: color))),
           validator: (val) => val == null || val.isEmpty ? localizations.cannotBeEmpty : null,
         ));

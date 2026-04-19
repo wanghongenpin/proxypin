@@ -25,6 +25,7 @@ enum ContentType {
   formData,
   js,
   html,
+  xml,
   text,
   css,
   font,

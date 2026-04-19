@@ -34,7 +34,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
     //请求本服务
     if (((await localIps()).contains(msg.hostAndPort?.host) || '127.0.0.1' == msg.hostAndPort?.host) &&
         msg.hostAndPort?.port == channel.socket.port) {
-      ProxyHelper.localRequest(channelContext, msg, channel);
+      ProxyHelper.localRequest(channelContext, msg, channel, listener: listener);
       return;
     }
 

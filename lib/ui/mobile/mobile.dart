@@ -33,6 +33,7 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -41,6 +42,7 @@ import 'package:proxypin/ui/launch/launch.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
 import 'package:proxypin/ui/mobile/menu/menu.dart';
+import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
 import 'package:proxypin/ui/mobile/widgets/pip.dart';
@@ -83,6 +85,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   /// 选择索引
   final ValueNotifier<int> _selectIndex = ValueNotifier(0);
 
+  StreamSubscription<HistoryItem>? _remoteHistorySubscription;
+
   late ProxyServer proxyServer;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -119,8 +123,9 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer = ProxyServer(widget.configuration);
     proxyServer.addListener(this);
     proxyServer.start();
+    _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
 
-    if (widget.appConfiguration.upgradeNoticeV26) {
+    if (widget.appConfiguration.upgradeNoticeV27) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -151,7 +156,26 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   @override
   void dispose() {
     AppLifecycleBinding.instance.removeListener(this);
+    _remoteHistorySubscription?.cancel();
     super.dispose();
+  }
+
+  void toRequestsView(HistoryItem item, HistoryStorage storage) {}
+
+  void _openHistoryPage(HistoryItem item) {
+    _selectIndex.value = 2;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context)
+          .push(MaterialPageRoute(
+              builder: (BuildContext context) => HistoryRecord(history: item, proxyServer: proxyServer)))
+          .then((value) async {
+        Future.delayed(const Duration(seconds: 60), () => item.requests = null);
+      });
+    });
   }
 
   int exitTime = 0;
@@ -309,22 +333,26 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 新增请求断点，可修改请求、响应后发送；\n'
-            '2. 在请求编辑器中为Header添加自动补全建议；\n'
-            '3. Android、iOS新增系统代理IP忽略设置；\n'
-            '4. Android新增系统代理是否启用设置；\n'
-            '5. Socks5代理新增 IPV6 支持；\n'
-            '6. 修复 MacOS 网线代理设置失败问题；\n'
+            '1. 新增html、css、js格式化以及代码高亮；\n'
+            '2. 高级重发支持指定时间；\n'
+            '3. 域名列表增加导出har文件；\n'
+            '4. 远程设备增加快速分享；\n'
+            '5. 收藏支持websocket消息持久化；\n'
+            '6. 远程脚本加载添加引导；\n'
+            '7. 优化消息体大文本展示；\n'
+            '8. 修复自定已读状态丢失问题；\n'
         : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
-            '1. Added request breakpoint feature, allowing modification of requests and responses before sending;\n'
-            '2. Added autocomplete suggestions for HTTP headers in request editor;\n'
-            '3. Added system proxy IP ignore settings for Android and iOS;\n'
-            '4. Added system proxy enable/disable settings for Android;\n'
-            '5. Added IPv6 support for Socks5 proxy;\n'
-            '6. Fixed an issue where proxy settings failed on macOS; \n';
+            '1. Added HTML, CSS, and JS formatting with code highlighting;\n'
+            '2. Advanced repeat now supports specifying the time;\n'
+            '3. Added HAR file export for domain list;\n'
+            '4. Added quick share for remote devices;\n'
+            '5. Favorites support WebSocket message persistence;\n'
+            '6. Added guidance for remote script loading;\n'
+            '7. Optimized large text display in message body;\n'
+            '8. Fixed issue where custom read status was lost;\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV26 = false;
+      widget.appConfiguration.upgradeNoticeV27 = false;
       widget.appConfiguration.flushConfig();
     });
   }

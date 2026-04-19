@@ -690,6 +690,12 @@ abstract class AppLocalizations {
   /// **'Click'**
   String get click;
 
+  /// No description provided for @loadRemoteScript.
+  ///
+  /// In en, this message translates to:
+  /// **'load remote script'**
+  String get loadRemoteScript;
+
   /// No description provided for @replace.
   ///
   /// In en, this message translates to:
@@ -1067,6 +1073,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View Export'**
   String get viewExport;
+
+  /// No description provided for @exportDomainHar.
+  ///
+  /// In en, this message translates to:
+  /// **'Export This Domain HAR'**
+  String get exportDomainHar;
 
   /// No description provided for @timeDesc.
   ///

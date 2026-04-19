@@ -103,6 +103,7 @@
   "useGuide": "使用文档",
   "pleaseEnter": "请输入",
   "click": "点击",
+  "loadRemoteScript": "加载远程脚本",
   "replace": "替换",
   "clickEdit": "点击编辑",
   "refresh": "刷新",
@@ -169,6 +170,7 @@
   "editRequest": "编辑请求",
   "reSendRequest": "已重新发送请求",
   "viewExport": "视图导出",
+  "exportDomainHar": "导出该域名 HAR",
   "timeDesc": "按时间降序",
   "timeAsc": "按时间升序",
 

@@ -245,7 +245,7 @@ class _ScriptConsoleLogState extends State<ScriptConsoleLog> {
         ]),
         body: Container(
           padding: const EdgeInsets.only(top: 10, bottom: 10, right: 3),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
           child: Scrollbar(
               controller: _scrollController,
               thumbVisibility: true,
@@ -331,8 +331,8 @@ class _ScriptLogSmallWindowState extends State<ScriptLogSmallWindow> {
                 height: 320,
                 width: 180,
                 decoration: BoxDecoration(
-                    color: Colors.teal.withOpacity(0.3),
-                    border: Border.all(color: Colors.grey.withOpacity(0.8)),
+                    color: Colors.teal.withValues(alpha: 0.3),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.8)),
                     borderRadius: const BorderRadius.all(Radius.circular(10))),
                 child: Stack(
                   children: [
@@ -414,16 +414,16 @@ class _ScriptEditState extends State<ScriptEdit> {
   @override
   void initState() {
     super.initState();
+    _useRemote = widget.fromRemoteUrl || ((widget.scriptItem?.remoteUrl ?? '').trim().isNotEmpty);
     final urls = widget.scriptItem?.urls ??
         (widget.urls != null && widget.urls!.isNotEmpty
             ? widget.urls!
             : (widget.url != null && widget.url!.isNotEmpty ? [widget.url!] : <String>[]));
     urlControllers =
         urls.isNotEmpty ? urls.map((u) => TextEditingController(text: u)).toList() : [TextEditingController()];
-    script = CodeController(language: javascript, text: widget.script ?? ScriptManager.template);
+    script = CodeController(language: javascript, text: widget.script ?? (_useRemote ? '' : ScriptManager.template));
     nameController = TextEditingController(text: widget.scriptItem?.name ?? widget.title ?? '');
     remoteUrlController = TextEditingController(text: widget.scriptItem?.remoteUrl ?? '');
-    _useRemote = widget.fromRemoteUrl || ((widget.scriptItem?.remoteUrl ?? '').trim().isNotEmpty);
   }
 
   @override
@@ -550,10 +550,10 @@ class _ScriptEditState extends State<ScriptEdit> {
               children: [
                 // Name section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                         borderRadius: BorderRadius.circular(8)),
                     child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -561,10 +561,10 @@ class _ScriptEditState extends State<ScriptEdit> {
 
                 // URLs section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                         borderRadius: BorderRadius.circular(8)),
                     child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -615,10 +615,10 @@ class _ScriptEditState extends State<ScriptEdit> {
 
                 // Source section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                         borderRadius: BorderRadius.circular(8)),
                     child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -626,7 +626,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                           SizedBox(width: 55, child: Text('${localizations.type}:')),
                           Expanded(
                               child: DropdownButtonFormField<bool>(
-                            value: _useRemote,
+                            initialValue: _useRemote,
                             items: [
                               DropdownMenuItem(value: false, child: Text(localizations.local)),
                               DropdownMenuItem(value: true, child: Text(localizations.remoteUrl)),
@@ -649,10 +649,10 @@ class _ScriptEditState extends State<ScriptEdit> {
                 // Remote URL section
                 if (_useRemote)
                   Card(
-                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                          side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                          side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                           borderRadius: BorderRadius.circular(8)),
                       child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -702,16 +702,24 @@ class _ScriptEditState extends State<ScriptEdit> {
 
                 // Script section
                 Card(
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                        side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.4)),
                         borderRadius: BorderRadius.circular(8)),
                     child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Row(children: [
                             Text("${localizations.script}:", style: const TextStyle(fontWeight: FontWeight.w500)),
+                            if (_useRemote)
+                              Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.35),
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('Read-only', style: TextStyle(fontSize: 11))),
                             const Spacer(),
                             Tooltip(
                                 message: localizations.copy,
@@ -725,12 +733,14 @@ class _ScriptEditState extends State<ScriptEdit> {
                                 message: 'Reset',
                                 child: IconButton(
                                     icon: const Icon(Icons.settings_backup_restore, size: 22),
-                                    onPressed: _resetScript)),
+                                    onPressed: _useRemote ? null : _resetScript)),
                             Tooltip(
                                 message: localizations.clear,
                                 child: IconButton(
                                     icon: const Icon(Icons.delete_sweep_outlined, size: 22),
-                                    onPressed: () {
+                                    onPressed: _useRemote
+                                        ? null
+                                        : () {
                                       script.text = '';
                                       setState(() {});
                                     }))
@@ -742,15 +752,44 @@ class _ScriptEditState extends State<ScriptEdit> {
                                   child: Container(
                                       decoration: BoxDecoration(
                                           color: Colors.grey.shade900,
-                                          border: Border.all(color: Colors.grey.withOpacity(0.2))),
-                                      child: SingleChildScrollView(
-                                          child: CodeField(
-                                        readOnly: _useRemote,
-                                        enableSuggestions: true,
-                                        textStyle: const TextStyle(fontSize: 13, color: Colors.white),
-                                        controller: script,
-                                        gutterStyle: const GutterStyle(width: 50, margin: 0),
-                                      ))))),
+                                          border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
+                                      child: Stack(children: [
+                                        SingleChildScrollView(
+                                            child: CodeField(
+                                          readOnly: _useRemote,
+                                          enableSuggestions: true,
+                                          minLines: 15,
+                                          maxLines: 50,
+                                          textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                          controller: script,
+                                          gutterStyle: const GutterStyle(width: 50, margin: 0),
+                                        )),
+                                        if (_useRemote && script.text.trim().isEmpty)
+                                          Positioned.fill(
+                                              child: Center(
+                                                  child: Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                      decoration: BoxDecoration(
+                                                          color: Colors.black.withValues(alpha: 0.28),
+                                                          borderRadius: BorderRadius.circular(8)),
+                                                      child: RichText(
+                                                          text: TextSpan(
+                                                              style: const TextStyle(
+                                                                  fontSize: 12, color: Colors.white70),
+                                                              children: [
+                                                                TextSpan(text: '${localizations.click} “'),
+                                                                TextSpan(
+                                                                text: localizations.view,
+                                                                style: const TextStyle(
+                                                                    color: Colors.blue,
+                                                                    fontSize: 12,
+                                                                    decoration: TextDecoration.underline),
+                                                                recognizer:
+                                                                    TapGestureRecognizer()..onTap = _fetchRemoteScript),
+                                                                TextSpan(text: '” ${localizations.loadRemoteScript}'),
+                                                          ]))))),
+                                      ])))),
                         ]))),
               ],
             )));
@@ -803,7 +842,7 @@ class _ScriptListState extends State<ScriptList> {
         persistentFooterButtons: multiple ? [globalMenu()] : null,
         body: Container(
             padding: const EdgeInsets.only(top: 10, bottom: 30),
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+            decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
             child: Scrollbar(
                 child: ListView(children: [
               Row(
@@ -826,7 +865,7 @@ class _ScriptListState extends State<ScriptList> {
           height: 50,
           width: double.infinity,
           margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2)))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2)))),
       Positioned(
           top: 0,
           left: 0,
@@ -870,7 +909,7 @@ class _ScriptListState extends State<ScriptList> {
       final isRemote = item.remoteUrl != null && item.remoteUrl!.trim().isNotEmpty;
 
       return InkWell(
-          splashColor: primaryColor.withOpacity(0.3),
+          splashColor: primaryColor.withValues(alpha: 0.3),
           onTap: () async {
             if (multiple) {
               setState(() {
@@ -885,9 +924,9 @@ class _ScriptListState extends State<ScriptList> {
           onLongPress: () => showMenus(index),
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withValues(alpha: 0.8)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 45,
               padding: const EdgeInsets.all(5),
@@ -1027,7 +1066,12 @@ class _ScriptListState extends State<ScriptList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(json)), mimeType: 'json');
-    Share.shareXFiles([file], fileNameOverrides: [fileName], sharePositionOrigin: box?.paintBounds);
+    final shareParams = ShareParams(
+      files: [file],
+      fileNameOverrides: [fileName],
+      sharePositionOrigin: box?.paintBounds,
+    );
+    SharePlus.instance.share(shareParams);
   }
 
   void enableStatus(bool enable) {

@@ -308,6 +308,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get click => '点击';
 
   @override
+  String get loadRemoteScript => '加载远程脚本';
+
+  @override
   String get replace => '替换';
 
   @override
@@ -497,6 +500,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewExport => '视图导出';
+
+  @override
+  String get exportDomainHar => '导出该域名 HAR';
 
   @override
   String get timeDesc => '按时间降序';
@@ -1372,6 +1378,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get click => '點選';
 
   @override
+  String get loadRemoteScript => '載入遠端腳本';
+
+  @override
   String get replace => '替換';
 
   @override
@@ -1561,6 +1570,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get viewExport => '檢視匯出';
+
+  @override
+  String get exportDomainHar => '匯出該網域名稱 HAR';
 
   @override
   String get timeDesc => '按時間降序';

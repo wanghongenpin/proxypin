@@ -85,6 +85,7 @@ class Websocket extends StatelessWidget {
                                 child: SelectableText(
                                   "${message.payloadDataAsString}${message.isBinary ? ' ${getPackage(message.payloadLength)}' : ''}",
                                   maxLines: 3,
+                                  minLines: 1,
                                   contextMenuBuilder: (context, editableTextState) =>
                                       contextMenu(context, editableTextState,
                                           customItem: ContextMenuButtonItem(

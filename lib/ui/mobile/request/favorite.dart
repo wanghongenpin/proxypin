@@ -208,6 +208,16 @@ class _FavoriteItemState extends State<_FavoriteItem> {
             minLeadingWidth: 25,
             leading: getIcon(response),
             title: title,
+            trailing: request.isWebSocket
+                ? Text(
+                    'WS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  )
+                : null,
             subtitle: Text.rich(
                 maxLines: 1,
                 TextSpan(children: [

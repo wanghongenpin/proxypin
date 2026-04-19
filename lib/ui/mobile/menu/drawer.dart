@@ -19,12 +19,14 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/components/manager/request_breakpoint_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/mobile/setting/hosts.dart';
 import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
@@ -81,15 +83,19 @@ class DrawerWidget extends StatelessWidget {
                         width: 52,
                       ))),
                   const SizedBox(width: 12),
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('ProxyPin', style: Theme.of(context).textTheme.titleLarge),
-                        const SizedBox(height: 4),
-                        Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software",
-                            maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall)
-                      ])
+                  Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('ProxyPin', style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: 4),
+                          Text(isCN ? "全平台开源免费抓包软件" : "Full platform open source free capture HTTP(S) traffic software",
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall)
+                        ]),
+                  )
                 ])),
             // Favorites & History
             ListTile(
@@ -122,6 +128,15 @@ class DrawerWidget extends StatelessWidget {
                 title: Text(localizations.filter),
                 leading: const Icon(Icons.filter_alt_outlined),
                 onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
+            ListTile(
+                title: Text(localizations.hosts),
+                leading: Icon(Icons.domain),
+                onTap: () async {
+                  var hostsManager = await HostsManager.instance;
+                  if (context.mounted) {
+                    navigator(context, HostsPage(hostsManager: hostsManager));
+                  }
+                }),
             ListTile(
                 title: Text(localizations.requestBlock),
                 leading: const Icon(Icons.block_flipped),
@@ -277,7 +292,8 @@ class _SettingPage extends StatelessWidget {
                 Padding(
                     padding: const EdgeInsets.only(left: 15),
                     child: Row(children: [
-                      Column(
+                      Expanded(
+                          child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(localizations.proxyIgnoreDomain, style: const TextStyle(fontSize: 14)),
@@ -285,7 +301,7 @@ class _SettingPage extends StatelessWidget {
                           Text(isEn ? "Use ';' to separate multiple entries" : "多个使用;分割",
                               style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                         ],
-                      ),
+                      )),
                       Padding(
                           padding: const EdgeInsets.only(left: 35),
                           child: TextButton(

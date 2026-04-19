@@ -1,33 +1,43 @@
-import 'package:easy_permission/easy_permission.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_qr_reader/flutter_qr_reader.dart';
-import 'package:image_pickers/image_pickers.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:flutter_qr_reader_plus/flutter_qr_reader.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 ///@Author: Hongen Wang
 /// qr code scanner
 class QrCodeScanner {
   static Future<String?> scan(BuildContext context) async {
-    var status = await EasyPermission.getSinglePermissionStatus(PermissionType.CAMERA);
+    var status = await Permission.camera.status;
 
-    if (status == PermissionStatus.DENY) {
-      EasyPermission.openSettings();
-      return Future.value(null);
-    } else if (status == PermissionStatus.ALLOW) {
-      status = await EasyPermission.requestSinglePermission(PermissionType.CAMERA);
+    if (!status.isGranted) {
+      status = await Permission.camera.request();
     }
 
-    if (status != PermissionStatus.ALLOW) {
+    if (!status.isGranted) {
       if (!context.mounted) return Future.value(null);
       AppLocalizations localizations = AppLocalizations.of(context)!;
       bool isCN = localizations.localeName == 'zh';
-      showDialog(
+      await showDialog(
           context: context,
           builder: (context) => AlertDialog(
                 content: Text(isCN ? "请授予相机权限" : "Please grant camera permission"),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    child: Text(localizations.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      if (!context.mounted) return Future.value(null);
+                      Navigator.of(context).pop();
+                      final PermissionStatus newStatus = await Permission.camera.request();
+                      // Flutter权限处理有bug  url: https://github.com/Baseflow/flutter-permission-handler/issues/1206
+                      if (newStatus.isRestricted || newStatus.isPermanentlyDenied) {
+                        openAppSettings();
+                      }
+                    },
                     child: Text(localizations.confirm),
                   ),
                 ],
@@ -76,6 +86,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     isScan = true;
 
     _controller?.startCamera((data, _) async {
+      logger.d("scan qrCode data handle: $data");
       await handle(data);
     });
 
@@ -84,7 +95,6 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
 
   handle(String data) async {
     if (!isScan) return;
-    _controller?.stopCamera();
     stop();
     if (mounted) await Navigator.of(context, rootNavigator: true).maybePop(data);
   }
@@ -120,6 +130,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
 
     isScan = false;
     _controller?.stopCamera();
+    _controller = null;
     if (_animationController != null) {
       _animationController?.stop();
       _animationController?.dispose();
@@ -143,7 +154,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     FlutterQrReader.imgScan(path).then((value) {
       stop();
       if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop(value.isEmpty ? "-1" : value);
+        Navigator.of(context, rootNavigator: true).pop(value ?? "-1");
       }
     });
   }
@@ -187,12 +198,15 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
                     IconButton(
-                      onPressed: () {
-                        ImagePickers.pickerPaths(showCamera: true).then((value) {
-                          if (value.isNotEmpty) {
-                            scanImage(value[0].path!);
-                          }
-                        });
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.image,
+                          allowMultiple: false,
+                        );
+                        if (result == null || result.files.isEmpty) return;
+                        final path = result.files.first.path;
+                        if (path == null) return;
+                        scanImage(path);
                       },
                       icon: Icon(Icons.photo_library, color: Colors.white, size: 35),
                     ),
