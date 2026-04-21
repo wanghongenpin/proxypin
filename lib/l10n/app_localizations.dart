@@ -768,6 +768,12 @@ abstract class AppLocalizations {
   /// **'Edit Report Server'**
   String get editReportServer;
 
+  /// No description provided for @splitReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Split Report'**
+  String get splitReport;
+
   /// No description provided for @serverUrl.
   ///
   /// In en, this message translates to:

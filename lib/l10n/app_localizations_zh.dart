@@ -347,6 +347,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editReportServer => '编辑上报服务器';
 
   @override
+  String get splitReport => '分离上报';
+
+  @override
   String get serverUrl => '服务器 URL';
 
   @override
@@ -1415,6 +1418,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get editReportServer => '編輯上報伺服器';
+
+  @override
+  String get splitReport => '分離上報';
 
   @override
   String get serverUrl => '伺服器 URL';

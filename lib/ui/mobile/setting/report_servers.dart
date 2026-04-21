@@ -165,6 +165,7 @@ class _ReportServerEditPageMobileState extends State<ReportServerEditPageMobile>
   late TextEditingController _serverUrlCtrl;
   String _compression = 'none';
   bool _enabled = true;
+  bool _splitReport = false;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -177,6 +178,7 @@ class _ReportServerEditPageMobileState extends State<ReportServerEditPageMobile>
     _serverUrlCtrl = TextEditingController(text: init?.serverUrl ?? '');
     _compression = init?.compression ?? 'none';
     _enabled = init?.enabled ?? true;
+    _splitReport = init?.splitReport ?? false;
   }
 
   InputDecoration dec({String? hint}) => InputDecoration(
@@ -216,6 +218,7 @@ class _ReportServerEditPageMobileState extends State<ReportServerEditPageMobile>
       serverUrl: serverUrl,
       enabled: _enabled,
       compression: _compression,
+      splitReport: _splitReport,
     );
 
     Navigator.of(context).pop(server);
@@ -284,6 +287,13 @@ class _ReportServerEditPageMobileState extends State<ReportServerEditPageMobile>
                   Align(
                       alignment: Alignment.centerLeft,
                       child: SwitchWidget(value: _enabled, scale: 0.9, onChanged: (v) => setState(() => _enabled = v))),
+                ),
+                const SizedBox(height: 12),
+                labeled(
+                  '${localizations.splitReport}: ',
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: SwitchWidget(value: _splitReport, scale: 0.9, onChanged: (v) => setState(() => _splitReport = v))),
                 ),
               ],
             ),

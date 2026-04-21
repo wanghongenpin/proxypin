@@ -347,6 +347,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editReportServer => 'Edit Report Server';
 
   @override
+  String get splitReport => 'Split Report';
+
+  @override
   String get serverUrl => 'Server URL';
 
   @override

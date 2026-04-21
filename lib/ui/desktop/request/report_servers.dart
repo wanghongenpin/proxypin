@@ -82,6 +82,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
     final serverUrlCtrl = TextEditingController(text: initial?.serverUrl ?? '');
     String compression = initial?.compression ?? 'none';
     bool enabled = initial?.enabled ?? true;
+    bool splitReport = initial?.splitReport ?? false;
 
     // 紧凑的 Outline 输入框装饰
     InputDecoration dec({String? hint}) => InputDecoration(
@@ -164,6 +165,14 @@ class _ReportServersPageState extends State<ReportServersPage> {
                           child: SwitchWidget(value: enabled, scale: 0.83, onChanged: (v) => enabled = v),
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      labeled(
+                        '${localizations.splitReport}: ',
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SwitchWidget(value: splitReport, scale: 0.83, onChanged: (v) => splitReport = v),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -194,6 +203,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
                   serverUrl: serverUrl,
                   enabled: enabled,
                   compression: compression,
+                  splitReport: splitReport,
                 );
                 Navigator.pop(ctx, server);
               },
