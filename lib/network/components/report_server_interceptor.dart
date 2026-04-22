@@ -69,6 +69,10 @@ class ReportServerInterceptor extends Interceptor {
 
   Future<void> reportServer(HttpRequest request, HttpResponse? response,
       {dynamic error, StackTrace? stackTrace}) async {
+    if (response != null) {
+      request.response = response;
+    }
+
     String requestUrl = request.requestUrl;
     var manager = await reportServerManager;
     var server = await manager.matchServer(requestUrl);
@@ -79,6 +83,9 @@ class ReportServerInterceptor extends Interceptor {
     Map payload;
     String? phase;
     if (server.splitReport) {
+      if (request.response == null) {
+        return;
+      }
       payload = Har.toHarResponse(request);
       phase = "response";
     } else {
