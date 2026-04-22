@@ -116,7 +116,9 @@ class ReportServerInterceptor extends Interceptor {
 
       final matchedRule = server.name;
       if (matchedRule.isNotEmpty) {
-        ioReq.headers.set('X-Report-Name', matchedRule);
+        // URL encode the server name to support non-ASCII characters (e.g., Chinese)
+        final encodedName = Uri.encodeComponent(matchedRule);
+        ioReq.headers.set('X-Report-Name', encodedName);
       }
       if (phase != null) {
         ioReq.headers.set('X-Report-Phase', phase);
