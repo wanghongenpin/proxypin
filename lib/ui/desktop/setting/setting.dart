@@ -23,6 +23,7 @@ import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/setting/about.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/hosts.dart';
@@ -80,6 +81,7 @@ class _SettingState extends State<Setting> {
             onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
         item(localizations.breakpoint, onPressed: requestBreakpoint),
         item(localizations.externalProxy, onPressed: setExternalProxy),
+        item(localizations.wsTrafficPush, onPressed: showWsServerSetting),
         item(localizations.about, onPressed: showAbout),
       ],
     );
@@ -148,6 +150,130 @@ class _SettingState extends State<Setting> {
 
   void showRequestCrypto() {
     MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
+  }
+
+  void showWsServerSetting() {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => WsServerDialog(proxyServer: widget.proxyServer));
+  }
+}
+
+class WsServerDialog extends StatefulWidget {
+  final ProxyServer proxyServer;
+
+  const WsServerDialog({super.key, required this.proxyServer});
+
+  @override
+  State<WsServerDialog> createState() => _WsServerDialogState();
+}
+
+class _WsServerDialogState extends State<WsServerDialog> {
+  late bool enabled;
+  late bool historyEnabled;
+  late TextEditingController portController;
+  AppConfiguration? appConfig;
+
+  @override
+  void initState() {
+    super.initState();
+    enabled = widget.proxyServer.wsTrafficServer?.isRunning ?? false;
+    historyEnabled = false;
+    portController = TextEditingController();
+    AppConfiguration.instance.then((config) {
+      if (!mounted) return;
+      setState(() {
+        appConfig = config;
+        enabled = config.wsServerEnabled;
+        historyEnabled = config.wsHistoryEnabled;
+        portController.text = config.wsServerPort.toString();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    portController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    int clientCount = widget.proxyServer.wsTrafficServer?.clientCount ?? 0;
+
+    return AlertDialog(
+      scrollable: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      title: Text(AppLocalizations.of(context)!.wsTrafficPush, style: const TextStyle(fontSize: 15)),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Expanded(child: Text(AppLocalizations.of(context)!.enable, style: const TextStyle(fontSize: 14))),
+              SwitchWidget(
+                  value: enabled,
+                  scale: 0.85,
+                  onChanged: (val) async {
+                    int port = int.tryParse(portController.text) ?? 12080;
+                    if (val) {
+                      await widget.proxyServer.startWsServer(port);
+                    } else {
+                      await widget.proxyServer.stopWsServer();
+                    }
+                    appConfig?.wsServerEnabled = val;
+                    appConfig?.wsServerPort = port;
+                    appConfig?.flushConfig();
+                    setState(() => enabled = val);
+                  }),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Text(AppLocalizations.of(context)!.port, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 20),
+              SizedBox(
+                  width: 100,
+                  child: TextField(
+                    controller: portController,
+                    enabled: !enabled,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        border: OutlineInputBorder(),
+                        isDense: true),
+                  )),
+            ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(child: Text(AppLocalizations.of(context)!.wsHistoryAccess, style: const TextStyle(fontSize: 14))),
+              SwitchWidget(
+                  value: historyEnabled,
+                  scale: 0.85,
+                  onChanged: (val) {
+                    appConfig?.wsHistoryEnabled = val;
+                    appConfig?.flushConfig();
+                    setState(() => historyEnabled = val);
+                    widget.proxyServer.wsTrafficServer?.broadcastConfig();
+                  }),
+            ]),
+            const SizedBox(height: 16),
+            Text('ws://127.0.0.1:${portController.text}',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            const SizedBox(height: 8),
+            Text(AppLocalizations.of(context)!.wsConnectedClients(clientCount),
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppLocalizations.of(context)!.close)),
+      ],
+    );
   }
 }
 

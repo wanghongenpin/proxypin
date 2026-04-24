@@ -1075,6 +1075,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get view => '查看';
+
+  @override
+  String get wsTrafficPush => 'MCP 服务';
+
+  @override
+  String get wsTrafficPushDescribe => '通过MCP实时推送抓包流量到AI工具';
+
+  @override
+  String get wsHistoryAccess => '历史记录访问';
+
+  @override
+  String wsConnectedClients(int count) {
+    return '已连接客户端: $count';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2146,4 +2160,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get view => '檢視';
+
+  @override
+  String get wsTrafficPush => 'MCP 服務';
+
+  @override
+  String get wsTrafficPushDescribe => '通過MCP即時推送抓包流量到AI工具';
+
+  @override
+  String get wsHistoryAccess => '歷史記錄存取';
+
+  @override
+  String wsConnectedClients(int count) {
+    return '已連接用戶端: $count';
+  }
 }

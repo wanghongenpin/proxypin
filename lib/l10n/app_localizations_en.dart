@@ -1088,4 +1088,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get view => 'View';
+
+  @override
+  String get wsTrafficPush => 'MCP Service';
+
+  @override
+  String get wsTrafficPushDescribe => 'Push captured traffic to AI tools via MCP in real-time';
+
+  @override
+  String get wsHistoryAccess => 'History Access';
+
+  @override
+  String wsConnectedClients(int count) {
+    return 'Connected Clients: $count';
+  }
 }
