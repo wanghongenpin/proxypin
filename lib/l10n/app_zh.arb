@@ -378,5 +378,9 @@
 
   "local": "本地",
   "remoteUrl": "远程URL",
-  "view": "查看"
+  "view": "查看",
+
+  "wsTrafficPush": "WebSocket推送",
+  "wsTrafficPushDescribe": "通过WebSocket实时推送抓包流量到外部工具",
+  "wsConnectedClients": "已连接客户端: {count}"
 }

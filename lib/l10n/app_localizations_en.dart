@@ -1088,4 +1088,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get view => 'View';
+
+  @override
+  String get wsTrafficPush => 'WebSocket Push';
+
+  @override
+  String get wsTrafficPushDescribe => 'Push captured traffic to external tools via WebSocket in real-time';
+
+  @override
+  String wsConnectedClients(int count) {
+    return 'Connected Clients: $count';
+  }
 }

@@ -1075,6 +1075,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get view => '查看';
+
+  @override
+  String get wsTrafficPush => 'WebSocket推送';
+
+  @override
+  String get wsTrafficPushDescribe => '通过WebSocket实时推送抓包流量到外部工具';
+
+  @override
+  String wsConnectedClients(int count) {
+    return '已连接客户端: $count';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2146,4 +2157,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get view => '檢視';
+
+  @override
+  String get wsTrafficPush => 'WebSocket推送';
+
+  @override
+  String get wsTrafficPushDescribe => '通過WebSocket即時推送抓包流量到外部工具';
+
+  @override
+  String wsConnectedClients(int count) {
+    return '已連接用戶端: $count';
+  }
 }

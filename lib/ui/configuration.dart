@@ -94,6 +94,10 @@ class AppConfiguration {
   ///自动已读
   bool autoReadEnabled = true;
 
+  /// WebSocket 推送服务
+  bool wsServerEnabled = false;
+  int wsServerPort = 12080;
+
   //桌面window大小
   Size? windowSize;
 
@@ -213,6 +217,8 @@ class AppConfiguration {
       bottomNavigation = config['bottomNavigation'] ?? true;
       memoryCleanupThreshold = config['memoryCleanupThreshold'];
       autoReadEnabled = config['autoReadEnabled'] ?? true;
+      wsServerEnabled = config['wsServerEnabled'] ?? false;
+      wsServerPort = config['wsServerPort'] ?? 12080;
 
       windowSize =
           config['windowSize'] == null ? null : Size(config['windowSize']['width'], config['windowSize']['height']);
@@ -257,6 +263,8 @@ class AppConfiguration {
       "headerExpanded": headerExpanded,
       "headerViewMode": headerViewMode,
       "autoReadEnabled": autoReadEnabled,
+      "wsServerEnabled": wsServerEnabled,
+      "wsServerPort": wsServerPort,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,

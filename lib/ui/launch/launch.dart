@@ -25,6 +25,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -187,11 +188,17 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
         return;
       }
 
-      widget.proxyServer.start().then((value) {
+      widget.proxyServer.start().then((value) async {
         setState(() {
           started = true;
         });
         widget.onStart?.call();
+        if (Platforms.isDesktop()) {
+          var appConfig = await AppConfiguration.instance;
+          if (appConfig.wsServerEnabled) {
+            widget.proxyServer.startWsServer(appConfig.wsServerPort);
+          }
+        }
       }).catchError((e) {
         logger.e("启动代理服务器失败", error: e);
         String message = localizations.proxyPortRepeat(widget.proxyServer.port);

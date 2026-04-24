@@ -2195,6 +2195,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View'**
   String get view;
+
+  /// No description provided for @wsTrafficPush.
+  ///
+  /// In en, this message translates to:
+  /// **'WebSocket Push'**
+  String get wsTrafficPush;
+
+  /// No description provided for @wsTrafficPushDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Push captured traffic to external tools via WebSocket in real-time'**
+  String get wsTrafficPushDescribe;
+
+  /// No description provided for @wsConnectedClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected Clients: {count}'**
+  String wsConnectedClients(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -377,5 +377,16 @@
 
   "local": "Local",
   "remoteUrl": "Remote URL",
-  "view": "View"
+  "view": "View",
+
+  "wsTrafficPush": "WebSocket Push",
+  "wsTrafficPushDescribe": "Push captured traffic to external tools via WebSocket in real-time",
+  "wsConnectedClients": "Connected Clients: {count}",
+  "@wsConnectedClients": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
