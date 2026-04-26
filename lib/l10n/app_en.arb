@@ -115,6 +115,7 @@
   "reportServers": "Report Servers",
   "addReportServer": "Add Report Server",
   "editReportServer": "Edit Report Server",
+  "splitReport": "Split Report",
   "serverUrl": "Server URL",
   "compression": "Compression",
   "compressionNone": "None",

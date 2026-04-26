@@ -111,6 +111,7 @@
   "reportServers": "上報伺服器",
   "addReportServer": "新增上報伺服器",
   "editReportServer": "編輯上報伺服器",
+  "splitReport": "分離上報",
   "serverUrl": "伺服器 URL",
   "compression": "壓縮",
   "compressionNone": "無",

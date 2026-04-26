@@ -37,8 +37,13 @@ class ReportServerInterceptor extends Interceptor {
   int get priority => 1000;
 
   @override
+  Future<HttpRequest?> onRequest(HttpRequest request) async {
+    unawaited(_reportRequestIfSplit(request));
+    return request;
+  }
+
+  @override
   Future<HttpResponse?> onResponse(HttpRequest request, HttpResponse response) async {
-    // Fire-and-forget reporting; don't block the proxy pipeline
     unawaited(reportServer(request, response));
     return response;
   }
@@ -51,8 +56,23 @@ class ReportServerInterceptor extends Interceptor {
     return;
   }
 
+  Future<void> _reportRequestIfSplit(HttpRequest request) async {
+    String requestUrl = request.requestUrl;
+    var manager = await reportServerManager;
+    var server = await manager.matchServer(requestUrl);
+    if (server == null || !server.splitReport) {
+      return;
+    }
+    var payload = Har.toHarRequest(request);
+    await _sendReport(server, payload, requestUrl, phase: "request");
+  }
+
   Future<void> reportServer(HttpRequest request, HttpResponse? response,
       {dynamic error, StackTrace? stackTrace}) async {
+    if (response != null) {
+      request.response = response;
+    }
+
     String requestUrl = request.requestUrl;
     var manager = await reportServerManager;
     var server = await manager.matchServer(requestUrl);
@@ -60,10 +80,24 @@ class ReportServerInterceptor extends Interceptor {
       return;
     }
 
+    Map payload;
+    String? phase;
+    if (server.splitReport) {
+      if (request.response == null) {
+        return;
+      }
+      payload = Har.toHarResponse(request);
+      phase = "response";
+    } else {
+      payload = Har.toHar(request);
+    }
+    await _sendReport(server, payload, requestUrl, phase: phase);
+  }
+
+  Future<void> _sendReport(ReportServer server, Map payload, String requestUrl, {String? phase}) async {
     try {
       logger.i("reportServer start: $requestUrl -> ${server.name} (${server.serverUrl})");
 
-      // Prepare server URL (ensure scheme)
       var serverUrl = (server.serverUrl).trim();
       if (serverUrl.isEmpty) {
         logger.w('reportServer skipped: serverUrl empty for ${server.name}');
@@ -75,10 +109,7 @@ class ReportServerInterceptor extends Interceptor {
 
       final uri = Uri.parse(serverUrl);
 
-      var payload = Har.toHar(request);
-
       List<int> body = utf8.encode(jsonEncode(payload));
-      // Apply compression if configured
       final compression = server.compression?.toLowerCase();
       if (compression == 'gzip') {
         try {
@@ -88,15 +119,16 @@ class ReportServerInterceptor extends Interceptor {
         }
       }
 
-      // Send POST
       final ioReq = await httpClient.postUrl(uri).timeout(const Duration(seconds: 5));
 
-      // Set headers
       final matchedRule = server.name;
       if (matchedRule.isNotEmpty) {
         // URL encode the server name to support non-ASCII characters (e.g., Chinese)
         final encodedName = Uri.encodeComponent(matchedRule);
         ioReq.headers.set('X-Report-Name', encodedName);
+      }
+      if (phase != null) {
+        ioReq.headers.set('X-Report-Phase', phase);
       }
 
       ioReq.headers.set(HttpHeaders.contentTypeHeader, 'application/json; charset=utf-8');
@@ -104,7 +136,6 @@ class ReportServerInterceptor extends Interceptor {
         ioReq.headers.set(HttpHeaders.contentEncodingHeader, 'gzip');
       }
 
-      // Write body and close
       ioReq.add(body);
       final ioResp = await ioReq.close().timeout(const Duration(seconds: 30));
       final respText = await ioResp.transform(utf8.decoder).join();
