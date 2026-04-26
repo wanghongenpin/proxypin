@@ -378,5 +378,17 @@
 
   "local": "Local",
   "remoteUrl": "Remote URL",
-  "view": "View"
+  "view": "View",
+
+  "wsTrafficPush": "MCP Service",
+  "wsTrafficPushDescribe": "Push captured traffic to AI tools via MCP in real-time",
+  "wsHistoryAccess": "History Access",
+  "wsConnectedClients": "Connected Clients: {count}",
+  "@wsConnectedClients": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

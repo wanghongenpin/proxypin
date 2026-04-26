@@ -379,5 +379,10 @@
 
   "local": "本地",
   "remoteUrl": "远程URL",
-  "view": "查看"
+  "view": "查看",
+
+  "wsTrafficPush": "MCP 服务",
+  "wsTrafficPushDescribe": "通过MCP实时推送抓包流量到AI工具",
+  "wsHistoryAccess": "历史记录访问",
+  "wsConnectedClients": "已连接客户端: {count}"
 }
