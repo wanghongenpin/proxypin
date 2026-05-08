@@ -66,6 +66,7 @@ class _ToolbarState extends State<Toolbar> {
 
     if (HardwareKeyboard.instance.isMetaPressed && event.logicalKey == LogicalKeyboardKey.keyQ) {
       windowManager.close();
+      windowManager.destroy();
       return true;
     }
 

@@ -360,6 +360,36 @@ abstract class AppLocalizations {
   /// **'Automatically start recording traffic when the program starts'**
   String get autoStartupDescribe;
 
+  /// No description provided for @minimizeToTrayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize to tray on close'**
+  String get minimizeToTrayTitle;
+
+  /// No description provided for @minimizeToTraySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing the window will keep ProxyPin running and hide it to the system tray.'**
+  String get minimizeToTraySubtitle;
+
+  /// No description provided for @trayClosePromptContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Closing the window will keep ProxyPin running in the system tray. Do you want to minimize it now?'**
+  String get trayClosePromptContent;
+
+  /// No description provided for @trayCloseExitAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit anyway'**
+  String get trayCloseExitAnyway;
+
+  /// No description provided for @trayCloseMinimizeToTray.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize to tray'**
+  String get trayCloseMinimizeToTray;
+
   /// No description provided for @copied.
   ///
   /// In en, this message translates to:
@@ -767,6 +797,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit Report Server'**
   String get editReportServer;
+
+  /// No description provided for @splitReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Split Report'**
+  String get splitReport;
 
   /// No description provided for @serverUrl.
   ///

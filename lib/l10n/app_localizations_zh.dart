@@ -141,6 +141,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoStartupDescribe => '程序启动时自动开始记录流量';
 
   @override
+  String get minimizeToTrayTitle => '关闭时最小化到系统托盘';
+
+  @override
+  String get minimizeToTraySubtitle => '点击窗口关闭按钮时不退出程序，而是隐藏到系统托盘图标。';
+
+  @override
+  String get trayClosePromptContent => '关闭窗口后程序不会退出，而是继续在系统托盘中运行。要继续最小化到托盘吗？';
+
+  @override
+  String get trayCloseExitAnyway => '直接退出';
+
+  @override
+  String get trayCloseMinimizeToTray => '最小化到托盘';
+
+  @override
   String get copied => '已复制到剪切板';
 
   @override
@@ -345,6 +360,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get editReportServer => '编辑上报服务器';
+
+  @override
+  String get splitReport => '分离上报';
 
   @override
   String get serverUrl => '服务器 URL';
@@ -1228,6 +1246,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get autoStartupDescribe => '程式啟動時自動開始記錄流量';
 
   @override
+  String get minimizeToTrayTitle => '關閉時最小化到系統托盤';
+
+  @override
+  String get minimizeToTraySubtitle => '點擊視窗關閉按鈕時不退出程式，而是隱藏到系統托盤圖示。';
+
+  @override
+  String get trayClosePromptContent => '關閉視窗後程式不會退出，而是繼續在系統托盤中執行。要繼續最小化到托盤嗎？';
+
+  @override
+  String get trayCloseExitAnyway => '直接退出';
+
+  @override
+  String get trayCloseMinimizeToTray => '最小化到托盤';
+
+  @override
   String get copied => '已複製到剪切板';
 
   @override
@@ -1429,6 +1462,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get editReportServer => '編輯上報伺服器';
+
+  @override
+  String get splitReport => '分離上報';
 
   @override
   String get serverUrl => '伺服器 URL';

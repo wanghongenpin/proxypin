@@ -108,6 +108,9 @@ class AppConfiguration {
   //左侧面板占比
   double panelRatio = 0.3;
 
+  /// 关闭窗口时最小化到系统托盘
+  bool? minimizeToTray;
+
   AppConfiguration._();
 
   /// 单例
@@ -205,12 +208,9 @@ class AppConfiguration {
       _theme.color = config['themeColor'] ?? "Blue";
 
       upgradeNoticeV27 = config['upgradeNoticeV27'] ?? true;
-      _language = config['language'] == null 
-        ? null 
-        : Locale.fromSubtags(
-            languageCode: config['language'], 
-            scriptCode: config['languageScript']
-          );
+      _language = config['language'] == null
+          ? null
+          : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerExpanded = config['headerExpanded'] ?? true;
@@ -230,6 +230,7 @@ class AppConfiguration {
       if (config['panelRatio'] != null) {
         panelRatio = config['panelRatio'];
       }
+      minimizeToTray = config['minimizeToTray'];
     } catch (e) {
       logger.e(e);
     }
@@ -277,6 +278,7 @@ class AppConfiguration {
       if (Platforms.isDesktop())
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
+      if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
     };
   }
 }

@@ -123,6 +123,17 @@ class _PreferenceState extends State<Preference> {
               const Divider(),
               ListTile(
                   contentPadding: EdgeInsets.zero,
+                  title: Text(localizations.minimizeToTrayTitle, style: titleStyle),
+                  subtitle: Text(localizations.minimizeToTraySubtitle, style: subtitleStyle),
+                  trailing: SwitchWidget(
+                      scale: 0.75,
+                      value: appConfiguration.minimizeToTray ?? false,
+                      onChanged: (value) {
+                        appConfiguration.minimizeToTray = value;
+                        appConfiguration.flushConfig();
+                      })),
+              ListTile(
+                  contentPadding: EdgeInsets.zero,
                   title: Text(localizations.autoStartup, style: titleStyle),
                   //默认是否启动
                   subtitle: Text(localizations.autoStartupDescribe, style: subtitleStyle),

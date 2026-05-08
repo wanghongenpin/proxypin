@@ -65,6 +65,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
   Future<void> _load() async {
     final manager = await ReportServerManager.instance;
     final list = manager.servers;
+    if (!mounted) return;
     setState(() {
       _servers = List.of(list);
       _loading = false;
@@ -75,6 +76,38 @@ class _ReportServersPageState extends State<ReportServersPage> {
     return OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2));
   }
 
+  InputDecoration _inputDecoration({String? hint, String? helper}) => InputDecoration(
+        hintText: hint,
+        helperText: helper,
+        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        errorStyle: const TextStyle(height: 0, fontSize: 0),
+        focusedBorder: focusedBorder(),
+        isDense: true,
+        border: const OutlineInputBorder(),
+      );
+
+  Widget _buildLabel(String label, Widget field, {bool expanded = true}) => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(width: AppLocalizations.of(context)!.localeName == 'en' ? 108 : 88, child: Text(label)),
+          const SizedBox(width: 12),
+          expanded ? Expanded(child: field) : field,
+        ],
+      );
+
+  Widget _buildDialogSection({required Widget child}) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+      ),
+      child: child,
+    );
+  }
+
   // 统一的新增/编辑弹窗
   Future<ReportServer?> _showServerDialog({ReportServer? initial}) async {
     final nameCtrl = TextEditingController(text: initial?.name ?? '');
@@ -82,129 +115,162 @@ class _ReportServersPageState extends State<ReportServersPage> {
     final serverUrlCtrl = TextEditingController(text: initial?.serverUrl ?? '');
     String compression = initial?.compression ?? 'none';
     bool enabled = initial?.enabled ?? true;
-
-    // 紧凑的 Outline 输入框装饰
-    InputDecoration dec({String? hint}) => InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 5, vertical: 12),
-        errorStyle: const TextStyle(height: 0, fontSize: 0),
-        focusedBorder: focusedBorder(),
-        isDense: true,
-        border: const OutlineInputBorder());
-
-    Widget labeled(String label, Widget field, {bool expanded = true}) => Row(
-          children: [
-            SizedBox(width: AppLocalizations.of(context)!.localeName == 'en' ? 95 : 85, child: Text(label)),
-            const SizedBox(width: 12),
-            expanded ? Expanded(child: field) : field,
-          ],
-        );
+    bool splitReport = initial?.splitReport ?? false;
 
     final formKey = GlobalKey<FormState>();
-
-    final result = await showDialog<ReportServer>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(initial == null ? localizations.addReportServer : localizations.editReportServer,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-          content: Form(
+    try {
+      final result = await showDialog<ReportServer>(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+            contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  initial == null ? localizations.addReportServer : localizations.editReportServer,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            content: Form(
               key: formKey,
               child: SizedBox(
-                width: 460,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      labeled(
-                        '${localizations.name}: ',
-                        TextField(controller: nameCtrl, decoration: dec(hint: localizations.pleaseEnter)),
-                      ),
-                      const SizedBox(height: 12),
-                      labeled(
-                        '${localizations.match} URL: ',
-                        TextFormField(
-                            controller: matchUrlCtrl,
-                            keyboardType: TextInputType.url,
-                            validator: (val) => val?.isNotEmpty == true ? null : "",
-                            decoration: dec(hint: 'https://example.com/api/*')),
-                      ),
-                      const SizedBox(height: 12),
-                      labeled(
-                        '${localizations.serverUrl}: ',
-                        TextFormField(
-                            controller: serverUrlCtrl,
-                            keyboardType: TextInputType.url,
-                            validator: (val) => val?.isNotEmpty == true ? null : "",
-                            decoration: dec(hint: 'http://example.com/report')),
-                      ),
-                      const SizedBox(height: 12),
-                      labeled(
-                          '${localizations.compression}: ',
-                          expanded: false,
-                          SizedBox(
-                            width: 100,
-                            child: DropdownButtonFormField<String>(
-                              value: compression,
-                              decoration: dec(),
-                              isDense: true,
-                              items: [
-                                DropdownMenuItem(value: 'none', child: Text(localizations.compressionNone)),
-                                DropdownMenuItem(value: 'gzip', child: Text("GZIP")),
-                              ],
-                              onChanged: (v) => compression = v ?? 'none',
-                            ),
-                          )),
-                      const SizedBox(height: 12),
-                      labeled(
-                        '${localizations.enable}: ',
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: SwitchWidget(value: enabled, scale: 0.83, onChanged: (v) => enabled = v),
+                width: 520,
+                child: Scrollbar(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildDialogSection(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildLabel(
+                                '${localizations.name}: ',
+                                TextField(
+                                  controller: nameCtrl,
+                                  decoration: _inputDecoration(hint: localizations.pleaseEnter),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildLabel(
+                                '${localizations.match} URL: ',
+                                TextFormField(
+                                  controller: matchUrlCtrl,
+                                  keyboardType: TextInputType.url,
+                                  validator: (val) => val?.isNotEmpty == true ? null : '',
+                                  decoration: _inputDecoration(hint: 'https://example.com/api/*'),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildLabel(
+                                '${localizations.serverUrl}: ',
+                                TextFormField(
+                                  controller: serverUrlCtrl,
+                                  keyboardType: TextInputType.url,
+                                  validator: (val) => val?.isNotEmpty == true ? null : '',
+                                  decoration: _inputDecoration(hint: 'http://example.com/report'),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        _buildDialogSection(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildLabel(
+                                '${localizations.compression}: ',
+                                expanded: false,
+                                SizedBox(
+                                  width: 150,
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: compression,
+                                    decoration: _inputDecoration(),
+                                    isDense: true,
+                                    items: [
+                                      DropdownMenuItem(value: 'none', child: Text(localizations.compressionNone)),
+                                      const DropdownMenuItem(value: 'gzip', child: Text('GZIP')),
+                                    ],
+                                    onChanged: (v) => compression = v ?? 'none',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildLabel(
+                                '${localizations.enable}: ',
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: SwitchWidget(value: enabled, scale: 0.83, onChanged: (v) => enabled = v),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildLabel(
+                                '${localizations.splitReport}: ',
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child:
+                                      SwitchWidget(value: splitReport, scale: 0.83, onChanged: (v) => splitReport = v),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              )),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, null),
-              child: Text(localizations.cancel),
+              ),
             ),
-            FilledButton(
-              onPressed: () {
-                if (!(formKey.currentState as FormState).validate()) {
-                  FlutterToastr.show("${localizations.serverUrl} ${localizations.cannotBeEmpty}", context,
-                      position: FlutterToastr.top);
-                  return;
-                }
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, null),
+                child: Text(localizations.cancel),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (!(formKey.currentState as FormState).validate()) {
+                    FlutterToastr.show("${localizations.serverUrl} ${localizations.cannotBeEmpty}", context,
+                        position: FlutterToastr.top);
+                    return;
+                  }
 
-                final matchUrl = matchUrlCtrl.text.trim();
-                var serverUrl = serverUrlCtrl.text.trim();
-                // 修复此前的前缀判断逻辑：仅当不以 http/https 开头时补全
-                if (!serverUrl.startsWith('http://') && !serverUrl.startsWith('https://')) {
-                  serverUrl = 'http://$serverUrl';
-                }
+                  final matchUrl = matchUrlCtrl.text.trim();
+                  var serverUrl = serverUrlCtrl.text.trim();
+                  if (!serverUrl.startsWith('http://') && !serverUrl.startsWith('https://')) {
+                    serverUrl = 'http://$serverUrl';
+                  }
 
-                final server = ReportServer(
-                  name: nameCtrl.text.trim(),
-                  matchUrl: matchUrl,
-                  serverUrl: serverUrl,
-                  enabled: enabled,
-                  compression: compression,
-                );
-                Navigator.pop(ctx, server);
-              },
-              child: Text(localizations.save),
-            ),
-          ],
-        );
-      },
-    );
+                  final server = ReportServer(
+                    name: nameCtrl.text.trim(),
+                    matchUrl: matchUrl,
+                    serverUrl: serverUrl,
+                    enabled: enabled,
+                    compression: compression,
+                    splitReport: splitReport,
+                  );
+                  Navigator.pop(ctx, server);
+                },
+                child: Text(localizations.save),
+              ),
+            ],
+          );
+        },
+      );
 
-    return result;
+      return result;
+    } finally {
+      nameCtrl.dispose();
+      matchUrlCtrl.dispose();
+      serverUrlCtrl.dispose();
+    }
   }
 
   Future<void> _addServerDialog() async {
@@ -243,7 +309,6 @@ class _ReportServersPageState extends State<ReportServersPage> {
         title: Text(localizations.reportServers),
         centerTitle: true,
         actions: [
-
           TextButton.icon(
             label: Text(localizations.newBuilt),
             onPressed: _addServerDialog,
@@ -253,7 +318,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
           IconButton(
             tooltip: localizations.useGuide,
             onPressed: _openGuide,
-            icon: const Icon(Icons.help_outline,size: 21),
+            icon: const Icon(Icons.help_outline, size: 21),
           ),
           IconButton(
             tooltip: localizations.close,
