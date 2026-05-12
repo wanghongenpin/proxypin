@@ -24,6 +24,7 @@ import 'package:proxypin/network/components/report_server_interceptor.dart';
 import 'package:proxypin/network/components/request_block.dart';
 import 'package:proxypin/network/components/request_rewrite.dart';
 import 'package:proxypin/network/components/script.dart';
+import 'package:proxypin/network/components/ws_traffic_server.dart';
 import 'package:proxypin/network/handle/http_proxy_handle.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -161,5 +162,23 @@ class ProxyServer {
   ///添加监听器
   void addListener(EventListener listener) {
     listeners.add(listener);
+  }
+
+  WsTrafficServer? _wsTrafficServer;
+
+  WsTrafficServer? get wsTrafficServer => _wsTrafficServer;
+
+  Future<void> startWsServer(int port) async {
+    if (_wsTrafficServer?.isRunning == true) return;
+    _wsTrafficServer = WsTrafficServer(port: port);
+    await _wsTrafficServer!.start();
+    listeners.add(_wsTrafficServer!);
+  }
+
+  Future<void> stopWsServer() async {
+    if (_wsTrafficServer == null) return;
+    listeners.remove(_wsTrafficServer!);
+    await _wsTrafficServer!.stop();
+    _wsTrafficServer = null;
   }
 }
