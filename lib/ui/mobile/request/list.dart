@@ -97,7 +97,7 @@ class RequestListState extends State<RequestListWidget> with SingleTickerProvide
                   key: domainListKey, list: container, proxyServer: widget.proxyServer, onRemove: domainListRemove),
             ],
           ),
-        ));
+        );
   }
 
   ///添加请求
