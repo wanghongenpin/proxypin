@@ -46,18 +46,21 @@ class RequestListWidget extends StatefulWidget {
   }
 }
 
-class RequestListState extends State<RequestListWidget> {
+class RequestListState extends State<RequestListWidget> with SingleTickerProviderStateMixin {
   final GlobalKey<RequestSequenceState> requestSequenceKey = GlobalKey<RequestSequenceState>();
   final GlobalKey<DomainListState> domainListKey = GlobalKey<DomainListState>();
 
   //请求列表容器
   ListenableList<HttpRequest> container = ListenableList();
 
+  late TabController _tabController;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     if (widget.list != null) {
       container = widget.list!;
     }
@@ -65,6 +68,7 @@ class RequestListState extends State<RequestListWidget> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     RequestRowState.removeAutoReadByIds(container.map((request) => request.requestId));
     super.dispose();
   }
@@ -79,14 +83,11 @@ class RequestListState extends State<RequestListWidget> {
       DoubleClickHandle(handle: () => domainListKey.currentState?.scrollToTop())
     ];
 
-    return DefaultTabController(
-        length: tabs.length,
-        child: Scaffold(
+    return Scaffold(
           appBar: AppBar(
-              title: TabBar(tabs: tabs, onTap: (index) => tabClickHandles[index].call()),
+              title: TabBar(tabs: tabs, controller: _tabController, onTap: (index) => tabClickHandles[index].call()),
               automaticallyImplyLeading: false),
-          body: TabBarView(
-            children: [
+          body: TabBarView(controller: _tabController, children: [
               RequestSequence(
                   key: requestSequenceKey,
                   container: container,

@@ -48,6 +48,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   //关键词高亮监听
   late VoidCallback highlightListener;
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
  void initState() {
     super.initState();
@@ -65,6 +67,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   @override
   void dispose() {
     KeywordHighlights.removeListener(highlightListener);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -156,9 +159,9 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     super.build(context);
 
     return Scrollbar(
-        controller: PrimaryScrollController.maybeOf(context),
+        controller: _scrollController,
         child: ListView.separated(
-            controller: PrimaryScrollController.maybeOf(context),
+            controller: _scrollController,
             cacheExtent: 1000,
             separatorBuilder: (context, index) =>
                 Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
@@ -186,8 +189,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   scrollToTop() {
-    PrimaryScrollController.maybeOf(context)
-        ?.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+    _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
   }
 
   ///排序
