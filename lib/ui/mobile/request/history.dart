@@ -418,8 +418,15 @@ class _HistoryRecordState extends State<HistoryRecord> {
   final GlobalKey<MobileSearchState> searchStateKey = GlobalKey<MobileSearchState>();
 
   var searchEnabled = ValueNotifier(false);
+  late final Future<List<HttpRequest>> _requestsFuture;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestsFuture = HistoryStorage.instance.then((storage) => storage.getRequests(widget.history));
+  }
 
   @override
   void dispose() {
@@ -475,9 +482,7 @@ class _HistoryRecordState extends State<HistoryRecord> {
                     }),
               ],
             )),
-        body: futureWidget(
-            loading: true,
-            HistoryStorage.instance.then((storage) => storage.getRequests(widget.history)),
+        body: futureWidget(loading: true, _requestsFuture,
             (data) =>
                 RequestListWidget(proxyServer: widget.proxyServer, list: ListenableList(data), key: requestStateKey)));
   }

@@ -230,7 +230,10 @@ class _FutureWidgetState<T> extends State<_FutureWidget<T>> {
   void didUpdateWidget(covariant _FutureWidget<T> old) {
     super.didUpdateWidget(old);
     if (old.future != widget.future || old.initialData != widget.initialData) {
-      _data = widget.initialData;
+      // 仅当 initialData 变化或还没有数据时才重置，避免已加载的 widget 树被不必要地销毁重建
+      if (widget.initialData != null || _data == null) {
+        _data = widget.initialData;
+      }
       _subscribe();
     }
   }
