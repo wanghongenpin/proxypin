@@ -9,11 +9,59 @@ concurrency:
   group: flutter-android-ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NON_BLOCKING_TESTS_JSON: >-
+    ["test/cert_test.dart","test/favorites_trim_test.dart","test/http_test.dart","test/js_test.dart","test/multi_select_controller_test.dart","test/web_test.dart"]
+
 jobs:
+  android-test:
+    name: Flutter test (Android)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run stable tests
+        shell: pwsh
+        run: |
+          $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
+          $allTests = Get-ChildItem -Path test -Filter *.dart -File | Sort-Object Name | ForEach-Object { "test/$($_.Name)" }
+          $stableTests = $allTests | Where-Object { $_ -notin $nonBlockingTests }
+          Write-Host "Running stable tests:"
+          $stableTests | ForEach-Object { Write-Host $_ }
+          & flutter test @stableTests
+
+      - name: Run non-blocking legacy tests
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
+          Write-Host "Running non-blocking tests:"
+          $nonBlockingTests | ForEach-Object { Write-Host $_ }
+          & flutter test @nonBlockingTests
+
   android-build:
     name: Flutter build (Android)
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs: android-test
 
     steps:
       - name: Checkout
