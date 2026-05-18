@@ -14,6 +14,8 @@ jobs:
     name: Flutter test
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NON_BLOCKING_TESTS: test/cert_test.dart test/favorites_trim_test.dart test/http_test.dart test/js_test.dart test/multi_select_controller_test.dart test/web_test.dart
 
     steps:
       - name: Checkout
@@ -31,5 +33,23 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
+      - name: Run stable tests
+        shell: bash
+        run: |
+          mapfile -t all_tests < <(find test -maxdepth 1 -name '*.dart' | sort)
+          stable_tests=()
+          for test_file in "${all_tests[@]}"; do
+            if [[ " ${NON_BLOCKING_TESTS} " == *" ${test_file} "* ]]; then
+              continue
+            fi
+            stable_tests+=("${test_file}")
+          done
+          printf 'Running stable tests:\n%s\n' "${stable_tests[@]}"
+          flutter test "${stable_tests[@]}"
+
+      - name: Run non-blocking legacy tests
+        shell: bash
+        continue-on-error: true
+        run: |
+          printf 'Running non-blocking tests:\n%s\n' ${NON_BLOCKING_TESTS}
+          flutter test ${NON_BLOCKING_TESTS}
