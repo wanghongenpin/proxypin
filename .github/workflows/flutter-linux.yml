@@ -84,15 +84,9 @@ jobs:
       - name: Build Linux binary
         run: flutter build linux --release
 
-      - name: Archive Linux bundle
-        shell: bash
-        run: |
-          cd build/linux/x64/release
-          tar -czf proxypin-linux-x64.tar.gz bundle
-
       - name: Upload Linux bundle
         uses: actions/upload-artifact@v4
         with:
           name: proxypin-linux-x64
-          path: build/linux/x64/release/proxypin-linux-x64.tar.gz
+          path: build/linux/x64/release/bundle/**
           if-no-files-found: error

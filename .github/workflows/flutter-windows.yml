@@ -79,14 +79,9 @@ jobs:
       - name: Build Windows binary
         run: flutter build windows --release
 
-      - name: Archive Windows bundle
-        shell: pwsh
-        run: |
-          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath build/windows/x64/runner/proxypin-windows-x64.zip -Force
-
       - name: Upload Windows bundle
         uses: actions/upload-artifact@v4
         with:
           name: proxypin-windows-x64
-          path: build/windows/x64/runner/proxypin-windows-x64.zip
+          path: build/windows/x64/runner/Release/**
           if-no-files-found: error
