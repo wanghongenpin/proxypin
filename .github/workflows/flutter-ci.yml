@@ -10,16 +10,53 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Flutter test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+  linux-test:
+    name: Flutter test (Linux)
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
+    env:
+      NON_BLOCKING_TESTS_JSON: >-
+        ["test/cert_test.dart","test/favorites_trim_test.dart","test/http_test.dart","test/js_test.dart","test/multi_select_controller_test.dart","test/web_test.dart"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run stable tests
+        shell: pwsh
+        run: |
+          $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
+          $allTests = Get-ChildItem -Path test -Filter *.dart -File | Sort-Object Name | ForEach-Object { "test/$($_.Name)" }
+          $stableTests = $allTests | Where-Object { $_ -notin $nonBlockingTests }
+          Write-Host "Running stable tests:"
+          $stableTests | ForEach-Object { Write-Host $_ }
+          & flutter test @stableTests
+
+      - name: Run non-blocking legacy tests
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
+          Write-Host "Running non-blocking tests:"
+          $nonBlockingTests | ForEach-Object { Write-Host $_ }
+          & flutter test @nonBlockingTests
+
+  windows-test:
+    name: Flutter test (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
     env:
       NON_BLOCKING_TESTS_JSON: >-
         ["test/cert_test.dart","test/favorites_trim_test.dart","test/http_test.dart","test/js_test.dart","test/multi_select_controller_test.dart","test/web_test.dart"]
