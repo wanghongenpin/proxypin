@@ -11,11 +11,18 @@ concurrency:
 
 jobs:
   test:
-    name: Flutter test
-    runs-on: ubuntu-latest
+    name: Flutter test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
     env:
-      NON_BLOCKING_TESTS: test/cert_test.dart test/favorites_trim_test.dart test/http_test.dart test/js_test.dart test/multi_select_controller_test.dart test/web_test.dart
+      NON_BLOCKING_TESTS_JSON: >-
+        ["test/cert_test.dart","test/favorites_trim_test.dart","test/http_test.dart","test/js_test.dart","test/multi_select_controller_test.dart","test/web_test.dart"]
 
     steps:
       - name: Checkout
@@ -34,22 +41,20 @@ jobs:
         run: flutter pub get
 
       - name: Run stable tests
-        shell: bash
+        shell: pwsh
         run: |
-          mapfile -t all_tests < <(find test -maxdepth 1 -name '*.dart' | sort)
-          stable_tests=()
-          for test_file in "${all_tests[@]}"; do
-            if [[ " ${NON_BLOCKING_TESTS} " == *" ${test_file} "* ]]; then
-              continue
-            fi
-            stable_tests+=("${test_file}")
-          done
-          printf 'Running stable tests:\n%s\n' "${stable_tests[@]}"
-          flutter test "${stable_tests[@]}"
+          $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
+          $allTests = Get-ChildItem -Path test -Filter *.dart -File | Sort-Object Name | ForEach-Object { "test/$($_.Name)" }
+          $stableTests = $allTests | Where-Object { $_ -notin $nonBlockingTests }
+          Write-Host "Running stable tests:"
+          $stableTests | ForEach-Object { Write-Host $_ }
+          & flutter test @stableTests
 
       - name: Run non-blocking legacy tests
-        shell: bash
+        shell: pwsh
         continue-on-error: true
         run: |
-          printf 'Running non-blocking tests:\n%s\n' ${NON_BLOCKING_TESTS}
-          flutter test ${NON_BLOCKING_TESTS}
+          $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
+          Write-Host "Running non-blocking tests:"
+          $nonBlockingTests | ForEach-Object { Write-Host $_ }
+          & flutter test @nonBlockingTests
