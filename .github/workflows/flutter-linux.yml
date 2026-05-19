@@ -2,6 +2,8 @@ name: Flutter Linux CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -39,7 +41,10 @@ jobs:
         shell: pwsh
         run: |
           $nonBlockingTests = ConvertFrom-Json '${{ env.NON_BLOCKING_TESTS_JSON }}'
-          $allTests = Get-ChildItem -Path test -Filter *.dart -File | Sort-Object Name | ForEach-Object { "test/$($_.Name)" }
+          $allTests = Get-ChildItem -Path test -Recurse -Filter *.dart -File |
+            Where-Object { $_.FullName -notmatch '[\\/]+accessibility[\\/]' } |
+            Sort-Object FullName |
+            ForEach-Object { ((Resolve-Path -Relative $_.FullName) -replace '^[.][\\/]', '') -replace '\\', '/' }
           $stableTests = $allTests | Where-Object { $_ -notin $nonBlockingTests }
           Write-Host "Running stable tests:"
           $stableTests | ForEach-Object { Write-Host $_ }

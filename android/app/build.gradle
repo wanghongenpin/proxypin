@@ -31,7 +31,7 @@ def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
-def hasReleaseSigning = keystoreProperties['storeFile']
+def hasReleaseSigning = keystorePropertiesFile.exists() && keystoreProperties['storeFile']
 
 android {
     namespace "com.network.proxy"

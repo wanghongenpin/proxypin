@@ -20,28 +20,33 @@ void main() {
         ),
       );
 
-      expect(find.byTooltip('Repeat'), findsOneWidget);
-      expect(find.byTooltip('Export'), findsOneWidget);
-      expect(find.byTooltip('Delete'), findsOneWidget);
-      expect(find.byTooltip('Cancel'), findsOneWidget);
+      final context = tester.element(find.byType(SelectionActionBar));
+      final localizations = AppLocalizations.of(context)!;
+
+      expect(find.byTooltip(localizations.repeat), findsOneWidget);
+      expect(find.byTooltip(localizations.export), findsOneWidget);
+      expect(find.byTooltip(localizations.delete), findsOneWidget);
+      expect(find.byTooltip(localizations.cancel), findsOneWidget);
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     });
 
     testWidgets('toolbox action keeps an accessible label', (tester) async {
+      const tooltip = 'JavaScript';
+
       await _pumpLocalizedApp(
         tester,
         child: Center(
           child: IconText(
             icon: Icons.code,
-            text: 'JavaScript',
-            tooltip: 'JavaScript',
+            text: tooltip,
+            tooltip: tooltip,
             onTap: () {},
           ),
         ),
       );
 
-      expect(find.byTooltip('JavaScript'), findsOneWidget);
+      expect(find.byTooltip(tooltip), findsOneWidget);
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
