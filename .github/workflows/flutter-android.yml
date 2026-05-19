@@ -44,5 +44,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: proxypin-android-apk
-          path: build/app/outputs/flutter-apk/proxypin-android.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
