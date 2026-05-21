@@ -24,9 +24,11 @@ void main() {
       expect(controller.selectedIds, {'b', 'c', 'd'});
     });
 
-    test('selectAll and prune keep only visible ids', () {
+    test('prune keeps only visible ids', () {
       final controller = MultiSelectController();
 
+      controller.selectOnly('b');
+      controller.selectRange(['a', 'b', 'c', 'd'], 'c');
       controller.prune(['b', 'c', 'd']);
 
       expect(controller.isSelectionMode, isTrue);

@@ -132,47 +132,45 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                   bottomNavigationBar: Search(key: searchKey, onSearch: search),
                   body: Padding(
                       padding: const EdgeInsets.only(right: 5),
-                      child: Obx(() {
-                        return Column(children: [
-                          if (isSelectionMode)
-                            SelectionActionBar(
+                      child: Column(children: [
+                        Obx(() => selectionController.selectionMode.value
+                            ? SelectionActionBar(
                                 selectionController: selectionController,
                                 onRepeat: repeatSelected,
                                 onExport: exportSelected,
-                                onDelete: deleteSelected),
-                          Expanded(
-                              child: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
-                            DomainList(
-                              key: domainListKey,
-                              list: container,
-                              panel: widget.panel,
-                              proxyServer: widget.proxyServer,
-                              selectionController: selectionController,
-                              selectionHandlers: RequestSelectionHandlers(
-                                onRangeSelection: rangeSelectRequest,
-                                onDeleteSelected: deleteSelected,
-                                onRepeatSelected: repeatSelected,
-                                onExportSelected: exportSelected,
-                              ),
-                              onRemove: domainListRemove,
+                                onDelete: deleteSelected)
+                            : SizedBox()),
+                        Expanded(
+                            child: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
+                          DomainList(
+                            key: domainListKey,
+                            list: container,
+                            panel: widget.panel,
+                            proxyServer: widget.proxyServer,
+                            selectionController: selectionController,
+                            selectionHandlers: RequestSelectionHandlers(
+                              onRangeSelection: rangeSelectRequest,
+                              onDeleteSelected: deleteSelected,
+                              onRepeatSelected: repeatSelected,
+                              onExportSelected: exportSelected,
                             ),
-                            RequestSequence(
-                              key: requestSequenceKey,
-                              container: container,
-                              proxyServer: widget.proxyServer,
-                              selectionController: selectionController,
-                              // onSelectionChanged: syncDomainSelectionVisuals,
-                              selectionHandlers: RequestSelectionHandlers(
-                                onRangeSelection: rangeSelectRequest,
-                                onDeleteSelected: deleteSelected,
-                                onRepeatSelected: repeatSelected,
-                                onExportSelected: exportSelected,
-                              ),
-                              onRemove: sequenceRemove,
+                            onRemove: domainListRemove,
+                          ),
+                          RequestSequence(
+                            key: requestSequenceKey,
+                            container: container,
+                            proxyServer: widget.proxyServer,
+                            selectionController: selectionController,
+                            selectionHandlers: RequestSelectionHandlers(
+                              onRangeSelection: rangeSelectRequest,
+                              onDeleteSelected: deleteSelected,
+                              onRepeatSelected: repeatSelected,
+                              onExportSelected: exportSelected,
                             ),
-                          ])),
-                        ]);
-                      })));
+                            onRemove: sequenceRemove,
+                          ),
+                        ])),
+                      ])));
             })));
   }
 
