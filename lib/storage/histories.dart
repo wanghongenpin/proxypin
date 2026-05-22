@@ -272,11 +272,7 @@ class HistoryTask extends ListenerListEvent<HttpRequest> {
   void onBatchRemove(List<HttpRequest> items) => resetList();
 
   @override
-<<<<<<< HEAD
-  clear(List<HttpRequest> items) => resetList();
-=======
   void clear(List<HttpRequest> items) => resetList();
->>>>>>> remotes/origin/main
 
   Future<void> resetList() async {
     locked = true;
