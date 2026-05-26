@@ -340,6 +340,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   void repeatSelected() {
     final selectedRequests = domainListKey.currentState?.selectedRequests();
     _repeatRequests(selectedRequests);
+    selectionController.clear();
   }
 
   Future<void> exportSelected() async {
@@ -350,6 +351,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
 
     final fileName = 'ProxyPin_selected_${DateTime.now().dateFormat()}.har';
     _doExport(fileName, selectedRequests);
+    selectionController.clear();
   }
 
   ///导出

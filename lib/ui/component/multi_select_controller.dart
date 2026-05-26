@@ -22,6 +22,10 @@ class MultiSelectController {
     selectionMode.value = false;
   }
 
+  void remove(String requestId) {
+    selectedIds.remove(requestId);
+  }
+
   void enterSelectionMode([String? requestId]) {
     selectionMode.value = true;
     if (requestId != null) {

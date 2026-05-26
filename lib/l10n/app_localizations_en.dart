@@ -453,6 +453,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectAction => 'Select action';
 
   @override
+  String get select => 'Select';
+
+  @override
   String get copy => 'Copy';
 
   @override

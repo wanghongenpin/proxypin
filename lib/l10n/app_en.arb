@@ -152,6 +152,7 @@
   "domainListSubtitle": "Last Request Time: {time},  Count: {count}",
 
   "selectAction": "Select action",
+  "select": "Select",
   "copy": "Copy",
   "copyHost": "Copy Host",
   "copyUrl": "Copy URL",

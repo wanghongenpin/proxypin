@@ -972,6 +972,12 @@ abstract class AppLocalizations {
   /// **'Select action'**
   String get selectAction;
 
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
   /// No description provided for @copy.
   ///
   /// In en, this message translates to:

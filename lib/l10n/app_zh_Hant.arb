@@ -145,6 +145,7 @@
   "deleteWhitelist": "刪除代理白名單",
   "domainListSubtitle": "最後請求時間: {time},  次數: {count}",
   "selectAction": "選擇操作",
+  "select": "選擇",
   "copy": "複製",
   "copyHost": "複製網域名稱",
   "copyUrl": "複製URL",

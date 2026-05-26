@@ -31,6 +31,7 @@ import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/history_cache_time.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
@@ -412,10 +413,12 @@ class HistoryRecord extends StatefulWidget {
 }
 
 class _HistoryRecordState extends State<HistoryRecord> {
-  GlobalKey<RequestListState> requestStateKey = GlobalKey<RequestListState>();
+  final GlobalKey<RequestListState> requestStateKey = GlobalKey<RequestListState>();
 
   ///搜索key
   final GlobalKey<MobileSearchState> searchStateKey = GlobalKey<MobileSearchState>();
+
+  final MultiSelectController multiSelectController = MultiSelectController();
 
   var searchEnabled = ValueNotifier(false);
 
@@ -424,6 +427,7 @@ class _HistoryRecordState extends State<HistoryRecord> {
   @override
   void dispose() {
     searchEnabled.dispose();
+    multiSelectController.clear();
     super.dispose();
   }
 
@@ -463,6 +467,16 @@ class _HistoryRecordState extends State<HistoryRecord> {
                             onTap: () => export(context),
                             child: IconText(icon: const Icon(Icons.share), text: localizations.viewExport)),
                         PopupMenuItem(
+                            height: 32,
+                            child: ListTile(
+                                dense: true,
+                                leading: const Icon(Icons.checklist_rtl_outlined),
+                                title: Text(localizations.selectAction),
+                                onTap: () async {
+                                  await Navigator.maybePop(context);
+                                  multiSelectController.toggleSelectionMode();
+                                })),
+                        PopupMenuItem(
                             onTap: () async {
                               var requests = requestStateKey.currentState?.currentView();
                               if (requests == null) return;
@@ -476,10 +490,15 @@ class _HistoryRecordState extends State<HistoryRecord> {
               ],
             )),
         body: futureWidget(
-            loading: true,
-            HistoryStorage.instance.then((storage) => storage.getRequests(widget.history)),
-            (data) =>
-                RequestListWidget(proxyServer: widget.proxyServer, list: ListenableList(data), key: requestStateKey)));
+          loading: true,
+          HistoryStorage.instance.then((storage) => storage.getRequests(widget.history)),
+          (data) => RequestListWidget(
+            proxyServer: widget.proxyServer,
+            list: ListenableList(data),
+            key: requestStateKey,
+            selectionController: multiSelectController,
+          ),
+        ));
   }
 
   //导出har

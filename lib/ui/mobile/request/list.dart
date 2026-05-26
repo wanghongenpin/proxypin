@@ -22,6 +22,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/mobile/request/domians.dart';
 import 'package:proxypin/ui/mobile/request/request.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
@@ -37,8 +38,9 @@ import '../../component/model/search_model.dart';
 class RequestListWidget extends StatefulWidget {
   final ProxyServer proxyServer;
   final ListenableList<HttpRequest>? list;
+  final MultiSelectController selectionController;
 
-  const RequestListWidget({super.key, required this.proxyServer, this.list});
+  const RequestListWidget({super.key, required this.proxyServer, this.list, required this.selectionController});
 
   @override
   State<StatefulWidget> createState() {
@@ -91,7 +93,8 @@ class RequestListState extends State<RequestListWidget> {
                   key: requestSequenceKey,
                   container: container,
                   proxyServer: widget.proxyServer,
-                  onRemove: sequenceRemove),
+                  onRemove: sequenceRemove,
+                  selectionController: widget.selectionController),
               DomainList(
                   key: domainListKey, list: container, proxyServer: widget.proxyServer, onRemove: domainListRemove),
             ],
@@ -182,7 +185,6 @@ class RequestListState extends State<RequestListWidget> {
     requestSequenceKey.currentState?.sort(sortDesc);
     domainListKey.currentState?.sort(sortDesc);
   }
-
 }
 
 class DoubleClickHandle {

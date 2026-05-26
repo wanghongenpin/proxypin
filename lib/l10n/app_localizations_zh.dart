@@ -451,6 +451,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectAction => '选择操作';
 
   @override
+  String get select => '选择';
+
+  @override
   String get copy => '复制';
 
   @override
@@ -1540,6 +1543,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get selectAction => '選擇操作';
+
+  @override
+  String get select => '選擇';
 
   @override
   String get copy => '複製';

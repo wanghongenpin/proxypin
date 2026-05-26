@@ -35,6 +35,7 @@ import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -79,6 +80,8 @@ class MobileApp {
 
   ///请求列表容器
   static final container = ListenableList<HttpRequest>();
+
+  static final multiSelectController = MultiSelectController();
 }
 
 class MobileHomeState extends State<MobileHomePage> implements EventListener, LifecycleListener {
@@ -434,7 +437,10 @@ class RequestPageState extends State<RequestPage> {
                 value.connect ? remoteConnect(value) : const SizedBox(),
                 Expanded(
                     child: RequestListWidget(
-                        key: MobileApp.requestStateKey, proxyServer: proxyServer, list: MobileApp.container))
+                        key: MobileApp.requestStateKey,
+                        proxyServer: proxyServer,
+                        list: MobileApp.container,
+                        selectionController: MobileApp.multiSelectController))
               ]);
             }),
       ),

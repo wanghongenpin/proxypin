@@ -240,7 +240,7 @@ class _RequestWidgetState extends State<RequestWidget> {
       _menuAction(localizations.favorite, _RequestMenuAction.favorite),
       MenuItem(label: localizations.highlight, type: 'submenu', submenu: highlightMenu()),
       MenuItem.separator(),
-      _menuAction(localizations.selectAction, _RequestMenuAction.select),
+      _menuAction(localizations.select, _RequestMenuAction.select),
       MenuItem.separator(),
       _menuAction(localizations.delete, _RequestMenuAction.delete),
     ]);
