@@ -125,7 +125,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
   }
 
-  clean() {
+  void clean() {
     setState(() {
       view.clear();
       domainList.clear();
@@ -135,10 +135,10 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     });
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     for (var request in list) {
       containerMap[request.hostAndPort]?.remove(request);
-      if (containerMap[request.hostAndPort]!.isEmpty) {
+      if (containerMap[request.hostAndPort]?.isEmpty ?? false) {
         domainList.remove(request.hostAndPort);
         view.remove(request.hostAndPort);
       }
@@ -243,7 +243,10 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
                   displayDomain: false,
                   container: ListenableList(sortDesc ? list : list?.reversed.toList()),
                   sortDesc: sortDesc,
-                  onRemove: widget.onRemove,
+                  onRemove: (requests) {
+                    widget.onRemove?.call(requests);
+                    remove(requests);
+                  },
                   proxyServer: widget.proxyServer,
                   selectionController: MultiSelectController(),
                 ));

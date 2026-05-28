@@ -467,15 +467,11 @@ class _HistoryRecordState extends State<HistoryRecord> {
                             onTap: () => export(context),
                             child: IconText(icon: const Icon(Icons.share), text: localizations.viewExport)),
                         PopupMenuItem(
-                            height: 32,
-                            child: ListTile(
-                                dense: true,
-                                leading: const Icon(Icons.checklist_rtl_outlined),
-                                title: Text(localizations.selectAction),
-                                onTap: () async {
-                                  await Navigator.maybePop(context);
-                                  multiSelectController.toggleSelectionMode();
-                                })),
+                            onTap: () async {
+                              multiSelectController.toggleSelectionMode();
+                            },
+                            child: IconText(
+                                icon: const Icon(Icons.checklist_rtl_outlined), text: localizations.selectAction)),
                         PopupMenuItem(
                             onTap: () async {
                               var requests = requestStateKey.currentState?.currentView();
