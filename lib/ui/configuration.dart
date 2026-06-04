@@ -63,7 +63,7 @@ class ThemeModel {
 }
 
 class AppConfiguration {
-  static const String version = "1.2.7";
+  static const String version = "1.2.8";
 
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
