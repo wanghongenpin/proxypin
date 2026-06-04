@@ -71,7 +71,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV27 = true;
+  bool upgradeNoticeV28 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -102,6 +102,9 @@ class AppConfiguration {
 
   //左侧面板占比
   double panelRatio = 0.3;
+
+  /// 关闭窗口时最小化到系统托盘
+  bool? minimizeToTray;
 
   AppConfiguration._();
 
@@ -199,13 +202,10 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV27 = config['upgradeNoticeV27'] ?? true;
-      _language = config['language'] == null 
-        ? null 
-        : Locale.fromSubtags(
-            languageCode: config['language'], 
-            scriptCode: config['languageScript']
-          );
+      upgradeNoticeV28 = config['upgradeNoticeV28'] ?? true;
+      _language = config['language'] == null
+          ? null
+          : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerExpanded = config['headerExpanded'] ?? true;
@@ -222,6 +222,7 @@ class AppConfiguration {
       if (config['panelRatio'] != null) {
         panelRatio = config['panelRatio'];
       }
+      minimizeToTray = config['minimizeToTray'];
     } catch (e) {
       logger.e(e);
     }
@@ -251,7 +252,7 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV27': upgradeNoticeV27,
+      'upgradeNoticeV28': upgradeNoticeV28,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerExpanded": headerExpanded,
@@ -266,6 +267,7 @@ class AppConfiguration {
       if (Platforms.isDesktop())
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
+      if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
     };
   }
 }

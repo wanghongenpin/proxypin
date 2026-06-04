@@ -29,6 +29,7 @@ import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
 import 'package:proxypin/utils/har.dart';
@@ -124,7 +125,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     }
   }
 
-  clean() {
+  void clean() {
     setState(() {
       view.clear();
       domainList.clear();
@@ -134,10 +135,10 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     });
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     for (var request in list) {
       containerMap[request.hostAndPort]?.remove(request);
-      if (containerMap[request.hostAndPort]!.isEmpty) {
+      if (containerMap[request.hostAndPort]?.isEmpty ?? false) {
         domainList.remove(request.hostAndPort);
         view.remove(request.hostAndPort);
       }
@@ -238,22 +239,27 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
             return Scaffold(
                 appBar: AppBar(title: Text(view.elementAt(index).domain, style: const TextStyle(fontSize: 16))),
                 body: RequestSequence(
-                    key: requestSequenceKey,
-                    displayDomain: false,
-                    container: ListenableList(sortDesc ? list : list?.reversed.toList()),
-                    sortDesc: sortDesc,
-                    onRemove: widget.onRemove,
-                    proxyServer: widget.proxyServer));
+                  key: requestSequenceKey,
+                  displayDomain: false,
+                  container: ListenableList(sortDesc ? list : list?.reversed.toList()),
+                  sortDesc: sortDesc,
+                  onRemove: (requests) {
+                    widget.onRemove?.call(requests);
+                    remove(requests);
+                  },
+                  proxyServer: widget.proxyServer,
+                  selectionController: MultiSelectController(),
+                ));
           }));
         });
   }
 
-  scrollToTop() {
+  void scrollToTop() {
     _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
   ///菜单
-  menu(int index) {
+  void menu(int index) {
     var hostAndPort = view.elementAt(index);
 
     showModalBottomSheet(

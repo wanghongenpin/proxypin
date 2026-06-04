@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -321,6 +319,7 @@ class InstalledAppsWidget extends StatefulWidget {
 class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
   static List<AppInfo>? apps;
   static bool includeSystemApps = false;
+  static final Map<String, Future<AppInfo>> _iconFutureCache = {};
 
   RxBool loading = false.obs;
 
@@ -338,9 +337,10 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
 
   @override
   void dispose() {
-    DelayedTask().debounce("InstalledAppsWidget_release", const Duration(seconds: 10), () {
+    DelayedTask().debounce("InstalledAppsWidget_release", const Duration(seconds: 60), () {
       apps = null;
       includeSystemApps = false;
+      _iconFutureCache.clear();
     });
     super.dispose();
   }
@@ -348,7 +348,7 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
   void refreshApps() async {
     try {
       loading.value = true;
-      apps = await InstalledApps.getInstalledApps(true, includeSystemApps: includeSystemApps);
+      apps = await InstalledApps.getInstalledApps(false, includeSystemApps: includeSystemApps);
     } finally {
       loading.value = false;
     }
@@ -414,7 +414,7 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
         itemBuilder: (BuildContext context, int index) {
           AppInfo appInfo = appInfoList[index];
           return ListTile(
-            leading: Image.memory(appInfo.icon ?? Uint8List(0)),
+            leading: _buildAppIcon(appInfo),
             title: Text(appInfo.name ?? ""),
             subtitle: Text(appInfo.packageName ?? ""),
             onTap: () async {
@@ -422,5 +422,44 @@ class _InstalledAppsWidgetState extends State<InstalledAppsWidget> {
             },
           );
         });
+  }
+
+  Widget _buildAppIcon(AppInfo appInfo) {
+    final icon = appInfo.icon;
+    if (icon != null && icon.isNotEmpty) {
+      return Image.memory(icon);
+    }
+
+    final packageName = appInfo.packageName;
+    if (packageName == null || packageName.isEmpty) {
+      return const Icon(Icons.question_mark);
+    }
+
+    final future = _iconFutureCache.putIfAbsent(
+      packageName,
+      () => InstalledApps.getAppInfo(packageName),
+    );
+
+    return FutureBuilder<AppInfo>(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<AppInfo> snapshot) {
+        final loadedIcon = snapshot.data?.icon;
+        if (loadedIcon != null && loadedIcon.isNotEmpty) {
+          return Image.memory(loadedIcon);
+        }
+
+        if (snapshot.hasError) {
+          return const Icon(Icons.question_mark);
+        }
+
+        return const SizedBox(
+          width: 24,
+          height: 24,
+          child: Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      },
+    );
   }
 }

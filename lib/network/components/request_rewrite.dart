@@ -83,7 +83,10 @@ class RequestRewriteInterceptor extends Interceptor {
 
     if (rewriteRule?.type == RuleType.requestReplace) {
       var rewriteItems = await manager.getRewriteItems(rewriteRule!);
-      for (var item in rewriteItems!) {
+      if (rewriteItems == null) {
+        return;
+      }
+      for (var item in rewriteItems) {
         if (item.enabled) {
           await _replaceRequest(request, item);
         }
@@ -104,27 +107,31 @@ class RequestRewriteInterceptor extends Interceptor {
   }
 
   /// 重写响应
-  Future<void> responseRewrite(String? url, HttpResponse response) async {
+  Future<bool> responseRewrite(String? url, HttpResponse response) async {
     var manager = await RequestRewriteManager.instance;
 
     var rewriteRule = manager.getRewriteRule(url, [RuleType.responseReplace, RuleType.responseUpdate]);
     if (rewriteRule == null) {
-      return;
+      return false;
     }
 
     if (rewriteRule.type == RuleType.responseReplace) {
       var rewriteItems = await manager.getRewriteItems(rewriteRule);
-      for (var item in rewriteItems!) {
+      if (rewriteItems == null) {
+        return false;
+      }
+      for (var item in rewriteItems) {
         if (item.enabled) {
           await _replaceResponse(response, item);
         }
       }
+      return true;
     }
 
     if (rewriteRule.type == RuleType.responseUpdate) {
       var rewriteItems = await manager.getRewriteItems(rewriteRule);
       if (rewriteItems == null) {
-        return;
+        return false;
       }
 
       for (var item in rewriteItems) {
@@ -132,7 +139,10 @@ class RequestRewriteInterceptor extends Interceptor {
           await _updateMessage(response, item);
         }
       }
+      return true;
     }
+
+    return false;
   }
 
   Future<void> _updateRequest(HttpRequest request, RewriteItem item) async {

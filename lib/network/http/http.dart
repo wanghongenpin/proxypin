@@ -15,7 +15,6 @@
  */
 
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
@@ -23,6 +22,7 @@ import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/util/compress.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/process_info.dart';
+import 'package:proxypin/network/util/random.dart';
 
 import 'http_headers.dart';
 
@@ -68,7 +68,7 @@ abstract class HttpMessage {
   String? remoteHost;
   int? remotePort;
 
-  String requestId = (DateTime.now().millisecondsSinceEpoch + Random().nextInt(999999)).toRadixString(36);
+  String requestId = (DateTime.now().millisecondsSinceEpoch).toRadixString(36) + RandomUtil.randomString(8); //请求id
   int? streamId; // http2 streamId
   HttpMessage(this.protocolVersion);
 

@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "proxy_cleanup.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -51,6 +52,19 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Keep shutdown handling minimal in the runner: just allow session end and
+  // clear the current user's system proxy as a native fallback.
+  switch (message) {
+    case WM_QUERYENDSESSION:
+      return TRUE;
+
+    case WM_ENDSESSION:
+      if (wparam) {
+        ClearSystemProxy();
+      }
+      return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

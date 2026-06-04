@@ -24,6 +24,7 @@ import 'package:proxypin/network/util/socket_address.dart';
 import 'package:win32audio/win32audio.dart';
 
 import 'cache.dart';
+import 'process_info_macos.dart';
 
 void main() async {
   var processInfo = await ProcessInfoUtils.getProcess(512);
@@ -36,6 +37,19 @@ void main() async {
 ///@author wanghongen
 class ProcessInfoUtils {
   static final processInfoCache = ExpiringCache<String, ProcessInfo>(const Duration(minutes: 5));
+
+  // (host:port) -> pid short cache. Keeps the FFI / Process.run lookup off
+  // the request hot path for the typical HTTP keep-alive case where many
+  // requests share a single client TCP connection (and thus a single
+  // remote socket address). Greatly reduces how often the synchronous
+  // libproc scan runs on the main isolate.
+  static final _pidCache = ExpiringCache<String, int>(const Duration(seconds: 15));
+
+  // Negative cache for ports whose owner can't be resolved (e.g. the client
+  // process has already exited by the time we scan). Without this, every
+  // short-lived connection forces a full PID-list rescan on every request.
+  // Short TTL so a real owner that appears soon after is not masked.
+  static final _pidNotFoundCache = ExpiringCache<String, bool>(const Duration(seconds: 5));
 
   static Future<ProcessInfo?> getProcessByPort(InetSocketAddress socketAddress, String cacheKeyPre) async {
     try {
@@ -50,15 +64,26 @@ class ProcessInfoUtils {
         return null;
       }
 
-      var pid = await _getPid(socketAddress);
-      if (pid == null) return null;
+      var addrKey = "${socketAddress.host}:${socketAddress.port}";
+      if (_pidNotFoundCache.get(addrKey) == true) return null;
+      var pid = _pidCache.get(addrKey);
+      if (pid == null) {
+        pid = await _getPid(socketAddress);
+        if (pid == null) {
+          _pidNotFoundCache.set(addrKey, true);
+          return null;
+        }
+        _pidCache.set(addrKey, pid);
+      }
 
       String cacheKey = "$cacheKeyPre:$pid";
       var processInfo = processInfoCache.get(cacheKey);
       if (processInfo != null) return processInfo;
 
       processInfo = await getProcess(pid);
-      processInfoCache.set(cacheKey, processInfo!);
+      if (processInfo != null) {
+        processInfoCache.set(cacheKey, processInfo);
+      }
       return processInfo;
     } catch (e) {
       logger.e("getProcessByPort error: $e");
@@ -84,21 +109,12 @@ class ProcessInfoUtils {
     }
 
     if (Platform.isMacOS) {
-      var results =
-          await Process.run('bash', ['-c', 'lsof -nP -iTCP:${socketAddress.port} |grep "${socketAddress.port}->"']);
-
-      if (results.exitCode != 0) {
-        return null;
-      }
-
-      var lines = LineSplitter.split(results.stdout);
-
-      for (var line in lines) {
-        var parts = line.trim().split(RegExp(r'\s+'));
-        if (parts.length >= 9) {
-          return int.tryParse(parts[1]);
-        }
-      }
+      // Use libproc syscalls (FFI) instead of spawning `lsof`. Each
+      // Process.run on macOS goes through fork()+execvp(); under load a
+      // multi-threaded Dart VM occasionally deadlocks the forked child
+      // before exec, and the orphaned child keeps the inherited listening
+      // socket fd alive forever. See issue #763.
+      return MacosProcessInfo.findPidByLocalTcpPort(socketAddress.port);
     }
     return null;
   }
@@ -114,19 +130,26 @@ class ProcessInfoUtils {
     }
 
     if (Platform.isMacOS) {
-      var results = await Process.run('bash', ['-c', 'ps -p $pid -o pid= -o comm=']);
-      if (results.exitCode == 0) {
-        var lines = LineSplitter.split(results.stdout);
-        for (var line in lines) {
-          var parts = line.trim().split(RegExp(r'\s+'));
-          if (parts.length >= 2) {
-            parts.removeAt(0).trim();
-            var path = parts.join(" ").split(".app/")[0];
-            String name = path.substring(path.lastIndexOf('/') + 1);
-            return ProcessInfo(name, name, "$path.app", os: Platform.operatingSystem);
-          }
-        }
+      // Use libproc syscalls (FFI) instead of spawning `ps`. See issue #763.
+      final fullPath = MacosProcessInfo.getProcessPath(pid);
+      if (fullPath == null) return null;
+      // For .app bundles, surface the bundle directory as the path so the
+      // icon loader can find Contents/Info.plist. For standalone binaries
+      // (e.g. /usr/bin/curl) use the executable path verbatim -- the old
+      // implementation blindly appended ".app", producing non-existent
+      // paths that poisoned the icon cache with empty bytes for 5 minutes.
+      final bundleIdx = fullPath.indexOf('.app/');
+      final String displayPath;
+      final String name;
+      if (bundleIdx >= 0) {
+        final bundleBase = fullPath.substring(0, bundleIdx);
+        displayPath = '$bundleBase.app';
+        name = bundleBase.substring(bundleBase.lastIndexOf('/') + 1);
+      } else {
+        displayPath = fullPath;
+        name = fullPath.substring(fullPath.lastIndexOf('/') + 1);
       }
+      return ProcessInfo(name, name, displayPath, os: Platform.operatingSystem);
     }
 
     return null;

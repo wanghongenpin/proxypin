@@ -35,6 +35,7 @@ import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -79,6 +80,8 @@ class MobileApp {
 
   ///请求列表容器
   static final container = ListenableList<HttpRequest>();
+
+  static final multiSelectController = MultiSelectController();
 }
 
 class MobileHomeState extends State<MobileHomePage> implements EventListener, LifecycleListener {
@@ -125,7 +128,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.start();
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
 
-    if (widget.appConfiguration.upgradeNoticeV27) {
+    if (widget.appConfiguration.upgradeNoticeV28) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -333,26 +336,27 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 新增html、css、js格式化以及代码高亮；\n'
-            '2. 高级重发支持指定时间；\n'
-            '3. 域名列表增加导出har文件；\n'
-            '4. 远程设备增加快速分享；\n'
-            '5. 收藏支持websocket消息持久化；\n'
-            '6. 远程脚本加载添加引导；\n'
-            '7. 优化消息体大文本展示；\n'
-            '8. 修复自定已读状态丢失问题；\n'
+            '1. 新增多选功能，支持批量删除、导出、重放；\n'
+            '2. 增强请求重写，支持目标请求失败时自动重写；\n'
+            '3. 新增最小化到托盘功能；\n'
+            '4. 修复 macOS 退出后端口号占用问题；\n'
+            '5. Windows 系统关闭系统代理时自动清理；\n'
+            '6. 优化 Android 应用过滤列表的图标加载与缓存；\n'
+            '7. 优化请求菜单，新增 Copy as fetch 等剪贴板相关操作；\n'
+            '8. 服务上报新增分离式 report server 模式；\n'
         : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
-            '1. Added HTML, CSS, and JS formatting with code highlighting;\n'
-            '2. Advanced repeat now supports specifying the time;\n'
-            '3. Added HAR file export for domain list;\n'
-            '4. Added quick share for remote devices;\n'
-            '5. Favorites support WebSocket message persistence;\n'
-            '6. Added guidance for remote script loading;\n'
-            '7. Optimized large text display in message body;\n'
-            '8. Fixed issue where custom read status was lost;\n';
+            '1. Added multi-select support for batch delete, export, and replay;\n'
+            '2. Improved request rewrite, supporting automatic rewrite when the target request fails;\n'
+            '3. Added minimize to tray support;\n'
+            '4. Fixed the port occupation issue after macOS exit;\n'
+            '5. Added automatic system proxy cleanup when disabling system proxy on Windows;\n'
+            '6. Optimized app icon loading and caching in Android app filter list;\n'
+            '7. Optimized the request menu with clipboard actions such as Copy as fetch;\n'
+            '8. Added a separated report server mode for reporting service;\n'
+    ;
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV27 = false;
+      widget.appConfiguration.upgradeNoticeV28 = false;
       widget.appConfiguration.flushConfig();
     });
   }
@@ -434,7 +438,10 @@ class RequestPageState extends State<RequestPage> {
                 value.connect ? remoteConnect(value) : const SizedBox(),
                 Expanded(
                     child: RequestListWidget(
-                        key: MobileApp.requestStateKey, proxyServer: proxyServer, list: MobileApp.container))
+                        key: MobileApp.requestStateKey,
+                        proxyServer: proxyServer,
+                        list: MobileApp.container,
+                        selectionController: MobileApp.multiSelectController))
               ]);
             }),
       ),
@@ -548,7 +555,10 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
         leading: bottomNavigation ? const SizedBox() : null,
         systemOverlayStyle:
             // older SDKs may not have ColorScheme.of, use Theme.of(context).colorScheme for compatibility
-            Platform.isAndroid ? SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).colorScheme.surface) : null,
+            Platform.isAndroid
+                ? SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).colorScheme.surface,
+                statusBarColor: Theme.of(context).colorScheme.surface)
+             : null,
         title: MobileSearch(
             key: MobileApp.searchStateKey, onSearch: (val) => MobileApp.requestStateKey.currentState?.search(val)),
         actions: [

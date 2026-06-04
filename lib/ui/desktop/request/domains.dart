@@ -21,16 +21,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
-import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/transition.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -52,6 +53,8 @@ class DomainList extends StatefulWidget {
   final ListenableList<HttpRequest> list;
   final bool shrinkWrap;
   final Function(List<HttpRequest>)? onRemove;
+  final MultiSelectController selectionController;
+  final RequestSelectionHandlers selectionHandlers;
 
   const DomainList(
       {super.key,
@@ -59,7 +62,9 @@ class DomainList extends StatefulWidget {
       required this.list,
       this.shrinkWrap = true,
       required this.panel,
-      this.onRemove});
+      this.onRemove,
+      required this.selectionController,
+      required this.selectionHandlers});
 
   @override
   State<StatefulWidget> createState() {
@@ -79,10 +84,13 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   bool changing = false; //是否存在刷新任务
   //关键词高亮监听
   late VoidCallback highlightListener;
+  late MultiSelectListener<String> selectionListener;
 
   bool sortDesc = true;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  MultiSelectController get selectionController => widget.selectionController;
 
   void changeState() {
     if (!changing) {
@@ -110,10 +118,19 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
       });
     };
     KeywordHighlights.addListener(highlightListener);
+
+    selectionListener = MultiSelectListener((items) {
+      if (!mounted) {
+        return;
+      }
+      _refreshRequestSelection(items);
+    });
+    selectionController.selectedIds.addListener(selectionListener);
   }
 
   @override
-  dispose() {
+  void dispose() {
+    selectionController.selectedIds.removeListener(selectionListener);
     KeywordHighlights.removeListener(highlightListener);
     super.dispose();
   }
@@ -130,6 +147,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     if (searchModel?.isNotEmpty == true) {
       searchView = searchFilter(searchModel!);
       list = searchView.values;
+      selectionController.prune(list.expand((e) => e.body).map((e) => e.request.requestId).toSet());
     } else {
       searchView.clear();
     }
@@ -161,7 +179,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///高亮处理
-  highlightHandler() {
+  void highlightHandler() {
     //获取所有请求Widget
     List<RequestWidget> requests = containerMap.values.map((e) => e.body).expand((element) => element).toList();
     for (RequestWidget request in requests) {
@@ -171,7 +189,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///添加请求
-  add(Channel channel, HttpRequest request) {
+  void add(Channel channel, HttpRequest request) {
     String? host = request.remoteDomain();
     if (host == null) {
       return;
@@ -208,6 +226,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
           widget.onRemove?.call([req]);
           changeState();
         },
+        selectionController: selectionController,
+        selectionHandlers: widget.selectionHandlers,
       );
       containerMap[host] = domainRequests;
     }
@@ -228,7 +248,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   }
 
   ///移除域名
-  deleteHost(String host) {
+  void deleteHost(String host) {
     DomainRequests? domainRequests = containerMap.remove(host);
     if (domainRequests == null) {
       return;
@@ -258,7 +278,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     }
   }
 
-  remove(List<HttpRequest> list) {
+  void remove(List<HttpRequest> list) {
     for (var request in list) {
       String? host = request.remoteDomain();
       containerMap[host]?._removeRequest(request);
@@ -330,6 +350,37 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
       request.changeState();
     });
   }
+
+  List<HttpRequest> selectedRequests() {
+    final selectedIds = selectionController.selectedIds;
+    if (selectedIds.isEmpty) {
+      return [];
+    }
+    return currentView().where((request) => selectedIds.contains(request.requestId)).toList();
+  }
+
+  void selectRange(HttpRequest request) {
+    final currentIds = currentView().map((item) => item.requestId).toList();
+    if (currentIds.isEmpty) {
+      return;
+    }
+
+    selectionController.selectRange(currentIds, request.requestId);
+  }
+
+  void _refreshRequestSelection(List<String> selectedIds) {
+    var container = containerMap.values;
+    if (searchModel?.isNotEmpty == true) {
+      container = searchView.values;
+    }
+    for (var domain in container) {
+      for (var requestWidget in domain.body) {
+        if (selectedIds.contains(requestWidget.request.requestId)) {
+          requestWidget.changeState();
+        }
+      }
+    }
+  }
 }
 
 ///标题和内容布局 标题是域名 内容是域名下请求
@@ -351,6 +402,8 @@ class DomainRequests extends StatefulWidget {
   final Function(String host)? onDelete;
   final Function(String host)? onExportHar;
   final Function(HttpRequest request)? onRequestRemove;
+  final RequestSelectionHandlers selectionHandlers;
+  final MultiSelectController selectionController;
 
   DomainRequests(this.domain,
       {this.selected = false,
@@ -358,7 +411,9 @@ class DomainRequests extends StatefulWidget {
       this.onExportHar,
       required this.proxyServer,
       this.onRequestRemove,
-      this.trailing})
+      required this.selectionHandlers,
+      this.trailing,
+      required this.selectionController})
       : super(key: GlobalKey<_DomainRequestsState>());
 
   ///添加请求
@@ -366,7 +421,12 @@ class DomainRequests extends StatefulWidget {
     if (requestMap.containsKey(requestId)) return;
 
     var requestWidget = RequestWidget(request,
-        index: body.length, proxyServer: proxyServer, displayDomain: false, remove: (it) => _remove(it));
+        index: body.length,
+        proxyServer: proxyServer,
+        displayDomain: false,
+        multiSelectController: selectionController,
+        selectionHandlers: selectionHandlers,
+        remove: (it) => _remove(it));
     sortDesc ? body.addFirst(requestWidget) : body.addLast(requestWidget);
 
     if (requestId == null) {
@@ -381,19 +441,19 @@ class DomainRequests extends StatefulWidget {
     return requestMap[response.request?.requestId ?? response.requestId];
   }
 
-  setTrailing(Widget? trailing) {
+  void setTrailing(Widget? trailing) {
     var state = key as GlobalKey<_DomainRequestsState>;
     state.currentState?.trailing = trailing;
   }
 
-  _remove(RequestWidget requestWidget) {
+  void _remove(RequestWidget requestWidget) {
     if (body.remove(requestWidget)) {
       onRequestRemove?.call(requestWidget.request);
       changeState();
     }
   }
 
-  _removeRequest(HttpRequest request) {
+  void _removeRequest(HttpRequest request) {
     var requestWidget = requestMap.remove(request.requestId);
     if (requestWidget != null) {
       _remove(requestWidget);
@@ -415,6 +475,8 @@ class DomainRequests extends StatefulWidget {
         onDelete: onDelete,
         onExportHar: onExportHar,
         onRequestRemove: onRequestRemove,
+        selectionController: selectionController,
+        selectionHandlers: selectionHandlers,
         proxyServer: proxyServer);
     if (body != null) {
       headerBody.body.addAll(body);
@@ -427,7 +489,7 @@ class DomainRequests extends StatefulWidget {
     return state.currentState?.selected == true;
   }
 
-  changeState() {
+  void changeState() {
     var state = key as GlobalKey<_DomainRequestsState>;
     state.currentState?.changeState();
   }
@@ -455,7 +517,7 @@ class _DomainRequestsState extends State<DomainRequests> {
     trailing = widget.trailing;
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
@@ -510,7 +572,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   }
 
   //域名右键菜单
-  menu() {
+  void menu() {
     Menu menu = Menu(items: [
       MenuItem(
           label: localizations.copyHost,
@@ -580,7 +642,7 @@ class _DomainRequestsState extends State<DomainRequests> {
     ]);
   }
 
-  _delete() {
+  void _delete() {
     widget.onDelete?.call(widget.domain);
     widget.requestMap.clear();
     widget.body.clear();

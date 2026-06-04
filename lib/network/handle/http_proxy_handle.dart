@@ -5,6 +5,8 @@ import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/components/interceptor.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/components/request_rewrite.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -67,27 +69,38 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   /// 转发请求
   Future<void> forward(ChannelContext channelContext, Channel channel, HttpRequest httpRequest) async {
     // log.d("[${channel.id}] ${httpRequest.method.name} ${httpRequest.requestUrl}");
-    if (channel.error != null) {
-      ProxyHelper.exceptionHandler(channelContext, channel, listener, httpRequest, channel.error);
-      return;
-    }
-
     //获取远程连接
-    Channel remoteChannel;
-    try {
-      remoteChannel = await _getRemoteChannel(channelContext, channel, httpRequest);
-    } catch (error, stackTrace) {
-      log.e("[${channel.id}] 连接异常 ${httpRequest.method.name} ${httpRequest.requestUrl}",
-          error: error, stackTrace: stackTrace);
-      if (httpRequest.method == HttpMethod.connect) {
-        channel.error = error; //记录异常
-        //https代理新建connect连接请求 返回ok 会继续发起正常请求 可以获取到请求内容
-        await channel.write(channelContext,
-            HttpResponse(HttpStatus.ok.reason('Connection established'), protocolVersion: httpRequest.protocolVersion));
-      } else {
-        rethrow;
+    Channel? remoteChannel;
+
+    if (channel.error != null) {
+      final tryRewriteHandler =
+          await _tryHandleRewriteResponseOnConnectFailure(channelContext, channel, httpRequest, channel.error);
+      if (!tryRewriteHandler) {
+        ProxyHelper.exceptionHandler(channelContext, channel, listener, httpRequest, channel.error);
+        return;
       }
-      return;
+    } else {
+      try {
+        remoteChannel = await _getRemoteChannel(channelContext, channel, httpRequest);
+      } catch (error, stackTrace) {
+        log.e("[${channel.id}] 连接异常 ${httpRequest.method.name} ${httpRequest.requestUrl}",
+            error: error, stackTrace: stackTrace);
+        if (httpRequest.method == HttpMethod.connect) {
+          channel.error = error; //记录异常
+          //https代理新建connect连接请求 返回ok 会继续发起正常请求 可以获取到请求内容
+          await channel.write(
+              channelContext,
+              HttpResponse(HttpStatus.ok.reason('Connection established'),
+                  protocolVersion: httpRequest.protocolVersion));
+          return;
+        } else {
+          final tryRewriteHandler =
+              await _tryHandleRewriteResponseOnConnectFailure(channelContext, channel, httpRequest, channel.error);
+          if (!tryRewriteHandler) {
+            rethrow;
+          }
+        }
+      }
     }
 
     //实现抓包代理转发
@@ -95,7 +108,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       // log.d(
       //     "[${channel.id}] streamId:${httpRequest.streamId ?? ''} ${httpRequest.protocolVersion}  ${httpRequest.method.name} ${httpRequest.requestUrl}");
       if (HostFilter.filter(httpRequest.hostAndPort?.host)) {
-        await remoteChannel.write(channelContext, httpRequest);
+        await remoteChannel?.write(channelContext, httpRequest);
         return;
       }
 
@@ -107,7 +120,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
         if (request == null) {
           listener?.onRequest(channel, httpRequest);
           channel.close();
-          remoteChannel.close();
+          remoteChannel?.close();
           return;
         }
       }
@@ -133,14 +146,37 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       }
 
       //http1 直接请求  不需要携带域名
-      if (!remoteChannel.useProxy &&
+      if ((remoteChannel != null && !remoteChannel.useProxy) &&
           request.protocolVersion == HttpMessage.http1Version &&
           request.uri.startsWith(HostAndPort.httpScheme)) {
         final requestUri = request.requestUri!;
         request.uri = "${requestUri.path}${requestUri.hasQuery ? '?${requestUri.query}' : ''}";
       }
-      await remoteChannel.write(channelContext, request);
+      await remoteChannel?.write(channelContext, request);
     }
+  }
+
+  Future<bool> _tryHandleRewriteResponseOnConnectFailure(
+      ChannelContext channelContext, Channel clientChannel, HttpRequest request, dynamic error) async {
+    final manager = await RequestRewriteManager.instance;
+    final rewriteRule = manager.getRewriteRule(request.requestUrl, [RuleType.responseReplace, RuleType.responseUpdate]);
+    if (rewriteRule == null) {
+      return false;
+    }
+
+    final message = error.toString();
+    final body = utf8.encode(message);
+    final response = HttpResponse(HttpStatus.newStatus(502, message), protocolVersion: request.protocolVersion)
+      ..request = request
+      ..body = body
+      ..headers.contentType = 'text/plain'
+      ..headers.contentLength = body.length;
+
+    log.d(
+        "[${clientChannel.id}] tryHandleRewriteResponseOnConnectFailure for ${request.requestUrl} with rule ${rewriteRule.url} error: $error");
+    var proxyHandler = HttpResponseProxyHandler(clientChannel, interceptors, listener: listener);
+    await proxyHandler.channelRead(channelContext, clientChannel, response);
+    return true;
   }
 
   //重定向

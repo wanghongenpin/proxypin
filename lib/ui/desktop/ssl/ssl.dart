@@ -381,16 +381,10 @@ class _SwitchState extends State<_Switch> {
                     changed = true;
                     widget.onEnableChange(val);
                     CertificateManager.cleanCache();
+                    widget.proxyServer.configuration.flushConfig();
                     setState(() {});
                   }))
         ]));
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    if (changed) {
-      widget.proxyServer.configuration.flushConfig();
-    }
-  }
 }

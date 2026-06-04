@@ -75,6 +75,69 @@ class Har {
     return har;
   }
 
+  static Map toHarRequest(HttpRequest request) {
+    return {
+      "startedDateTime": request.requestTime.toUtc().toIso8601String(),
+      "time": -1,
+      "pageref": "ProxyPin",
+      "_id": request.requestId,
+      "_phase": "request",
+      '_app': request.processInfo?.toJson(),
+      "request": {
+        "method": request.method.name,
+        "url": request.requestUrl,
+        "httpVersion": request.protocolVersion,
+        "cookies": [],
+        "headers": _headers(request),
+        "queryString": _getQueryString(request),
+        "postData": _getPostData(request),
+        "headersSize": -1,
+        "bodySize": request.body?.length ?? -1,
+      },
+      "response": null,
+      "cache": {},
+      'timings': {'send': 0, 'wait': -1, 'receive': 0},
+      'serverIPAddress': '',
+    };
+  }
+
+  static Map toHarResponse(HttpRequest request) {
+    return {
+      "startedDateTime": request.requestTime.toUtc().toIso8601String(),
+      "time": request.response?.responseTime.difference(request.requestTime).inMilliseconds ?? -1,
+      "pageref": "ProxyPin",
+      "_id": request.requestId,
+      "_phase": "response",
+      '_app': request.processInfo?.toJson(),
+      "request": {
+        "method": request.method.name,
+        "url": request.requestUrl,
+      },
+      "response": {
+        "status": request.response?.status.code ?? 0,
+        "statusText": request.response?.status.reasonPhrase ?? '',
+        "httpVersion": request.response?.protocolVersion ?? 'HTTP/1.1',
+        "cookies": [],
+        "headers": _headers(request.response),
+        "content": {
+          "size": request.response?.body?.length ?? -1,
+          "mimeType": _getContentType(request.response?.headers.contentType),
+          "text": request.response?.bodyAsString ?? '',
+        },
+        "redirectURL": '',
+        "headersSize": -1,
+        "bodySize": request.response?.body?.length ?? -1,
+      },
+      "cache": {},
+      'timings': {
+        'send': 0,
+        'wait': request.response?.responseTime.difference(request.requestTime).inMilliseconds ?? -1,
+        'receive': 0,
+      },
+      'serverIPAddress': request.response?.remoteHost ?? '',
+    };
+  }
+
   static Future<String> writeJson(List<HttpRequest> list, {String title = ''}) async {
     var entries = _entries(list);
     Map har = {};

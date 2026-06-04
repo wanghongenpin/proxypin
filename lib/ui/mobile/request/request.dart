@@ -29,10 +29,12 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/storage/favorites.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
+import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/ui/mobile/request/repeat.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
@@ -51,14 +53,19 @@ class RequestRow extends StatefulWidget {
   final ProxyServer proxyServer;
   final bool displayDomain;
   final Function(HttpRequest)? onRemove;
+  final MultiSelectController selectionController;
+  final RequestSelectionHandlers selectionHandlers;
 
-  const RequestRow(
-      {super.key,
-      required this.request,
-      required this.proxyServer,
-      this.displayDomain = true,
-      this.onRemove,
-      required this.index});
+  const RequestRow({
+    super.key,
+    required this.request,
+    required this.proxyServer,
+    this.displayDomain = true,
+    this.onRemove,
+    required this.selectionController,
+    required this.index,
+    required this.selectionHandlers,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -135,10 +142,11 @@ class RequestRowState extends State<RequestRow> {
         child: ListTile(
           visualDensity: const VisualDensity(vertical: -4),
           minLeadingWidth: 5,
-          selected: selected,
+          selected: selected ||
+              (widget.selectionController.isSelectionMode && widget.selectionController.contains(request.requestId)),
           textColor: highlightColor,
           selectedColor: highlightColor,
-          leading: appIcon(),
+          leading: rowLeading(),
           title: Text(title.fixAutoLines(),
               overflow: TextOverflow.ellipsis, maxLines: 2, style: const TextStyle(fontSize: 14)),
           subtitle: Text.rich(
@@ -151,6 +159,11 @@ class RequestRowState extends State<RequestRow> {
           contentPadding:
               Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
           onTap: () {
+            if (widget.selectionController.isSelectionMode) {
+              widget.selectionController.toggle(request.requestId);
+              return;
+            }
+
             if (AppConfiguration.current?.autoReadEnabled == true) {
               if (markAutoRead(request.requestId)) {
                 setState(() {});
@@ -166,6 +179,23 @@ class RequestRowState extends State<RequestRow> {
             }));
           },
         ));
+  }
+
+  Widget? rowLeading() {
+    var icon = appIcon();
+    if (!widget.selectionController.isSelectionMode) {
+      return icon;
+    }
+
+    bool isSelected = widget.selectionController.contains(request.requestId);
+    var checkbox = Icon(isSelected ? Icons.check_box_outlined : Icons.check_box_outline_blank_outlined,
+        size: 20, color: isSelected ? Theme.of(context).colorScheme.primary : null);
+
+    if (icon == null) {
+      return checkbox;
+    }
+
+    return Row(mainAxisSize: MainAxisSize.min, children: [checkbox, const SizedBox(width: 6), icon]);
   }
 
   Widget? appIcon() {
@@ -202,6 +232,7 @@ class RequestRowState extends State<RequestRow> {
     var globalPosition = details.globalPosition;
     MediaQueryData mediaQuery = MediaQuery.of(context);
     var position = RelativeRect.fromLTRB(globalPosition.dx, globalPosition.dy, globalPosition.dx, globalPosition.dy);
+    final selectionMode = widget.selectionController.isSelectionMode;
     // Trigger haptic feedback
     if (Platform.isAndroid) HapticFeedback.mediumImpact();
 
@@ -210,145 +241,189 @@ class RequestRowState extends State<RequestRow> {
         constraints: BoxConstraints(maxWidth: mediaQuery.size.width * 0.88),
         position: position,
         items: [
-          //复制url
           PopupMenuContainer(
               child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                    padding: EdgeInsets.only(left: 20, top: 5),
-                    child: Text(localizations.selectAction, style: Theme.of(context).textTheme.bodyLarge)),
-              ),
-              //copy
-              menuItem(
-                left: itemButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: request.requestUrl)).then((value) {
-                        FlutterToastr.show(localizations.copied, getContext());
-                        Navigator.maybePop(getContext());
-                      });
-                    },
-                    label: localizations.copyUrl,
-                    icon: Icons.link,
-                    iconSize: 22),
-                right: itemButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: curlRequest(request))).then((value) {
-                        FlutterToastr.show(localizations.copied, getContext());
-                        Navigator.maybePop(getContext());
-                      });
-                    },
-                    label: localizations.copyCurl,
-                    icon: Icons.code),
-              ),
-              //repeat
-              menuItem(
-                left: itemButton(
-                    onPressed: () {
-                      onRepeat(request);
-                      Navigator.maybePop(getContext());
-                    },
-                    label: localizations.repeat,
-                    icon: Icons.repeat_one),
-                right: itemButton(
-                    onPressed: () => showCustomRepeat(request), label: localizations.customRepeat, icon: Icons.repeat),
-              ),
-              //favorite and edit
-              menuItem(
-                left: itemButton(
-                    onPressed: () {
-                      FavoriteStorage.addFavorite(widget.request);
-                      FlutterToastr.show(localizations.addSuccess, availableContext);
-                      Navigator.maybePop(availableContext);
-                    },
-                    label: localizations.favorite,
-                    icon: Icons.favorite_outline),
-                right: itemButton(
-                    onPressed: () async {
-                      await Navigator.maybePop(availableContext);
+            children: selectionMode
+                ? [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                          padding: EdgeInsets.only(left: 20, top: 5),
+                          child: Text(localizations.selectAction, style: Theme.of(context).textTheme.bodyLarge)),
+                    ),
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () {
+                            widget.selectionHandlers.onExportSelected?.call();
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.export,
+                          icon: Icons.checklist_rtl_outlined),
+                      right: itemButton(
+                          onPressed: () {
+                            widget.selectionHandlers.onRepeatSelected?.call();
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.repeat,
+                          icon: Icons.delete_outline),
+                    ),
+                    SizedBox(height: 1),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      itemButton(
+                          onPressed: () {
+                            widget.selectionHandlers.onDeleteSelected?.call();
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.delete,
+                          icon: Icons.delete_outline),
+                      SizedBox(width: 15),
+                    ]),
+                  ]
+                : [
+                    //复制url
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                          padding: EdgeInsets.only(left: 20, top: 5),
+                          child: Text(localizations.selectAction, style: Theme.of(context).textTheme.bodyLarge)),
+                    ),
+                    //copy
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: request.requestUrl)).then((value) {
+                              FlutterToastr.show(localizations.copied, getContext());
+                              Navigator.maybePop(getContext());
+                            });
+                          },
+                          label: localizations.copyUrl,
+                          icon: Icons.link,
+                          iconSize: 22),
+                      right: itemButton(
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: curlRequest(request))).then((value) {
+                              FlutterToastr.show(localizations.copied, getContext());
+                              Navigator.maybePop(getContext());
+                            });
+                          },
+                          label: localizations.copyCurl,
+                          icon: Icons.code),
+                    ),
+                    //repeat
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () {
+                            onRepeat(request);
+                            Navigator.maybePop(getContext());
+                          },
+                          label: localizations.repeat,
+                          icon: Icons.repeat_one),
+                      right: itemButton(
+                          onPressed: () => showCustomRepeat(request),
+                          label: localizations.customRepeat,
+                          icon: Icons.repeat),
+                    ),
+                    //favorite and edit
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () {
+                            FavoriteStorage.addFavorite(widget.request);
+                            FlutterToastr.show(localizations.addSuccess, availableContext);
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.favorite,
+                          icon: Icons.favorite_outline),
+                      right: itemButton(
+                          onPressed: () async {
+                            await Navigator.maybePop(availableContext);
 
-                      var pageRoute = MaterialPageRoute(
-                          builder: (context) =>
-                              MobileRequestEditor(request: widget.request, proxyServer: widget.proxyServer));
-                      Navigator.push(getContext(), pageRoute);
-                    },
-                    label: localizations.editRequest,
-                    icon: Icons.replay_outlined),
-              ),
-              //script and rewrite
-              menuItem(
-                left: itemButton(
-                    onPressed: () async {
-                      Navigator.maybePop(availableContext);
+                            var pageRoute = MaterialPageRoute(
+                                builder: (context) =>
+                                    MobileRequestEditor(request: widget.request, proxyServer: widget.proxyServer));
+                            Navigator.push(getContext(), pageRoute);
+                          },
+                          label: localizations.editRequest,
+                          icon: Icons.replay_outlined),
+                    ),
+                    //script and rewrite
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () async {
+                            Navigator.maybePop(availableContext);
 
-                      var scriptManager = await ScriptManager.instance;
-                      var url = request.domainPath;
-                      var scriptItem = scriptManager.list.firstWhereOrNull((it) => it.urls.contains(url));
-                      String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
+                            var scriptManager = await ScriptManager.instance;
+                            var url = request.domainPath;
+                            var scriptItem = scriptManager.list.firstWhereOrNull((it) => it.urls.contains(url));
+                            String? script = scriptItem == null ? null : await scriptManager.getScript(scriptItem);
 
-                      var pageRoute = MaterialPageRoute(
-                          builder: (context) => ScriptEdit(
-                            scriptItem: scriptItem,
-                            script: script,
-                            urls: scriptItem?.urls ?? [url],
-                            title: request.hostAndPort?.host));
+                            var pageRoute = MaterialPageRoute(
+                                builder: (context) => ScriptEdit(
+                                    scriptItem: scriptItem,
+                                    script: script,
+                                    urls: scriptItem?.urls ?? [url],
+                                    title: request.hostAndPort?.host));
 
-                      Navigator.push(getContext(), pageRoute);
-                    },
-                    label: localizations.script,
-                    icon: Icons.javascript_outlined),
-                right: itemButton(
-                    onPressed: () async {
-                      Navigator.maybePop(availableContext);
-                      bool isRequest = response == null;
-                      var requestRewrites = await RequestRewriteManager.instance;
+                            Navigator.push(getContext(), pageRoute);
+                          },
+                          label: localizations.script,
+                          icon: Icons.javascript_outlined),
+                      right: itemButton(
+                          onPressed: () async {
+                            Navigator.maybePop(availableContext);
+                            bool isRequest = response == null;
+                            var requestRewrites = await RequestRewriteManager.instance;
 
-                      var ruleType = isRequest ? RuleType.requestReplace : RuleType.responseReplace;
-                      var rule = requestRewrites.getRequestRewriteRule(request, ruleType);
+                            var ruleType = isRequest ? RuleType.requestReplace : RuleType.responseReplace;
+                            var rule = requestRewrites.getRequestRewriteRule(request, ruleType);
 
-                      var rewriteItems = await requestRewrites.getRewriteItems(rule);
+                            var rewriteItems = await requestRewrites.getRewriteItems(rule);
 
-                      var pageRoute = MaterialPageRoute(
-                          builder: (_) => RewriteRule(rule: rule, items: rewriteItems, request: request));
-                      var context = availableContext;
-                      if (context.mounted) Navigator.push(context, pageRoute);
-                    },
-                    label: localizations.requestRewrite,
-                    icon: Icons.edit_outlined),
-              ),
-              menuItem(
-                left: itemButton(
-                    onPressed: () {
-                      highlightColor = Theme.of(availableContext).colorScheme.primary;
-                      Navigator.maybePop(availableContext);
-                    },
-                    label: localizations.highlight,
-                    icon: Icons.highlight_outlined),
-                right: itemButton(
-                    onPressed: () {
-                      AppConfiguration.current?.autoReadEnabled = !AppConfiguration.current!.autoReadEnabled;
-                      highlightColor = Colors.grey;
-                      Navigator.maybePop(availableContext);
-                    },
-                    label: localizations.autoRead,
-                    icon: AppConfiguration.current?.autoReadEnabled == true
-                        ? Icons.check_box_outlined
-                        : Icons.check_box_outline_blank_outlined),
-              ),
-              SizedBox(height: 2),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                itemButton(
-                    onPressed: () {
-                      widget.onRemove?.call(request);
-                      FlutterToastr.show(localizations.deleteSuccess, availableContext);
-                      Navigator.maybePop(availableContext);
-                    },
-                    label: localizations.delete,
-                    icon: Icons.delete_outline),
-                SizedBox(width: 15),
-              ]),
-            ],
+                            var pageRoute = MaterialPageRoute(
+                                builder: (_) => RewriteRule(rule: rule, items: rewriteItems, request: request));
+                            var context = availableContext;
+                            if (context.mounted) Navigator.push(context, pageRoute);
+                          },
+                          label: localizations.requestRewrite,
+                          icon: Icons.edit_outlined),
+                    ),
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () {
+                            highlightColor = Theme.of(availableContext).colorScheme.primary;
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.highlight,
+                          icon: Icons.highlight_outlined),
+                      right: itemButton(
+                          onPressed: () {
+                            AppConfiguration.current?.autoReadEnabled = !AppConfiguration.current!.autoReadEnabled;
+                            highlightColor = Colors.grey;
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.autoRead,
+                          icon: AppConfiguration.current?.autoReadEnabled == true
+                              ? Icons.check_box_outlined
+                              : Icons.check_box_outline_blank_outlined),
+                    ),
+                    SizedBox(height: 1),
+                    menuItem(
+                      left: itemButton(
+                          onPressed: () {
+                            widget.selectionController.toggle(request.requestId);
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.select,
+                          icon: Icons.checklist_rtl_outlined),
+                      right: itemButton(
+                          onPressed: () {
+                            widget.onRemove?.call(request);
+                            FlutterToastr.show(localizations.deleteSuccess, availableContext);
+                            Navigator.maybePop(availableContext);
+                          },
+                          label: localizations.delete,
+                          icon: Icons.delete_outline),
+                    ),
+                  ],
           )),
         ]).then((value) {
       selected = false;

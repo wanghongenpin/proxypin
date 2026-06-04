@@ -128,6 +128,17 @@ class MoreMenu extends StatelessWidget {
               height: 32,
               child: ListTile(
                 dense: true,
+                leading: const Icon(Icons.checklist_rtl_outlined),
+                title: Text(localizations.selectAction),
+                onTap: () async {
+                  await Navigator.maybePop(context);
+                  MobileApp.multiSelectController.toggleSelectionMode();
+                },
+              )),
+          PopupMenuItem(
+              height: 32,
+              child: ListTile(
+                dense: true,
                 leading: const Icon(Icons.sort, size: 16),
                 title: Text(sortDesc ? localizations.timeAsc : localizations.timeDesc),
                 onTap: () async {

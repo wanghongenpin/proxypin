@@ -17,6 +17,34 @@
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'dart:convert';
+
+/// 复制为 fetch 请求
+String copyAsFetch(HttpRequest request) {
+  final headers = request.headers.entries
+      .where((entry) => entry.key.toLowerCase() != 'content-length')
+      .toList();
+
+  final sb = StringBuffer();
+  sb.writeln('fetch(${jsonEncode(request.requestUrl)}, {');
+  sb.writeln('  method: ${jsonEncode(request.method.name.toUpperCase())},');
+
+  if (headers.isNotEmpty) {
+    sb.writeln('  headers: {');
+    for (final entry in headers) {
+      sb.writeln('    ${jsonEncode(entry.key)}: ${jsonEncode(entry.value)},');
+    }
+    sb.writeln('  },');
+  }
+
+  if (request.bodyAsString.isNotEmpty) {
+    sb.writeln('  body: ${jsonEncode(request.bodyAsString)},');
+  }
+
+  sb.writeln('});');
+  return sb.toString();
+}
+
 
 ///复制cURL请求
 String curlRequest(HttpRequest request) {
