@@ -176,10 +176,11 @@ class RequestListState extends State<RequestListWidget> {
     if (await Platforms.isIpad() && context.mounted) {
       box = context.findRenderObject() as RenderBox?;
     }
-    SharePlus.instance.share(ShareParams(
-        files: [file],
-        fileNameOverrides: [fileName],
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size));
+    await Share.shareXFiles(
+      [file],
+      fileNameOverrides: [fileName],
+      sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+    );
   }
 
   void sort(bool sortDesc) {

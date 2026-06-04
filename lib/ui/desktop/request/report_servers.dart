@@ -6,6 +6,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/components/manager/report_server_manager.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../../l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -192,7 +193,7 @@ class _ReportServersPageState extends State<ReportServersPage> {
                                 SizedBox(
                                   width: 150,
                                   child: DropdownButtonFormField<String>(
-                                    initialValue: compression,
+                                    value: compression,
                                     decoration: _inputDecoration(),
                                     isDense: true,
                                     items: [
