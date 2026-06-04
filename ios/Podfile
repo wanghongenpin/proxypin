@@ -53,6 +53,26 @@ post_install do |installer|
         ## dart: PermissionGroup.photos
        # 'PERMISSION_PHOTOS=1',
       ]
+
+      # Fix for AFNetworking private header warnings (netinet6/in6.h)
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     end
+
+    # Specifically fix AFNetworking module
+    if target.name == 'AFNetworking'
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
+  Dir.glob('Pods/**/*.{m,mm}').each do |file|
+    content = File.read(file)
+    if content.include?("#import <netinet6/in6.h>")
+      content.gsub!("#import <netinet6/in6.h>\n", '')
+      File.chmod(0644, file)
+      File.write(file, content)
+      puts "✅ 已修复 #{file} 的 netinet6/in6.h 问题"
+    end
+  end
+
   end
 end
