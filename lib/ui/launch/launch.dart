@@ -250,11 +250,17 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
         return;
       }
 
-      widget.proxyServer.start().then((value) {
+      widget.proxyServer.start().then((value) async {
         setState(() {
           started = true;
         });
         widget.onStart?.call();
+        if (Platforms.isDesktop()) {
+          var appConfig = await AppConfiguration.instance;
+          if (appConfig.wsServerEnabled) {
+            widget.proxyServer.startWsServer(appConfig.wsServerPort);
+          }
+        }
       }).catchError((e) {
         logger.e("启动代理服务器失败", error: e);
         String message = localizations.proxyPortRepeat(widget.proxyServer.port);
