@@ -140,6 +140,17 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.bottomNavigation = value;
                         appConfiguration.flushConfig();
                       })),
+              Divider(height: 0, thickness: 0.3, color: dividerColor),
+              ListTile(
+                  title: Text(localizations.clearConfirm),
+                  subtitle: Text(localizations.clearConfirmSubtitle, style: const TextStyle(fontSize: 12)),
+                  trailing: SwitchWidget(
+                      value: appConfiguration.clearConfirm,
+                      scale: 0.8,
+                      onChanged: (value) {
+                        appConfiguration.clearConfirm = value;
+                        appConfiguration.flushConfig();
+                      })),
             ]),
             const SizedBox(height: 12),
             section([

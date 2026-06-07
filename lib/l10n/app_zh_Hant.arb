@@ -274,6 +274,8 @@
   "bottomNavigationSubtitle": "底部導航欄是否顯示，重新啟動後生效",
   "memoryCleanup": "記憶體清理",
   "memoryCleanupSubtitle": "到記憶體限制自動清理請求，清理後保留最近32條請求",
+  "clearConfirm": "清理抓包記錄前確認",
+  "clearConfirmSubtitle": "開啟後，點擊清理抓包記錄會先彈出確認框",
   "unlimited": "無限制",
   "custom": "自訂",
   "externalProxyAuth": "代理認證 (可選)",

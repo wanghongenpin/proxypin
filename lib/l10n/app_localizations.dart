@@ -1740,6 +1740,18 @@ abstract class AppLocalizations {
   /// **'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning'**
   String get memoryCleanupSubtitle;
 
+  /// No description provided for @clearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm before clearing captured records'**
+  String get clearConfirm;
+
+  /// No description provided for @clearConfirmSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show a confirmation dialog before clearing captured records'**
+  String get clearConfirmSubtitle;
+
   /// No description provided for @unlimited.
   ///
   /// In en, this message translates to:

@@ -94,6 +94,9 @@ class AppConfiguration {
   ///自动已读
   bool autoReadEnabled = true;
 
+  /// 清空抓包前确认
+  bool clearConfirm = false;
+
   //桌面window大小
   Size? windowSize;
 
@@ -213,6 +216,7 @@ class AppConfiguration {
       bottomNavigation = config['bottomNavigation'] ?? true;
       memoryCleanupThreshold = config['memoryCleanupThreshold'];
       autoReadEnabled = config['autoReadEnabled'] ?? true;
+      clearConfirm = config['clearConfirm'] ?? false;
 
       windowSize =
           config['windowSize'] == null ? null : Size(config['windowSize']['width'], config['windowSize']['height']);
@@ -258,6 +262,7 @@ class AppConfiguration {
       "headerExpanded": headerExpanded,
       "headerViewMode": headerViewMode,
       "autoReadEnabled": autoReadEnabled,
+      "clearConfirm": clearConfirm,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,

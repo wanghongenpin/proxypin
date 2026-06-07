@@ -36,6 +36,7 @@ import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -352,8 +353,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
             '5. Added automatic system proxy cleanup when disabling system proxy on Windows;\n'
             '6. Optimized app icon loading and caching in Android app filter list;\n'
             '7. Optimized the request menu with clipboard actions such as Copy as fetch;\n'
-            '8. Added a separated report server mode for reporting service;\n'
-    ;
+            '8. Added a separated report server mode for reporting service;\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
       widget.appConfiguration.upgradeNoticeV28 = false;
@@ -543,6 +543,17 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   const _MobileAppBar(this.appConfiguration, this.proxyServer, {required this.remoteDevice});
 
+  Future<void> _onClear(BuildContext context, AppLocalizations localizations) async {
+    if (!appConfiguration.clearConfirm) {
+      MobileApp.requestStateKey.currentState?.clean();
+      return;
+    }
+
+    showConfirmDialog(context, title: localizations.clearConfirm, onConfirm: () {
+      MobileApp.requestStateKey.currentState?.clean();
+    });
+  }
+
   @override
   Size get preferredSize => const Size.fromHeight(42);
 
@@ -564,7 +575,7 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
           IconButton(
               tooltip: localizations.clear,
               icon: const Icon(Icons.delete_outline),
-              onPressed: () => MobileApp.requestStateKey.currentState?.clean()),
+              onPressed: () => _onClear(context, localizations)),
           const SizedBox(width: 2),
           MoreMenu(proxyServer: proxyServer, remoteDevice: remoteDevice),
           const SizedBox(width: 10),

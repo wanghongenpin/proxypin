@@ -290,6 +290,8 @@
   "bottomNavigationSubtitle": "Bottom navigation bar is displayed, effective after restart",
   "memoryCleanup": "Memory Cleanup",
   "memoryCleanupSubtitle": "Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning",
+  "clearConfirm": "Confirm before clearing captured records",
+  "clearConfirmSubtitle": "Show a confirmation dialog before clearing captured records",
   "unlimited": "Unlimited",
   "custom": "Custom",
 

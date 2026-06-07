@@ -856,6 +856,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning';
 
   @override
+  String get clearConfirm => 'Confirm before clearing captured records';
+
+  @override
+  String get clearConfirmSubtitle => 'Show a confirmation dialog before clearing captured records';
+
+  @override
   String get unlimited => 'Unlimited';
 
   @override

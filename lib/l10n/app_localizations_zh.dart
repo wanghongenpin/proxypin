@@ -846,6 +846,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memoryCleanupSubtitle => '到内存限制自动清理请求，清理后保留最近32条请求';
 
   @override
+  String get clearConfirm => '清理抓包记录前确认';
+
+  @override
+  String get clearConfirmSubtitle => '开启后，点击清理抓包记录会先弹出确认框';
+
+  @override
   String get unlimited => '无限制';
 
   @override
@@ -1938,6 +1944,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get memoryCleanupSubtitle => '到記憶體限制自動清理請求，清理後保留最近32條請求';
+
+  @override
+  String get clearConfirm => '清理抓包記錄前確認';
+
+  @override
+  String get clearConfirmSubtitle => '開啟後，點擊清理抓包記錄會先彈出確認框';
 
   @override
   String get unlimited => '無限制';
