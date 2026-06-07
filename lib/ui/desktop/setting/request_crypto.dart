@@ -83,7 +83,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool isEN = Localizations.localeOf(context).languageCode == 'en';
+    bool isCN = Localizations.localeOf(context).languageCode == 'zh';
     return Scaffold(
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
@@ -96,7 +96,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     SizedBox(
-                        width: isEN ? 310 : 225,
+                        width: !isCN ? 310 : 225,
                         child: ListTile(
                             title: Text("${localizations.enable} ${localizations.requestCrypto}"),
                             trailing: SwitchWidget(

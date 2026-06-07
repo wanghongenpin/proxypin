@@ -232,7 +232,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   List<Widget> rows(List<RequestRewriteRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
     return List.generate(list.length, (index) {
       return InkWell(
           highlightColor: Colors.transparent,
@@ -276,9 +276,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   const SizedBox(width: 20),
                   Expanded(child: Text(list[index].url, style: const TextStyle(fontSize: 13))),
                   const SizedBox(width: 3),
-                  SizedBox(
+                      SizedBox(
                       width: 60,
-                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                      child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
@@ -558,7 +558,7 @@ class _RewriteRuleState extends State<RewriteRule> {
                             child: Text('${localizations.action}:',
                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                         SizedBox(
-                            width: 165,
+                            width: 185,
                             height: 50,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,

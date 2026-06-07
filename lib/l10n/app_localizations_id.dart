@@ -4,48 +4,48 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Indonesian (`id`).
+class AppLocalizationsId extends AppLocalizations {
+  AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
   String get breakpoint => 'Breakpoint';
 
   @override
-  String get breakpointRule => 'Breakpoint Rule';
+  String get breakpointRule => 'Aturan breakpoint';
 
   @override
-  String get name => 'Name';
+  String get name => 'Nama';
 
   @override
-  String get requests => 'Requests';
+  String get requests => 'Tangkap';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'Favorit';
 
   @override
-  String get history => 'History';
+  String get history => 'Riwayat';
 
   @override
-  String get toolbox => 'Toolbox';
+  String get toolbox => 'Peralatan';
 
   @override
-  String get preference => 'Preferences';
+  String get preference => 'Preferensi';
 
   @override
-  String get feedback => 'Feedback';
+  String get feedback => 'Umpan balik';
 
   @override
-  String get about => 'About';
+  String get about => 'Tentang';
 
   @override
-  String get filter => 'Proxy Filter';
+  String get filter => 'Filter proxy';
 
   @override
   String get script => 'Script';
 
   @override
-  String get share => 'Share';
+  String get share => 'Bagikan';
 
   @override
   String get port => 'Port: ';
@@ -54,94 +54,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proxy => 'Proxy';
 
   @override
-  String get externalProxy => 'External Proxy';
+  String get externalProxy => 'Proxy eksternal';
 
   @override
-  String get username => 'Username';
+  String get username => 'Nama pengguna';
 
   @override
-  String get password => 'Password';
+  String get password => 'Kata sandi';
 
   @override
   String get proxySetting => 'Proxy Setting';
 
   @override
-  String get setAs => 'Set as ';
+  String get setAs => 'Tetapkan sebagai ';
 
   @override
-  String get systemProxy => 'System Proxy';
+  String get systemProxy => 'Proxy sistem';
 
   @override
-  String get enabledHTTP2 => 'Enable HTTP2';
+  String get enabledHTTP2 => 'Aktifkan HTTP/2';
 
   @override
-  String get serverNotStart => 'Proxy server not started';
+  String get serverNotStart => 'Server proxy belum dimulai';
 
   @override
-  String get download => 'Download';
+  String get download => 'Unduh';
 
   @override
-  String get config => 'Configuration';
+  String get config => 'Konfigurasi';
 
   @override
   String get version => 'Version';
 
   @override
-  String get start => 'Start';
+  String get start => 'Mulai';
 
   @override
-  String get stop => 'Stop';
+  String get stop => 'Berhenti';
 
   @override
-  String get clear => 'Clear';
+  String get clear => 'Bersihkan';
 
   @override
-  String get httpsProxy => 'HTTPS Proxy';
+  String get httpsProxy => 'Proxy HTTPS';
 
   @override
-  String get setting => 'Settings';
+  String get setting => 'Pengaturan';
 
   @override
-  String get mobileConnect => 'Mobile Connect';
+  String get mobileConnect => 'Koneksi seluler';
 
   @override
-  String get connectRemote => 'Connect Remote';
+  String get connectRemote => 'Hubungkan jarak jauh';
 
   @override
-  String get remoteDevice => 'Remote Device';
+  String get remoteDevice => 'Perangkat jarak jauh';
 
   @override
-  String get remoteDeviceList => 'Remote Device List';
+  String get remoteDeviceList => 'Daftar perangkat jarak jauh';
 
   @override
-  String get myQRCode => 'My QR Code';
+  String get myQRCode => 'QR saya';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Tema';
 
   @override
-  String get followSystem => 'Follow System';
+  String get followSystem => 'Ikuti sistem';
 
   @override
-  String get themeColor => 'Theme Color';
+  String get themeColor => 'Warna tema';
 
   @override
-  String get themeLight => 'Light';
+  String get themeLight => 'Terang';
 
   @override
-  String get themeDark => 'Dark';
+  String get themeDark => 'Gelap';
 
   @override
-  String get language => 'Language';
+  String get language => 'Bahasa';
 
   @override
-  String get autoStartup => 'Auto Start Recording Traffic';
+  String get autoStartup => 'Mulai tangkap otomatis';
 
   @override
-  String get autoStartupDescribe => 'Automatically start recording traffic when the program starts';
+  String get autoStartupDescribe => 'Memulai penangkapan saat membuka aplikasi';
 
   @override
-  String get minimizeToTrayTitle => 'Minimize to tray on close';
+  String get minimizeToTrayTitle => 'Minimalkan ke tray saat menutup';
 
   @override
   String get minimizeToTraySubtitle => 'Closing the window will keep ProxyPin running and hide it to the system tray.';
@@ -160,16 +160,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copied => 'Copied to clipboard';
 
   @override
-  String get execute => 'Execute';
+  String get execute => 'Jalankan';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Batal';
 
   @override
-  String get close => 'Close';
+  String get close => 'Tutup';
 
   @override
-  String get save => 'Save';
+  String get save => 'Simpan';
 
   @override
   String get confirm => 'Confirm';
@@ -184,121 +184,121 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addSuccess => 'Successfully added';
 
   @override
-  String get saveSuccess => 'Saved successfully';
+  String get saveSuccess => 'Berhasil disimpan';
 
   @override
-  String get operationSuccess => 'Operation succeeded';
+  String get operationSuccess => 'Operasi berhasil';
 
   @override
-  String get import => 'Import';
+  String get import => 'Impor';
 
   @override
-  String get importSuccess => 'Import successful';
+  String get importSuccess => 'Berhasil impor';
 
   @override
-  String get importFailed => 'Import failed';
+  String get importFailed => 'Gagal impor';
 
   @override
-  String get export => 'Export';
+  String get export => 'Ekspor';
 
   @override
-  String get exportSuccess => 'Export successful';
+  String get exportSuccess => 'Berhasil ekspor';
 
   @override
-  String get exportFailed => 'Export failed';
+  String get exportFailed => 'Gagal ekspor';
 
   @override
-  String get deleteSuccess => 'Delete successful';
+  String get deleteSuccess => 'Berhasil dihapus';
 
   @override
   String get send => 'Send';
 
   @override
-  String get fail => 'fail';
+  String get fail => 'gagal';
 
   @override
   String get success => 'success';
 
   @override
-  String get emptyData => 'Empty Data';
+  String get emptyData => 'Tidak ada data';
 
   @override
   String get requestSuccess => 'Request successful';
 
   @override
-  String get add => 'Add';
+  String get add => 'Tambah';
 
   @override
   String get all => 'All';
 
   @override
-  String get modify => 'Modify';
+  String get modify => 'Ubah';
 
   @override
   String get responseType => 'Response Type';
 
   @override
-  String get request => 'Request';
+  String get request => 'Permintaan';
 
   @override
-  String get response => 'Response';
+  String get response => 'Respons';
 
   @override
-  String get statusCode => 'Status code';
+  String get statusCode => 'Kode status';
 
   @override
   String get duration => 'Duration';
 
   @override
-  String get done => 'Done';
+  String get done => 'Selesai';
 
   @override
-  String get type => 'Type';
+  String get type => 'Tipe';
 
   @override
-  String get enable => 'Enable';
+  String get enable => 'Aktifkan';
 
   @override
-  String get example => 'Example: ';
+  String get example => 'Contoh: ';
 
   @override
-  String get responseHeader => 'Headers';
+  String get responseHeader => 'Header respons';
 
   @override
-  String get requestHeader => 'Headers';
+  String get requestHeader => 'Header permintaan';
 
   @override
-  String get requestLine => 'Request Line';
+  String get requestLine => 'Baris permintaan';
 
   @override
-  String get requestMethod => 'Request Method';
+  String get requestMethod => 'Metode permintaan';
 
   @override
-  String get param => 'Param';
+  String get param => 'Parameter';
 
   @override
-  String get replaceBodyWith => 'Replace Body With:';
+  String get replaceBodyWith => 'Ganti body dengan:';
 
   @override
-  String get redirectTo => 'Redirect To:';
+  String get redirectTo => 'Alihkan ke:';
 
   @override
-  String get redirect => 'Redirect';
+  String get redirect => 'Alihkan';
 
   @override
   String get cannotBeEmpty => 'Cannot be empty';
 
   @override
-  String get requestRewriteList => 'Request Rewrite List';
+  String get requestRewriteList => 'Daftar penulisan ulang';
 
   @override
-  String get requestRewriteRule => 'Request Rewrite Rule';
+  String get requestRewriteRule => 'Aturan penulisan ulang';
 
   @override
-  String get requestRewriteEnable => 'Enable Request Rewrite';
+  String get requestRewriteEnable => 'Aktifkan penulisan ulang';
 
   @override
-  String get action => 'Action';
+  String get action => 'Aksi';
 
   @override
   String get multiple => 'Multiple';
@@ -307,18 +307,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get edit => 'Edit';
 
   @override
-  String get disabled => 'Disabled';
+  String get disabled => 'Dinonaktifkan';
 
   @override
   String requestRewriteDeleteConfirm(Object size) {
-    return 'Delete $size rule(s)?';
+    return 'Hapus $size aturan?';
   }
 
   @override
-  String get useGuide => 'Use Guide';
+  String get useGuide => 'Panduan penggunaan';
 
   @override
-  String get pleaseEnter => 'Please Enter';
+  String get pleaseEnter => 'Silakan masukkan';
 
   @override
   String get click => 'Click';
@@ -327,46 +327,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadRemoteScript => 'load remote script';
 
   @override
-  String get replace => 'Replace';
+  String get replace => 'Ganti';
 
   @override
   String get clickEdit => 'Click Edit';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'Muat ulang';
 
   @override
-  String get selectFile => 'Select file';
+  String get selectFile => 'Pilih berkas';
 
   @override
-  String get match => 'Match';
+  String get match => 'Cocok';
 
   @override
-  String get value => 'Value';
+  String get value => 'Nilai';
 
   @override
-  String get matchRule => 'Match Rule';
+  String get matchRule => 'Aturan kecocokan';
 
   @override
-  String get emptyMatchAll => 'Empty means match all';
+  String get emptyMatchAll => 'Kosong berarti cocok semua';
 
   @override
-  String get newBuilt => 'New';
+  String get newBuilt => 'Baru';
 
   @override
-  String get reportServers => 'Report Servers';
+  String get reportServers => 'Server laporan';
 
   @override
-  String get addReportServer => 'Add Report Server';
+  String get addReportServer => 'Tambah server laporan';
 
   @override
-  String get editReportServer => 'Edit Report Server';
+  String get editReportServer => 'Edit server laporan';
 
   @override
-  String get splitReport => 'Split Report';
+  String get splitReport => 'Pisah laporan';
 
   @override
-  String get serverUrl => 'Server URL';
+  String get serverUrl => 'URL server';
 
   @override
   String get compression => 'Compression';
@@ -375,25 +375,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get compressionNone => 'None';
 
   @override
-  String get newFolder => 'New Folder';
+  String get newFolder => 'Folder baru';
 
   @override
-  String get enableSelect => 'Enable Select';
+  String get enableSelect => 'Aktifkan pilih';
 
   @override
-  String get disableSelect => 'Disable Select';
+  String get disableSelect => 'Nonaktifkan pilih';
 
   @override
-  String get deleteSelect => 'Delete Select';
+  String get deleteSelect => 'Hapus pilihan';
 
   @override
   String get testData => 'Test Data';
 
   @override
-  String get noChangesDetected => 'No changes detected';
+  String get noChangesDetected => 'Tidak ada perubahan terdeteksi';
 
   @override
-  String get enterMatchData => 'Enter the data to be matched';
+  String get enterMatchData => 'Masukkan data untuk dicocokkan';
 
   @override
   String get modifyRequestHeader => 'Modify Header';
@@ -411,29 +411,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sequence => 'All Requests';
 
   @override
-  String get domainList => 'Domain List';
+  String get domainList => 'Daftar domain';
 
   @override
-  String get domainWhitelist => 'Proxy Domain Whitelist';
+  String get domainWhitelist => 'Daftar putih domain';
 
   @override
-  String get domainBlacklist => 'Proxy Domain Blacklist';
+  String get domainBlacklist => 'Daftar hitam domain';
 
   @override
-  String get domainFilter => 'Proxy Domain List';
+  String get domainFilter => 'Filter domain';
 
   @override
-  String get appWhitelist => 'App Whitelist';
+  String get appWhitelist => 'Daftar putih aplikasi';
 
   @override
   String get appWhitelistDescribe =>
       'Only proxy Apps on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
 
   @override
-  String get appBlacklist => 'App Blacklist';
+  String get appBlacklist => 'Daftar hitam aplikasi';
 
   @override
-  String get scanCode => 'Scan Code Connect';
+  String get scanCode => 'Pindai kode';
 
   @override
   String get addBlacklist => 'Add Proxy Blacklist';
@@ -446,98 +446,98 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String domainListSubtitle(Object count, Object time) {
-    return 'Last Request Time: $time,  Count: $count';
+    return 'Permintaan terakhir: $time, jumlah: $count';
   }
 
   @override
-  String get selectAction => 'Select action';
+  String get selectAction => 'Pilih aksi';
 
   @override
-  String get select => 'Select';
+  String get select => 'Pilih';
 
   @override
-  String get copy => 'Copy';
+  String get copy => 'Salin';
 
   @override
-  String get copyHost => 'Copy Host';
+  String get copyHost => 'Salin host';
 
   @override
-  String get copyUrl => 'Copy URL';
+  String get copyUrl => 'Salin URL';
 
   @override
-  String get copyRawRequest => 'Copy Raw Request';
+  String get copyRawRequest => 'Salin permintaan mentah';
 
   @override
-  String get copyRequestResponse => 'Copy Request and Response';
+  String get copyRequestResponse => 'Salin permintaan dan respons';
 
   @override
-  String get copyCurl => 'Copy cURL';
+  String get copyCurl => 'Salin cURL';
 
   @override
-  String get copyAsPythonRequests => 'Copy as Python Requests';
+  String get copyAsPythonRequests => 'Salin sebagai Python Requests';
 
   @override
-  String get copyAsFetch => 'Copy as fetch';
+  String get copyAsFetch => 'Salin sebagai fetch';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Hapus';
 
   @override
-  String get rename => 'Rename';
+  String get rename => 'Ganti nama';
 
   @override
-  String get repeat => 'Repeat';
+  String get repeat => 'Ulang';
 
   @override
-  String get repeatAllRequests => 'Repeat All Requests';
+  String get repeatAllRequests => 'Ulangi semua permintaan';
 
   @override
-  String get repeatDomainRequests => 'Repeat Domain Requests';
+  String get repeatDomainRequests => 'Ulangi permintaan domain';
 
   @override
-  String get customRepeat => 'Custom Repeat';
+  String get customRepeat => 'Ulang kustom';
 
   @override
-  String get repeatCount => 'Iterations';
+  String get repeatCount => 'Hitungan';
 
   @override
   String get repeatInterval => 'Interval(ms)';
 
   @override
-  String get repeatDelay => 'Delay(ms)';
+  String get repeatDelay => 'Tunda(ms)';
 
   @override
   String get scheduleTime => 'Schedule Time';
 
   @override
-  String get fixed => 'fixed';
+  String get fixed => 'Tetap';
 
   @override
-  String get random => 'random';
+  String get random => 'Acak';
 
   @override
-  String get keepCustomSettings => 'Keep custom settings';
+  String get keepCustomSettings => 'Pertahankan pengaturan kustom';
 
   @override
-  String get editRequest => 'Edit and Request';
+  String get editRequest => 'Edit dan kirim';
 
   @override
-  String get reSendRequest => 'The request has been resent';
+  String get reSendRequest => 'Permintaan dikirim ulang';
 
   @override
-  String get viewExport => 'View Export';
+  String get viewExport => 'Lihat ekspor';
 
   @override
-  String get exportDomainHar => 'Export This Domain HAR';
+  String get exportDomainHar => 'Ekspor HAR domain ini';
 
   @override
-  String get timeDesc => 'Descending by time';
+  String get timeDesc => 'Menurun berdasarkan waktu';
 
   @override
-  String get timeAsc => 'Ascending by time';
+  String get timeAsc => 'Menaik berdasarkan waktu';
 
   @override
-  String get search => 'Search';
+  String get search => 'Cari';
 
   @override
   String get clearSearch => 'Clear Search';
@@ -546,7 +546,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestType => 'Request type';
 
   @override
-  String get keyword => 'Keyword';
+  String get keyword => 'Kata kunci';
 
   @override
   String get keywordSearchScope => 'Keyword search scope: ';
@@ -555,16 +555,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get favorite => 'Favorite';
 
   @override
-  String get deleteFavorite => 'Delete Favorite';
+  String get deleteFavorite => 'Hapus favorit';
 
   @override
-  String get emptyFavorite => 'Empty Favorite';
+  String get emptyFavorite => 'Favorit kosong';
 
   @override
-  String get deleteFavoriteSuccess => 'Favorite deleted';
+  String get deleteFavoriteSuccess => 'Favorit dihapus';
 
   @override
-  String get historyRecord => 'History';
+  String get historyRecord => 'Riwayat';
 
   @override
   String get historyCacheTime => 'Cache Time';
@@ -582,52 +582,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String historyRecordTitle(Object length, Object name) {
-    return '$name Records $length';
+    return '$name - $length catatan';
   }
 
   @override
-  String get historyEmptyName => 'Name cannot be empty';
+  String get historyEmptyName => 'Nama tidak boleh kosong';
 
   @override
   String historySubtitle(Object requestLength, Object size) {
-    return 'Records $requestLength  file $size';
+    return 'Catatan $requestLength  file $size';
   }
 
   @override
-  String get historyUnSave => 'Current record is not saved';
+  String get historyUnSave => 'Catatan saat ini belum disimpan';
 
   @override
   String get historyDeleteConfirm => 'Do you want to delete this history?';
 
   @override
-  String get requestEdit => 'Request Editing';
+  String get requestEdit => 'Edit dan kirim';
 
   @override
   String get encode => 'Encode';
 
   @override
-  String get requestBody => 'Request Body';
+  String get requestBody => 'Body permintaan';
 
   @override
-  String get responseBody => 'Response Body';
+  String get responseBody => 'Body respons';
 
   @override
-  String get requestRewrite => 'Request Rewrite';
+  String get requestRewrite => 'Penulisan ulang permintaan';
 
   @override
   String get newWindow => 'New Window';
 
   @override
-  String get httpRequest => 'HTTP Request';
+  String get httpRequest => 'Permintaan HTTP';
 
   @override
-  String get enabledHttps => 'Enable HTTPS Proxy';
+  String get enabledHttps => 'Aktifkan proxy HTTPS';
 
   @override
-  String get installRootCa => 'Install Certificate';
+  String get installRootCa => 'Pasang sertifikat';
 
   @override
-  String get installCaLocal => 'Install Certificate to Local-Machine';
+  String get installCaLocal => 'Pasang sertifikat di komputer';
 
   @override
   String get downloadRootCa => 'Download Certificate';
@@ -637,45 +637,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'Note: If you set the default browser to other than Safari, click this line to copy and paste the link to Safari browser';
 
   @override
-  String get generateCA => 'Generate new root certificate';
+  String get generateCA => 'Buat sertifikat root baru';
 
   @override
-  String get generateCADescribe =>
-      'Are you sure you want to generate a new root certificate? If confirmed,\nYou need to reinstall and trust the new certificate';
+  String get generateCADescribe => 'Yakin ingin membuat sertifikat root baru?';
 
   @override
-  String get resetDefaultCA => 'Reset Default Root Certificate';
+  String get resetDefaultCA => 'Reset sertifikat root default';
 
   @override
-  String get resetDefaultCADescribe =>
-      'Are you sure you want to reset to the default root certificate?\nProxyPin default root certificate is the same for all users.';
+  String get resetDefaultCADescribe => 'Yakin ingin mereset sertifikat root default?';
 
   @override
-  String get exportCaP12 => 'Export Root Certificate(.p12)';
+  String get exportCaP12 => 'Ekspor sertifikat root (.p12)';
 
   @override
-  String get importCaP12 => 'Import Root Certificate(.p12)';
+  String get importCaP12 => 'Impor sertifikat root (.p12)';
 
   @override
-  String get trustCa => 'Trust Certificate';
+  String get trustCa => 'Percayai sertifikat';
 
   @override
   String get profileDownload => 'Profile Download';
 
   @override
-  String get exportCA => 'Export Root Certificate';
+  String get exportCA => 'Ekspor sertifikat root';
 
   @override
-  String get exportPrivateKey => 'Export Private Key';
+  String get exportPrivateKey => 'Ekspor kunci privat';
 
   @override
-  String get install => 'Install';
+  String get install => 'Instal';
 
   @override
-  String get installCaDescribe => 'Install CA Setting > Profile Download > Install';
+  String get installCaDescribe => 'Pasang sertifikat';
 
   @override
-  String get trustCaDescribe => 'Trust CA Setting > General > About > Certificate Trust Setting';
+  String get trustCaDescribe => 'Percayai sertifikat di pengaturan sistem';
 
   @override
   String get androidRoot => 'System Certificate (ROOT Device)';
@@ -719,10 +717,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get caIosBrowser => 'Open Safari on iOS devices：';
 
   @override
-  String get localIP => 'Local IP ';
+  String get localIP => 'IP lokal';
 
   @override
-  String get mobileScan => 'Configure Wi-Fi proxy or Scan with Mobile App';
+  String get mobileScan => 'Konfigurasi proxy Wi‑Fi atau pindai dengan aplikasi';
 
   @override
   String get decode => 'Decode';
@@ -752,7 +750,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captureDetail => 'Capture Detail';
 
   @override
-  String get proxyPinSoftware => 'ProxyPin Open source traffic capture software for all platforms';
+  String get proxyPinSoftware => 'Perangkat lunak penangkapan lalu lintas open-source ProxyPin';
 
   @override
   String get prompt => 'Prompt';
@@ -761,10 +759,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get curlSchemeRequest => 'If the curl format is recognized, should it be converted into an HTTP request?';
 
   @override
-  String get appExitTips => 'Press again to exit the program';
+  String get appExitTips => 'Tekan lagi untuk keluar';
 
   @override
-  String get remoteConnectDisconnect => 'Check remote connection failed, disconnected';
+  String get remoteConnectDisconnect => 'Kesalahan memeriksa koneksi jarak jauh, terputus';
 
   @override
   String get connect => 'Connect';
@@ -778,110 +776,107 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get remoteConnectForward => 'Remote connection, forwarding requests to other terminals';
+  String get remoteConnectForward => 'Koneksi jarak jauh, meneruskan permintaan ke perangkat lain';
 
   @override
-  String get connectSuccess => 'Connect successful';
+  String get connectSuccess => 'Koneksi berhasil';
 
   @override
   String get connectedRemote => 'Connected to remote';
 
   @override
-  String get connected => 'Connected';
+  String get connected => 'Tersambung';
 
   @override
-  String get notConnected => 'Not connected';
+  String get notConnected => 'Tidak tersambung';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Putuskan koneksi';
 
   @override
-  String get ipLayerProxy => 'IP Layer Proxy(Beta)';
+  String get ipLayerProxy => 'Proxy lapisan IP (Beta)';
 
   @override
-  String get ipLayerProxyDesc =>
-      'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR';
+  String get ipLayerProxyDesc => 'Dapat menangkap permintaan aplikasi Flutter; stabilitas terbatas.';
 
   @override
   String get inputAddress => 'Input Address';
 
   @override
-  String get syncConfig => 'Sync configuration';
+  String get syncConfig => 'Sinkronkan konfigurasi';
 
   @override
-  String get pullConfigFail => 'Failed to pull configuration, please check the network connection';
+  String get pullConfigFail => 'Gagal mengambil konfigurasi, periksa koneksi';
 
   @override
-  String get sync => 'Sync';
+  String get sync => 'Sinkron';
 
   @override
-  String get invalidQRCode => 'Unrecognized QR code';
+  String get invalidQRCode => 'Kode QR tidak valid';
 
   @override
-  String get remoteConnectFail =>
-      'Connection failed，Please check if it is allowed on the same LAN and firewall, iOS needs to enable local network permissions';
+  String get remoteConnectFail => 'Koneksi gagal';
 
   @override
-  String get remoteConnectSuccessTips => 'Your phone needs to enable packet capture in order to capture requests';
+  String get remoteConnectSuccessTips => 'Ponsel harus mengaktifkan penangkapan untuk menangkap permintaan';
 
   @override
-  String get windowMode => 'Window Mode';
+  String get windowMode => 'Mode jendela';
 
   @override
   String get windowModeSubTitle => 'Enabled Packet Capture, Enter the background, Display a small window';
 
   @override
-  String get pipIcon => 'Window shortcut icon';
+  String get pipIcon => 'Ikon jendela';
 
   @override
-  String get pipIconDescribe => 'Show quick access to small window Icon';
+  String get pipIconDescribe => 'Tampilkan ikon akses cepat ke jendela kecil';
 
   @override
-  String get headerExpanded => 'Headers Expanded';
+  String get headerExpanded => 'Header diperluas';
 
   @override
-  String get headerExpandedSubtitle => 'Details page Headers is expanded by default';
+  String get headerExpandedSubtitle => 'Perluas Headers secara default';
 
   @override
-  String get bottomNavigation => 'Bottom Navigation';
+  String get bottomNavigation => 'Navigasi bawah';
 
   @override
-  String get bottomNavigationSubtitle => 'Bottom navigation bar is displayed, effective after restart';
+  String get bottomNavigationSubtitle => 'Tampilkan bar bawah; berlaku setelah restart';
 
   @override
-  String get memoryCleanup => 'Memory Cleanup';
+  String get memoryCleanup => 'Pembersihan memori';
 
   @override
-  String get memoryCleanupSubtitle =>
-      'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning';
+  String get memoryCleanupSubtitle => 'Bersihkan permintaan secara otomatis saat batas memori tercapai';
 
   @override
-  String get clearConfirm => 'Confirm before clearing captured records';
+  String get clearConfirm => 'Konfirmasi sebelum membersihkan';
 
   @override
-  String get clearConfirmSubtitle => 'Show a confirmation dialog before clearing captured records';
+  String get clearConfirmSubtitle => 'Tampilkan konfirmasi sebelum membersihkan tangkapan';
 
   @override
-  String get unlimited => 'Unlimited';
+  String get unlimited => 'Tak terbatas';
 
   @override
-  String get custom => 'Custom';
+  String get custom => 'Kustom';
 
   @override
-  String get externalProxyAuth => 'Proxy Auth (Optional)';
+  String get externalProxyAuth => 'Autentikasi proxy (opsional)';
 
   @override
-  String get externalProxyServer => 'Proxy Server';
+  String get externalProxyServer => 'Server proxy';
 
   @override
-  String get externalProxyConnectFailure => 'External Proxy Connect failure';
+  String get externalProxyConnectFailure => 'Gagal terhubung ke proxy eksternal';
 
   @override
   String get externalProxyFailureConfirm =>
-      'Access to all http will fail due to network connectivity issues，Do you want to continue setting up external proxies。';
+      'Masalah jaringan akan menyebabkan akses gagal. Lanjutkan dengan proxy eksternal?';
 
   @override
-  String get mobileDisplayPacketCapture => 'Mobile Display Packet Capture:';
+  String get mobileDisplayPacketCapture => 'Tampilkan tangkapan di mobile:';
 
   @override
   String proxyPortRepeat(Object port) {
@@ -889,38 +884,38 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get reset => 'Reset';
+  String get reset => 'Atur ulang';
 
   @override
-  String get proxyIgnoreDomain => 'Proxy ignores domain';
+  String get proxyIgnoreDomain => 'Proxy mengabaikan domain';
 
   @override
   String get domainWhitelistDescribe =>
-      'Only proxy domain names on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
+      'Hanya domain pada daftar putih yang akan diproksikan. Jika diaktifkan, daftar hitam tidak berlaku.';
 
   @override
-  String get domainBlacklistDescribe => 'Domain names on the blacklist will not be proxied';
+  String get domainBlacklistDescribe => 'Domain pada daftar hitam tidak akan diproksikan';
 
   @override
-  String get domain => 'Host';
+  String get domain => 'Domain';
 
   @override
-  String get enableScript => 'Enable Script';
+  String get enableScript => 'Aktifkan script';
 
   @override
-  String get scriptUseDescribe => 'Use JavaScript to modify requests and responses';
+  String get scriptUseDescribe => 'Gunakan JavaScript untuk mengubah permintaan dan respons';
 
   @override
   String get scriptEdit => 'Edit script';
 
   @override
-  String get scrollEnd => 'Scroll to End';
+  String get scrollEnd => 'Lompat ke akhir';
 
   @override
-  String get logger => 'Log';
+  String get logger => 'Logger';
 
   @override
-  String get material3 => 'Material 3 is the latest version of Google’s open-source design system';
+  String get material3 => 'Material 3';
 
   @override
   String get iosVpnBackgroundAudio =>
@@ -939,25 +934,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blue => 'Blue';
 
   @override
-  String get green => 'Green';
+  String get green => 'Hijau';
 
   @override
-  String get yellow => 'Yellow';
+  String get yellow => 'Kuning';
 
   @override
-  String get red => 'Red';
+  String get red => 'Merah';
 
   @override
   String get pink => 'Pink';
 
   @override
-  String get gray => 'Gray';
+  String get gray => 'Abu-abu';
 
   @override
   String get underline => 'Underline';
 
   @override
-  String get requestBlock => 'Request Block';
+  String get requestBlock => 'Blokir permintaan';
 
   @override
   String get other => 'Other';
@@ -969,7 +964,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get regExp => 'RegExp';
 
   @override
-  String get systemCertName => 'System Certificate Name';
+  String get systemCertName => 'Nama sertifikat sistem';
 
   @override
   String get qrCode => 'QR Code';
@@ -1002,7 +997,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get convert => 'Convert';
 
   @override
-  String get time => 'DateTime';
+  String get time => 'Waktu';
 
   @override
   String get nowTimestamp => 'Now timestamp';
@@ -1023,7 +1018,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cipher => 'Cipher';
 
   @override
-  String get appUpdateCheckVersion => 'Check for Updates';
+  String get appUpdateCheckVersion => 'Periksa pembaruan';
 
   @override
   String get appUpdateNotAvailableMsg => 'Already Using The Latest Version';
@@ -1047,13 +1042,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appUpdateLaterBtnTxt => 'Later';
 
   @override
-  String get appUpdateIgnoreBtnTxt => 'Ignore';
+  String get appUpdateIgnoreBtnTxt => 'Abaikan';
 
   @override
-  String get requestMap => 'Request Map';
+  String get requestMap => 'Peta permintaan';
 
   @override
-  String get requestMapDescribe => 'Do not request remote services, use local configuration or script for response';
+  String get requestMapDescribe =>
+      'Tidak meminta layanan jarak jauh; gunakan konfigurasi atau script lokal untuk menjawab';
 
   @override
   String get automatic => 'Automatic';
@@ -1065,30 +1061,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get certNotInstalled => 'Certificate not installed';
 
   @override
-  String get openNewWindow => 'Open New Window';
+  String get openNewWindow => 'Buka jendela baru';
 
   @override
-  String get sponsorDonate => 'Sponsor / Donate';
+  String get sponsorDonate => 'Sponsor / Donasi';
 
   @override
-  String get sponsorSupport => 'Support ongoing development';
+  String get sponsorSupport => 'Dukung pengembangan berkelanjutan';
 
   @override
-  String get sponsorThanks =>
-      'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
+  String get sponsorThanks => 'Terima kasih telah mendukung proyek open-source ini.';
 
   @override
   String get sponsorAfdian => 'AFDIAN';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Kebijakan privasi';
 
   @override
   String get privacyContent =>
       'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.';
 
   @override
-  String get requestCrypto => 'Request Crypto';
+  String get requestCrypto => 'Kripto permintaan';
 
   @override
   String get cryptoDecoded => 'Decoded';
@@ -1109,11 +1104,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cryptoIvPrefixTooltip => 'Use the first N bytes of the response body as IV';
 
   @override
-  String get local => 'Local';
+  String get local => 'Lokal';
 
   @override
-  String get remoteUrl => 'Remote URL';
+  String get remoteUrl => 'URL jarak jauh';
 
   @override
-  String get view => 'View';
+  String get view => 'Lihat';
 }

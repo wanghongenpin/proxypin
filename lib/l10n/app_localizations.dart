@@ -1,12 +1,16 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
-import 'app_localizations_en.dart';
-import 'app_localizations_zh.dart';
+import 'app_localizations_en.dart' deferred as app_localizations_en;
+import 'app_localizations_es.dart' deferred as app_localizations_es;
+import 'app_localizations_id.dart' deferred as app_localizations_id;
+import 'app_localizations_pt.dart' deferred as app_localizations_pt;
+import 'app_localizations_th.dart' deferred as app_localizations_th;
+import 'app_localizations_vi.dart' deferred as app_localizations_vi;
+import 'app_localizations_zh.dart' deferred as app_localizations_zh;
 
 // ignore_for_file: type=lint
 
@@ -92,6 +96,12 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('es'),
+    Locale('id'),
+    Locale('pt'),
+    Locale('pt', 'BR'),
+    Locale('th'),
+    Locale('vi'),
     Locale('zh'),
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant')
   ];
@@ -2178,12 +2188,6 @@ abstract class AppLocalizations {
   /// **'AFDIAN'**
   String get sponsorAfdian;
 
-  /// No description provided for @sponsorBuyMeCoffee.
-  ///
-  /// In en, this message translates to:
-  /// **'Buy Me a Coffee'**
-  String get sponsorBuyMeCoffee;
-
   /// No description provided for @privacyPolicy.
   ///
   /// In en, this message translates to:
@@ -2262,24 +2266,38 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
 
   @override
   Future<AppLocalizations> load(Locale locale) {
-    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+    return lookupAppLocalizations(locale);
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'es', 'id', 'pt', 'th', 'vi', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
-AppLocalizations lookupAppLocalizations(Locale locale) {
+Future<AppLocalizations> lookupAppLocalizations(Locale locale) {
   // Lookup logic when language+script codes are specified.
   switch (locale.languageCode) {
     case 'zh':
       {
         switch (locale.scriptCode) {
           case 'Hant':
-            return AppLocalizationsZhHant();
+            return app_localizations_zh
+                .loadLibrary()
+                .then((dynamic _) => app_localizations_zh.AppLocalizationsZhHant());
+        }
+        break;
+      }
+  }
+
+  // Lookup logic when language+country codes are specified.
+  switch (locale.languageCode) {
+    case 'pt':
+      {
+        switch (locale.countryCode) {
+          case 'BR':
+            return app_localizations_pt.loadLibrary().then((dynamic _) => app_localizations_pt.AppLocalizationsPtBr());
         }
         break;
       }
@@ -2288,9 +2306,19 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
     case 'en':
-      return AppLocalizationsEn();
+      return app_localizations_en.loadLibrary().then((dynamic _) => app_localizations_en.AppLocalizationsEn());
+    case 'es':
+      return app_localizations_es.loadLibrary().then((dynamic _) => app_localizations_es.AppLocalizationsEs());
+    case 'id':
+      return app_localizations_id.loadLibrary().then((dynamic _) => app_localizations_id.AppLocalizationsId());
+    case 'pt':
+      return app_localizations_pt.loadLibrary().then((dynamic _) => app_localizations_pt.AppLocalizationsPt());
+    case 'th':
+      return app_localizations_th.loadLibrary().then((dynamic _) => app_localizations_th.AppLocalizationsTh());
+    case 'vi':
+      return app_localizations_vi.loadLibrary().then((dynamic _) => app_localizations_vi.AppLocalizationsVi());
     case 'zh':
-      return AppLocalizationsZh();
+      return app_localizations_zh.loadLibrary().then((dynamic _) => app_localizations_zh.AppLocalizationsZh());
   }
 
   throw FlutterError('AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '

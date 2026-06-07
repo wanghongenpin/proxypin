@@ -136,7 +136,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool isEN = Localizations.localeOf(context).languageCode == 'en';
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Scaffold(
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
@@ -150,7 +150,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     SizedBox(
-                        width: isEN ? 280 : 250,
+                        width: isCN ? 250 : 280,
                         child: ListTile(
                             title: Text("${localizations.enable} ${localizations.breakpoint}"),
                             contentPadding: const EdgeInsets.only(left: 2),

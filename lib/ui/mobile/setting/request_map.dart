@@ -187,7 +187,7 @@ class _RequestMapListState extends State<RequestMapList> {
 
   List<Widget> rows(List<RequestMapRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return List.generate(list.length, (index) {
       return InkWell(
@@ -232,10 +232,10 @@ class _RequestMapListState extends State<RequestMapList> {
                       child:
                           Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   const SizedBox(width: 3),
-                  SizedBox(
-                      width: 60,
-                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
-                          textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
+                    SizedBox(
+                        width: 60,
+                        child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                            textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
@@ -451,12 +451,12 @@ class _RequestMapEditState extends State<MobileRequestMapEdit> {
   @override
   Widget build(BuildContext context) {
     GlobalKey formKey = GlobalKey<FormState>();
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Scaffold(
         appBar: AppBar(
             title: Row(children: [
-              Text(localizations.requestRewriteRule, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              Text(localizations.requestMap, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ]),
             actions: [
               TextButton(
@@ -531,8 +531,8 @@ class _RequestMapEditState extends State<MobileRequestMapEdit> {
                                       items: RequestMapType.values
                                           .map((e) => DropdownMenuItem(
                                               value: e,
-                                              child:
-                                                  Text(isEN ? e.name : e.label, style: const TextStyle(fontSize: 13))))
+                                               child:
+                                                  Text(!isCN ? e.name : e.label, style: const TextStyle(fontSize: 13))))
                                           .toList(),
                                       onChanged: onChangeType,
                                     )),

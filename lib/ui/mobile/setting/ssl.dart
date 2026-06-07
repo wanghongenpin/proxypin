@@ -408,7 +408,7 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
   }
 
   Future<void> _autoInstallCert() async {
-    bool isEN = localizations.localeName == 'en';
+    bool isCN = localizations.localeName == 'zh';
 
     try {
       final caFile = await CertificateManager.certificateFile();
@@ -427,7 +427,7 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
       if (!mounted) return;
       if (result.exitCode != 0) {
         FlutterToastr.show(
-            isEN
+            !isCN
                 ? 'Certificate install failed. Please check root and /system write permission, or use Magisk module.'
                 : '证书安装失败，请确认Root权限和system写权限，或参考Magisk模块安装。',
             context,
@@ -436,7 +436,7 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
         return;
       }
       FlutterToastr.show(
-        isEN ? 'Certificate installed, reboot required' : '证书已安装，重启手机后生效',
+        !isCN ? 'Certificate installed, reboot required' : '证书已安装，重启手机后生效',
         context,
         rootNavigator: true,
         duration: 5,
@@ -444,7 +444,7 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
     } catch (e) {
       logger.d('auto install cert error：$e');
       FlutterToastr.show(
-          isEN
+          !isCN
               ? 'Auto install failed: $e. Please check root and /system write permission, or use Magisk module.'
               : '自动安装失败：$e，请确认Root和system写权限，或参考Magisk模块安装。',
           context,

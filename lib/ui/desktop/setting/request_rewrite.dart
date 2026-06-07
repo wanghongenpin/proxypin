@@ -304,7 +304,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   List<Widget> rows(List<RequestRewriteRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return List.generate(list.length, (index) {
       return InkWell(
@@ -360,7 +360,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                           Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
-                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                      child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
@@ -550,7 +550,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
             width: 550,
-            constraints: const BoxConstraints(minHeight: 200, maxHeight: 560),
+            constraints: const BoxConstraints(minHeight: 200, maxHeight: 564),
             child: Form(
                 key: formKey,
                 child: Column(
@@ -600,7 +600,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                       Row(children: [
                         SizedBox(width: 60, child: Text('${localizations.action}:')),
                         SizedBox(
-                            width: 150,
+                            width: 170,
                             height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,

@@ -99,9 +99,9 @@ class SearchState extends State<Search> {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
-    bool isEN = AppLocalizations.of(context)!.localeName == 'en';
+    bool isCN = AppLocalizations.of(context)!.localeName == 'zh';
     var height = MediaQuery.of(context).size.height;
-    height = isEN ? height - 501 : height - 468;
+    height = !isCN ? height - 501 : height - 468;
     if (Platform.isMacOS) {
       height -= 30;
     }

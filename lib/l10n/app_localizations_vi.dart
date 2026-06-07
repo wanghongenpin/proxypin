@@ -4,144 +4,144 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Vietnamese (`vi`).
+class AppLocalizationsVi extends AppLocalizations {
+  AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get breakpoint => 'Breakpoint';
+  String get breakpoint => 'Điểm ngắt';
 
   @override
-  String get breakpointRule => 'Breakpoint Rule';
+  String get breakpointRule => 'Quy tắc điểm ngắt';
 
   @override
-  String get name => 'Name';
+  String get name => 'Tên';
 
   @override
-  String get requests => 'Requests';
+  String get requests => 'Bắt gói';
 
   @override
-  String get favorites => 'Favorites';
+  String get favorites => 'Yêu thích';
 
   @override
-  String get history => 'History';
+  String get history => 'Lịch sử';
 
   @override
-  String get toolbox => 'Toolbox';
+  String get toolbox => 'Hộp công cụ';
 
   @override
-  String get preference => 'Preferences';
+  String get preference => 'Tùy chọn';
 
   @override
-  String get feedback => 'Feedback';
+  String get feedback => 'Phản hồi';
 
   @override
-  String get about => 'About';
+  String get about => 'Giới thiệu';
 
   @override
-  String get filter => 'Proxy Filter';
+  String get filter => 'Bộ lọc Proxy';
 
   @override
   String get script => 'Script';
 
   @override
-  String get share => 'Share';
+  String get share => 'Chia sẻ';
 
   @override
-  String get port => 'Port: ';
+  String get port => 'Cổng: ';
 
   @override
   String get proxy => 'Proxy';
 
   @override
-  String get externalProxy => 'External Proxy';
+  String get externalProxy => 'Proxy ngoài';
 
   @override
-  String get username => 'Username';
+  String get username => 'Tên người dùng';
 
   @override
-  String get password => 'Password';
+  String get password => 'Mật khẩu';
 
   @override
   String get proxySetting => 'Proxy Setting';
 
   @override
-  String get setAs => 'Set as ';
+  String get setAs => 'Đặt làm';
 
   @override
-  String get systemProxy => 'System Proxy';
+  String get systemProxy => 'Proxy hệ thống';
 
   @override
-  String get enabledHTTP2 => 'Enable HTTP2';
+  String get enabledHTTP2 => 'Bật HTTP/2';
 
   @override
-  String get serverNotStart => 'Proxy server not started';
+  String get serverNotStart => 'Chưa khởi động proxy';
 
   @override
-  String get download => 'Download';
+  String get download => 'Tải xuống';
 
   @override
-  String get config => 'Configuration';
+  String get config => 'Cấu hình';
 
   @override
   String get version => 'Version';
 
   @override
-  String get start => 'Start';
+  String get start => 'Bắt đầu';
 
   @override
-  String get stop => 'Stop';
+  String get stop => 'Dừng';
 
   @override
-  String get clear => 'Clear';
+  String get clear => 'Xóa';
 
   @override
-  String get httpsProxy => 'HTTPS Proxy';
+  String get httpsProxy => 'Proxy HTTPS';
 
   @override
-  String get setting => 'Settings';
+  String get setting => 'Cài đặt';
 
   @override
-  String get mobileConnect => 'Mobile Connect';
+  String get mobileConnect => 'Kết nối điện thoại';
 
   @override
-  String get connectRemote => 'Connect Remote';
+  String get connectRemote => 'Kết nối từ xa';
 
   @override
-  String get remoteDevice => 'Remote Device';
+  String get remoteDevice => 'Thiết bị từ xa';
 
   @override
-  String get remoteDeviceList => 'Remote Device List';
+  String get remoteDeviceList => 'Danh sách thiết bị từ xa';
 
   @override
-  String get myQRCode => 'My QR Code';
+  String get myQRCode => 'Mã QR của tôi';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Giao diện';
 
   @override
-  String get followSystem => 'Follow System';
+  String get followSystem => 'Theo hệ thống';
 
   @override
-  String get themeColor => 'Theme Color';
+  String get themeColor => 'Màu giao diện';
 
   @override
-  String get themeLight => 'Light';
+  String get themeLight => 'Sáng';
 
   @override
-  String get themeDark => 'Dark';
+  String get themeDark => 'Tối';
 
   @override
-  String get language => 'Language';
+  String get language => 'Ngôn ngữ';
 
   @override
-  String get autoStartup => 'Auto Start Recording Traffic';
+  String get autoStartup => 'Tự động bắt gói khi khởi động';
 
   @override
-  String get autoStartupDescribe => 'Automatically start recording traffic when the program starts';
+  String get autoStartupDescribe => 'Tự động bắt gói khi mở ứng dụng';
 
   @override
-  String get minimizeToTrayTitle => 'Minimize to tray on close';
+  String get minimizeToTrayTitle => 'Thu nhỏ vào khay khi đóng';
 
   @override
   String get minimizeToTraySubtitle => 'Closing the window will keep ProxyPin running and hide it to the system tray.';
@@ -160,16 +160,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copied => 'Copied to clipboard';
 
   @override
-  String get execute => 'Execute';
+  String get execute => 'Thực thi';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Hủy';
 
   @override
-  String get close => 'Close';
+  String get close => 'Đóng';
 
   @override
-  String get save => 'Save';
+  String get save => 'Lưu';
 
   @override
   String get confirm => 'Confirm';
@@ -184,141 +184,141 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addSuccess => 'Successfully added';
 
   @override
-  String get saveSuccess => 'Saved successfully';
+  String get saveSuccess => 'Lưu thành công';
 
   @override
-  String get operationSuccess => 'Operation succeeded';
+  String get operationSuccess => 'Thao tác thành công';
 
   @override
-  String get import => 'Import';
+  String get import => 'Nhập';
 
   @override
-  String get importSuccess => 'Import successful';
+  String get importSuccess => 'Nhập thành công';
 
   @override
-  String get importFailed => 'Import failed';
+  String get importFailed => 'Nhập thất bại';
 
   @override
-  String get export => 'Export';
+  String get export => 'Xuất';
 
   @override
-  String get exportSuccess => 'Export successful';
+  String get exportSuccess => 'Xuất thành công';
 
   @override
-  String get exportFailed => 'Export failed';
+  String get exportFailed => 'Xuất thất bại';
 
   @override
-  String get deleteSuccess => 'Delete successful';
+  String get deleteSuccess => 'Xóa thành công';
 
   @override
   String get send => 'Send';
 
   @override
-  String get fail => 'fail';
+  String get fail => 'thất bại';
 
   @override
   String get success => 'success';
 
   @override
-  String get emptyData => 'Empty Data';
+  String get emptyData => 'Không có dữ liệu';
 
   @override
   String get requestSuccess => 'Request successful';
 
   @override
-  String get add => 'Add';
+  String get add => 'Thêm';
 
   @override
   String get all => 'All';
 
   @override
-  String get modify => 'Modify';
+  String get modify => 'Sửa';
 
   @override
   String get responseType => 'Response Type';
 
   @override
-  String get request => 'Request';
+  String get request => 'Yêu cầu';
 
   @override
-  String get response => 'Response';
+  String get response => 'Phản hồi';
 
   @override
-  String get statusCode => 'Status code';
+  String get statusCode => 'Mã trạng thái';
 
   @override
   String get duration => 'Duration';
 
   @override
-  String get done => 'Done';
+  String get done => 'Xong';
 
   @override
-  String get type => 'Type';
+  String get type => 'Loại';
 
   @override
-  String get enable => 'Enable';
+  String get enable => 'Bật';
 
   @override
-  String get example => 'Example: ';
+  String get example => 'Ví dụ: ';
 
   @override
-  String get responseHeader => 'Headers';
+  String get responseHeader => 'Header phản hồi';
 
   @override
-  String get requestHeader => 'Headers';
+  String get requestHeader => 'Header yêu cầu';
 
   @override
-  String get requestLine => 'Request Line';
+  String get requestLine => 'Dòng request';
 
   @override
-  String get requestMethod => 'Request Method';
+  String get requestMethod => 'Phương thức request';
 
   @override
-  String get param => 'Param';
+  String get param => 'Tham số';
 
   @override
-  String get replaceBodyWith => 'Replace Body With:';
+  String get replaceBodyWith => 'Thay body bằng:';
 
   @override
-  String get redirectTo => 'Redirect To:';
+  String get redirectTo => 'Chuyển hướng đến:';
 
   @override
-  String get redirect => 'Redirect';
+  String get redirect => 'Chuyển hướng';
 
   @override
   String get cannotBeEmpty => 'Cannot be empty';
 
   @override
-  String get requestRewriteList => 'Request Rewrite List';
+  String get requestRewriteList => 'Danh sách viết lại yêu cầu';
 
   @override
-  String get requestRewriteRule => 'Request Rewrite Rule';
+  String get requestRewriteRule => 'Quy tắc viết lại yêu cầu';
 
   @override
-  String get requestRewriteEnable => 'Enable Request Rewrite';
+  String get requestRewriteEnable => 'Bật viết lại yêu cầu';
 
   @override
-  String get action => 'Action';
+  String get action => 'Thao tác';
 
   @override
-  String get multiple => 'Multiple';
+  String get multiple => 'Nhiều';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'Sửa';
 
   @override
-  String get disabled => 'Disabled';
+  String get disabled => 'Đã tắt';
 
   @override
   String requestRewriteDeleteConfirm(Object size) {
-    return 'Delete $size rule(s)?';
+    return 'Xóa $size quy tắc?';
   }
 
   @override
-  String get useGuide => 'Use Guide';
+  String get useGuide => 'Hướng dẫn';
 
   @override
-  String get pleaseEnter => 'Please Enter';
+  String get pleaseEnter => 'Vui lòng nhập';
 
   @override
   String get click => 'Click';
@@ -327,46 +327,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadRemoteScript => 'load remote script';
 
   @override
-  String get replace => 'Replace';
+  String get replace => 'Thay thế';
 
   @override
   String get clickEdit => 'Click Edit';
 
   @override
-  String get refresh => 'Refresh';
+  String get refresh => 'Làm mới';
 
   @override
-  String get selectFile => 'Select file';
+  String get selectFile => 'Chọn tệp';
 
   @override
-  String get match => 'Match';
+  String get match => 'Khớp';
 
   @override
-  String get value => 'Value';
+  String get value => 'Giá trị';
 
   @override
-  String get matchRule => 'Match Rule';
+  String get matchRule => 'Quy tắc khớp';
 
   @override
-  String get emptyMatchAll => 'Empty means match all';
+  String get emptyMatchAll => 'Để trống nghĩa là khớp tất cả';
 
   @override
-  String get newBuilt => 'New';
+  String get newBuilt => 'Tạo mới';
 
   @override
-  String get reportServers => 'Report Servers';
+  String get reportServers => 'Máy chủ báo cáo';
 
   @override
-  String get addReportServer => 'Add Report Server';
+  String get addReportServer => 'Thêm máy chủ báo cáo';
 
   @override
-  String get editReportServer => 'Edit Report Server';
+  String get editReportServer => 'Sửa máy chủ báo cáo';
 
   @override
-  String get splitReport => 'Split Report';
+  String get splitReport => 'Chia nhỏ báo cáo';
 
   @override
-  String get serverUrl => 'Server URL';
+  String get serverUrl => 'URL máy chủ';
 
   @override
   String get compression => 'Compression';
@@ -375,25 +375,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get compressionNone => 'None';
 
   @override
-  String get newFolder => 'New Folder';
+  String get newFolder => 'Thư mục mới';
 
   @override
-  String get enableSelect => 'Enable Select';
+  String get enableSelect => 'Bật chọn';
 
   @override
-  String get disableSelect => 'Disable Select';
+  String get disableSelect => 'Tắt chọn';
 
   @override
-  String get deleteSelect => 'Delete Select';
+  String get deleteSelect => 'Xóa lựa chọn';
 
   @override
   String get testData => 'Test Data';
 
   @override
-  String get noChangesDetected => 'No changes detected';
+  String get noChangesDetected => 'Không phát hiện thay đổi';
 
   @override
-  String get enterMatchData => 'Enter the data to be matched';
+  String get enterMatchData => 'Nhập dữ liệu cần khớp';
 
   @override
   String get modifyRequestHeader => 'Modify Header';
@@ -411,29 +411,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sequence => 'All Requests';
 
   @override
-  String get domainList => 'Domain List';
+  String get domainList => 'Danh sách miền';
 
   @override
-  String get domainWhitelist => 'Proxy Domain Whitelist';
+  String get domainWhitelist => 'Danh sách trắng miền';
 
   @override
-  String get domainBlacklist => 'Proxy Domain Blacklist';
+  String get domainBlacklist => 'Danh sách đen miền';
 
   @override
-  String get domainFilter => 'Proxy Domain List';
+  String get domainFilter => 'Bộ lọc miền';
 
   @override
-  String get appWhitelist => 'App Whitelist';
+  String get appWhitelist => 'Danh sách trắng ứng dụng';
 
   @override
   String get appWhitelistDescribe =>
       'Only proxy Apps on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
 
   @override
-  String get appBlacklist => 'App Blacklist';
+  String get appBlacklist => 'Danh sách đen ứng dụng';
 
   @override
-  String get scanCode => 'Scan Code Connect';
+  String get scanCode => 'Quét mã kết nối';
 
   @override
   String get addBlacklist => 'Add Proxy Blacklist';
@@ -446,98 +446,98 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String domainListSubtitle(Object count, Object time) {
-    return 'Last Request Time: $time,  Count: $count';
+    return 'Lần request cuối: $time, Số lượng: $count';
   }
 
   @override
-  String get selectAction => 'Select action';
+  String get selectAction => 'Chọn thao tác';
 
   @override
-  String get select => 'Select';
+  String get select => 'Chọn';
 
   @override
-  String get copy => 'Copy';
+  String get copy => 'Sao chép';
 
   @override
-  String get copyHost => 'Copy Host';
+  String get copyHost => 'Sao chép host';
 
   @override
-  String get copyUrl => 'Copy URL';
+  String get copyUrl => 'Sao chép URL';
 
   @override
-  String get copyRawRequest => 'Copy Raw Request';
+  String get copyRawRequest => 'Sao chép request thô';
 
   @override
-  String get copyRequestResponse => 'Copy Request and Response';
+  String get copyRequestResponse => 'Sao chép request và response';
 
   @override
-  String get copyCurl => 'Copy cURL';
+  String get copyCurl => 'Sao chép cURL';
 
   @override
-  String get copyAsPythonRequests => 'Copy as Python Requests';
+  String get copyAsPythonRequests => 'Sao chép dạng Python Requests';
 
   @override
-  String get copyAsFetch => 'Copy as fetch';
+  String get copyAsFetch => 'Sao chép dạng fetch';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Xóa';
 
   @override
-  String get rename => 'Rename';
+  String get rename => 'Đổi tên';
 
   @override
-  String get repeat => 'Repeat';
+  String get repeat => 'Phát lại';
 
   @override
-  String get repeatAllRequests => 'Repeat All Requests';
+  String get repeatAllRequests => 'Phát lại tất cả yêu cầu';
 
   @override
-  String get repeatDomainRequests => 'Repeat Domain Requests';
+  String get repeatDomainRequests => 'Phát lại yêu cầu theo miền';
 
   @override
-  String get customRepeat => 'Custom Repeat';
+  String get customRepeat => 'Lặp tùy chỉnh';
 
   @override
-  String get repeatCount => 'Iterations';
+  String get repeatCount => 'Số lần';
 
   @override
-  String get repeatInterval => 'Interval(ms)';
+  String get repeatInterval => 'Khoảng thời gian(ms)';
 
   @override
-  String get repeatDelay => 'Delay(ms)';
+  String get repeatDelay => 'Độ trễ(ms)';
 
   @override
   String get scheduleTime => 'Schedule Time';
 
   @override
-  String get fixed => 'fixed';
+  String get fixed => 'Cố định';
 
   @override
-  String get random => 'random';
+  String get random => 'Ngẫu nhiên';
 
   @override
-  String get keepCustomSettings => 'Keep custom settings';
+  String get keepCustomSettings => 'Giữ cài đặt tùy chỉnh';
 
   @override
-  String get editRequest => 'Edit and Request';
+  String get editRequest => 'Sửa và gửi';
 
   @override
-  String get reSendRequest => 'The request has been resent';
+  String get reSendRequest => 'Đã gửi lại request';
 
   @override
-  String get viewExport => 'View Export';
+  String get viewExport => 'Xem bản xuất';
 
   @override
-  String get exportDomainHar => 'Export This Domain HAR';
+  String get exportDomainHar => 'Xuất HAR của miền này';
 
   @override
-  String get timeDesc => 'Descending by time';
+  String get timeDesc => 'Giảm dần theo thời gian';
 
   @override
-  String get timeAsc => 'Ascending by time';
+  String get timeAsc => 'Tăng dần theo thời gian';
 
   @override
-  String get search => 'Search';
+  String get search => 'Tìm kiếm';
 
   @override
   String get clearSearch => 'Clear Search';
@@ -546,7 +546,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requestType => 'Request type';
 
   @override
-  String get keyword => 'Keyword';
+  String get keyword => 'Từ khóa';
 
   @override
   String get keywordSearchScope => 'Keyword search scope: ';
@@ -555,16 +555,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get favorite => 'Favorite';
 
   @override
-  String get deleteFavorite => 'Delete Favorite';
+  String get deleteFavorite => 'Xóa mục yêu thích';
 
   @override
-  String get emptyFavorite => 'Empty Favorite';
+  String get emptyFavorite => 'Không có mục yêu thích';
 
   @override
-  String get deleteFavoriteSuccess => 'Favorite deleted';
+  String get deleteFavoriteSuccess => 'Đã xóa mục yêu thích';
 
   @override
-  String get historyRecord => 'History';
+  String get historyRecord => 'Lịch sử';
 
   @override
   String get historyCacheTime => 'Cache Time';
@@ -582,37 +582,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String historyRecordTitle(Object length, Object name) {
-    return '$name Records $length';
+    return '$name - $length bản ghi';
   }
 
   @override
-  String get historyEmptyName => 'Name cannot be empty';
+  String get historyEmptyName => 'Tên không được để trống';
 
   @override
   String historySubtitle(Object requestLength, Object size) {
-    return 'Records $requestLength  file $size';
+    return 'Bản ghi $requestLength  tệp $size';
   }
 
   @override
-  String get historyUnSave => 'Current record is not saved';
+  String get historyUnSave => 'Bản ghi hiện tại chưa được lưu';
 
   @override
   String get historyDeleteConfirm => 'Do you want to delete this history?';
 
   @override
-  String get requestEdit => 'Request Editing';
+  String get requestEdit => 'Sửa yêu cầu';
 
   @override
   String get encode => 'Encode';
 
   @override
-  String get requestBody => 'Request Body';
+  String get requestBody => 'Thân request';
 
   @override
-  String get responseBody => 'Response Body';
+  String get responseBody => 'Thân response';
 
   @override
-  String get requestRewrite => 'Request Rewrite';
+  String get requestRewrite => 'Viết lại yêu cầu';
 
   @override
   String get newWindow => 'New Window';
@@ -621,13 +621,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get httpRequest => 'HTTP Request';
 
   @override
-  String get enabledHttps => 'Enable HTTPS Proxy';
+  String get enabledHttps => 'Bật proxy HTTPS';
 
   @override
-  String get installRootCa => 'Install Certificate';
+  String get installRootCa => 'Cài đặt chứng chỉ';
 
   @override
-  String get installCaLocal => 'Install Certificate to Local-Machine';
+  String get installCaLocal => 'Cài đặt chứng chỉ vào máy';
 
   @override
   String get downloadRootCa => 'Download Certificate';
@@ -637,45 +637,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'Note: If you set the default browser to other than Safari, click this line to copy and paste the link to Safari browser';
 
   @override
-  String get generateCA => 'Generate new root certificate';
+  String get generateCA => 'Tạo chứng chỉ gốc mới';
 
   @override
-  String get generateCADescribe =>
-      'Are you sure you want to generate a new root certificate? If confirmed,\nYou need to reinstall and trust the new certificate';
+  String get generateCADescribe => 'Bạn có chắc muốn tạo chứng chỉ gốc mới không?';
 
   @override
-  String get resetDefaultCA => 'Reset Default Root Certificate';
+  String get resetDefaultCA => 'Đặt lại chứng chỉ gốc mặc định';
 
   @override
-  String get resetDefaultCADescribe =>
-      'Are you sure you want to reset to the default root certificate?\nProxyPin default root certificate is the same for all users.';
+  String get resetDefaultCADescribe => 'Bạn có chắc muốn đặt lại chứng chỉ gốc mặc định không?';
 
   @override
-  String get exportCaP12 => 'Export Root Certificate(.p12)';
+  String get exportCaP12 => 'Xuất chứng chỉ gốc (.p12)';
 
   @override
-  String get importCaP12 => 'Import Root Certificate(.p12)';
+  String get importCaP12 => 'Nhập chứng chỉ gốc (.p12)';
 
   @override
-  String get trustCa => 'Trust Certificate';
+  String get trustCa => 'Tin cậy chứng chỉ';
 
   @override
   String get profileDownload => 'Profile Download';
 
   @override
-  String get exportCA => 'Export Root Certificate';
+  String get exportCA => 'Xuất chứng chỉ gốc';
 
   @override
-  String get exportPrivateKey => 'Export Private Key';
+  String get exportPrivateKey => 'Xuất khóa riêng';
 
   @override
-  String get install => 'Install';
+  String get install => 'Cài đặt';
 
   @override
-  String get installCaDescribe => 'Install CA Setting > Profile Download > Install';
+  String get installCaDescribe => 'Cài đặt chứng chỉ';
 
   @override
-  String get trustCaDescribe => 'Trust CA Setting > General > About > Certificate Trust Setting';
+  String get trustCaDescribe => 'Tin cậy chứng chỉ trong cài đặt hệ thống';
 
   @override
   String get androidRoot => 'System Certificate (ROOT Device)';
@@ -719,10 +717,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get caIosBrowser => 'Open Safari on iOS devices：';
 
   @override
-  String get localIP => 'Local IP ';
+  String get localIP => 'IP cục bộ';
 
   @override
-  String get mobileScan => 'Configure Wi-Fi proxy or Scan with Mobile App';
+  String get mobileScan => 'Cấu hình proxy Wi‑Fi hoặc quét bằng app';
 
   @override
   String get decode => 'Decode';
@@ -752,7 +750,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captureDetail => 'Capture Detail';
 
   @override
-  String get proxyPinSoftware => 'ProxyPin Open source traffic capture software for all platforms';
+  String get proxyPinSoftware => 'Phần mềm bắt gói mã nguồn mở ProxyPin';
 
   @override
   String get prompt => 'Prompt';
@@ -761,10 +759,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get curlSchemeRequest => 'If the curl format is recognized, should it be converted into an HTTP request?';
 
   @override
-  String get appExitTips => 'Press again to exit the program';
+  String get appExitTips => 'Nhấn lại để thoát ứng dụng';
 
   @override
-  String get remoteConnectDisconnect => 'Check remote connection failed, disconnected';
+  String get remoteConnectDisconnect => 'Kiểm tra kết nối từ xa thất bại, đã ngắt';
 
   @override
   String get connect => 'Connect';
@@ -778,110 +776,107 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get remoteConnectForward => 'Remote connection, forwarding requests to other terminals';
+  String get remoteConnectForward => 'Kết nối từ xa, chuyển tiếp yêu cầu sang thiết bị khác';
 
   @override
-  String get connectSuccess => 'Connect successful';
+  String get connectSuccess => 'Kết nối thành công';
 
   @override
   String get connectedRemote => 'Connected to remote';
 
   @override
-  String get connected => 'Connected';
+  String get connected => 'Đã kết nối';
 
   @override
-  String get notConnected => 'Not connected';
+  String get notConnected => 'Chưa kết nối';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Ngắt kết nối';
 
   @override
-  String get ipLayerProxy => 'IP Layer Proxy(Beta)';
+  String get ipLayerProxy => 'Proxy tầng IP (Beta)';
 
   @override
-  String get ipLayerProxyDesc =>
-      'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR';
+  String get ipLayerProxyDesc => 'Proxy tầng IP có thể bắt yêu cầu Flutter, độ ổn định còn hạn chế.';
 
   @override
   String get inputAddress => 'Input Address';
 
   @override
-  String get syncConfig => 'Sync configuration';
+  String get syncConfig => 'Đồng bộ cấu hình';
 
   @override
-  String get pullConfigFail => 'Failed to pull configuration, please check the network connection';
+  String get pullConfigFail => 'Không thể tải cấu hình, vui lòng kiểm tra mạng';
 
   @override
-  String get sync => 'Sync';
+  String get sync => 'Đồng bộ';
 
   @override
-  String get invalidQRCode => 'Unrecognized QR code';
+  String get invalidQRCode => 'Mã QR không hợp lệ';
 
   @override
-  String get remoteConnectFail =>
-      'Connection failed，Please check if it is allowed on the same LAN and firewall, iOS needs to enable local network permissions';
+  String get remoteConnectFail => 'Kết nối thất bại';
 
   @override
-  String get remoteConnectSuccessTips => 'Your phone needs to enable packet capture in order to capture requests';
+  String get remoteConnectSuccessTips => 'Điện thoại cần bật bắt gói để bắt được yêu cầu';
 
   @override
-  String get windowMode => 'Window Mode';
+  String get windowMode => 'Chế độ cửa sổ';
 
   @override
   String get windowModeSubTitle => 'Enabled Packet Capture, Enter the background, Display a small window';
 
   @override
-  String get pipIcon => 'Window shortcut icon';
+  String get pipIcon => 'Biểu tượng cửa sổ';
 
   @override
-  String get pipIconDescribe => 'Show quick access to small window Icon';
+  String get pipIconDescribe => 'Hiển thị biểu tượng truy cập nhanh vào cửa sổ nhỏ';
 
   @override
-  String get headerExpanded => 'Headers Expanded';
+  String get headerExpanded => 'Mở rộng Headers';
 
   @override
-  String get headerExpandedSubtitle => 'Details page Headers is expanded by default';
+  String get headerExpandedSubtitle => 'Mở rộng Headers theo mặc định';
 
   @override
-  String get bottomNavigation => 'Bottom Navigation';
+  String get bottomNavigation => 'Thanh điều hướng dưới';
 
   @override
-  String get bottomNavigationSubtitle => 'Bottom navigation bar is displayed, effective after restart';
+  String get bottomNavigationSubtitle => 'Hiển thị thanh dưới, có hiệu lực sau khi khởi động lại';
 
   @override
-  String get memoryCleanup => 'Memory Cleanup';
+  String get memoryCleanup => 'Dọn bộ nhớ';
 
   @override
-  String get memoryCleanupSubtitle =>
-      'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning';
+  String get memoryCleanupSubtitle => 'Tự động dọn yêu cầu khi chạm giới hạn bộ nhớ';
 
   @override
-  String get clearConfirm => 'Confirm before clearing captured records';
+  String get clearConfirm => 'Xác nhận trước khi xóa';
 
   @override
-  String get clearConfirmSubtitle => 'Show a confirmation dialog before clearing captured records';
+  String get clearConfirmSubtitle => 'Hiện hộp xác nhận trước khi xóa gói tin';
 
   @override
-  String get unlimited => 'Unlimited';
+  String get unlimited => 'Không giới hạn';
 
   @override
-  String get custom => 'Custom';
+  String get custom => 'Tùy chỉnh';
 
   @override
-  String get externalProxyAuth => 'Proxy Auth (Optional)';
+  String get externalProxyAuth => 'Xác thực proxy (không bắt buộc)';
 
   @override
-  String get externalProxyServer => 'Proxy Server';
+  String get externalProxyServer => 'Máy chủ proxy';
 
   @override
-  String get externalProxyConnectFailure => 'External Proxy Connect failure';
+  String get externalProxyConnectFailure => 'Kết nối proxy ngoài thất bại';
 
   @override
   String get externalProxyFailureConfirm =>
-      'Access to all http will fail due to network connectivity issues，Do you want to continue setting up external proxies。';
+      'Mạng có vấn đề sẽ khiến các giao diện thất bại, vẫn muốn tiếp tục cấu hình proxy ngoài?';
 
   @override
-  String get mobileDisplayPacketCapture => 'Mobile Display Packet Capture:';
+  String get mobileDisplayPacketCapture => 'Hiển thị bắt gói trên điện thoại:';
 
   @override
   String proxyPortRepeat(Object port) {
@@ -889,38 +884,37 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get reset => 'Reset';
+  String get reset => 'Đặt lại';
 
   @override
-  String get proxyIgnoreDomain => 'Proxy ignores domain';
+  String get proxyIgnoreDomain => 'Proxy bỏ qua miền';
 
   @override
-  String get domainWhitelistDescribe =>
-      'Only proxy domain names on the whitelist. If the whitelist is enabled, the blacklist will be invalid';
+  String get domainWhitelistDescribe => 'Chỉ proxy miền trong danh sách trắng. Bật lên sẽ vô hiệu danh sách đen.';
 
   @override
-  String get domainBlacklistDescribe => 'Domain names on the blacklist will not be proxied';
+  String get domainBlacklistDescribe => 'Miền trong danh sách đen sẽ không được proxy';
 
   @override
-  String get domain => 'Host';
+  String get domain => 'Miền';
 
   @override
-  String get enableScript => 'Enable Script';
+  String get enableScript => 'Bật Script';
 
   @override
-  String get scriptUseDescribe => 'Use JavaScript to modify requests and responses';
+  String get scriptUseDescribe => 'Dùng JavaScript để sửa request và response';
 
   @override
-  String get scriptEdit => 'Edit script';
+  String get scriptEdit => 'Sửa script';
 
   @override
-  String get scrollEnd => 'Scroll to End';
+  String get scrollEnd => 'Cuộn tới cuối';
 
   @override
-  String get logger => 'Log';
+  String get logger => 'Nhật ký';
 
   @override
-  String get material3 => 'Material 3 is the latest version of Google’s open-source design system';
+  String get material3 => 'Material 3';
 
   @override
   String get iosVpnBackgroundAudio =>
@@ -939,25 +933,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get blue => 'Blue';
 
   @override
-  String get green => 'Green';
+  String get green => 'Xanh lá';
 
   @override
-  String get yellow => 'Yellow';
+  String get yellow => 'Vàng';
 
   @override
-  String get red => 'Red';
+  String get red => 'Đỏ';
 
   @override
   String get pink => 'Pink';
 
   @override
-  String get gray => 'Gray';
+  String get gray => 'Xám';
 
   @override
   String get underline => 'Underline';
 
   @override
-  String get requestBlock => 'Request Block';
+  String get requestBlock => 'Chặn yêu cầu';
 
   @override
   String get other => 'Other';
@@ -969,7 +963,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get regExp => 'RegExp';
 
   @override
-  String get systemCertName => 'System Certificate Name';
+  String get systemCertName => 'Tên chứng chỉ hệ thống';
 
   @override
   String get qrCode => 'QR Code';
@@ -1002,7 +996,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get convert => 'Convert';
 
   @override
-  String get time => 'DateTime';
+  String get time => 'Thời gian';
 
   @override
   String get nowTimestamp => 'Now timestamp';
@@ -1023,7 +1017,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cipher => 'Cipher';
 
   @override
-  String get appUpdateCheckVersion => 'Check for Updates';
+  String get appUpdateCheckVersion => 'Kiểm tra cập nhật';
 
   @override
   String get appUpdateNotAvailableMsg => 'Already Using The Latest Version';
@@ -1047,48 +1041,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appUpdateLaterBtnTxt => 'Later';
 
   @override
-  String get appUpdateIgnoreBtnTxt => 'Ignore';
+  String get appUpdateIgnoreBtnTxt => 'Bỏ qua';
 
   @override
-  String get requestMap => 'Request Map';
+  String get requestMap => 'Ánh xạ yêu cầu';
 
   @override
-  String get requestMapDescribe => 'Do not request remote services, use local configuration or script for response';
+  String get requestMapDescribe => 'Không gọi dịch vụ từ xa, dùng cấu hình hoặc script cục bộ để trả lời';
 
   @override
   String get automatic => 'Automatic';
 
   @override
-  String get manual => 'Manual';
+  String get manual => 'Thủ công';
 
   @override
   String get certNotInstalled => 'Certificate not installed';
 
   @override
-  String get openNewWindow => 'Open New Window';
+  String get openNewWindow => 'Mở cửa sổ mới';
 
   @override
-  String get sponsorDonate => 'Sponsor / Donate';
+  String get sponsorDonate => 'Ủng hộ / Tài trợ';
 
   @override
-  String get sponsorSupport => 'Support ongoing development';
+  String get sponsorSupport => 'Ủng hộ phát triển dự án';
 
   @override
-  String get sponsorThanks =>
-      'Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.';
+  String get sponsorThanks => 'Cảm ơn bạn đã ủng hộ dự án mã nguồn mở này.';
 
   @override
   String get sponsorAfdian => 'AFDIAN';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Chính sách quyền riêng tư';
 
   @override
   String get privacyContent =>
       'This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.';
 
   @override
-  String get requestCrypto => 'Request Crypto';
+  String get requestCrypto => 'Giải mã yêu cầu';
 
   @override
   String get cryptoDecoded => 'Decoded';
@@ -1109,11 +1102,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cryptoIvPrefixTooltip => 'Use the first N bytes of the response body as IV';
 
   @override
-  String get local => 'Local';
+  String get local => 'Cục bộ';
 
   @override
-  String get remoteUrl => 'Remote URL';
+  String get remoteUrl => 'URL từ xa';
 
   @override
-  String get view => 'View';
+  String get view => 'Xem';
 }

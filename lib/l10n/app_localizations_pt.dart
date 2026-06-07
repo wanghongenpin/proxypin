@@ -4,9 +4,9 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Portuguese (`pt`).
+class AppLocalizationsPt extends AppLocalizations {
+  AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
   String get breakpoint => 'Breakpoint';
@@ -132,7 +132,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
-  String get language => 'Language';
+  String get language => 'Português';
 
   @override
   String get autoStartup => 'Auto Start Recording Traffic';
@@ -1116,4 +1116,739 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get view => 'View';
+}
+
+/// The translations for Portuguese, as used in Brazil (`pt_BR`).
+class AppLocalizationsPtBr extends AppLocalizationsPt {
+  AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get breakpoint => 'Ponto de interrupção';
+
+  @override
+  String get breakpointRule => 'Regra de ponto de interrupção';
+
+  @override
+  String get name => 'Nome';
+
+  @override
+  String get requests => 'Capturas';
+
+  @override
+  String get favorites => 'Favoritos';
+
+  @override
+  String get history => 'Histórico';
+
+  @override
+  String get toolbox => 'Ferramentas';
+
+  @override
+  String get preference => 'Preferências';
+
+  @override
+  String get feedback => 'Feedback';
+
+  @override
+  String get about => 'Sobre';
+
+  @override
+  String get filter => 'Filtro de proxy';
+
+  @override
+  String get script => 'Script';
+
+  @override
+  String get share => 'Compartilhar';
+
+  @override
+  String get port => 'Porta: ';
+
+  @override
+  String get proxy => 'Proxy';
+
+  @override
+  String get externalProxy => 'Proxy externo';
+
+  @override
+  String get username => 'Usuário';
+
+  @override
+  String get password => 'Senha';
+
+  @override
+  String get setAs => 'Definir como ';
+
+  @override
+  String get systemProxy => 'Proxy do sistema';
+
+  @override
+  String get enabledHTTP2 => 'Habilitar HTTP/2';
+
+  @override
+  String get serverNotStart => 'Servidor proxy não iniciado';
+
+  @override
+  String get download => 'Baixar';
+
+  @override
+  String get config => 'Configuração';
+
+  @override
+  String get start => 'Iniciar';
+
+  @override
+  String get stop => 'Parar';
+
+  @override
+  String get clear => 'Limpar';
+
+  @override
+  String get httpsProxy => 'Proxy HTTPS';
+
+  @override
+  String get setting => 'Configurações';
+
+  @override
+  String get mobileConnect => 'Conexão móvel';
+
+  @override
+  String get connectRemote => 'Conectar remoto';
+
+  @override
+  String get remoteDevice => 'Dispositivo remoto';
+
+  @override
+  String get remoteDeviceList => 'Lista de dispositivos remotos';
+
+  @override
+  String get myQRCode => 'Meu QR';
+
+  @override
+  String get theme => 'Tema';
+
+  @override
+  String get followSystem => 'Seguir o sistema';
+
+  @override
+  String get themeColor => 'Cor do tema';
+
+  @override
+  String get themeLight => 'Claro';
+
+  @override
+  String get themeDark => 'Escuro';
+
+  @override
+  String get language => 'Idioma';
+
+  @override
+  String get autoStartup => 'Iniciar captura automaticamente';
+
+  @override
+  String get autoStartupDescribe => 'Inicia a captura ao abrir o app';
+
+  @override
+  String get minimizeToTrayTitle => 'Minimizar para a bandeja ao fechar';
+
+  @override
+  String get execute => 'Executar';
+
+  @override
+  String get cancel => 'Cancelar';
+
+  @override
+  String get close => 'Fechar';
+
+  @override
+  String get save => 'Salvar';
+
+  @override
+  String get saveSuccess => 'Salvo com sucesso';
+
+  @override
+  String get operationSuccess => 'Operação bem-sucedida';
+
+  @override
+  String get import => 'Importar';
+
+  @override
+  String get importSuccess => 'Importação bem-sucedida';
+
+  @override
+  String get importFailed => 'Falha na importação';
+
+  @override
+  String get export => 'Exportar';
+
+  @override
+  String get exportSuccess => 'Exportado com sucesso';
+
+  @override
+  String get exportFailed => 'Falha na exportação';
+
+  @override
+  String get deleteSuccess => 'Excluído com sucesso';
+
+  @override
+  String get fail => 'falha';
+
+  @override
+  String get emptyData => 'Sem dados';
+
+  @override
+  String get add => 'Adicionar';
+
+  @override
+  String get modify => 'Modificar';
+
+  @override
+  String get request => 'Requisição';
+
+  @override
+  String get response => 'Resposta';
+
+  @override
+  String get statusCode => 'Código de status';
+
+  @override
+  String get done => 'Concluído';
+
+  @override
+  String get type => 'Tipo';
+
+  @override
+  String get enable => 'Ativar';
+
+  @override
+  String get example => 'Exemplo: ';
+
+  @override
+  String get responseHeader => 'Cabeçalhos de resposta';
+
+  @override
+  String get requestHeader => 'Cabeçalhos de requisição';
+
+  @override
+  String get requestLine => 'Linha de requisição';
+
+  @override
+  String get requestMethod => 'Método de requisição';
+
+  @override
+  String get param => 'Parâmetro';
+
+  @override
+  String get replaceBodyWith => 'Substituir body por:';
+
+  @override
+  String get redirectTo => 'Redirecionar para:';
+
+  @override
+  String get redirect => 'Redirecionar';
+
+  @override
+  String get requestRewriteList => 'Lista de reescrita';
+
+  @override
+  String get requestRewriteRule => 'Regra de reescrita';
+
+  @override
+  String get requestRewriteEnable => 'Habilitar reescrita';
+
+  @override
+  String get action => 'Ação';
+
+  @override
+  String get multiple => 'Múltiplo';
+
+  @override
+  String get edit => 'Editar';
+
+  @override
+  String get disabled => 'Desativado';
+
+  @override
+  String requestRewriteDeleteConfirm(Object size) {
+    return 'Remover $size regra(s)?';
+  }
+
+  @override
+  String get useGuide => 'Guia de uso';
+
+  @override
+  String get pleaseEnter => 'Por favor insira';
+
+  @override
+  String get replace => 'Substituir';
+
+  @override
+  String get refresh => 'Atualizar';
+
+  @override
+  String get selectFile => 'Selecionar arquivo';
+
+  @override
+  String get match => 'Corresponder';
+
+  @override
+  String get value => 'Valor';
+
+  @override
+  String get matchRule => 'Regra de correspondência';
+
+  @override
+  String get emptyMatchAll => 'Vazio significa corresponder tudo';
+
+  @override
+  String get newBuilt => 'Novo';
+
+  @override
+  String get reportServers => 'Servidores de relatório';
+
+  @override
+  String get addReportServer => 'Adicionar servidor de relatório';
+
+  @override
+  String get editReportServer => 'Editar servidor de relatório';
+
+  @override
+  String get splitReport => 'Dividir relatório';
+
+  @override
+  String get serverUrl => 'URL do servidor';
+
+  @override
+  String get newFolder => 'Nova pasta';
+
+  @override
+  String get enableSelect => 'Ativar seleção';
+
+  @override
+  String get disableSelect => 'Desativar seleção';
+
+  @override
+  String get deleteSelect => 'Excluir seleção';
+
+  @override
+  String get noChangesDetected => 'Nenhuma alteração detectada';
+
+  @override
+  String get enterMatchData => 'Insira os dados para corresponder';
+
+  @override
+  String get domainList => 'Lista de domínios';
+
+  @override
+  String get domainWhitelist => 'Lista branca de domínios';
+
+  @override
+  String get domainBlacklist => 'Lista negra de domínios';
+
+  @override
+  String get domainFilter => 'Filtro de domínios';
+
+  @override
+  String get appWhitelist => 'Lista branca de apps';
+
+  @override
+  String get appBlacklist => 'Lista negra de apps';
+
+  @override
+  String get scanCode => 'Escanear código';
+
+  @override
+  String domainListSubtitle(Object count, Object time) {
+    return 'Última requisição: $time, quantidade: $count';
+  }
+
+  @override
+  String get selectAction => 'Selecione uma ação';
+
+  @override
+  String get select => 'Selecionar';
+
+  @override
+  String get copy => 'Copiar';
+
+  @override
+  String get copyHost => 'Copiar host';
+
+  @override
+  String get copyUrl => 'Copiar URL';
+
+  @override
+  String get copyRawRequest => 'Copiar requisição bruta';
+
+  @override
+  String get copyRequestResponse => 'Copiar requisição e resposta';
+
+  @override
+  String get copyCurl => 'Copiar cURL';
+
+  @override
+  String get copyAsPythonRequests => 'Copiar como Python Requests';
+
+  @override
+  String get copyAsFetch => 'Copiar como fetch';
+
+  @override
+  String get delete => 'Excluir';
+
+  @override
+  String get rename => 'Renomear';
+
+  @override
+  String get repeat => 'Repetir';
+
+  @override
+  String get repeatAllRequests => 'Repetir todas as requisições';
+
+  @override
+  String get repeatDomainRequests => 'Repetir requisições do domínio';
+
+  @override
+  String get customRepeat => 'Repetição personalizada';
+
+  @override
+  String get repeatCount => 'Vezes';
+
+  @override
+  String get repeatInterval => 'Intervalo(ms)';
+
+  @override
+  String get repeatDelay => 'Atraso(ms)';
+
+  @override
+  String get fixed => 'Fixo';
+
+  @override
+  String get random => 'Aleatório';
+
+  @override
+  String get keepCustomSettings => 'Manter configurações personalizadas';
+
+  @override
+  String get editRequest => 'Editar e enviar';
+
+  @override
+  String get reSendRequest => 'Requisição reenviada';
+
+  @override
+  String get viewExport => 'Ver exportação';
+
+  @override
+  String get exportDomainHar => 'Exportar HAR deste domínio';
+
+  @override
+  String get timeDesc => 'Decrescente por tempo';
+
+  @override
+  String get timeAsc => 'Crescente por tempo';
+
+  @override
+  String get search => 'Buscar';
+
+  @override
+  String get keyword => 'Palavra-chave';
+
+  @override
+  String get deleteFavorite => 'Remover favorito';
+
+  @override
+  String get emptyFavorite => 'Sem favoritos';
+
+  @override
+  String get deleteFavoriteSuccess => 'Favorito removido';
+
+  @override
+  String get historyRecord => 'Histórico';
+
+  @override
+  String historyRecordTitle(Object length, Object name) {
+    return '$name - $length registros';
+  }
+
+  @override
+  String get historyEmptyName => 'O nome não pode estar vazio';
+
+  @override
+  String historySubtitle(Object requestLength, Object size) {
+    return 'Registros $requestLength  arquivo $size';
+  }
+
+  @override
+  String get historyUnSave => 'O registro atual não está salvo';
+
+  @override
+  String get requestEdit => 'Editar e enviar';
+
+  @override
+  String get requestBody => 'Corpo da requisição';
+
+  @override
+  String get responseBody => 'Corpo da resposta';
+
+  @override
+  String get requestRewrite => 'Reescrita de requisições';
+
+  @override
+  String get httpRequest => 'Requisição HTTP';
+
+  @override
+  String get enabledHttps => 'Habilitar proxy HTTPS';
+
+  @override
+  String get installRootCa => 'Instalar certificado';
+
+  @override
+  String get installCaLocal => 'Instalar certificado no computador';
+
+  @override
+  String get generateCA => 'Gerar novo certificado raiz';
+
+  @override
+  String get generateCADescribe => 'Tem certeza de que deseja gerar um novo certificado raiz?';
+
+  @override
+  String get resetDefaultCA => 'Restaurar certificado raiz padrão';
+
+  @override
+  String get resetDefaultCADescribe => 'Tem certeza de que deseja restaurar o certificado raiz padrão?';
+
+  @override
+  String get exportCaP12 => 'Exportar certificado raiz (.p12)';
+
+  @override
+  String get importCaP12 => 'Importar certificado raiz (.p12)';
+
+  @override
+  String get trustCa => 'Confiar no certificado';
+
+  @override
+  String get exportCA => 'Exportar certificado raiz';
+
+  @override
+  String get exportPrivateKey => 'Exportar chave privada';
+
+  @override
+  String get install => 'Instalar';
+
+  @override
+  String get installCaDescribe => 'Instalar certificado';
+
+  @override
+  String get trustCaDescribe => 'Confiar no certificado nas configurações do sistema';
+
+  @override
+  String get localIP => 'IP local';
+
+  @override
+  String get mobileScan => 'Configurar proxy Wi‑Fi ou escanear com o app';
+
+  @override
+  String get proxyPinSoftware => 'Software de captura de tráfego open-source ProxyPin';
+
+  @override
+  String get appExitTips => 'Pressione novamente para sair';
+
+  @override
+  String get remoteConnectDisconnect => 'Erro ao verificar conexão remota, desconectado';
+
+  @override
+  String get remoteConnectForward => 'Conexão remota, encaminhando requisições para outro dispositivo';
+
+  @override
+  String get connectSuccess => 'Conexão bem-sucedida';
+
+  @override
+  String get connected => 'Conectado';
+
+  @override
+  String get notConnected => 'Não conectado';
+
+  @override
+  String get disconnect => 'Desconectar';
+
+  @override
+  String get ipLayerProxy => 'Proxy de camada IP (Beta)';
+
+  @override
+  String get ipLayerProxyDesc => 'Pode capturar requisições de apps Flutter; estabilidade limitada.';
+
+  @override
+  String get syncConfig => 'Sincronizar configuração';
+
+  @override
+  String get pullConfigFail => 'Falha ao obter configuração, verifique a conexão';
+
+  @override
+  String get sync => 'Sincronizar';
+
+  @override
+  String get invalidQRCode => 'Código QR inválido';
+
+  @override
+  String get remoteConnectFail => 'Falha na conexão remota';
+
+  @override
+  String get remoteConnectSuccessTips => 'O celular deve ter a captura ativada para capturar requisições';
+
+  @override
+  String get windowMode => 'Modo janela';
+
+  @override
+  String get pipIcon => 'Ícone da janela';
+
+  @override
+  String get pipIconDescribe => 'Mostrar ícone de acesso rápido à janela pequena';
+
+  @override
+  String get headerExpanded => 'Cabeçalhos expandidos';
+
+  @override
+  String get headerExpandedSubtitle => 'Expandir cabeçalhos por padrão';
+
+  @override
+  String get bottomNavigation => 'Navegação inferior';
+
+  @override
+  String get bottomNavigationSubtitle => 'Exibir barra inferior; aplica-se após reiniciar';
+
+  @override
+  String get memoryCleanup => 'Limpeza de memória';
+
+  @override
+  String get memoryCleanupSubtitle => 'Limpar requisições automaticamente ao atingir limite de memória';
+
+  @override
+  String get clearConfirm => 'Confirmar antes de limpar';
+
+  @override
+  String get clearConfirmSubtitle => 'Mostrar confirmação antes de limpar capturas';
+
+  @override
+  String get unlimited => 'Ilimitado';
+
+  @override
+  String get custom => 'Personalizado';
+
+  @override
+  String get externalProxyAuth => 'Autenticação proxy (opcional)';
+
+  @override
+  String get externalProxyServer => 'Servidor proxy';
+
+  @override
+  String get externalProxyConnectFailure => 'Falha ao conectar ao proxy externo';
+
+  @override
+  String get externalProxyFailureConfirm =>
+      'Problemas de rede farão falhar o acesso. Deseja continuar com o proxy externo?';
+
+  @override
+  String get mobileDisplayPacketCapture => 'Mostrar captura no móvel:';
+
+  @override
+  String get reset => 'Redefinir';
+
+  @override
+  String get proxyIgnoreDomain => 'Proxy ignora domínio';
+
+  @override
+  String get domainWhitelistDescribe =>
+      'Apenas domínios da lista branca serão proxyados. Ao ativar, a lista negra fica inativa.';
+
+  @override
+  String get domainBlacklistDescribe => 'Domínios da lista negra não serão proxyados';
+
+  @override
+  String get domain => 'Domínio';
+
+  @override
+  String get enableScript => 'Habilitar script';
+
+  @override
+  String get scriptUseDescribe => 'Use JavaScript para modificar requisições e respostas';
+
+  @override
+  String get scriptEdit => 'Editar script';
+
+  @override
+  String get scrollEnd => 'Ir para o fim';
+
+  @override
+  String get logger => 'Registro';
+
+  @override
+  String get material3 => 'Material 3';
+
+  @override
+  String get green => 'Verde';
+
+  @override
+  String get yellow => 'Amarelo';
+
+  @override
+  String get red => 'Vermelho';
+
+  @override
+  String get gray => 'Cinza';
+
+  @override
+  String get requestBlock => 'Bloqueio de requisição';
+
+  @override
+  String get systemCertName => 'Nome do certificado do sistema';
+
+  @override
+  String get time => 'Hora';
+
+  @override
+  String get hosts => 'Hosts';
+
+  @override
+  String get appUpdateCheckVersion => 'Procurar atualizações';
+
+  @override
+  String get appUpdateIgnoreBtnTxt => 'Ignorar';
+
+  @override
+  String get requestMap => 'Mapeamento de requisições';
+
+  @override
+  String get requestMapDescribe => 'Não solicita serviços remotos; usa configuração ou script local para responder';
+
+  @override
+  String get manual => 'Manual';
+
+  @override
+  String get openNewWindow => 'Abrir nova janela';
+
+  @override
+  String get sponsorDonate => 'Patrocinar / Doar';
+
+  @override
+  String get sponsorSupport => 'Apoiar desenvolvimento contínuo';
+
+  @override
+  String get sponsorThanks => 'Obrigado por apoiar este projeto open-source.';
+
+  @override
+  String get sponsorAfdian => 'AFDIAN';
+
+  @override
+  String get privacyPolicy => 'Política de privacidade';
+
+  @override
+  String get requestCrypto => 'Criptografia de requisição';
+
+  @override
+  String get local => 'Local';
+
+  @override
+  String get remoteUrl => 'URL remoto';
+
+  @override
+  String get view => 'Ver';
 }

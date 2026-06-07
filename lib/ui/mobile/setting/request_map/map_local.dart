@@ -123,7 +123,7 @@ class MobileMapLocaleState extends State<MobileMapLocal> {
 
   //body
   Widget body() {
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Obx(() => ListView(physics: const ClampingScrollPhysics(), children: [
           Row(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -140,7 +140,7 @@ class MobileMapLocaleState extends State<MobileMapLocal> {
                     items: ReplaceBodyType.values
                         .map((e) => DropdownMenuItem(
                             value: e.name,
-                            child: Text(isEN ? e.name.toUpperCase() : e.label,
+                            child: Text(!isCN ? e.name.toUpperCase() : e.label,
                                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))))
                         .toList(),
                     onChanged: (val) => bodyType.value = val ?? ReplaceBodyType.text.name)),

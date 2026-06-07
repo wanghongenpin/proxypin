@@ -84,6 +84,9 @@ class _PreferenceState extends State<Preference> {
                       const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "zh"), child: Text("简体中文")),
                       const DropdownMenuItem(
                           value: Locale.fromSubtags(languageCode: "zh", scriptCode: "Hant"), child: Text("繁體中文")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "vi"), child: Text("Tiếng Việt")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "th"), child: Text("ไทย")),
+                      const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "es"), child: Text("Español")),
                       const DropdownMenuItem(value: Locale.fromSubtags(languageCode: "en"), child: Text("English")),
                     ]),
               ]),
