@@ -74,8 +74,7 @@ class _SslState extends State<SslWidget> {
   //import method
   Widget importMenu() {
     return item(localizations.importCaP12, onPressed: () async {
-      FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
+      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
       if (result == null || !mounted) return;
 
       //entry password
@@ -130,7 +129,7 @@ class _SslState extends State<SslWidget> {
                   padding: const EdgeInsets.only(left: 10, right: 10),
                   child: Text(localizations.exportCA, style: const TextStyle(fontSize: 14))),
               onPressed: () async {
-                String? path = (await FilePicker.platform.saveFile(fileName: "ProxyPinCA.crt"));
+                String? path = (await FilePicker.saveFile(fileName: "ProxyPinCA.crt"));
                 if (path == null) return;
 
                 var caFile = await CertificateManager.certificateFile();
@@ -165,7 +164,7 @@ class _SslState extends State<SslWidget> {
                               TextButton(onPressed: () => Navigator.pop(context), child: Text(localizations.cancel)),
                               TextButton(
                                 onPressed: () async {
-                                  String? path = (await FilePicker.platform.saveFile(fileName: "ProxyPinPkcs12.p12"));
+                                  String? path = (await FilePicker.saveFile(fileName: "ProxyPinPkcs12.p12"));
                                   if (path == null) return;
 
                                   var p12Bytes = await CertificateManager.generatePkcs12(
@@ -184,7 +183,7 @@ class _SslState extends State<SslWidget> {
                   padding: const EdgeInsets.only(left: 10, right: 10),
                   child: Text(localizations.exportPrivateKey, style: const TextStyle(fontSize: 14))),
               onPressed: () async {
-                String? path = (await FilePicker.platform.saveFile(fileName: "ProxyPinKey.pem"));
+                String? path = (await FilePicker.saveFile(fileName: "ProxyPinKey.pem"));
                 if (path == null) return;
 
                 var keyFile = await CertificateManager.privateKeyFile();
@@ -386,5 +385,4 @@ class _SwitchState extends State<_Switch> {
                   }))
         ]));
   }
-
 }

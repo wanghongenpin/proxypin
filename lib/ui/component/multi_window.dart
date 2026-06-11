@@ -300,7 +300,7 @@ void registerMethodHandler() {
 
     if (call.method == 'pickFiles') {
       var extensions = call.arguments != null ? call.arguments['allowedExtensions'] : null;
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
           type: extensions == null ? FileType.any : FileType.custom,
           allowedExtensions: extensions == null ? null : List.from(extensions),
           initialDirectory: "/Downloads");
@@ -309,7 +309,7 @@ void registerMethodHandler() {
     }
 
     if (call.method == 'saveFile') {
-      return await FilePicker.platform.saveFile(fileName: call.arguments['fileName']);
+      return await FilePicker.saveFile(fileName: call.arguments['fileName']);
     }
 
     if (call.method == 'getApplicationSupportDirectory') {

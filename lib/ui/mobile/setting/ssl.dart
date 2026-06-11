@@ -17,7 +17,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -44,7 +43,6 @@ class MobileSslWidget extends StatefulWidget {
 }
 
 class _MobileSslState extends State<MobileSslWidget> {
-
   // iOS CA status
   bool _loading = false;
   static bool _installed = false;
@@ -166,7 +164,7 @@ class _MobileSslState extends State<MobileSslWidget> {
                   showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,
                       onConfirm: () async {
                     await CertificateManager.generateNewRootCA();
-                    if (mounted) FlutterToastr.show(localizations.success, context);
+                    if (context.mounted) FlutterToastr.show(localizations.success, context);
                     if (Platform.isIOS) _refreshStatus();
                   });
                 }),
@@ -178,7 +176,7 @@ class _MobileSslState extends State<MobileSslWidget> {
                       title: localizations.resetDefaultCA,
                       content: localizations.resetDefaultCADescribe, onConfirm: () async {
                     await CertificateManager.resetDefaultRootCA();
-                    if (mounted) FlutterToastr.show(localizations.success, context);
+                    if (context.mounted) FlutterToastr.show(localizations.success, context);
                     if (Platform.isIOS) _refreshStatus();
                   });
                 }),
@@ -187,8 +185,7 @@ class _MobileSslState extends State<MobileSslWidget> {
   }
 
   void importPk12() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
     if (result == null || !mounted) return;
     //entry password
     showDialog(
@@ -267,8 +264,8 @@ class _MobileSslState extends State<MobileSslWidget> {
   void _exportFile(String name, {File? file, Uint8List? bytes}) async {
     bytes ??= await file!.readAsBytes();
 
-    String? outputFile = await FilePicker.platform
-        .saveFile(dialogTitle: 'Please select the path to save:', fileName: name, bytes: bytes);
+    String? outputFile =
+        await FilePicker.saveFile(dialogTitle: 'Please select the path to save:', fileName: name, bytes: bytes);
 
     if (outputFile != null && mounted) {
       AppLocalizations localizations = AppLocalizations.of(context)!;
@@ -398,8 +395,8 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
 
   void _downloadCert(String name) async {
     var caFile = await CertificateManager.certificateFile();
-    String? outputFile = await FilePicker.platform
-        .saveFile(dialogTitle: 'Please select the path to save:', fileName: name, bytes: await caFile.readAsBytes());
+    String? outputFile = await FilePicker.saveFile(
+        dialogTitle: 'Please select the path to save:', fileName: name, bytes: await caFile.readAsBytes());
 
     if (outputFile != null && mounted) {
       AppLocalizations localizations = AppLocalizations.of(context)!;

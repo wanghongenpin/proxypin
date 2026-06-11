@@ -326,7 +326,7 @@ class _FavoritesActions extends StatelessWidget {
                   localizations.favorites,
                   style: TextStyle(
                     fontSize: 12.5,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.82),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.82),
                   ),
                 ),
                 const Spacer(),
@@ -348,7 +348,7 @@ class _FavoritesActions extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                   icon: const Icon(Icons.upload_file, size: 18),
                   onPressed: () async {
-                    final path = await FilePicker.platform.saveFile(fileName: 'favorites.json');
+                    final path = await FilePicker.saveFile(fileName: 'favorites.json');
                     if (path == null) return;
                     await FavoriteStorage.exportToFile(path);
                     if (context.mounted) CustomToast.success(localizations.exportSuccess).show(context);
@@ -362,7 +362,7 @@ class _FavoritesActions extends StatelessWidget {
                   icon: const Icon(Icons.download_for_offline_outlined, size: 18),
                   onPressed: () async {
                     final result =
-                        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
+                        await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
                     final file = result?.files.isNotEmpty == true ? result!.files.first : null;
                     if (file?.path == null) return;
 

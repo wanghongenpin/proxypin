@@ -99,7 +99,7 @@ class _JavaScriptState extends State<JavaScript> {
                       WindowController.fromWindowId(widget.windowId!).show();
                     } else {
                       FilePickerResult? result =
-                          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
+                          await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
                       path = result?.files.single.path;
                     }
 
@@ -192,7 +192,7 @@ class _JavaScriptState extends State<JavaScript> {
 class FullScreenCodeField extends StatelessWidget {
   final CodeController code;
 
-  FullScreenCodeField({required this.code});
+  const FullScreenCodeField({super.key, required this.code});
 
   @override
   Widget build(BuildContext context) {

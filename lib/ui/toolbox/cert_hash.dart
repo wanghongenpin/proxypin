@@ -83,8 +83,8 @@ class _CertHashPageState extends State<CertHashPage> {
           Wrap(alignment: WrapAlignment.end, children: [
             ElevatedButton.icon(
                 onPressed: () async {
-                  FilePickerResult? result = await FilePicker.platform
-                      .pickFiles(type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer', 'der']);
+                  FilePickerResult? result = await FilePicker.pickFiles(
+                      type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer', 'der']);
                   if (result == null) return;
 
                   File file = File(result.files.single.path!);
@@ -138,7 +138,7 @@ class _CertHashPageState extends State<CertHashPage> {
         ]));
   }
 
-  getSubjectName() {
+  void getSubjectName() {
     var content = input.text;
     if (content.isEmpty) return;
     try {

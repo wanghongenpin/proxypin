@@ -95,7 +95,7 @@ class _RequestMapPageState extends State<MobileRequestMapPage> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -166,7 +166,7 @@ class _RequestMapListState extends State<RequestMapList> {
         body: Container(
             padding: const EdgeInsets.only(top: 10),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             ),
             child: Scrollbar(
                 child: ListView(children: [
@@ -193,7 +193,7 @@ class _RequestMapListState extends State<RequestMapList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onLongPress: () => showMenus(index),
           onTap: () async {
             if (multiple) {
@@ -208,9 +208,9 @@ class _RequestMapListState extends State<RequestMapList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),
@@ -232,10 +232,10 @@ class _RequestMapListState extends State<RequestMapList> {
                       child:
                           Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   const SizedBox(width: 3),
-                    SizedBox(
-                        width: 60,
-                        child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
-                            textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
+                  SizedBox(
+                      width: 60,
+                      child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                          textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
@@ -247,7 +247,7 @@ class _RequestMapListState extends State<RequestMapList> {
           height: 50,
           width: double.infinity,
           margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2)))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2)))),
       Positioned(
           top: 0,
           left: 0,
@@ -522,7 +522,7 @@ class _RequestMapEditState extends State<MobileRequestMapEdit> {
                                     height: 33,
                                     child: DropdownButtonFormField<RequestMapType>(
                                       onSaved: (val) => rule.type = val!,
-                                      value: mapType,
+                                      initialValue: mapType,
                                       decoration: InputDecoration(
                                           errorStyle: const TextStyle(height: 0, fontSize: 0),
                                           contentPadding: const EdgeInsets.only(left: 7, right: 7),
@@ -531,7 +531,7 @@ class _RequestMapEditState extends State<MobileRequestMapEdit> {
                                       items: RequestMapType.values
                                           .map((e) => DropdownMenuItem(
                                               value: e,
-                                               child:
+                                              child:
                                                   Text(!isCN ? e.name : e.label, style: const TextStyle(fontSize: 13))))
                                           .toList(),
                                       onChanged: onChangeType,

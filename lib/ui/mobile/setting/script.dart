@@ -121,7 +121,7 @@ class _MobileScriptState extends State<MobileScript> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -741,9 +741,9 @@ class _ScriptEditState extends State<ScriptEdit> {
                                     onPressed: _useRemote
                                         ? null
                                         : () {
-                                      script.text = '';
-                                      setState(() {});
-                                    }))
+                                            script.text = '';
+                                            setState(() {});
+                                          }))
                           ]),
                           CodeTheme(
                               data: CodeThemeData(styles: monokaiSublimeTheme),
@@ -768,26 +768,25 @@ class _ScriptEditState extends State<ScriptEdit> {
                                           Positioned.fill(
                                               child: Center(
                                                   child: Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                                       decoration: BoxDecoration(
                                                           color: Colors.black.withValues(alpha: 0.28),
                                                           borderRadius: BorderRadius.circular(8)),
                                                       child: RichText(
                                                           text: TextSpan(
-                                                              style: const TextStyle(
-                                                                  fontSize: 12, color: Colors.white70),
+                                                              style:
+                                                                  const TextStyle(fontSize: 12, color: Colors.white70),
                                                               children: [
-                                                                TextSpan(text: '${localizations.click} “'),
-                                                                TextSpan(
+                                                            TextSpan(text: '${localizations.click} “'),
+                                                            TextSpan(
                                                                 text: localizations.view,
                                                                 style: const TextStyle(
                                                                     color: Colors.blue,
                                                                     fontSize: 12,
                                                                     decoration: TextDecoration.underline),
-                                                                recognizer:
-                                                                    TapGestureRecognizer()..onTap = _fetchRemoteScript),
-                                                                TextSpan(text: '” ${localizations.loadRemoteScript}'),
+                                                                recognizer: TapGestureRecognizer()
+                                                                  ..onTap = _fetchRemoteScript),
+                                                            TextSpan(text: '” ${localizations.loadRemoteScript}'),
                                                           ]))))),
                                       ])))),
                         ]))),

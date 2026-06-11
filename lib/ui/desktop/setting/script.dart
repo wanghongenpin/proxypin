@@ -174,8 +174,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
       });
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-      FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
 
@@ -966,7 +965,7 @@ class _ScriptListState extends State<ScriptList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-      path = await FilePicker.platform.saveFile(fileName: fileName);
+      path = await FilePicker.saveFile(fileName: fileName);
     }
     if (path == null) {
       return;

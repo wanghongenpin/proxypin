@@ -93,7 +93,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     _initAnimation();
   }
 
-  handle(String data) async {
+  Future<void> handle(String data) async {
     if (!isScan) return;
     stop();
     if (mounted) await Navigator.of(context, rootNavigator: true).maybePop(data);
@@ -150,7 +150,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     });
   }
 
-  scanImage(String path) {
+  void scanImage(String path) {
     FlutterQrReader.imgScan(path).then((value) {
       stop();
       if (mounted) {
@@ -199,10 +199,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
                   children: <Widget>[
                     IconButton(
                       onPressed: () async {
-                        final result = await FilePicker.platform.pickFiles(
-                          type: FileType.image,
-                          allowMultiple: false,
-                        );
+                        final result = await FilePicker.pickFiles(type: FileType.image, allowMultiple: false);
                         if (result == null || result.files.isEmpty) return;
                         final path = result.files.first.path;
                         if (path == null) return;

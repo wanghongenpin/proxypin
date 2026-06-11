@@ -84,7 +84,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     initFromContainer();
   }
 
-  initFromContainer() {
+  void initFromContainer() {
     for (var request in widget.list) {
       var hostAndPort = request.hostAndPort!;
       domainList.add(hostAndPort);
@@ -95,7 +95,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     view = domainList.toList();
   }
 
-  add(HttpRequest request) {
+  void add(HttpRequest request) {
     var hostAndPort = request.hostAndPort!;
     domainList.remove(hostAndPort);
     domainList.add(hostAndPort);
@@ -114,7 +114,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     changeState();
   }
 
-  addResponse(HttpResponse response) {
+  void addResponse(HttpResponse response) {
     HostAndPort? hostAndPort = response.request!.hostAndPort;
     if (response.isWebSocket) {
       add(response.request!);
@@ -171,7 +171,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   }
 
   ///排序
-  sort(bool desc) {
+  void sort(bool desc) {
     sortDesc = desc;
   }
 
@@ -182,7 +182,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     return true;
   }
 
-  changeState() {
+  void changeState() {
     //防止频繁刷新
     if (!changing) {
       changing = true;
@@ -373,7 +373,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     var json = await Har.writeJson(requests, title: fileName);
     var bytes = utf8.encode(json);
 
-    var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: bytes);
+    var path = await FilePicker.saveFile(fileName: fileName, bytes: bytes);
     if (path == null) {
       return;
     }
