@@ -1,0 +1,47 @@
+name: Flutter iOS CI
+
+on:
+  push:
+    branches:
+      - main
+      - ci
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: flutter-ios-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-build:
+    name: Flutter build (iOS)
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          pod install
+
+      - name: Build unsigned iOS app
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload iOS app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: proxypin-ios-app
+          path: build/ios/iphoneos/Runner.app/**
+          if-no-files-found: error
