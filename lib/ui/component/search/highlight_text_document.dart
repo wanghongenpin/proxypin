@@ -73,7 +73,7 @@ class HighlightTextDocument {
     return spans;
   }
 
-  List<InlineSpan> buildSpansForLine(BuildContext context, int lineIndex) {
+  List<InlineSpan> buildSpansForLine(BuildContext context, int lineIndex, {int? currentMatchIndexOverride}) {
     final line = lines[lineIndex];
     final matchesForLine = lineMatches[lineIndex];
     if (matchesForLine.isEmpty) {
@@ -82,6 +82,7 @@ class HighlightTextDocument {
 
     final spans = <InlineSpan>[];
     final colorScheme = ColorScheme.of(context);
+    final effectiveCurrentMatchIndex = currentMatchIndexOverride ?? currentMatchIndex;
     var matchIndex = 0;
     var consumed = 0;
 
@@ -112,7 +113,7 @@ class HighlightTextDocument {
 
         final overlapEnd = match.end < segmentEnd ? match.end : segmentEnd;
         final matchText = segment.text.substring(localStart, overlapEnd - segmentStart);
-        final isCurrentMatch = match.index == currentMatchIndex;
+        final isCurrentMatch = match.index == effectiveCurrentMatchIndex;
 
         // 复用样式计算，减少对象创建
         final baseStyle = segment.style ?? const TextStyle();

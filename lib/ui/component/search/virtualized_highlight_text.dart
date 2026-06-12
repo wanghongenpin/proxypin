@@ -38,11 +38,17 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   final ItemScrollController itemScrollController = ItemScrollController();
   ScrollController? trackingScrollController;
   int _lastScrolledMatchIndex = -1;
+  int _lastRenderedMatchIndex = -1;
+  int _lastKnownMatchCount = -1;
+  String _lastSearchSignature = '';
+  bool _searchUpdateScheduled = false;
+  int _scrollRequestId = 0;
 
   // 缓存机制，避免重复计算
   HighlightTextDocument? _cachedDocument;
   String? _cachedText;
   SearchSettings? _cachedSearchSettings;
+  int? _cachedEffectiveChunkLines;
   late final Map<int, List<InlineSpan>> _chunkSpanCache;
   late List<HighlightDocumentChunk> chunks;
 
@@ -78,8 +84,10 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
         );
 
         final shouldRebuildDocument = _cachedText != widget.text || _cachedSearchSettings != newSearchSettings;
+        // 搜索激活时切换为逐行虚拟化，保证自动滚动能精确定位到匹配行。
+        final effectiveChunkLines = widget.searchController.shouldSearch() ? 1 : widget.chunkLines;
 
-        if (shouldRebuildDocument) {
+        if (shouldRebuildDocument || _cachedEffectiveChunkLines != effectiveChunkLines) {
           _cachedDocument = HighlightTextDocument.create(
             context,
             text: widget.text,
@@ -89,10 +97,21 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           );
           _cachedText = widget.text;
           _cachedSearchSettings = newSearchSettings;
+          _cachedEffectiveChunkLines = effectiveChunkLines;
           // 清除旧的块缓存
           _chunkSpanCache.clear();
           // 重新分块
-          chunks = _buildChunks(_cachedDocument!, widget.chunkLines);
+          chunks = _buildChunks(_cachedDocument!, effectiveChunkLines);
+          // 搜索文档重建后重置滚动状态，确保首次匹配也会触发自动跳转
+          _lastScrolledMatchIndex = -1;
+          _lastRenderedMatchIndex = -1;
+        }
+
+        final currentMatch = widget.searchController.currentMatchIndex.value;
+        if (currentMatch != _lastRenderedMatchIndex) {
+          // 当前匹配变化时，清理块渲染缓存，确保高亮样式同步到最新匹配项
+          _chunkSpanCache.clear();
+          _lastRenderedMatchIndex = currentMatch;
         }
 
         _updateSearchState(_cachedDocument!);
@@ -101,7 +120,12 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           final chunk = chunks[index];
           final chunkSpans = _chunkSpanCache.putIfAbsent(
             index,
-            () => _buildSpansForChunk(context, _cachedDocument!, chunk),
+                () => _buildSpansForChunk(
+              context,
+              _cachedDocument!,
+              chunk,
+              currentMatchIndex: widget.searchController.currentMatchIndex.value,
+            ),
           );
           return Text.rich(TextSpan(children: chunkSpans));
         });
@@ -140,26 +164,53 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   }
 
   void _updateSearchState(HighlightTextDocument document) {
+    if (_searchUpdateScheduled) {
+      return;
+    }
+    _searchUpdateScheduled = true;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchUpdateScheduled = false;
       if (!mounted) return;
       // 使用缓存的文档，确保使用最新的数据
       final cachedDoc = _cachedDocument;
       if (cachedDoc == null) return;
 
-      // 记录当前状态，便于调试
-      logger.d(
-          'updateSearchState: totalMatches=${cachedDoc.totalMatchCount}, currentMatch=${widget.searchController.currentMatchIndex.value}, lastScrolled=$_lastScrolledMatchIndex');
+      final settings = widget.searchController.value;
+      final searchSignature = '${settings.pattern}|${settings.isCaseSensitive}|${settings.isRegExp}';
+      if (searchSignature != _lastSearchSignature || cachedDoc.totalMatchCount != _lastKnownMatchCount) {
+        _lastSearchSignature = searchSignature;
+        _lastKnownMatchCount = cachedDoc.totalMatchCount;
+        _lastScrolledMatchIndex = -1;
+      }
 
       widget.searchController.updateMatchCount(cachedDoc.totalMatchCount);
       final currentMatch = widget.searchController.currentMatchIndex.value;
+      if (!widget.searchController.shouldSearch() || cachedDoc.totalMatchCount == 0) {
+        return;
+      }
+
       if (currentMatch != _lastScrolledMatchIndex && currentMatch >= 0) {
-        _lastScrolledMatchIndex = currentMatch;
-        _scrollToCurrentMatch(cachedDoc);
+        _scheduleScrollToCurrentMatch(cachedDoc);
       }
     });
   }
 
-  Future<void> _scrollToCurrentMatch(HighlightTextDocument document) async {
+  void _scheduleScrollToCurrentMatch(HighlightTextDocument document) {
+    final requestId = ++_scrollRequestId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || requestId != _scrollRequestId) {
+        return;
+      }
+      _scrollToCurrentMatch(document, requestId);
+    });
+  }
+
+  Future<void> _scrollToCurrentMatch(HighlightTextDocument document, int requestId, [int attempt = 0]) async {
+    if (!mounted || requestId != _scrollRequestId) {
+      return;
+    }
+
     // 防守性检查：确保所有条件都满足才进行滚动
     if (document.totalMatchCount == 0 || chunks.isEmpty) {
       return;
@@ -175,11 +226,14 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
     }
 
     // 直接通过行号计算块索引（更简单可靠）
-    final chunkLines = widget.chunkLines;
-    var chunkIndex = (lineIndex ~/ max(1, chunkLines)).clamp(0, chunks.length - 1);
+    final chunkLines = _cachedEffectiveChunkLines ?? widget.chunkLines;
+    final chunkIndex = (lineIndex ~/ max(1, chunkLines)).clamp(0, chunks.length - 1);
 
     // 计算匹配行在块内的位置（用于计算 alignment）
     final chunk = chunks[chunkIndex];
+    if (chunk.lineCount <= 0) {
+      return;
+    }
     final lineOffsetInChunk = (lineIndex - chunk.startLineIndex).clamp(0, chunk.lineCount - 1);
     final chunkLineCount = max(1, chunk.lineCount);
 
@@ -189,12 +243,12 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
     // 如果 itemScrollController 尚未 attach，则延迟一帧重试一次
     if (!itemScrollController.isAttached) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        // 再次尝试滚动（防守式，忽略返回值）
-        _scrollToCurrentMatch(document);
-      });
-      return;
+      if (attempt >= 7) {
+        logger.w('VirtualizedHighlightText scroll aborted: itemScrollController not attached');
+        return;
+      }
+      await Future<void>.delayed(Duration(milliseconds: 16 * (attempt + 1)));
+      return _scrollToCurrentMatch(document, requestId, attempt + 1);
     }
 
     try {
@@ -204,22 +258,20 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
         curve: Curves.easeOut,
         alignment: alignment,
       );
+
+      // 只在滚动成功后更新 lastScrolled，避免失败后丢失同一索引的重试机会。
+      _lastScrolledMatchIndex = matchIndex;
     } catch (e) {
       logger.w('VirtualizedHighlightText scroll failed: $e');
-      // 当 scrollTo 失败时，尝试在下个帧再试一次（容错）
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (itemScrollController.isAttached) {
-          itemScrollController.scrollTo(
-            index: chunkIndex,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            alignment: alignment,
-          );
-        }
-      });
+      if (attempt >= 5) {
+        _lastScrolledMatchIndex = -1;
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+      return _scrollToCurrentMatch(document, requestId, attempt + 1);
     }
   }
+
 
   ScrollController _trackingScroll() {
     if (trackingScrollController != null) {
@@ -248,16 +300,17 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
   /// 为指定块构建 InlineSpan 列表
   List<InlineSpan> _buildSpansForChunk(
-    BuildContext context,
-    HighlightTextDocument document,
-    HighlightDocumentChunk chunk,
-  ) {
+      BuildContext context,
+      HighlightTextDocument document,
+      HighlightDocumentChunk chunk,
+      {required int currentMatchIndex}
+      ) {
     final spans = <InlineSpan>[];
 
     for (var i = chunk.startLineIndex; i < chunk.endLineIndex; i++) {
       if (i >= document.lines.length) break;
 
-      spans.addAll(document.buildSpansForLine(context, i));
+      spans.addAll(document.buildSpansForLine(context, i, currentMatchIndexOverride: currentMatchIndex));
 
       // 在行之间添加换行符
       if (i < chunk.endLineIndex - 1) {

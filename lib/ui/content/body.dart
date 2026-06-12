@@ -730,7 +730,6 @@ class _BodyState extends State<_Body> {
       futureFormatted,
       (formattedText) {
         if (showVirtualized) {
-          logger.d("Using virtualized viewer for ${type.name} with length ${formattedText.length}");
           return VirtualizedHighlightText(
             text: formattedText,
             language: language,
