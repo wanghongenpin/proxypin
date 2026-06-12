@@ -19,6 +19,8 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
   double? overlayTop;
   double? overlayRight;
 
+  String? _lastPattern;
+
   bool shouldSearch() {
     return isSearchOverlayVisible && patternController.text.isNotEmpty;
   }
@@ -72,6 +74,8 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
   }
 
   void closeSearch() {
+    _lastPattern = patternController.text;
+    patternController.clear();
     removeSearchOverlay();
   }
 
@@ -125,6 +129,9 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
       return;
     }
 
+    if (_lastPattern?.isNotEmpty == true) {
+      patternController.text = _lastPattern!;
+    }
     _searchPopup = _buildSearchOverlay(context, top: top, right: right);
     Overlay.of(context).insert(_searchPopup!);
   }

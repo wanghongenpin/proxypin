@@ -63,7 +63,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
   @override
   Widget build(BuildContext context) {
-    final viewHeight = widget.height ?? max(240, MediaQuery.sizeOf(context).height - 220);
+    final viewHeight = widget.height ?? max(240, MediaQuery.sizeOf(context).height - 210);
 
     return AnimatedBuilder(
       animation: widget.searchController,
@@ -77,9 +77,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           currentMatchIndex: 0, // 忽略currentMatchIndex用于比较
         );
 
-        final shouldRebuildDocument =
-          _cachedText != widget.text ||
-          _cachedSearchSettings != newSearchSettings;
+        final shouldRebuildDocument = _cachedText != widget.text || _cachedSearchSettings != newSearchSettings;
 
         if (shouldRebuildDocument) {
           _cachedDocument = HighlightTextDocument.create(
@@ -127,6 +125,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
           scrollController: Platforms.isDesktop() ? null : _trackingScroll(),
           itemScrollController: itemScrollController,
+          padding: const EdgeInsets.only(bottom: 10),
           minCacheExtent: minCacheExtent,
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -146,6 +145,10 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       // 使用缓存的文档，确保使用最新的数据
       final cachedDoc = _cachedDocument;
       if (cachedDoc == null) return;
+
+      // 记录当前状态，便于调试
+      logger.d(
+          'updateSearchState: totalMatches=${cachedDoc.totalMatchCount}, currentMatch=${widget.searchController.currentMatchIndex.value}, lastScrolled=$_lastScrolledMatchIndex');
 
       widget.searchController.updateMatchCount(cachedDoc.totalMatchCount);
       final currentMatch = widget.searchController.currentMatchIndex.value;
@@ -171,36 +174,50 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       return;
     }
 
-    // 根据行索引找到对应的块索引
-    // 找到包含该行的块
-    int chunkIndex = -1;
-    for (var i = 0; i < chunks.length; i++) {
-      final chunk = chunks[i];
-      // 检查该行是否在这个块的范围内
-      if (lineIndex >= chunk.startLineIndex && lineIndex < chunk.endLineIndex) {
-        chunkIndex = i;
-        break;
-      }
-    }
+    // 直接通过行号计算块索引（更简单可靠）
+    final chunkLines = widget.chunkLines;
+    var chunkIndex = (lineIndex ~/ max(1, chunkLines)).clamp(0, chunks.length - 1);
 
-    // 如果没找到（lineIndex超出所有块范围，防守性编程），使用最后一个块
-    if (chunkIndex == -1) {
-      chunkIndex = max(0, chunks.length - 1);
-    }
+    // 计算匹配行在块内的位置（用于计算 alignment）
+    final chunk = chunks[chunkIndex];
+    final lineOffsetInChunk = (lineIndex - chunk.startLineIndex).clamp(0, chunk.lineCount - 1);
+    final chunkLineCount = max(1, chunk.lineCount);
 
+    // alignment: 把匹配行放在块的相对位置上，限制在 [0.1, 0.9] 避免太靠边
+    double alignment = (lineOffsetInChunk + 0.5) / chunkLineCount;
+    alignment = alignment.clamp(0.1, 0.9);
+
+    // 如果 itemScrollController 尚未 attach，则延迟一帧重试一次
     if (!itemScrollController.isAttached) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        // 再次尝试滚动（防守式，忽略返回值）
+        _scrollToCurrentMatch(document);
+      });
       return;
     }
 
     try {
       await itemScrollController.scrollTo(
         index: chunkIndex,
-        duration: const Duration(milliseconds: 180),
+        duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
-        alignment: 0.45,
+        alignment: alignment,
       );
     } catch (e) {
       logger.w('VirtualizedHighlightText scroll failed: $e');
+      // 当 scrollTo 失败时，尝试在下个帧再试一次（容错）
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (itemScrollController.isAttached) {
+          itemScrollController.scrollTo(
+            index: chunkIndex,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            alignment: alignment,
+          );
+        }
+      });
     }
   }
 
