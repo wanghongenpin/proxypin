@@ -122,7 +122,7 @@ class Har {
         "content": {
           "size": request.response?.body?.length ?? -1,
           "mimeType": _getContentType(request.response?.headers.contentType),
-          "text": request.response?.bodyAsString ?? '',
+          "text": _getResponseText(request.response),
         },
         "redirectURL": '',
         "headersSize": -1,
@@ -210,10 +210,17 @@ class Har {
     if (response != null && response['status'] != null) {
       httpResponse = HttpResponse(HttpStatus.newStatus(response['status'], response['statusText']),
           protocolVersion: response['httpVersion']);
-      httpResponse.body = response['content']['text']?.toString().codeUnits;
       List responseHeaders = response['headers'];
       for (var element in responseHeaders) {
         httpResponse.headers.add(element['name'], element['value']);
+      }
+
+      if (httpResponse.contentType.isBinary) {
+        try {
+          httpResponse.body = base64Decode(response['content']['text']);
+        } catch (e) {
+          httpResponse.body = response['content']['text'].toString().codeUnits;
+        }
       }
     }
 
@@ -256,6 +263,18 @@ class Har {
       "mimeType": request.headers.contentType, // 请求体类型
       if (request.body != null) "text": String.fromCharCodes(request.body!), // 请求体内容
     };
+  }
+
+  static String _getResponseText(HttpResponse? response) {
+    final responseBody = response?.body;
+    if (responseBody == null) {
+      return '';
+    }
+    if (response?.contentType.isBinary == true) {
+      return base64Encode(responseBody);
+    }
+
+    return response?.bodyAsString ?? '';
   }
 
   //获取contentType
