@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:proxypin/storage/path.dart';
 
 import '../../util/logger.dart';
 import '../../util/random.dart';
+import '../../util/url_pattern.dart';
 
 class RequestMapManager {
   static RequestMapManager? _instance;
@@ -32,7 +32,7 @@ class RequestMapManager {
 
   //添加规则
   Future<void> addRule(RequestMapRule rule, RequestMapItem item) async {
-    final path = await homePath();
+    final path = await Paths.homePath();
     String itemPath = "${separator}request_map$separator${RandomUtil.randomString(16)}.json";
     var file = File(path + itemPath);
     await file.create(recursive: true);
@@ -50,7 +50,7 @@ class RequestMapManager {
   Future<void> updateRule(RequestMapRule rule, RequestMapItem item) async {
     rule.updatePathReg();
     if (rule.itemPath != null) {
-      final path = await homePath();
+      final path = await Paths.homePath();
       var file = File('$path${rule.itemPath}');
       await file.writeAsString(jsonEncode(item.toJson()));
     }
@@ -61,7 +61,7 @@ class RequestMapManager {
   //删除规则
   Future<void> deleteRule(int index) async {
     var item = rules.removeAt(index);
-    final home = await homePath();
+    final home = await Paths.homePath();
     File(home + item.itemPath!).delete();
   }
 
@@ -81,7 +81,7 @@ class RequestMapManager {
     }
 
     if (rule.itemPath != null) {
-      final path = await homePath();
+      final path = await Paths.homePath();
       var file = File('$path$separator${rule.itemPath}');
       if (await file.exists()) {
         var content = await file.readAsString();
@@ -95,23 +95,8 @@ class RequestMapManager {
     return null;
   }
 
-  static String? _homePath;
-
-  static Future<String> homePath() async {
-    if (_homePath != null) {
-      return _homePath!;
-    }
-
-    if (Platform.isMacOS) {
-      _homePath = await DesktopMultiWindow.invokeMethod(0, "getApplicationSupportDirectory");
-    } else {
-      _homePath = await getApplicationSupportDirectory().then((it) => it.path);
-    }
-    return _homePath!;
-  }
-
   static Future<File> get _path async {
-    final path = await homePath();
+    final path = await Paths.homePath();
     var file = File('$path${Platform.pathSeparator}request_map.json');
     if (!await file.exists()) {
       await file.create();
@@ -181,7 +166,7 @@ class RequestMapRule {
   String? itemPath;
 
   RequestMapRule({this.enabled = true, this.name, required this.url, required this.type, this.itemPath})
-      : _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+      : _urlReg = UrlPattern.toRegExp(url);
 
   bool match(String url) {
     if (enabled) {
@@ -201,7 +186,7 @@ class RequestMapRule {
   }
 
   void updatePathReg() {
-    _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+    _urlReg = UrlPattern.toRegExp(url);
   }
 
   Map<String, Object?> toJson() {

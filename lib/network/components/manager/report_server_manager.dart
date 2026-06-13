@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../storage/path.dart';
 import '../../util/logger.dart';
+import '../../util/url_pattern.dart';
 
 class ReportServerManager {
   static ReportServerManager? _instance;
@@ -108,7 +109,7 @@ class ReportServer {
     this.enabled = true,
     this.compression,
     this.splitReport = false,
-  }) : _urlReg = RegExp(matchUrl.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+  }) : _urlReg = UrlPattern.toRegExp(matchUrl);
 
   bool match(String url) {
     if (enabled) {
@@ -118,7 +119,7 @@ class ReportServer {
   }
 
   void updateUrlReg() {
-    _urlReg = RegExp(matchUrl.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+    _urlReg = UrlPattern.toRegExp(matchUrl);
   }
 
   ReportServer copyWith({

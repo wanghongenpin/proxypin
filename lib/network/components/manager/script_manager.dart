@@ -22,9 +22,10 @@ import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/url_pattern.dart';
 import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/storage/path.dart';
 import 'package:proxypin/ui/component/device.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 
 import '../js/script_engine.dart';
@@ -142,23 +143,8 @@ async function onResponse(context, request, response) {
     _scriptMap.clear();
   }
 
-  static String? _homePath;
-
-  static Future<String> homePath() async {
-    if (_homePath != null) {
-      return _homePath!;
-    }
-
-    if (Platform.isMacOS) {
-      _homePath = await DesktopMultiWindow.invokeMethod(0, "getApplicationSupportDirectory");
-    } else {
-      _homePath = await getApplicationSupportDirectory().then((it) => it.path);
-    }
-    return _homePath!;
-  }
-
   static Future<File> get _path async {
-    final path = await homePath();
+    final path = await Paths.homePath();
     var file = File('$path${separator}script.json');
     if (!await file.exists()) {
       await file.create();
@@ -181,7 +167,7 @@ async function onResponse(context, request, response) {
       return script;
     }
 
-    final home = await homePath();
+    final home = await Paths.homePath();
     var script = await File(home + item.scriptPath!).readAsString();
     _scriptMap[item] = script;
     return script;
@@ -218,7 +204,7 @@ async function onResponse(context, request, response) {
     }
 
     script ??= template;
-    final path = await homePath();
+    final path = await Paths.homePath();
     String scriptPath = "${separator}scripts$separator${RandomUtil.randomString(16)}.js";
     var file = File(path + scriptPath);
     await file.create(recursive: true);
@@ -240,7 +226,7 @@ async function onResponse(context, request, response) {
       return;
     }
 
-    final home = await homePath();
+    final home = await Paths.homePath();
     File(home + item.scriptPath!).writeAsString(script);
     _scriptMap[item] = script;
   }
@@ -251,7 +237,7 @@ async function onResponse(context, request, response) {
     _scriptMap.remove(item);
 
     if (item.scriptPath != null) {
-      final home = await homePath();
+      final home = await Paths.homePath();
       File(home + item.scriptPath!).delete();
     }
   }
@@ -261,7 +247,7 @@ async function onResponse(context, request, response) {
     while (list.isNotEmpty) {
       var item = list.removeLast();
       if (item.scriptPath != null) {
-        final home = await homePath();
+        final home = await Paths.homePath();
         File(home + item.scriptPath!).delete();
       }
     }
@@ -387,7 +373,7 @@ class ScriptItem {
 
   // 匹配url，任意一个规则匹配即可
   bool match(String url) {
-    urlRegs ??= urls.map((u) => RegExp(u.replaceAll("*", ".*"))).toList();
+    urlRegs ??= urls.map((u) => UrlPattern.toHostRegExp(u)).toList();
     for (final reg in urlRegs!) {
       if (reg!.hasMatch(url)) return true;
     }

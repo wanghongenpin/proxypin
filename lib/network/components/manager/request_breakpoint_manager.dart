@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/storage/path.dart';
 import 'package:proxypin/network/util/logger.dart';
 
 class RequestBreakpointRule {
@@ -80,16 +79,9 @@ class RequestBreakpointManager {
   bool enabled = true;
   List<RequestBreakpointRule> list = [];
 
-  static Future<String> homePath() async {
-    if (Platform.isMacOS) {
-      return await DesktopMultiWindow.invokeMethod(0, "getApplicationSupportDirectory");
-    }
-    return await getApplicationSupportDirectory().then((it) => it.path);
-  }
-
   Future<void> load() async {
     try {
-      var home = await homePath();
+      var home = await Paths.homePath();
       var file = File('$home${Platform.pathSeparator}request_breakpoint.json');
       if (await file.exists()) {
         var json = jsonDecode(await file.readAsString());
@@ -103,7 +95,7 @@ class RequestBreakpointManager {
 
   Future<void> save() async {
     try {
-      var home = await homePath();
+      var home = await Paths.homePath();
       var file = File('$home${Platform.pathSeparator}request_breakpoint.json');
       if (!await file.exists()) {
         await file.create(recursive: true);

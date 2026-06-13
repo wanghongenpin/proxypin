@@ -15,6 +15,7 @@
  */
 
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/url_pattern.dart';
 import 'package:proxypin/utils/lang.dart';
 
 ///重写规则
@@ -51,7 +52,7 @@ class RequestRewriteRule {
   HttpMethod? method;
 
   RequestRewriteRule({this.enabled = true, this.name, required this.url, required this.type, this.rewritePath, this.method})
-      : _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+      : _urlReg = UrlPattern.toRegExp(url);
 
   bool match(String url, {RuleType? type, HttpMethod? method}) {
     if (!enabled) return false;
@@ -88,7 +89,7 @@ class RequestRewriteRule {
   }
 
   void updatePathReg() {
-    _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+    _urlReg = UrlPattern.toRegExp(url);
   }
 
   Map<String, dynamic> toJson() {
