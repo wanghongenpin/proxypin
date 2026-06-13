@@ -17,9 +17,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/storage/path.dart';
 import 'package:proxypin/network/util/url_pattern.dart';
 
 /// Hosts manager
@@ -46,17 +45,10 @@ class HostsManager {
 
   static File? _configFile;
 
-  static Future<String> homePath() async {
-    if (Platform.isMacOS) {
-      return await DesktopMultiWindow.invokeMethod(0, "getApplicationSupportDirectory");
-    }
-    return await getApplicationSupportDirectory().then((it) => it.path);
-  }
-
   static Future<File> get configFile async {
     if (_configFile != null) return _configFile!;
 
-    final path = await homePath();
+    final path = await Paths.homePath();
     var file = File('$path${separator}hosts.json');
     if (!await file.exists()) {
       await file.create();
