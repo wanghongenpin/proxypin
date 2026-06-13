@@ -418,7 +418,10 @@ class _AndroidCaInstallState extends State<AndroidCaInstall> with SingleTickerPr
         destPath = '/system/etc/security/cacerts/$hash';
       }
       final caPath = caFile.path;
-      final shellCmd = 'cp $caPath $destPath && chmod 644 $destPath && chown root:root $destPath';
+      // Use separate commands to avoid shell injection via path values
+      final shellCmd = "cp '${caPath.replaceAll("'", "'\\''")}' '${destPath.replaceAll("'", "'\\''")}'"
+          " && chmod 644 '${destPath.replaceAll("'", "'\\''")}'"
+          " && chown root:root '${destPath.replaceAll("'", "'\\''")}'";
       final result = await Process.run('su', ['-c', shellCmd]);
       logger.d('Auto install cert result: ${result.stdout}, ${result.stderr}');
       if (!mounted) return;

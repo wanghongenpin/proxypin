@@ -276,7 +276,10 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
       return "PROXY $proxy";
     };
 
-    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) {
+      logger.w('XHR: accepting untrusted certificate for $host:$port (proxy-intercepted)');
+      return true;
+    };
 
     // 创建一个 IOClient 实例，将 HttpClient 传入
     return IOClient(httpClient);

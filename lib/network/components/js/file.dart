@@ -23,6 +23,39 @@ import 'package:proxypin/network/util/logger.dart';
 /// FileBridge for file operation
 /// @Author: Hongen Wang
 class FileBridge {
+  static String? _allowedRoot;
+
+  /// Resolve the allowed root directory for JS file operations.
+  static Future<String> _getAllowedRoot() async {
+    _allowedRoot ??= (await getApplicationSupportDirectory()).path;
+    return _allowedRoot!;
+  }
+
+  /// Validate that [path] is under the app support directory.
+  /// Throws if the resolved path escapes the sandbox.
+  static Future<void> _validatePath(String path) async {
+    final root = await _getAllowedRoot();
+    final resolved = File(path).absolute.path;
+    if (!resolved.startsWith(root)) {
+      throw PathAccessException(
+        path,
+        const OSError('Access denied: path is outside the allowed directory'),
+      );
+    }
+  }
+
+  static void _validatePathSync(String path) {
+    if (_allowedRoot == null) {
+      throw StateError('FileBridge not initialized: call an async file API first');
+    }
+    final resolved = File(path).absolute.path;
+    if (!resolved.startsWith(_allowedRoot!)) {
+      throw PathAccessException(
+        path,
+        const OSError('Access denied: path is outside the allowed directory'),
+      );
+    }
+  }
   static const String code = '''
     function getApplicationSupportDirectory() {
       return sendMessage('getApplicationSupportDirectory', JSON.stringify(''));
@@ -101,20 +134,23 @@ class FileBridge {
       return getApplicationSupportDirectory().then((dir) => dir.path);
     });
 
-    flutterJs.onMessage('file.readAsString', (path) {
+    flutterJs.onMessage('file.readAsString', (path) async {
+      await _validatePath(path);
       return File(path).readAsString();
     });
 
     flutterJs.onMessage('file.readAsStringSync', (path) {
-      var readAsStringSync = File(path).readAsStringSync();
-      return readAsStringSync;
+      _validatePathSync(path);
+      return File(path).readAsStringSync();
     });
 
-    flutterJs.onMessage('file.readAsBytes', (path) {
+    flutterJs.onMessage('file.readAsBytes', (path) async {
+      await _validatePath(path);
       return File(path).readAsBytes();
     });
 
     flutterJs.onMessage('file.readAsBytesSync', (path) {
+      _validatePathSync(path);
       return File(path).readAsBytesSync();
     });
 
@@ -122,6 +158,7 @@ class FileBridge {
       var path = args['path'];
       var content = args['content'];
       var append = args['append'] ?? false;
+      await _validatePath(path);
       await File(path).writeAsString(content, mode: append ? FileMode.append : FileMode.write);
     });
 
@@ -129,7 +166,7 @@ class FileBridge {
       var path = args['path'];
       var content = args['content'];
       var append = args['append'] ?? false;
-
+      _validatePathSync(path);
       File(path).writeAsStringSync(content, mode: append ? FileMode.append : FileMode.write);
     });
 
@@ -137,7 +174,7 @@ class FileBridge {
       var path = args['path'];
       var bytes = List<int>.from(args['bytes']);
       var append = args['append'] ?? false;
-
+      await _validatePath(path);
       await File(path).writeAsBytes(bytes, mode: append ? FileMode.append : FileMode.write);
     });
 
@@ -145,15 +182,17 @@ class FileBridge {
       var path = args['path'];
       var bytes = List<int>.from(args['bytes']);
       var append = args['append'] ?? false;
-
+      _validatePathSync(path);
       File(path).writeAsBytesSync(bytes, mode: append ? FileMode.append : FileMode.write);
     });
 
-    flutterJs.onMessage('file.length', (path) {
+    flutterJs.onMessage('file.length', (path) async {
+      await _validatePath(path);
       return File(path).length();
     });
 
     flutterJs.onMessage('file.lengthSync', (path) {
+      _validatePathSync(path);
       return File(path).lengthSync();
     });
 
@@ -165,19 +204,21 @@ class FileBridge {
     //   return File(path).deleteSync();
     // });
 
-    flutterJs.onMessage('file.exists', (path) {
+    flutterJs.onMessage('file.exists', (path) async {
+      await _validatePath(path);
       return File(path).exists();
     });
 
     flutterJs.onMessage('file.existsSync', (path) {
+      _validatePathSync(path);
       return File(path).existsSync();
     });
 
-    flutterJs.onMessage('file.create', (args) {
-      //bool recursive = false, bool exclusive = false
+    flutterJs.onMessage('file.create', (args) async {
       var path = args['path'];
       var recursive = args['recursive'] ?? false;
       var exclusive = args['exclusive'] ?? false;
+      await _validatePath(path);
       File(path).create(recursive: recursive, exclusive: exclusive);
     });
 
@@ -185,12 +226,15 @@ class FileBridge {
       var path = args['path'];
       var recursive = args['recursive'] ?? false;
       var exclusive = args['exclusive'] ?? false;
+      _validatePathSync(path);
       File(path).createSync(recursive: recursive, exclusive: exclusive);
     });
 
     flutterJs.onMessage('file.rename', (args) async {
       var path = args['path'];
       var newPath = args['newPath'];
+      await _validatePath(path);
+      await _validatePath(newPath);
       await File(path).rename(newPath);
     });
   }

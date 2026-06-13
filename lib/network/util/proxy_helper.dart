@@ -146,7 +146,6 @@ class ProxyHelper {
     var response = HttpResponse(HttpStatus.ok, protocolVersion: msg.protocolVersion);
     response.body = utf8.encode('pong');
     response.headers.set("os", Platform.operatingSystem);
-    response.headers.set("hostname", Platform.isAndroid ? Platform.operatingSystem : Platform.localHostname);
     channel.writeAndClose(channelContext, response);
   }
 
