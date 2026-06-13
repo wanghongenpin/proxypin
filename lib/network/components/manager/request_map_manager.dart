@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../util/logger.dart';
 import '../../util/random.dart';
+import '../../util/url_pattern.dart';
 
 class RequestMapManager {
   static RequestMapManager? _instance;
@@ -181,7 +182,7 @@ class RequestMapRule {
   String? itemPath;
 
   RequestMapRule({this.enabled = true, this.name, required this.url, required this.type, this.itemPath})
-      : _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+      : _urlReg = UrlPattern.toRegExp(url);
 
   bool match(String url) {
     if (enabled) {
@@ -201,7 +202,7 @@ class RequestMapRule {
   }
 
   void updatePathReg() {
-    _urlReg = RegExp(url.replaceAll("*", ".*").replaceFirst('?', '\\?'));
+    _urlReg = UrlPattern.toRegExp(url);
   }
 
   Map<String, Object?> toJson() {

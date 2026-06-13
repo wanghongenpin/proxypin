@@ -22,6 +22,7 @@ import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/url_pattern.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/ui/component/device.dart';
 import 'package:path_provider/path_provider.dart';
@@ -387,7 +388,7 @@ class ScriptItem {
 
   // 匹配url，任意一个规则匹配即可
   bool match(String url) {
-    urlRegs ??= urls.map((u) => RegExp(u.replaceAll("*", ".*"))).toList();
+    urlRegs ??= urls.map((u) => UrlPattern.toHostRegExp(u)).toList();
     for (final reg in urlRegs!) {
       if (reg!.hasMatch(url)) return true;
     }

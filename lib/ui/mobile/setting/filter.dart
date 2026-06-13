@@ -25,6 +25,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/network/util/url_pattern.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
@@ -208,7 +209,7 @@ class DomainAddDialog extends StatelessWidget {
                 }
                 try {
                   if (index != null) {
-                    hostList.list[index!] = RegExp(host!.trim().replaceAll("*", ".*"));
+                    hostList.list[index!] = UrlPattern.toHostRegExp(host!.trim());
                   } else {
                     hostList.add(host!.trim());
                   }

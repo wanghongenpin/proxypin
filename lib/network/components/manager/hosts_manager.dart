@@ -20,6 +20,7 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/network/util/url_pattern.dart';
 
 /// Hosts manager
 /// @author wanghongen
@@ -176,7 +177,7 @@ class HostsItem {
   //匹配url
   bool match(String domain) {
     if (host != _hostReg?.pattern) _hostReg = null;
-    _hostReg ??= RegExp(host.replaceAll("*", ".*"));
+    _hostReg ??= UrlPattern.toHostRegExp(host);
     return _hostReg!.hasMatch(domain);
   }
 
