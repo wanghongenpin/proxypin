@@ -157,7 +157,9 @@ class HttpClients {
       try {
         var uri = Uri.parse(request.requestUrl);
         request.headers.host = '${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
-      } catch (_) {}
+      } catch (e) {
+        logger.w('proxyRequest: failed to parse host from requestUrl=${request.requestUrl}: $e');
+      }
     }
 
     ChannelContext channelContext = ChannelContext();

@@ -17,12 +17,18 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
 
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
-    proxyChannel.writeBytes(msg);
+    try {
+      await proxyChannel.writeBytes(msg);
+    } catch (e) {
+      logger.w("[${channelContext.clientChannel?.id}] websocket relay write failed: $e");
+      channel.close();
+      return;
+    }
     WebSocketFrame? frame;
     try {
       frame = decoder.decode(msg);
     } catch (e, stackTrace) {
-      log.e("websocket decode error", error: e, stackTrace: stackTrace);
+      logger.e("[${channelContext.clientChannel?.id}] websocket decode error", error: e, stackTrace: stackTrace);
     }
     if (frame == null) {
       return;

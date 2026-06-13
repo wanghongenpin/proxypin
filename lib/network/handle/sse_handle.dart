@@ -19,7 +19,13 @@ class SseChannelHandler extends ChannelHandler<Uint8List> {
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
     // Always forward the raw bytes first
-    proxyChannel.writeBytes(msg);
+    try {
+      await proxyChannel.writeBytes(msg);
+    } catch (e) {
+      logger.w("[${channelContext.clientChannel?.id}] sse relay write failed: $e");
+      channel.close();
+      return;
+    }
 
     try {
       final frames = decoder.feed(msg);
@@ -31,7 +37,7 @@ class SseChannelHandler extends ChannelHandler<Uint8List> {
             "[${channelContext.clientChannel?.id}] sse channelRead ${frame.payloadLength} ${frame.payloadDataAsString}");
       }
     } catch (e, stackTrace) {
-      log.e("sse decode error", error: e, stackTrace: stackTrace);
+      logger.e("[${channelContext.clientChannel?.id}] sse decode error", error: e, stackTrace: stackTrace);
     }
   }
 }

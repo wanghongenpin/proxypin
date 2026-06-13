@@ -249,8 +249,8 @@ class Server extends Network {
       try {
         channelContext.processInfo ??=
             await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
-      } catch (ignore) {
-        /*ignore*/
+      } catch (e) {
+        logger.w('Failed to get process info during SSL error handling: $e');
       }
 
       channelContext.host ??= hostAndPort;

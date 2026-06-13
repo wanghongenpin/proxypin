@@ -176,17 +176,24 @@ async function onResponse(context, request, response) {
   Future<String?> _fetchRemoteScript(ScriptItem item) async {
     final url = item.remoteUrl!.trim();
     if (!_isHttpUrl(url)) {
+      logger.w('Invalid remote script URL for "${item.name}": $url');
       return null;
     }
 
-    final resp = await http.get(Uri.parse(url));
+    try {
+      final resp = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        logger.e('Failed to fetch remote script "${item.name}" from $url, status=${resp.statusCode}');
+        return null;
+      }
 
-    final bytes = resp.bodyBytes;
-
-    final content = utf8.decode(bytes);
-    _scriptMap[item] = content;
-
-    return content;
+      final content = utf8.decode(resp.bodyBytes);
+      _scriptMap[item] = content;
+      return content;
+    } catch (e, stackTrace) {
+      logger.e('Error fetching remote script "${item.name}" from $url', error: e, stackTrace: stackTrace);
+      return null;
+    }
   }
 
   bool _isHttpUrl(String url) {
@@ -208,7 +215,7 @@ async function onResponse(context, request, response) {
     String scriptPath = "${separator}scripts$separator${RandomUtil.randomString(16)}.js";
     var file = File(path + scriptPath);
     await file.create(recursive: true);
-    file.writeAsString(script);
+    await file.writeAsString(script);
     item.scriptPath = scriptPath;
     list.add(item);
     _scriptMap[item] = script;
@@ -227,7 +234,11 @@ async function onResponse(context, request, response) {
     }
 
     final home = await Paths.homePath();
-    File(home + item.scriptPath!).writeAsString(script);
+    try {
+      await File(home + item.scriptPath!).writeAsString(script);
+    } catch (e) {
+      logger.e('Failed to write script file "${item.name}" at ${item.scriptPath}', error: e);
+    }
     _scriptMap[item] = script;
   }
 
@@ -238,7 +249,11 @@ async function onResponse(context, request, response) {
 
     if (item.scriptPath != null) {
       final home = await Paths.homePath();
-      File(home + item.scriptPath!).delete();
+      try {
+        await File(home + item.scriptPath!).delete();
+      } catch (e) {
+        logger.w('Failed to delete script file "${item.name}" at ${item.scriptPath}: $e');
+      }
     }
   }
 
@@ -248,7 +263,11 @@ async function onResponse(context, request, response) {
       var item = list.removeLast();
       if (item.scriptPath != null) {
         final home = await Paths.homePath();
-        File(home + item.scriptPath!).delete();
+        try {
+          await File(home + item.scriptPath!).delete();
+        } catch (e) {
+          logger.w('Failed to delete script file during clean "${item.name}": $e');
+        }
       }
     }
     await flushConfig();

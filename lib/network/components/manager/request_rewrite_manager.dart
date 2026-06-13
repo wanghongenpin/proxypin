@@ -131,7 +131,7 @@ class RequestRewriteManager {
     String rewritePath = "${separator}rewrite$separator${RandomUtil.randomString(16)}.json";
     var file = File(home.path + rewritePath);
     await file.create(recursive: true);
-    file.writeAsString(jsonEncode(items.map((e) => e.toJson()).toList()));
+    await file.writeAsString(jsonEncode(items.map((e) => e.toJson()).toList()));
     rule.rewritePath = rewritePath;
 
     rules.add(rule);

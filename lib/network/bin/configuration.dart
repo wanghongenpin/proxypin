@@ -120,7 +120,11 @@ class Configuration {
     HostFilter.blacklist.toJson();
     var json = jsonEncode(toJson());
     logger.d('Refresh configuration file $runtimeType ${toJson()}');
-    file.writeAsString(json);
+    try {
+      await file.writeAsString(json);
+    } catch (e, stackTrace) {
+      logger.e('Failed to write configuration file ${file.path}', error: e, stackTrace: stackTrace);
+    }
   }
 
   /// 加载配置文件

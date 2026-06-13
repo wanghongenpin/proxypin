@@ -1,5 +1,6 @@
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
+import 'package:proxypin/network/util/logger.dart';
 
 class RelayHandler extends ChannelHandler<Object> {
   final Channel remoteChannel;
@@ -8,8 +9,12 @@ class RelayHandler extends ChannelHandler<Object> {
 
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Object msg) async {
-    //发送给客户端
-    remoteChannel.write(channelContext, msg);
+    try {
+      await remoteChannel.write(channelContext, msg);
+    } catch (e) {
+      logger.w("[${channel.id}] relay write failed to ${remoteChannel.remoteSocketAddress}: $e");
+      channel.close();
+    }
   }
 
   @override

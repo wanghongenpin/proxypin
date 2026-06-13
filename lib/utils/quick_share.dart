@@ -42,7 +42,8 @@ class QuickShareService {
 
       final response = await HttpClients.request(HostAndPort.of(shareUrl), quickShareRequest, timeout: timeout);
       return response.status.isSuccessful();
-    } catch (_) {
+    } catch (e) {
+      logger.w('Failed to send request to remote: $e');
       return false;
     }
   }

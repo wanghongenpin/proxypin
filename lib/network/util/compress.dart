@@ -10,8 +10,8 @@ List<int> gzipDecode(List<int> byteBuffer) {
   GZipCodec gzipCodec = GZipCodec();
   try {
     return gzipCodec.decode(byteBuffer);
-  } catch (e) {
-    logger.e("gzipDecode error: $e");
+  } catch (e, stackTrace) {
+    logger.e("gzipDecode error, inputLength=${byteBuffer.length}", error: e, stackTrace: stackTrace);
     return byteBuffer;
   }
 }
@@ -25,8 +25,8 @@ List<int> gzipEncode(List<int> input) {
 List<int> brDecode(List<int> byteBuffer) {
   try {
     return brotli.decode(byteBuffer);
-  } catch (e) {
-    logger.e("brDecode error: $e");
+  } catch (e, stackTrace) {
+    logger.e("brDecode error, inputLength=${byteBuffer.length}", error: e, stackTrace: stackTrace);
     return byteBuffer;
   }
 }
@@ -36,8 +36,8 @@ Future<List<int>?> zstdDecode(List<int> byteBuffer) async {
   final zstandard = Zstandard();
   try {
     return zstandard.decompress(Uint8List.fromList(byteBuffer));
-  } catch (e) {
-    logger.e("zstdDecode error: $e");
+  } catch (e, stackTrace) {
+    logger.e("zstdDecode error, inputLength=${byteBuffer.length}", error: e, stackTrace: stackTrace);
     return byteBuffer;
   }
 }
@@ -48,8 +48,8 @@ List<int> zlibDecode(List<int> byteBuffer) {
   try {
     final rawDeflateDecoder = ZLibDecoder(raw: true);
     return rawDeflateDecoder.convert(byteBuffer);
-  } catch (e) {
-    logger.e("zlibDecode error: $e");
+  } catch (e, stackTrace) {
+    logger.e("zlibDecode error, inputLength=${byteBuffer.length}", error: e, stackTrace: stackTrace);
     return byteBuffer;
   }
 }

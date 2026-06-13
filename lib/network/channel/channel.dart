@@ -122,7 +122,8 @@ class Channel {
 
   Future<void> writeBytes(List<int> bytes) async {
     if (isClosed) {
-      logger.w("[$id] $remoteSocketAddress channel is closed", stackTrace: StackTrace.current);
+      logger.w("[$id] $remoteSocketAddress channel is closed, dropping ${bytes.length} bytes");
+      return;
     }
 
     //只能有一个写入
@@ -132,7 +133,7 @@ class Channel {
     }
 
     if (isWriting) {
-      logger.d("[$id] write busy");
+      logger.w("[$id] write still busy after ${retry * 100}ms, proceeding anyway");
     }
 
     isWriting = true;
@@ -142,10 +143,12 @@ class Channel {
       }
     } catch (e, t) {
       if (e is StateError && e.message == "StreamSink is closed") {
-        logger.w("[$id] $remoteSocketAddress write error channel is closed $e", stackTrace: t);
+        logger.w("[$id] $remoteSocketAddress write failed: StreamSink is closed");
+        isOpen = false;
       } else {
-        logger.e("[$id] write error", error: e, stackTrace: t);
+        logger.e("[$id] $remoteSocketAddress write error, bytesLength=${bytes.length}", error: e, stackTrace: t);
       }
+      rethrow;
     } finally {
       isWriting = false;
     }

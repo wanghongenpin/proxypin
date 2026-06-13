@@ -144,6 +144,7 @@ abstract class HttpMessage {
 
       return String.fromCharCodes(rawBody);
     } catch (e) {
+      logger.w('getBodyString decode failed (encoding=${headers.contentEncoding}, charset=$charset): $e');
       return String.fromCharCodes(body!);
     }
   }
