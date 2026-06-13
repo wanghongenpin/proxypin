@@ -17,6 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
@@ -33,6 +34,7 @@ import 'l10n/app_localizations.dart';
 ///主入口
 ///@author wanghongen
 void main(List<String> args) async {
+  await RustLib.init();
   WidgetsFlutterBinding.ensureInitialized();
 
   //多窗口

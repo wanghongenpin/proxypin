@@ -29,10 +29,6 @@ dependencies:
   flutter_toastr: ^1.0.3
   share_plus: ^12.0.2
   flutter_js: ^0.8.7
-  flutter_code_editor:
-    git:
-      url: https://github.com/wanghongenpin/flutter-code-editor.git
-      ref: secure-keyboard
   flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^12.4.0
@@ -51,7 +47,8 @@ dependencies:
   win32audio: ^1.5.0
   vclibs: ^0.1.3
   scrollable_positioned_list_nic: ^0.0.2
-  tray_manager: ^0.5.2
+  tray_manager: ^0.5.3
+  code_forge: ^10.6.0
 
 dev_dependencies:
   flutter_test:
