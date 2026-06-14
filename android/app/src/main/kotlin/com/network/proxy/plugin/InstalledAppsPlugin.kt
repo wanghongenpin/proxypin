@@ -83,18 +83,26 @@ class InstalledAppsPlugin : AndroidFlutterPlugin() {
             }
         }
 
-        val threadPoolExecutor = Executors.newFixedThreadPool(4)
-        installedApps.map { app ->
-            val task: Callable<ProcessInfo> = Callable {
-                ProcessInfo.create(packageManager, app, withIcon)
+        if (withIcon) {
+            // 使用线程池并发加载图标，提升性能
+            val threadPoolExecutor = Executors.newFixedThreadPool(3)
+            installedApps.map { app ->
+                val task: Callable<ProcessInfo> = Callable {
+                    ProcessInfo.create(packageManager, app, withIcon)
+                }
+                threadPoolExecutor.submit(task)
+            }.map { future ->
+                future.get()
+            }.let {
+                threadPoolExecutor.shutdown()
+                threadPoolExecutor.awaitTermination(3, TimeUnit.SECONDS)
+                return it
             }
-            threadPoolExecutor.submit(task)
-        }.map { future ->
-            future.get()
-        }.let {
-            threadPoolExecutor.shutdown()
-            threadPoolExecutor.awaitTermination(3, TimeUnit.SECONDS)
-            return it
+        } else {
+            // 不需要图标，直接创建ProcessInfo对象
+            return installedApps.map { app ->
+                ProcessInfo.create(packageManager, app, false)
+            }
         }
     }
 

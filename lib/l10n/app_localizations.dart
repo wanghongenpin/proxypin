@@ -1540,11 +1540,11 @@ abstract class AppLocalizations {
   /// **'Share cURL Request'**
   String get shareCurl;
 
-  /// No description provided for @shareRequestResponse.
+  /// No description provided for @requestResponse.
   ///
   /// In en, this message translates to:
-  /// **'Share Request and Response'**
-  String get shareRequestResponse;
+  /// **'Request and Response'**
+  String get requestResponse;
 
   /// No description provided for @captureDetail.
   ///

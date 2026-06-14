@@ -239,7 +239,7 @@
   "decodeFail": "解碼失敗",
   "shareUrl": "分享請求連結",
   "shareCurl": "分享 cURL 請求",
-  "shareRequestResponse": "分享請求和回應",
+  "requestResponse": "請求和回應",
   "captureDetail": "抓包詳情",
   "proxyPinSoftware": "ProxyPin全平台開源抓包軟體",
   "prompt": "提示",

@@ -117,7 +117,6 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
   void dispose() {
     WidgetsBinding.instance.removeObserver(this); // 移除监听器
     logger.d('Disposing SearchTextController');
-    super.didChangeMetrics();
     removeSearchOverlay();
     patternController.dispose();
     totalMatchCount.close();

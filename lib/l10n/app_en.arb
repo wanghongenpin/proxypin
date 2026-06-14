@@ -253,7 +253,7 @@
 
   "shareUrl": "Share Request URL",
   "shareCurl": "Share cURL Request",
-  "shareRequestResponse": "Share Request and Response",
+  "requestResponse": "Request and Response",
   "captureDetail": "Capture Detail",
   "proxyPinSoftware": "ProxyPin Open source traffic capture software for all platforms",
 

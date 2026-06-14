@@ -739,7 +739,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareCurl => '分享 cURL 请求';
 
   @override
-  String get shareRequestResponse => '分享请求和响应';
+  String get requestResponse => '请求和响应';
 
   @override
   String get captureDetail => '抓包详情';
@@ -1835,7 +1835,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get shareCurl => '分享 cURL 請求';
 
   @override
-  String get shareRequestResponse => '分享請求和回應';
+  String get requestResponse => '請求和回應';
 
   @override
   String get captureDetail => '抓包詳情';

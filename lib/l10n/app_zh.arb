@@ -253,7 +253,7 @@
 
   "shareUrl": "分享请求链接",
   "shareCurl": "分享 cURL 请求",
-  "shareRequestResponse": "分享请求和响应",
+  "requestResponse": "请求和响应",
   "captureDetail": "抓包详情",
   "proxyPinSoftware": "ProxyPin全平台开源抓包软件",
 

@@ -107,6 +107,7 @@ String copyRequest(HttpRequest request, HttpResponse? response) {
   sb.writeln();
   sb.writeln(request.bodyAsString);
 
+  sb.writeln();
   sb.writeln("--------------------------------------------------------");
   sb.writeln();
   sb.writeln("Response");

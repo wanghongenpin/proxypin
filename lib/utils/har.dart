@@ -66,7 +66,7 @@ class Har {
       "content": {
         "size": request.response?.body?.length ?? -1, // 响应体大小
         "mimeType": _getContentType(request.response?.headers.contentType), // 响应体类型
-        "text": request.response?.bodyAsString ?? '', // 响应体内容
+        "text": _getResponseText(request.response),
       },
       "redirectURL": '', // 重定向地址
       "headersSize": -1, // 响应头大小

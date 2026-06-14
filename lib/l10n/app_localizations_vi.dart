@@ -744,7 +744,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shareCurl => 'Share cURL Request';
 
   @override
-  String get shareRequestResponse => 'Share Request and Response';
+  String get requestResponse => 'Request and Response';
 
   @override
   String get captureDetail => 'Capture Detail';

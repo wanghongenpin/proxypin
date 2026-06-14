@@ -59,6 +59,14 @@ void exportResponseBody(HttpResponse? response) async {
   logger.d("Export response body to $path");
 }
 
+void exportRequestAndResponse(HttpRequest request, HttpResponse? response) async {
+  String fileName = "request_response_${request.hostAndPort?.host ?? ''}_${request.requestId}.txt";
+
+  var json = copyRequest(request, response);
+  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  logger.d("Export request and response to $path");
+}
+
 void exportHar(HttpRequest request) async {
   String fileName = "har_${request.hostAndPort?.host}_${request.requestId}.har";
 
