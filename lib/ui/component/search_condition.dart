@@ -84,16 +84,28 @@ class SearchConditionsState extends State<SearchConditions> {
             decoration: InputDecoration(
               isCollapsed: true,
               contentPadding: const EdgeInsets.all(10),
-              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
               hintText: localizations.keyword,
-              suffixIcon: Obx(() => IconButton(
-                    tooltip: "Case Sensitive",
-                    icon: Text('Aa',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w500, color: searchModel.caseSensitive.value ? primaryColor : null)),
-                    onPressed: () {
-                      searchModel.caseSensitive.value = !searchModel.caseSensitive.value;
+              suffixIcon: Obx(() => ToggleButtons(
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 34),
+                    borderRadius: BorderRadius.circular(8),
+                    renderBorder: false,
+                    selectedColor: primaryColor,
+                    isSelected: [searchModel.caseSensitive.value, searchModel.isRegExp.value],
+                    onPressed: (index) {
+                      switch (index) {
+                        case 0:
+                          searchModel.caseSensitive.value = !searchModel.caseSensitive.value;
+                          break;
+                        case 1:
+                          searchModel.isRegExp.value = !searchModel.isRegExp.value;
+                          break;
+                      }
                     },
+                    children: [
+                      Tooltip(message: 'Case Sensitive', child: const Text('Aa')),
+                      Tooltip(message: localizations.regExp, child: const Text('.*')),
+                    ],
                   )),
             ),
           ),
@@ -337,7 +349,7 @@ class SearchConditionsState extends State<SearchConditions> {
           style: style,
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.only(left: 10, right: 10, top: 2, bottom: 2),
-            border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withOpacity(0.3))),
+            border: OutlineInputBorder(borderSide: BorderSide(width: 1, color: color.withValues(alpha: 0.3))),
           ),
         ));
   }

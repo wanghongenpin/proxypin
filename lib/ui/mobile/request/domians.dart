@@ -29,6 +29,7 @@ import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/ui/component/model/search_model.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
@@ -68,8 +69,8 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
 
   HostAndPort? showHostAndPort;
 
-  //搜索关键字
-  String? searchText;
+  //域名匹配函数；为 null 表示当前没有搜索条件
+  bool Function(String)? _domainMatcher;
 
   bool changing = false;
 
@@ -148,25 +149,18 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   }
 
   ///搜索域名
-  void search(String? text) {
-    if (text == null) {
+  void search(SearchModel? searchModel) {
+    final keyword = searchModel?.keyword?.trim();
+    if (searchModel == null || keyword == null || keyword.isEmpty) {
+      _domainMatcher = null;
       setState(() {
         view = List.of(domainList.toList().reversed);
-        searchText = null;
       });
       return;
     }
 
-    text = text.toLowerCase();
-
-    var contains = text.contains(searchText ?? "");
-    searchText = text.toLowerCase();
-    if (contains) {
-      //包含从上次结果过滤
-      view.retainWhere(filter);
-    } else {
-      view = List.of(domainList.where(filter).toList().reversed);
-    }
+    _domainMatcher = searchModel.buildMatcher();
+    view = List.of(domainList.where(filter).toList().reversed);
     changeState();
   }
 
@@ -176,10 +170,11 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   }
 
   bool filter(HostAndPort hostAndPort) {
-    if (searchText?.isNotEmpty == true) {
-      return hostAndPort.domain.toLowerCase().contains(searchText!);
+    final matcher = _domainMatcher;
+    if (matcher == null) {
+      return true;
     }
-    return true;
+    return matcher(hostAndPort.domain);
   }
 
   void changeState() {
