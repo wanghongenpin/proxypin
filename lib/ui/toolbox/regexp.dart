@@ -60,7 +60,9 @@ class _RegExpPageState extends State<RegExpPage> {
     pattern.dispose();
     input.dispose();
     replaceText.dispose();
-    HardwareKeyboard.instance.removeHandler(onKeyEvent);
+    if (Platforms.isDesktop() && widget.windowId != null) {
+      HardwareKeyboard.instance.removeHandler(onKeyEvent);
+    }
     super.dispose();
   }
 
@@ -155,9 +157,21 @@ class _RegExpPageState extends State<RegExpPage> {
             FilledButton.icon(
                 onPressed: () {
                   if (pattern.text.isEmpty) return;
-                  setState(() {
-                    resultInput = input.text;
-                  });
+                  try {
+                    var regex = RegExp(pattern.text);
+                    setState(() {
+                      resultInput = input.text.replaceAllMapped(regex, (match) {
+                        var replacement = replaceText.text;
+                        // Replace capture groups $1, $2, etc.
+                        for (var i = 1; i <= match.groupCount; i++) {
+                          replacement = replacement.replaceAll('\$$i', match.group(i) ?? '');
+                        }
+                        return replacement;
+                      });
+                    });
+                  } catch (e) {
+                    FlutterToastr.show('Invalid regular expression: $e', context, duration: 3);
+                  }
                 },
                 style: Buttons.buttonStyle,
                 icon: const Icon(Icons.play_arrow_rounded),
@@ -200,16 +214,20 @@ class _RegExpPageState extends State<RegExpPage> {
     final spans = <InlineSpan>[];
     int start = 0;
 
-    var text = resultInput!;
+    var text = input.text; // Use original input for highlighting
     var regex = RegExp(pattern.text);
-    var replaceText = this.replaceText.text;
     var matches = regex.allMatches(text);
 
     for (var match in matches) {
       if (start < match.start) {
         spans.add(TextSpan(text: text.substring(start, match.start)));
       }
-      spans.add(TextSpan(text: replaceText, style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)));
+      // Calculate the actual replacement text for this match
+      var replacement = replaceText.text;
+      for (var i = 1; i <= match.groupCount; i++) {
+        replacement = replacement.replaceAll('\$$i', match.group(i) ?? '');
+      }
+      spans.add(TextSpan(text: replacement, style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)));
       start = match.end;
     }
 
@@ -222,7 +240,7 @@ class _RegExpPageState extends State<RegExpPage> {
   bool onMatch = false; //是否正在匹配
   bool isMatch = true; //是否匹配成功
 
-  onInputChangeMatch() {
+  void onInputChangeMatch() {
     if (onMatch || input.highlightEnabled == false) {
       return;
     }
