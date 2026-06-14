@@ -677,6 +677,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                     editorTheme: monokaiSublimeTheme,
                                     readOnly: _useRemote,
                                     autoFocus: true,
+                                    enableGuideLines: false,
                                     finderBuilder: (c, controller) => FindPanelView(controller: controller),
                                     textStyle: const TextStyle(fontSize: 13, color: Colors.white),
                                   ),

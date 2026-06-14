@@ -58,6 +58,7 @@ async function onRequest(context, request) {
         controller: script,
         language: langJavascript,
         editorTheme: monokaiSublimeTheme,
+        enableGuideLines: false,
         autoFocus: true,
         textStyle: const TextStyle(fontSize: 13),
       ),

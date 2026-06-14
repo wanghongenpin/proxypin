@@ -150,6 +150,7 @@ class _JavaScriptState extends State<JavaScript> {
                     language: langJavascript,
                     editorTheme: monokaiSublimeTheme,
                     autoFocus: true,
+                    enableGuideLines: false,
                     finderBuilder: (c, controller) => FindPanelView(controller: controller),
                     textStyle: const TextStyle(fontSize: 13),
                   )),

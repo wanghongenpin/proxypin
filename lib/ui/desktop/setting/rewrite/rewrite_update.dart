@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
+import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:get/get.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
-
-import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:re_highlight/languages/json.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -55,7 +58,7 @@ class RewriteUpdateState extends State<DesktopRewriteUpdate> {
   }
 
   ///初始化重写项
-  initItems(RuleType ruleType, List<RewriteItem>? items) {
+  void initItems(RuleType ruleType, List<RewriteItem>? items) {
     this.ruleType = ruleType;
     this.items.clear();
 
@@ -87,7 +90,7 @@ class RewriteUpdateState extends State<DesktopRewriteUpdate> {
     );
   }
 
-  add() {
+  void add() {
     showDialog(
         context: context,
         builder: (context) => RewriteUpdateAddDialog(ruleType: ruleType, request: widget.request)).then((value) {
@@ -119,7 +122,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   var keyController = TextEditingController();
   var valueController = TextEditingController();
-  var dataController = HighlightTextEditingController();
+  final CodeForgeController _codeDataController = CodeForgeController();
+  late FindController _findController;
 
   bool jsonFormatted = false;
 
@@ -131,16 +135,26 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
+    _findController = FindController(_codeDataController);
+
     initTestData();
     keyController.addListener(onInputChangeMatch);
-    dataController.addListener(onInputChangeMatch);
+
+    var textVersion = _codeDataController.contentVersion;
+    _codeDataController.addListener(() {
+      if (textVersion != _codeDataController.contentVersion) {
+        textVersion = _codeDataController.contentVersion;
+        onInputChangeMatch();
+      }
+    });
   }
 
   @override
   void dispose() {
     keyController.dispose();
     valueController.dispose();
-    dataController.dispose();
+    _codeDataController.dispose();
+    _findController.dispose();
     super.dispose();
   }
 
@@ -197,7 +211,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                       SizedBox(
                           width: 140,
                           child: DropdownButtonFormField<RewriteType>(
-                              value: rewriteType,
+                              initialValue: rewriteType,
                               focusColor: Colors.transparent,
                               itemHeight: 48,
                               decoration: const InputDecoration(
@@ -228,8 +242,9 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                         alignment: Alignment.centerLeft,
                         child: Text(localizations.testData, style: const TextStyle(fontSize: 14))),
                     const SizedBox(width: 10),
-                    if (!isMatch)
-                      Text(localizations.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14)),
+                    Obx(() => isMatch.value
+                        ? SizedBox()
+                        : Text(localizations.noChangesDetected, style: TextStyle(color: Colors.red, fontSize: 14))),
                     Expanded(child: SizedBox()),
                     IconButton(
                       tooltip: 'JSON Format',
@@ -238,22 +253,40 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                       onPressed: () {
                         setState(() {
                           jsonFormatted = !jsonFormatted;
-                          dataController.text =
-                              jsonFormatted ? JSON.pretty(dataController.text) : JSON.compact(dataController.text);
+                          _codeDataController.text = jsonFormatted
+                              ? JSON.pretty(_codeDataController.text)
+                              : JSON.compact(_codeDataController.text);
                         });
                       },
                     ),
                     const SizedBox(width: 5),
                   ]),
                   const SizedBox(height: 5),
-                  formField(localizations.enterMatchData, lines: 10, required: false, controller: dataController),
+                  Container(
+                      height: 230,
+                      decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                      child: CodeForge(
+                        controller: _codeDataController,
+                        language: isJsonText() ? langJson : null,
+                        selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+                        editorTheme:
+                            Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                        enableGuideLines: false,
+                        textStyle: const TextStyle(fontSize: 14),
+                      )),
                 ]))));
   }
 
-  initTestData() {
-    dataController.splitPattern = null;
-    dataController.highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
+  //判断是否是json格式
+  bool isJsonText() {
+    var bodyString = _codeDataController.text;
+    return (bodyString.startsWith('{') && bodyString.endsWith('}') ||
+        bodyString.startsWith('[') && bodyString.endsWith(']'));
+  }
+
+  void initTestData() {
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
+    _findController.caseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
 
     valueController.removeListener(onInputChangeMatch);
     if (isRemove) {
@@ -263,7 +296,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     if (widget.request == null) return;
 
     if (rewriteType == RewriteType.updateBody) {
-      dataController.text = (widget.ruleType == RuleType.requestUpdate
+      _codeDataController.text = (widget.ruleType == RuleType.requestUpdate
               ? widget.request?.getBodyString()
               : widget.request?.response?.getBodyString()) ??
           '';
@@ -271,8 +304,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     }
 
     if (rewriteType == RewriteType.updateQueryParam || rewriteType == RewriteType.removeQueryParam) {
-      dataController.splitPattern = '&';
-      dataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
+      // dataController.splitPattern = '&';
+      _codeDataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
       return;
     }
 
@@ -280,49 +313,49 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
       var headerData = widget.ruleType == RuleType.requestUpdate
           ? widget.request?.headers.toRawHeaders()
           : widget.request?.response?.headers.toRawHeaders();
-      dataController.text = headerData ?? '';
+      _codeDataController.text = headerData ?? '';
       return;
     }
 
-    dataController.clear();
+    _codeDataController.text = '';
   }
 
   bool onMatch = false; //是否正在匹配
-  bool isMatch = true;
+  RxBool isMatch = true.obs;
 
-  onInputChangeMatch() {
-    if (onMatch || dataController.highlightEnabled == false) {
+  void onInputChangeMatch() {
+    bool highlightEnabled = rewriteType != RewriteType.addQueryParam && rewriteType != RewriteType.addHeader;
+
+    if (onMatch || highlightEnabled == false) {
       return;
     }
     onMatch = true;
 
     //高亮显示
-    Future.delayed(const Duration(milliseconds: 600), () {
+    Future.delayed(const Duration(milliseconds: 800), () {
       onMatch = false;
-      if (dataController.text.isEmpty) {
-        if (isMatch) return;
-        setState(() {
-          isMatch = true;
-        });
+      if (_codeDataController.text.isEmpty) {
+        if (isMatch.value) return;
+        isMatch.value = true;
         return;
       }
 
-      setState(() {
-        bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
-        String key = keyController.text;
-        if (isRemove && key.isNotEmpty) {
-          if (rewriteType == RewriteType.removeHeader) {
-            key = '$key: ';
-          } else {
-            key = '$key=';
-          }
-          key = '$key${valueController.text}';
+      if (!mounted) {
+        return;
+      }
+      bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
+      String key = keyController.text;
+      if (isRemove && key.isNotEmpty) {
+        if (rewriteType == RewriteType.removeHeader) {
+          key = '$key: ';
+        } else {
+          key = '$key=';
         }
+        key = '$key${valueController.text}';
+      }
 
-        var match = dataController.highlight(key,
-            caseSensitive: rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader);
-        isMatch = match;
-      });
+      _findController.find(key);
+      isMatch.value = _findController.matchCount > 0;
     });
   }
 
@@ -338,7 +371,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
       controller: controller,
       style: const TextStyle(fontSize: 14),
       minLines: lines ?? 1,
-      maxLines: lines ?? 2,
+      maxLines: lines ?? 1,
       validator: (val) => val?.isNotEmpty == true || !required ? null : "",
       decoration: InputDecoration(
           hintText: hint,
@@ -380,7 +413,7 @@ class _UpdateListState extends State<UpdateList> {
     return Container(
         padding: const EdgeInsets.only(top: 10),
         constraints: const BoxConstraints(minHeight: 330),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
         child: SingleChildScrollView(
             child: Column(children: [
           Row(
@@ -407,7 +440,7 @@ class _UpdateListState extends State<UpdateList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onDoubleTap: () => showDialog(
                       context: context,
                       builder: (context) =>
@@ -420,7 +453,7 @@ class _UpdateListState extends State<UpdateList> {
               color: selected == index
                   ? primaryColor
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),
@@ -454,7 +487,7 @@ class _UpdateListState extends State<UpdateList> {
     return "${item.key}=${item.value}";
   }
 
-  showMenus(TapDownDetails details, int index) {
+  void showMenus(TapDownDetails details, int index) {
     setState(() {
       selected = index;
     });

@@ -15,16 +15,22 @@
  */
 
 import 'dart:io';
+import 'package:re_highlight/languages/json.dart';
 
+import 'package:code_forge/code_forge.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
+
+import '../../../component/search/finder.dart';
 
 /// 重写替换
 /// @author wanghongen
@@ -42,7 +48,8 @@ class DesktopRewriteReplace extends StatefulWidget {
 
 class RewriteReplaceState extends State<DesktopRewriteReplace> {
   final _headerKey = GlobalKey<HeadersState>();
-  final bodyTextController = TextEditingController();
+  late CodeForgeController bodyTextController;
+  VoidCallback? _bodyListener;
   late RuleType ruleType;
   List<RewriteItem> items = [];
 
@@ -51,12 +58,17 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
   @override
   initState() {
     super.initState();
+    bodyTextController = CodeForgeController();
     ruleType = widget.ruleType;
     initItems(widget.ruleType, widget.items);
   }
 
   @override
   dispose() {
+    if (_bodyListener != null) {
+      bodyTextController.removeListener(_bodyListener!);
+      _bodyListener = null;
+    }
     bodyTextController.dispose();
     super.dispose();
   }
@@ -218,14 +230,39 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
       if (rewriteItem.bodyType == ReplaceBodyType.file.name)
         fileBodyEdit(rewriteItem)
       else
-        TextFormField(
-            controller: bodyTextController,
-            style: const TextStyle(fontSize: 14),
-            maxLines: 12,
-            decoration: decoration(localizations.replaceBodyWith,
-                hintText: '${localizations.example} {"code":"200","data":{}}'),
-            onChanged: (val) => rewriteItem.body = val)
+        Container(
+            height: 280,
+            decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+            child: Builder(builder: (context) {
+              // ensure we update rewriteItem when editor text changes; remove previous listener to avoid duplicates
+              if (_bodyListener != null) {
+                bodyTextController.removeListener(_bodyListener!);
+                _bodyListener = null;
+              }
+              _bodyListener = () {
+                rewriteItem.body = bodyTextController.text;
+              };
+              bodyTextController.addListener(_bodyListener!);
+
+              return CodeForge(
+                controller: bodyTextController,
+                lineWrap: true,
+                language: isJsonText() ? langJson : null,
+                enableGuideLines: false,
+                selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+                editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                textStyle: const TextStyle(fontSize: 14),
+                finderBuilder: (c, controller) => FindPanelView(controller: controller),
+              );
+            }))
     ]);
+  }
+
+  //判断是否是json格式
+  bool isJsonText() {
+    var bodyString = bodyTextController.text;
+    return (bodyString.startsWith('{') && bodyString.endsWith('}') ||
+        bodyString.startsWith('[') && bodyString.endsWith(']'));
   }
 
   Widget fileBodyEdit(RewriteItem item) {

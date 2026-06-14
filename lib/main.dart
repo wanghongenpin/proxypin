@@ -34,8 +34,9 @@ import 'l10n/app_localizations.dart';
 ///主入口
 ///@author wanghongen
 void main(List<String> args) async {
-  await RustLib.init();
   WidgetsFlutterBinding.ensureInitialized();
+  await RustLib.init();
+
 
   //多窗口
   if (args.firstOrNull == 'multi_window') {

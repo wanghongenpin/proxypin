@@ -58,6 +58,7 @@ async function onRequest(context, request) {
         child: CodeForge(
           controller: script,
           autoFocus: true,
+          enableGuideLines: false,
           language: langJavascript,
           editorTheme: monokaiSublimeTheme,
           finderBuilder: (c, controller) => FindPanelView(controller: controller),

@@ -1,11 +1,13 @@
+import 'dart:io';
+
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 const EdgeInsetsGeometry _kFindMargin = EdgeInsets.only(right: 10);
 const double _kFindPanelWidth = 360;
-const double _kFindPanelHeight = 32;
-const double _kReplacePanelHeight = _kFindPanelHeight * 2;
+final double _kFindPanelHeight = (Platform.isIOS || Platform.isAndroid) ? 52 : 32;
+final double _kReplacePanelHeight = _kFindPanelHeight * 2;
 const double _kFindIconSize = 16;
 const double _kFindIconWidth = 26;
 const double _kFindIconHeight = 26;
@@ -19,14 +21,11 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size(
-    double.infinity,
-    !controller.isActive
-        ? 0
-        : (controller.isReplaceMode
-        ? _kReplacePanelHeight
-        : _kFindPanelHeight + 2) +
-        _kFindMargin.vertical,
-  );
+        double.infinity,
+        !controller.isActive
+            ? 0
+            : (controller.isReplaceMode ? _kReplacePanelHeight : _kFindPanelHeight + 2) + _kFindMargin.vertical,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +37,6 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
       margin: _kFindMargin,
       alignment: Alignment.topRight,
       height: preferredSize.height,
-
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Focus(
@@ -67,9 +65,7 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 IconButton(
                   icon: Icon(
-                    controller.isReplaceMode
-                        ? Icons.keyboard_arrow_down
-                        : Icons.keyboard_arrow_right,
+                    controller.isReplaceMode ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
                   ),
                   style: IconButton.styleFrom(
                     shape: RoundedRectangleBorder(
@@ -159,9 +155,7 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
               _buildIconButton(
                 icon: Icons.arrow_upward,
                 tooltip: 'Previous',
-                onPressed: controller.matchCount == 0
-                    ? null
-                    : controller.previous,
+                onPressed: controller.matchCount == 0 ? null : controller.previous,
               ),
               _buildIconButton(
                 icon: Icons.arrow_downward,
@@ -301,9 +295,7 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildResultText() {
-    final text = controller.matchCount == 0
-        ? 'none'
-        : '${controller.currentMatchIndex + 1}/${controller.matchCount}';
+    final text = controller.matchCount == 0 ? 'none' : '${controller.currentMatchIndex + 1}/${controller.matchCount}';
 
     return Text(text, style: const TextStyle(fontSize: _kFindResultFontSize));
   }

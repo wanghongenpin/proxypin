@@ -761,6 +761,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                         language: langJavascript,
                                         editorTheme: monokaiSublimeTheme,
                                         readOnly: _useRemote,
+                                        enableGuideLines: false,
                                         textStyle: const TextStyle(fontSize: 13, color: Colors.white),
                                       )),
                                   if (_useRemote && script.text.trim().isEmpty)
