@@ -1990,6 +1990,42 @@ abstract class AppLocalizations {
   /// **'XML Viewer'**
   String get xmlViewer;
 
+  /// No description provided for @textDiff.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Diff'**
+  String get textDiff;
+
+  /// No description provided for @compare.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare'**
+  String get compare;
+
+  /// No description provided for @diffOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get diffOriginal;
+
+  /// No description provided for @diffChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get diffChanged;
+
+  /// No description provided for @diffIdentical.
+  ///
+  /// In en, this message translates to:
+  /// **'Two texts are identical'**
+  String get diffIdentical;
+
+  /// No description provided for @diffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'+{added} −{removed}'**
+  String diffSummary(int added, int removed);
+
   /// No description provided for @text.
   ///
   /// In en, this message translates to:

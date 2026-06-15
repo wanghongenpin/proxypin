@@ -968,6 +968,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get xmlViewer => 'XML 查看器';
 
   @override
+  String get textDiff => '文本对比';
+
+  @override
+  String get compare => '对比';
+
+  @override
+  String get diffOriginal => '原文';
+
+  @override
+  String get diffChanged => '新文';
+
+  @override
+  String get diffIdentical => '两段文本完全相同';
+
+  @override
+  String diffSummary(int added, int removed) {
+    return '新增 $added · 删除 $removed';
+  }
+
+  @override
   String get text => '文本';
 
   @override

@@ -178,14 +178,18 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isNewWindows = widget.windowId != null && Platform.isWindows;
+
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Platforms.isDesktop() ? const Size.fromHeight(23) : const Size.fromHeight(36),
-        child: AppBar(
-          title: Text("XML Viewer", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
-          centerTitle: true,
-        ),
-      ),
+      appBar: isNewWindows
+          ? null
+          : PreferredSize(
+              preferredSize: Platforms.isDesktop() ? const Size.fromHeight(23) : const Size.fromHeight(36),
+              child: AppBar(
+                title: Text("XML Viewer", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
+                centerTitle: true,
+              ),
+            ),
       body: Column(children: [
         Align(alignment: Alignment.centerRight, child: _toolbar()),
         const Divider(height: 1, thickness: 0.3),

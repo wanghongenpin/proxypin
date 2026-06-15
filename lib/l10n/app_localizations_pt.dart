@@ -981,6 +981,26 @@ class AppLocalizationsPt extends AppLocalizations {
   String get xmlViewer => 'XML Viewer';
 
   @override
+  String get textDiff => 'Text Diff';
+
+  @override
+  String get compare => 'Compare';
+
+  @override
+  String get diffOriginal => 'Original';
+
+  @override
+  String get diffChanged => 'Changed';
+
+  @override
+  String get diffIdentical => 'Two texts are identical';
+
+  @override
+  String diffSummary(int added, int removed) {
+    return '+$added −$removed';
+  }
+
+  @override
   String get text => 'Text';
 
   @override

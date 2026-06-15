@@ -335,6 +335,18 @@
   "qrCode": "QR Code",
   "jsonViewer": "JSON Viewer",
   "xmlViewer": "XML Viewer",
+  "textDiff": "Text Diff",
+  "compare": "Compare",
+  "diffOriginal": "Original",
+  "diffChanged": "Changed",
+  "diffIdentical": "Two texts are identical",
+  "diffSummary": "+{added} −{removed}",
+  "@diffSummary": {
+    "placeholders": {
+      "added": { "type": "int" },
+      "removed": { "type": "int" }
+    }
+  },
   "text": "Text",
   "format": "Format",
   "compact": "Compact",

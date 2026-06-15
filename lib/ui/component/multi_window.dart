@@ -53,6 +53,7 @@ import '../toolbox/encoder.dart';
 import '../toolbox/js_run.dart';
 import '../toolbox/json_viewer.dart';
 import '../toolbox/qr_code_page.dart';
+import '../toolbox/text_diff.dart';
 import '../toolbox/xml_viewer.dart';
 import '../toolbox/regexp.dart';
 import '../toolbox/timestamp.dart';
@@ -129,6 +130,10 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
 
   if (argument['name'] == 'XmlViewerPage') {
     return XmlViewerPage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'TextDiffPage') {
+    return TextDiffPage(windowId: windowId);
   }
 
   if (argument['name'] == 'CertHashPage') {

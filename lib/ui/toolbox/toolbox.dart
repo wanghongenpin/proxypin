@@ -18,6 +18,7 @@ import 'cert_hash.dart';
 import 'encoder.dart';
 import 'js_run.dart';
 import 'json_viewer.dart';
+import 'text_diff.dart';
 import 'websocket_request.dart';
 import 'xml_viewer.dart';
 
@@ -107,7 +108,7 @@ class _ToolboxState extends State<Toolbox> {
                           Navigator.of(context).push(MaterialPageRoute(builder: (context) => const JsonViewerPage()));
                           return;
                         }
-                        MultiWindow.openWindow("JSON Viewer", 'JsonViewerPage', size: const Size(900, 700));
+                        MultiWindow.openWindow("JSON Viewer", 'JsonViewerPage', size: const Size(760, 820));
                       },
                       icon: Icons.data_object,
                       text: 'JSON'),
@@ -121,6 +122,16 @@ class _ToolboxState extends State<Toolbox> {
                       },
                       icon: Icons.code,
                       text: 'XML'),
+                  IconText(
+                      onTap: () async {
+                        if (Platforms.isMobile()) {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const TextDiffPage()));
+                          return;
+                        }
+                        MultiWindow.openWindow(localizations.textDiff, 'TextDiffPage', size: const Size(1100, 720));
+                      },
+                      icon: Icons.difference_outlined,
+                      text: localizations.textDiff),
                 ],
               ),
               const Divider(thickness: 0.3),

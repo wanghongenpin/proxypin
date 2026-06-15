@@ -262,6 +262,12 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
       ),
     ]);
 
+    if (widget.windowId != null && Platform.isWindows) {
+      return Scaffold(
+        body: body,
+      );
+    }
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Platforms.isDesktop() ? const Size.fromHeight(23) : const Size.fromHeight(36),
