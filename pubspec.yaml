@@ -41,7 +41,7 @@ dependencies:
   flutter_qr_reader_plus: ^1.0.6
   brotli: ^0.6.0
   html: ^0.15.6
-  xml: ^6.6.1
+  xml: ^7.0.1
   ffi: ^2.1.0
 #  macos_window_utils: 1.6.1
   win32audio: ^1.5.0
