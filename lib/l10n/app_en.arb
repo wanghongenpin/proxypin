@@ -334,6 +334,7 @@
   "systemCertName": "System Certificate Name",
   "qrCode": "QR Code",
   "jsonViewer": "JSON Viewer",
+  "xmlViewer": "XML Viewer",
   "text": "Text",
   "format": "Format",
   "compact": "Compact",

@@ -978,6 +978,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get jsonViewer => 'JSON Viewer';
 
   @override
+  String get xmlViewer => 'XML Viewer';
+
+  @override
   String get text => 'Text';
 
   @override

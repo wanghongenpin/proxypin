@@ -1984,6 +1984,12 @@ abstract class AppLocalizations {
   /// **'JSON Viewer'**
   String get jsonViewer;
 
+  /// No description provided for @xmlViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'XML Viewer'**
+  String get xmlViewer;
+
   /// No description provided for @text.
   ///
   /// In en, this message translates to:

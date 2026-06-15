@@ -19,6 +19,7 @@ import 'encoder.dart';
 import 'js_run.dart';
 import 'json_viewer.dart';
 import 'websocket_request.dart';
+import 'xml_viewer.dart';
 
 class Toolbox extends StatefulWidget {
   final ProxyServer? proxyServer;
@@ -110,6 +111,16 @@ class _ToolboxState extends State<Toolbox> {
                       },
                       icon: Icons.data_object,
                       text: 'JSON'),
+                  IconText(
+                      onTap: () async {
+                        if (Platforms.isMobile()) {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const XmlViewerPage()));
+                          return;
+                        }
+                        MultiWindow.openWindow("XML Viewer", 'XmlViewerPage', size: const Size(900, 700));
+                      },
+                      icon: Icons.code,
+                      text: 'XML'),
                 ],
               ),
               const Divider(thickness: 0.3),
@@ -198,7 +209,7 @@ class _ToolboxState extends State<Toolbox> {
                         }
                         MultiWindow.openWindow(localizations.regExp, 'RegExpPage', size: const Size(800, 720));
                       },
-                      icon: Icons.code,
+                      icon: Icons.find_in_page_outlined,
                       text: localizations.regExp,
                       tooltip: localizations.regExp),
                   IconText(

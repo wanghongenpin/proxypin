@@ -965,6 +965,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jsonViewer => 'JSON 工具';
 
   @override
+  String get xmlViewer => 'XML 查看器';
+
+  @override
   String get text => '文本';
 
   @override

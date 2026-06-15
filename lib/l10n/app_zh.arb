@@ -333,6 +333,7 @@
   "regExp": "正则表达式",
   "qrCode": "二维码",
   "jsonViewer": "JSON 工具",
+  "xmlViewer": "XML 查看器",
   "text": "文本",
   "format": "格式化",
   "compact": "压缩",
