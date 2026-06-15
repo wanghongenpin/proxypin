@@ -236,8 +236,12 @@
   "useGuide": "Hướng dẫn",
   "username": "Tên người dùng",
   "value": "Giá trị",
-  "view": "Xem",
+  "preview": "Xem trước",
   "viewExport": "Xem bản xuất",
   "windowMode": "Chế độ cửa sổ",
-  "yellow": "Vàng"
+  "yellow": "Vàng",
+  "encode": "Mã hóa",
+  "view": "Xem",
+  "cipher": "Mật mã",
+  "other": "Khác"
 }

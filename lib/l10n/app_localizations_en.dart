@@ -975,6 +975,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qrCode => 'QR Code';
 
   @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
+
+  @override
   String get scanQrCode => 'Scan QR Code';
 
   @override
@@ -1021,6 +1036,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cipher => 'Cipher';
+
+  @override
+  String get view => 'View';
 
   @override
   String get appUpdateCheckVersion => 'Check for Updates';
@@ -1115,5 +1133,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteUrl => 'Remote URL';
 
   @override
-  String get view => 'View';
+  String get preview => 'Preview';
 }

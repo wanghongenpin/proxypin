@@ -326,6 +326,7 @@
   "encrypt": "加密",
   "decrypt": "解密",
   "cipher": "密文",
+  "view": "查看",
   "requestCrypto": "請求解密",
   "cryptoDecoded": "已解密",
   "cryptoDecodeToggle": "解密",
@@ -360,5 +361,5 @@
 
   "local": "本地",
   "remoteUrl": "遠端URL",
-  "view": "檢視"
+  "preview": "預覽"
 }

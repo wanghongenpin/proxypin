@@ -1978,6 +1978,36 @@ abstract class AppLocalizations {
   /// **'QR Code'**
   String get qrCode;
 
+  /// No description provided for @jsonViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON Viewer'**
+  String get jsonViewer;
+
+  /// No description provided for @text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get text;
+
+  /// No description provided for @format.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get format;
+
+  /// No description provided for @compact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get compact;
+
+  /// No description provided for @wordWrap.
+  ///
+  /// In en, this message translates to:
+  /// **'Word Wrap'**
+  String get wordWrap;
+
   /// No description provided for @scanQrCode.
   ///
   /// In en, this message translates to:
@@ -2073,6 +2103,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cipher'**
   String get cipher;
+
+  /// No description provided for @view.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view;
 
   /// No description provided for @appUpdateCheckVersion.
   ///
@@ -2254,11 +2290,11 @@ abstract class AppLocalizations {
   /// **'Remote URL'**
   String get remoteUrl;
 
-  /// No description provided for @view.
+  /// No description provided for @preview.
   ///
   /// In en, this message translates to:
-  /// **'View'**
-  String get view;
+  /// **'Preview'**
+  String get preview;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -779,7 +779,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                               children: [
                                                 TextSpan(text: '${localizations.click} “'),
                                                 TextSpan(
-                                                  text: localizations.view,
+                                                  text: localizations.preview,
                                                   style: const TextStyle(
                                                     color: Colors.blue,
                                                     fontSize: 12,

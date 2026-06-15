@@ -333,6 +333,11 @@
   "regExp": "RegExp",
   "systemCertName": "System Certificate Name",
   "qrCode": "QR Code",
+  "jsonViewer": "JSON Viewer",
+  "text": "Text",
+  "format": "Format",
+  "compact": "Compact",
+  "wordWrap": "Word Wrap",
   "scanQrCode": "Scan QR Code",
   "generateQrCode": "Generate",
   "saveImage": "Save Image",
@@ -349,6 +354,7 @@
   "encrypt": "Encrypt",
   "decrypt": "Decrypt",
   "cipher": "Cipher",
+  "view": "View",
 
   "appUpdateCheckVersion": "Check for Updates",
   "appUpdateNotAvailableMsg": "Already Using The Latest Version",
@@ -386,5 +392,5 @@
 
   "local": "Local",
   "remoteUrl": "Remote URL",
-  "view": "View"
+  "preview": "Preview"
 }

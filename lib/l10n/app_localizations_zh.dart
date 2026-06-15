@@ -962,6 +962,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get qrCode => '二维码';
 
   @override
+  String get jsonViewer => 'JSON 工具';
+
+  @override
+  String get text => '文本';
+
+  @override
+  String get format => '格式化';
+
+  @override
+  String get compact => '压缩';
+
+  @override
+  String get wordWrap => '自动换行';
+
+  @override
   String get scanQrCode => '扫描二维码';
 
   @override
@@ -1008,6 +1023,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cipher => '加解密';
+
+  @override
+  String get view => '查看';
 
   @override
   String get appUpdateCheckVersion => '检查更新';
@@ -1101,7 +1119,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteUrl => '远程URL';
 
   @override
-  String get view => '查看';
+  String get preview => '预览';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2100,6 +2118,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get cipher => '密文';
 
   @override
+  String get view => '查看';
+
+  @override
   String get appUpdateCheckVersion => '檢查更新';
 
   @override
@@ -2190,5 +2211,5 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get remoteUrl => '遠端URL';
 
   @override
-  String get view => '檢視';
+  String get preview => '預覽';
 }

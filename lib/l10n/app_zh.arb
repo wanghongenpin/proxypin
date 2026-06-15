@@ -332,6 +332,11 @@
   "systemCertName": "系统证书名称",
   "regExp": "正则表达式",
   "qrCode": "二维码",
+  "jsonViewer": "JSON 工具",
+  "text": "文本",
+  "format": "格式化",
+  "compact": "压缩",
+  "wordWrap": "自动换行",
   "generateQrCode": "生成二维码",
   "scanQrCode": "扫描二维码",
   "saveImage": "保存图片",
@@ -348,6 +353,7 @@
   "encrypt": "加密",
   "decrypt": "解密",
   "cipher": "加解密",
+  "view": "查看",
 
   "appUpdateCheckVersion": "检查更新",
   "appUpdateNotAvailableMsg": "已是最新版本",
@@ -386,5 +392,5 @@
 
   "local": "本地",
   "remoteUrl": "远程URL",
-  "view": "查看"
+  "preview": "预览"
 }

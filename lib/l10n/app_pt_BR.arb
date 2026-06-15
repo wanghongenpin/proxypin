@@ -236,8 +236,12 @@
   "useGuide": "Guia de uso",
   "username": "Usuário",
   "value": "Valor",
-  "view": "Ver",
+  "preview": "Visualizar",
   "viewExport": "Ver exportação",
   "windowMode": "Modo janela",
-  "yellow": "Amarelo"
+  "yellow": "Amarelo",
+  "encode": "Codificar",
+  "view": "Visualizar",
+  "cipher": "Cifra",
+  "other": "Outros"
 }

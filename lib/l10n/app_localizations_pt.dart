@@ -975,6 +975,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get qrCode => 'QR Code';
 
   @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
+
+  @override
   String get scanQrCode => 'Scan QR Code';
 
   @override
@@ -1021,6 +1036,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get cipher => 'Cipher';
+
+  @override
+  String get view => 'View';
 
   @override
   String get appUpdateCheckVersion => 'Check for Updates';
@@ -1115,7 +1133,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get remoteUrl => 'Remote URL';
 
   @override
-  String get view => 'View';
+  String get preview => 'Preview';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1584,6 +1602,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get requestEdit => 'Editar e enviar';
 
   @override
+  String get encode => 'Codificar';
+
+  @override
   String get requestBody => 'Corpo da requisição';
 
   @override
@@ -1799,6 +1820,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get requestBlock => 'Bloqueio de requisição';
 
   @override
+  String get other => 'Outros';
+
+  @override
   String get systemCertName => 'Nome do certificado do sistema';
 
   @override
@@ -1806,6 +1830,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get hosts => 'Hosts';
+
+  @override
+  String get cipher => 'Cifra';
+
+  @override
+  String get view => 'Visualizar';
 
   @override
   String get appUpdateCheckVersion => 'Procurar atualizações';
@@ -1850,5 +1880,5 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get remoteUrl => 'URL remoto';
 
   @override
-  String get view => 'Ver';
+  String get preview => 'Visualizar';
 }

@@ -236,8 +236,12 @@
   "useGuide": "คู่มือ",
   "username": "ชื่อผู้ใช้",
   "value": "ค่า",
-  "view": "ดู",
+  "preview": "ดูตัวอย่าง",
   "viewExport": "ดูไฟล์ส่งออก",
   "windowMode": "โหมดหน้าต่าง",
-  "yellow": "เหลือง"
+  "yellow": "เหลือง",
+  "encode": "เข้ารหัส",
+  "view": "ดู",
+  "cipher": "รหัสลับ",
+  "other": "อื่นๆ"
 }

@@ -603,7 +603,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get requestEdit => 'แก้ไขและส่ง';
 
   @override
-  String get encode => 'Encode';
+  String get encode => 'เข้ารหัส';
 
   @override
   String get requestBody => 'เนื้อหาคำขอ';
@@ -954,7 +954,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get requestBlock => 'บล็อกคำขอ';
 
   @override
-  String get other => 'Other';
+  String get other => 'อื่นๆ';
 
   @override
   String get certHashName => 'CA Hash Name';
@@ -967,6 +967,21 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get qrCode => 'QR Code';
+
+  @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
 
   @override
   String get scanQrCode => 'Scan QR Code';
@@ -1014,7 +1029,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get decrypt => 'Decrypt';
 
   @override
-  String get cipher => 'Cipher';
+  String get cipher => 'รหัสลับ';
+
+  @override
+  String get view => 'ดู';
 
   @override
   String get appUpdateCheckVersion => 'ตรวจสอบการอัปเดต';
@@ -1108,5 +1126,5 @@ class AppLocalizationsTh extends AppLocalizations {
   String get remoteUrl => 'URL ระยะไกล';
 
   @override
-  String get view => 'ดู';
+  String get preview => 'ดูตัวอย่าง';
 }

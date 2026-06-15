@@ -603,7 +603,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get requestEdit => 'Editar y enviar';
 
   @override
-  String get encode => 'Encode';
+  String get encode => 'Codificar';
 
   @override
   String get requestBody => 'Cuerpo de la solicitud';
@@ -955,7 +955,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get requestBlock => 'Bloqueo de solicitudes';
 
   @override
-  String get other => 'Other';
+  String get other => 'Otros';
 
   @override
   String get certHashName => 'CA Hash Name';
@@ -968,6 +968,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get qrCode => 'QR Code';
+
+  @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
 
   @override
   String get scanQrCode => 'Scan QR Code';
@@ -1015,7 +1030,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get decrypt => 'Decrypt';
 
   @override
-  String get cipher => 'Cipher';
+  String get cipher => 'Cifrado';
+
+  @override
+  String get view => 'Ver';
 
   @override
   String get appUpdateCheckVersion => 'Buscar actualizaciones';
@@ -1109,5 +1127,5 @@ class AppLocalizationsEs extends AppLocalizations {
   String get remoteUrl => 'URL remota';
 
   @override
-  String get view => 'Ver';
+  String get preview => 'Vista previa';
 }

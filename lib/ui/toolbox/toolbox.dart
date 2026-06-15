@@ -17,6 +17,7 @@ import 'aes_page.dart';
 import 'cert_hash.dart';
 import 'encoder.dart';
 import 'js_run.dart';
+import 'json_viewer.dart';
 import 'websocket_request.dart';
 
 class Toolbox extends StatefulWidget {
@@ -92,6 +93,23 @@ class _ToolboxState extends State<Toolbox> {
                         ..show();
                     },
                   ),
+                ],
+              ),
+              const Divider(thickness: 0.3),
+              Text(localizations.view, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              Wrap(
+                spacing: 6,
+                children: [
+                  IconText(
+                      onTap: () async {
+                        if (Platforms.isMobile()) {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const JsonViewerPage()));
+                          return;
+                        }
+                        MultiWindow.openWindow("JSON Viewer", 'JsonViewerPage', size: const Size(900, 700));
+                      },
+                      icon: Icons.data_object,
+                      text: 'JSON'),
                 ],
               ),
               const Divider(thickness: 0.3),

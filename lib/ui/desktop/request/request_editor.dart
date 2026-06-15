@@ -622,7 +622,7 @@ class _HttpState extends State<_HttpWidget> {
           ),
           const Spacer(),
           IconButton(
-            tooltip: isCN ? '自动换行' : 'Word Wrap',
+            tooltip: localizations.wordWrap,
             iconSize: 16,
             visualDensity: VisualDensity.compact,
             icon: Icon(Icons.wrap_text, color: _bodyWrap ? color : null),
@@ -630,7 +630,7 @@ class _HttpState extends State<_HttpWidget> {
           ),
           SizedBox(width: 3),
           IconButton(
-            tooltip: isCN ? '美化' : 'Beautify',
+            tooltip: localizations.format,
             iconSize: 16,
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.auto_fix_high),

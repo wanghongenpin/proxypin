@@ -118,11 +118,10 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
   Map<String, bool> openFlag = {};
 
   @override
-  void didUpdateWidget(covariant JsonObjectViewer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    openFlag = {};
+  void dispose() {
+    openFlag.clear();
+    super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     if (widget.notRoot) {
@@ -250,8 +249,13 @@ class JsonArrayViewer extends StatefulWidget {
 }
 
 class _JsonArrayViewerState extends State<JsonArrayViewer> {
-  late List<bool> openFlag;
+  final Map<int, bool> openFlag = {};
 
+  @override
+  void dispose() {
+    openFlag.clear();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     if (widget.notRoot) {
@@ -260,12 +264,6 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: _getList()));
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: _getList());
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    openFlag = List.filled(widget.jsonArray.length, false);
   }
 
   List<Widget> _getList() {
@@ -288,7 +286,7 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
         ],
       ));
       list.add(const SizedBox(height: 4));
-      if (openFlag[i]) {
+      if (openFlag[i] ?? false) {
         list.add(JsonObjectViewerState.getContentWidget(content, widget.colorTheme,
             searchController: widget.searchController,
             matchTotalCount: widget.matchTotalCount,
@@ -306,14 +304,14 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
       return InkWell(
           onTap: () {
             setState(() {
-              openFlag[index] = !(openFlag[index]);
+              openFlag[index] = !(openFlag[index] ?? false);
             });
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              openFlag[index]
+              (openFlag[index] ?? false)
                   ? const Icon(Icons.keyboard_arrow_down, size: 18)
                   : const Icon(Icons.keyboard_arrow_right, size: 18),
               Text('[$index]', style: TextStyle(color: widget.colorTheme.propertyKey)),

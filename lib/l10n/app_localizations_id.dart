@@ -955,7 +955,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get requestBlock => 'Blokir permintaan';
 
   @override
-  String get other => 'Other';
+  String get other => 'Lainnya';
 
   @override
   String get certHashName => 'CA Hash Name';
@@ -968,6 +968,21 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get qrCode => 'QR Code';
+
+  @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
 
   @override
   String get scanQrCode => 'Scan QR Code';
@@ -1015,7 +1030,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get decrypt => 'Decrypt';
 
   @override
-  String get cipher => 'Cipher';
+  String get cipher => 'Sandi';
+
+  @override
+  String get view => 'Lihat';
 
   @override
   String get appUpdateCheckVersion => 'Periksa pembaruan';
@@ -1110,5 +1128,5 @@ class AppLocalizationsId extends AppLocalizations {
   String get remoteUrl => 'URL jarak jauh';
 
   @override
-  String get view => 'Lihat';
+  String get preview => 'Pratinjau';
 }

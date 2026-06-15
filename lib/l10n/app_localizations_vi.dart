@@ -603,7 +603,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get requestEdit => 'Sửa yêu cầu';
 
   @override
-  String get encode => 'Encode';
+  String get encode => 'Mã hóa';
 
   @override
   String get requestBody => 'Thân request';
@@ -954,7 +954,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get requestBlock => 'Chặn yêu cầu';
 
   @override
-  String get other => 'Other';
+  String get other => 'Khác';
 
   @override
   String get certHashName => 'CA Hash Name';
@@ -967,6 +967,21 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get qrCode => 'QR Code';
+
+  @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
 
   @override
   String get scanQrCode => 'Scan QR Code';
@@ -1014,7 +1029,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get decrypt => 'Decrypt';
 
   @override
-  String get cipher => 'Cipher';
+  String get cipher => 'Mật mã';
+
+  @override
+  String get view => 'Xem';
 
   @override
   String get appUpdateCheckVersion => 'Kiểm tra cập nhật';
@@ -1108,5 +1126,5 @@ class AppLocalizationsVi extends AppLocalizations {
   String get remoteUrl => 'URL từ xa';
 
   @override
-  String get view => 'Xem';
+  String get preview => 'Xem trước';
 }

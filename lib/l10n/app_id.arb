@@ -236,8 +236,12 @@
   "useGuide": "Panduan penggunaan",
   "username": "Nama pengguna",
   "value": "Nilai",
-  "view": "Lihat",
+  "preview": "Pratinjau",
   "viewExport": "Lihat ekspor",
   "windowMode": "Mode jendela",
-  "yellow": "Kuning"
+  "yellow": "Kuning",
+  "encode": "Encode",
+  "view": "Lihat",
+  "cipher": "Sandi",
+  "other": "Lainnya"
 }

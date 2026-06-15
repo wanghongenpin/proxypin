@@ -51,6 +51,7 @@ import '../desktop/setting/request_map.dart';
 import '../toolbox/cert_hash.dart';
 import '../toolbox/encoder.dart';
 import '../toolbox/js_run.dart';
+import '../toolbox/json_viewer.dart';
 import '../toolbox/qr_code_page.dart';
 import '../toolbox/regexp.dart';
 import '../toolbox/timestamp.dart';
@@ -119,6 +120,10 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
 
   if (argument['name'] == 'QrCodePage') {
     return QrCodePage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'JsonViewerPage') {
+    return JsonViewerPage(windowId: windowId);
   }
 
   if (argument['name'] == 'CertHashPage') {
