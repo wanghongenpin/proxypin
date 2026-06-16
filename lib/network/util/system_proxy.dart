@@ -46,17 +46,17 @@ class SystemProxy {
   ///获取代理忽略地址
   static String get proxyPassDomains {
     if (Platform.isMacOS) {
-      return '192.168.0.0/16;10.0.0.0/8;172.16.0.0/12;127.0.0.1;localhost;*.local;timestamp.apple.com';
+      return '';
     }
     if (Platform.isWindows) {
-      return '192.168.0.*;10.0.0.*;172.16.0.*;127.0.0.1;localhost;*.local;<local>';
+      return '';
     }
 
     if (Platform.isAndroid) {
-      return '192.168.0.0/16;10.0.0.0/8;172.16.0.0/12;127.0.0.1;localhost';
+      return '';
     }
     if (Platform.isIOS) {
-      return '192.168.0.0/16;10.0.0.0/8;172.16.0.0/12;127.0.0.1;localhost;*.local;timestamp.apple.com';
+      return '';
     }
 
     return '';
@@ -189,13 +189,18 @@ class MacSystemProxy implements SystemProxy {
     }
 
     final quotedName = _shellQuote(_hardwarePort!);
+    var bypass = proxyPassDomains.replaceAll(";", " ");
+    if (bypass.isEmpty) {
+      bypass = '""';
+    }
 
     List<String> commands = [
       'networksetup -setwebproxy $quotedName 127.0.0.1 $port',
       sslSetting == true ? 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port' : '',
-      'networksetup -setproxybypassdomains $quotedName ${proxyPassDomains.replaceAll(";", " ")}',
+      'networksetup -setproxybypassdomains $quotedName $bypass',
       'networksetup -setsocksfirewallproxystate $quotedName off',
     ];
+    print("Running commands:\n${commands.where((c) => c.isNotEmpty).join('\n')}");
     var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
     logger.d('set proxyServer, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
     bool success = results.exitCode == 0;
@@ -236,7 +241,8 @@ class MacSystemProxy implements SystemProxy {
     var name = await networkName();
     // Use a safer pipeline that avoids embedding awk's $2 (which complicates Dart string quoting).
     // This command finds the Device line, takes the following Hardware Port line, and extracts the part after ':'
-    var cmd = 'networksetup -listnetworkserviceorder | grep "Device: ${name}" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
+    var cmd =
+        'networksetup -listnetworkserviceorder | grep "Device: ${name}" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
     var results = await Process.run('bash', ['-c', cmd]);
     var out = results.stdout.toString().trim();
     if (out.isEmpty) return '';
@@ -254,8 +260,11 @@ class MacSystemProxy implements SystemProxy {
       return;
     }
     final quotedName = _shellQuote(_hardwarePort!);
-    var results = await Process.run(
-        'bash', ['-c', 'networksetup -setproxybypassdomains $quotedName ${proxyPassDomains.replaceAll(";", " ")}']);
+    var pass = proxyPassDomains.replaceAll(";", " ");
+    if (pass.isEmpty) {
+      pass = '""';
+    }
+    var results = await Process.run('bash', ['-c', 'networksetup -setproxybypassdomains $quotedName $pass']);
     logger.d('set proxyPassDomains, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
   }
 

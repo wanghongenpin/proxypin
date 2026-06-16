@@ -262,6 +262,13 @@ class _MobileSslState extends State<MobileSslWidget> {
   }
 
   void _exportFile(String name, {File? file, Uint8List? bytes}) async {
+    if (Platform.isIOS) {
+      await widget.proxyServer.retryBind();
+      final url = Uri.parse("http://127.0.0.1:${widget.proxyServer.port}/ssl");
+      launchUrl(url, mode: LaunchMode.externalApplication);
+      return;
+    }
+
     bytes ??= await file!.readAsBytes();
 
     String? outputFile =
