@@ -115,9 +115,9 @@ class RequestBlockItem {
   RequestBlockItem(this.enabled, this.url, this.type);
 
   //匹配url
-  bool match(String url, BlockType blockType) {
+  bool match(String matchUrl, BlockType blockType) {
     urlReg ??= UrlPattern.toHostRegExp(url);
-    return enabled && type == blockType && urlReg!.hasMatch(url);
+    return enabled && type == blockType && urlReg!.hasMatch(matchUrl);
   }
 
   factory RequestBlockItem.fromJson(Map<String, dynamic> json) {
