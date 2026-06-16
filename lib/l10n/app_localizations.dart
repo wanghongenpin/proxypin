@@ -1996,6 +1996,12 @@ abstract class AppLocalizations {
   /// **'Text Diff'**
   String get textDiff;
 
+  /// No description provided for @textEditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Editor'**
+  String get textEditor;
+
   /// No description provided for @compare.
   ///
   /// In en, this message translates to:

@@ -978,6 +978,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get textDiff => 'Text Diff';
 
   @override
+  String get textEditor => 'Text Editor';
+
+  @override
   String get compare => 'Compare';
 
   @override

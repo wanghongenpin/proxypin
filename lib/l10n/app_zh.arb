@@ -335,6 +335,7 @@
   "jsonViewer": "JSON 工具",
   "xmlViewer": "XML 查看器",
   "textDiff": "文本对比",
+  "textEditor": "文本编辑",
   "compare": "对比",
   "diffOriginal": "原文",
   "diffChanged": "新文",

@@ -971,6 +971,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textDiff => '文本对比';
 
   @override
+  String get textEditor => '文本编辑';
+
+  @override
   String get compare => '对比';
 
   @override

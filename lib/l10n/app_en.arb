@@ -336,6 +336,7 @@
   "jsonViewer": "JSON Viewer",
   "xmlViewer": "XML Viewer",
   "textDiff": "Text Diff",
+  "textEditor": "Text Editor",
   "compare": "Compare",
   "diffOriginal": "Original",
   "diffChanged": "Changed",
