@@ -24,8 +24,9 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_highlight/themes/atom-one-dark.dart';
-import 'package:flutter_highlight/themes/atom-one-light.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/component/search/finder.dart';
@@ -36,6 +37,7 @@ import 'package:re_highlight/languages/bash.dart';
 import 'package:re_highlight/languages/css.dart';
 import 'package:re_highlight/languages/dart.dart';
 import 'package:re_highlight/languages/go.dart';
+import 'package:re_highlight/languages/http.dart';
 import 'package:re_highlight/languages/java.dart';
 import 'package:re_highlight/languages/javascript.dart';
 import 'package:re_highlight/languages/json.dart';
@@ -75,6 +77,7 @@ class _LangOption {
 
 final List<_LangOption> _langs = [
   _LangOption('Plain Text', null),
+  _LangOption('HTTP', langHttp),
   _LangOption('JSON', langJson),
   _LangOption('XML / HTML', langXml),
   _LangOption('JavaScript', langJavascript),
@@ -199,6 +202,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
       _controller.text = content;
       _autoDetectLanguage(path);
     } catch (e) {
+      logger.w('Failed to open file: ', error: e);
       _toast('${localizations.fail}: $e');
     }
   }
@@ -207,6 +211,8 @@ class _TextEditorPageState extends State<TextEditorPage> {
   void _autoDetectLanguage(String path) {
     final ext = path.split('.').last.toLowerCase();
     const map = {
+      'http': 'HTTP',
+      'rest': 'HTTP',
       'json': 'JSON',
       'xml': 'XML / HTML',
       'html': 'XML / HTML',
@@ -269,7 +275,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
 
   void _toast(String msg) {
     if (!mounted) return;
-    FlutterToastr.show(msg, context, duration: 2);
+    FlutterToastr.show(msg, context, duration: 3);
   }
 
   // ---------- UI ----------

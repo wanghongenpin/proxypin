@@ -1,6 +1,6 @@
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:re_highlight/styles/monokai-sublime.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:re_highlight/languages/javascript.dart';
 
