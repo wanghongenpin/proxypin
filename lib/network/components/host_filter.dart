@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import 'package:proxypin/network/util/url_pattern.dart';
-
 void main() {
   print(HostFilter.filter("stackoverflow.com"));
 }
@@ -67,13 +65,13 @@ abstract class HostList {
   }
 
   void add(String reg) {
-    var regExp = UrlPattern.toHostRegExp(reg);
+    var regExp = RegExp(reg.replaceAll("*", ".*"));
     list.removeWhere((element) => element.pattern == regExp.pattern);
     list.add(regExp);
   }
 
   void remove(String reg) {
-    list.removeWhere((element) => element.pattern == UrlPattern.toHostRegExp(reg).pattern);
+    list.removeWhere((element) => element.pattern == reg.replaceAll("*", ".*"));
   }
 
   void removeIndex(List<int> index) {
