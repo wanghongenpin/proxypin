@@ -13,6 +13,7 @@ import 'package:proxypin/network/components/manager/request_crypto_manager.dart'
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 bool _refresh = false;
 
@@ -141,7 +142,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
       });
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
     if (path == null) return;
@@ -382,7 +383,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_crypto.json'});
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      path = await FilePicker.saveFile(fileName: 'request_crypto.json');
+      path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json');
     }
     if (path == null) return;
     await File(path).writeAsString(jsonEncode(data));

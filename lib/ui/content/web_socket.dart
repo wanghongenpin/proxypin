@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/num.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../network/http/http.dart';
@@ -91,7 +92,7 @@ class Websocket extends StatelessWidget {
                                           customItem: ContextMenuButtonItem(
                                             label: localizations.download,
                                             onPressed: () async {
-                                              String? path = (await FilePicker.saveFile(
+                                              String? path = (await FilePicker.platform.saveFile(
                                                   fileName: "websocket.txt", bytes: message.payloadData));
                                               if (path != null && context.mounted) {
                                                 CustomToast.success(localizations.saveSuccess).show(context);

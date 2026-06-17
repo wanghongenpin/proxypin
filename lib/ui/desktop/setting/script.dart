@@ -22,21 +22,19 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:code_forge/code_forge.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:re_highlight/styles/monokai-sublime.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
-import 'package:re_highlight/languages/javascript.dart';
-import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
-import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/flutter_compat.dart';
+import 'package:proxypin/utils/lang.dart';
 
 bool _refresh = false;
 
@@ -176,7 +174,8 @@ class _ScriptWidgetState extends State<ScriptWidget> {
       });
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
 
@@ -350,7 +349,7 @@ class ScriptEdit extends StatefulWidget {
 }
 
 class _ScriptEditState extends State<ScriptEdit> {
-  late CodeForgeController script;
+  late CodeController script;
   late TextEditingController nameController;
   late List<TextEditingController> urlControllers;
   late TextEditingController remoteUrlController;
@@ -403,7 +402,7 @@ class _ScriptEditState extends State<ScriptEdit> {
   void initState() {
     super.initState();
     _useRemote = widget.fromRemoteUrl || ((widget.scriptItem?.remoteUrl ?? '').trim().isNotEmpty);
-    script = CodeForgeController()..text = widget.script ?? (_useRemote ? '' : ScriptManager.template);
+    script = CodeController()..text = widget.script ?? (_useRemote ? '' : ScriptManager.template);
     nameController = TextEditingController(text: widget.scriptItem?.name ?? widget.title);
     remoteUrlController = TextEditingController(text: widget.scriptItem?.remoteUrl ?? '');
     final urls = widget.scriptItem?.urls ??
@@ -672,15 +671,13 @@ class _ScriptEditState extends State<ScriptEdit> {
                               ),
                               child: Stack(
                                 children: [
-                                  CodeForge(
-                                    controller: script,
-                                    language: langJavascript,
-                                    editorTheme: monokaiSublimeTheme,
-                                    readOnly: _useRemote,
-                                    autoFocus: true,
-                                    enableGuideLines: false,
-                                    finderBuilder: (c, controller) => FindPanelView(controller: controller),
-                                    textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                  CodeTheme(
+                                    data: CodeThemeData(styles: monokaiSublimeTheme),
+                                    child: CodeField(
+                                      controller: script,
+                                      readOnly: _useRemote,
+                                      textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                    ),
                                   ),
                                   if (_useRemote && script.text.trim().isEmpty)
                                     Positioned.fill(
@@ -964,7 +961,7 @@ class _ScriptListState extends State<ScriptList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-      path = await FilePicker.saveFile(fileName: fileName);
+      path = await FilePicker.platform.saveFile(fileName: fileName);
     }
     if (path == null) {
       return;

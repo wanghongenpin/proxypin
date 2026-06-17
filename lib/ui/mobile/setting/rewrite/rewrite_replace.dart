@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'package:code_forge/code_forge.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
+import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:re_highlight/languages/json.dart';
 
 /// 重写替换
 /// @author wanghongen
@@ -42,8 +42,7 @@ class MobileRewriteReplace extends StatefulWidget {
 
 class RewriteReplaceState extends State<MobileRewriteReplace> {
   final _headerKey = GlobalKey<HeadersState>();
-  final bodyTextController = CodeForgeController();
-  late FindController findController;
+  final bodyTextController = CodeController();
   VoidCallback? _bodyListener;
 
   late RuleType ruleType;
@@ -55,7 +54,6 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
   void initState() {
     super.initState();
     initItems(widget.ruleType, widget.items);
-    findController = FindController(bodyTextController);
   }
 
   @override
@@ -176,7 +174,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
         SizedBox(
             width: 90,
             child: DropdownButtonFormField<String>(
-                initialValue: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
+                value: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
                 focusColor: Colors.transparent,
                 itemHeight: 48,
                 decoration:
@@ -192,7 +190,8 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
                     }))),
         Expanded(
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          IconButton(icon: Icon(Icons.search, size: 20), onPressed: () => findController.toggleActive()),
+          // 搜索通过快捷键 Ctrl+F 触发
+          SizedBox(width: 20),
           IconButton(
             tooltip: 'JSON Format',
             icon:
@@ -234,16 +233,21 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
               };
               bodyTextController.addListener(_bodyListener!);
 
-              return CodeForge(
-                controller: bodyTextController,
-                findController: findController,
-                lineWrap: true,
-                language: isJsonText() ? langJson : null,
-                enableGuideLines: false,
-                selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
-                textStyle: const TextStyle(fontSize: 14),
-                finderBuilder: (c, controller) => FindPanelView(controller: controller),
+              // 设置语言
+              if (isJsonText()) {
+                bodyTextController.language = langJson;
+              }
+
+              final editorTheme =
+                  ThemeCompat.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme;
+              return CodeTheme(
+                data: CodeThemeData(styles: editorTheme),
+                child: CodeField(
+                  controller: bodyTextController,
+                  wrap: true,
+                  cursorColor: Theme.of(context).colorScheme.primary,
+                  textStyle: const TextStyle(fontSize: 14),
+                ),
               );
             }))
     ]);
@@ -262,7 +266,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         FilledButton(
             onPressed: () async {
-              FilePickerResult? result = await FilePicker.pickFiles();
+              FilePickerResult? result = await FilePicker.platform.pickFiles();
               if (result == null) {
                 return;
               }
@@ -326,7 +330,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
           SizedBox(
               width: 120,
               child: DropdownButtonFormField<String>(
-                  initialValue: rewriteItem.method?.name ?? 'GET',
+                  value: rewriteItem.method?.name ?? 'GET',
                   focusColor: Colors.transparent,
                   itemHeight: 48,
                   decoration: const InputDecoration(

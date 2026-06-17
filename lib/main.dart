@@ -17,7 +17,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
@@ -35,8 +34,6 @@ import 'l10n/app_localizations.dart';
 ///@author wanghongen
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  await RustLib.init();
-
 
   //多窗口
   if (args.firstOrNull == 'multi_window') {
@@ -95,7 +92,7 @@ class FluentApp extends StatelessWidget {
 
     Color? themeColor = isDark ? appConfiguration.themeColor : appConfiguration.themeColor;
     Color? cardColor = isDark ? Color(0XFF3C3C3C) : Colors.white;
-    Color? surfaceContainer = isDark ? Colors.grey[800] : Colors.white;
+    // Color? surfaceContainer = isDark ? Colors.grey[800] : Colors.white;
 
     Color? secondary = useMaterial3 ? null : themeColor;
     if (themeColor is MaterialColor) {
@@ -103,13 +100,12 @@ class FluentApp extends StatelessWidget {
     }
 
     var colorScheme = ColorScheme.fromSeed(
-      brightness: brightness,
-      seedColor: themeColor,
-      primary: themeColor,
-      surface: cardColor,
-      secondary: secondary,
-      onPrimary: isDark ? Colors.white : null
-    );
+        brightness: brightness,
+        seedColor: themeColor,
+        primary: themeColor,
+        surface: cardColor,
+        secondary: secondary,
+        onPrimary: isDark ? Colors.white : null);
 
     var themeData =
         ThemeData(brightness: brightness, useMaterial3: appConfiguration.useMaterial3, colorScheme: colorScheme);

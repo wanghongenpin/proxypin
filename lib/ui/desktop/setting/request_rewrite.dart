@@ -33,6 +33,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_replace.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../component/http_method_popup.dart';
 
@@ -163,7 +164,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
       WindowController.fromWindowId(widget.windowId).show();
     } else {
       FilePickerResult? result =
-          await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
       path = result?.files.single.path;
     }
 
@@ -378,7 +379,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-      path = await FilePicker.saveFile(fileName: fileName);
+      path = await FilePicker.platform.saveFile(fileName: fileName);
     }
 
     if (path == null) {
@@ -604,7 +605,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                             height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: ruleType,
+                              value: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),

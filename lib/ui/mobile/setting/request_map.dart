@@ -12,6 +12,7 @@ import 'package:proxypin/ui/mobile/setting/request_map/map_local.dart';
 import 'package:proxypin/ui/mobile/setting/request_map/map_scipt.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../../../network/util/logger.dart';
 import '../../../utils/platform.dart';
@@ -95,7 +96,7 @@ class _RequestMapPageState extends State<MobileRequestMapPage> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -517,7 +518,7 @@ class _RequestMapEditState extends State<MobileRequestMapEdit> {
                                     height: 33,
                                     child: DropdownButtonFormField<RequestMapType>(
                                       onSaved: (val) => rule.type = val!,
-                                      initialValue: mapType,
+                                      value: mapType,
                                       decoration: InputDecoration(
                                           errorStyle: const TextStyle(height: 0, fontSize: 0),
                                           contentPadding: const EdgeInsets.only(left: 7, right: 7),

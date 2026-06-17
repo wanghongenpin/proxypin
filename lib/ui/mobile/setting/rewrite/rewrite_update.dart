@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
-import 'package:code_forge/code_forge/code_area.dart';
-import 'package:code_forge/code_forge/controller.dart';
-import 'package:code_forge/code_forge/find_controller.dart';
-import 'package:code_forge/code_forge/styling.dart';
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:re_highlight/languages/json.dart';
 
 class MobileRewriteUpdate extends StatefulWidget {
   final RuleType ruleType;
@@ -123,8 +118,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   var keyController = TextEditingController();
   var valueController = TextEditingController();
-  final CodeForgeController _codeDataController = CodeForgeController();
-  late FindController _findController;
+  final CodeController _codeDataController = CodeController();
 
   bool jsonFormatted = false;
 
@@ -139,18 +133,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
-    _findController = FindController(_codeDataController);
-
     initTestData();
     keyController.addListener(onInputChangeMatch);
-
-    var textVersion = _codeDataController.contentVersion;
-    _codeDataController.addListener(() {
-      if (textVersion != _codeDataController.contentVersion) {
-        textVersion = _codeDataController.contentVersion;
-        onInputChangeMatch();
-      }
-    });
   }
 
   @override
@@ -158,7 +142,6 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     keyController.dispose();
     valueController.dispose();
     _codeDataController.dispose();
-    _findController.dispose();
     super.dispose();
   }
 
@@ -210,7 +193,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                   SizedBox(
                       width: 140,
                       child: DropdownButtonFormField<RewriteType>(
-                          initialValue: rewriteType,
+                          value: rewriteType,
                           focusColor: Colors.transparent,
                           itemHeight: 48,
                           decoration: const InputDecoration(
@@ -261,12 +244,9 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
               Container(
                   height: MediaQuery.of(context).size.height * 0.45,
                   decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                  child: CodeForge(
+                  child: CodeField(
                     controller: _codeDataController,
-                    language: isJsonText() ? langJson : null,
-                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                    editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
-                    enableGuideLines: false,
+                    cursorColor: Theme.of(context).colorScheme.primary,
                     textStyle: const TextStyle(fontSize: 14),
                   )),
             ])));
@@ -281,7 +261,6 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   void initTestData() {
     // dataController.splitPattern = null;
-    _findController.caseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
     valueController.removeListener(onInputChangeMatch);
@@ -347,8 +326,13 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
         key = '$key${valueController.text}';
       }
 
-      _findController.find(key);
-      isMatch.value = _findController.matchCount > 0;
+      // 使用简单正则匹配检测 key 是否存在于文本中
+      if (key.isEmpty) {
+        isMatch.value = true;
+      } else {
+        final pattern = RegExp(RegExp.escape(key), caseSensitive: false);
+        isMatch.value = pattern.hasMatch(_codeDataController.text);
+      }
     });
   }
 

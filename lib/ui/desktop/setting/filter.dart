@@ -18,6 +18,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -162,7 +163,7 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   Future<void> import() async {
-    final FilePickerResult? result = await FilePicker.pickFiles(
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowedExtensions: ['config'], type: FileType.custom, initialDirectory: "/Downloads");
     var file = result?.files.single;
     if (file == null) {
@@ -325,7 +326,7 @@ class _DomainListState extends State<DomainList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'host-filters.config';
-    String? saveLocation = (await FilePicker.saveFile(fileName: fileName));
+    String? saveLocation = (await FilePicker.platform.saveFile(fileName: fileName));
     if (saveLocation == null) {
       return;
     }

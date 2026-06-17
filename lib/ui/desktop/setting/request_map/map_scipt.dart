@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:code_forge/code_forge.dart';
-import 'package:re_highlight/styles/monokai-sublime.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
-import 'package:re_highlight/languages/javascript.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/utils/highlight_languages.dart';
 
 class DesktopMapScript extends StatefulWidget {
   final String? script;
@@ -31,7 +30,7 @@ async function onRequest(context, request) {
   return response;
 }
   """;
-  late CodeForgeController script;
+  late CodeController script;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -42,7 +41,7 @@ async function onRequest(context, request) {
   @override
   void initState() {
     super.initState();
-    script = CodeForgeController()..text = widget.script ?? template;
+    script = CodeController()..text = widget.script ?? template;
   }
 
   @override
@@ -53,16 +52,17 @@ async function onRequest(context, request) {
 
   @override
   Widget build(BuildContext context) {
+    // 设置语言
+    script.language = langJavascript;
+
     return SizedBox(
         height: 330,
-        child: CodeForge(
-          controller: script,
-          autoFocus: true,
-          enableGuideLines: false,
-          language: langJavascript,
-          editorTheme: monokaiSublimeTheme,
-          finderBuilder: (c, controller) => FindPanelView(controller: controller),
-          textStyle: const TextStyle(fontSize: 13),
+        child: CodeTheme(
+          data: CodeThemeData(styles: monokaiSublimeTheme),
+          child: CodeField(
+            controller: script,
+            textStyle: const TextStyle(fontSize: 13),
+          ),
         ));
   }
 }

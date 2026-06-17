@@ -368,7 +368,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     var json = await Har.writeJson(requests, title: fileName);
     var bytes = utf8.encode(json);
 
-    var path = await FilePicker.saveFile(fileName: fileName, bytes: bytes);
+    var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: bytes);
     if (path == null) {
       return;
     }

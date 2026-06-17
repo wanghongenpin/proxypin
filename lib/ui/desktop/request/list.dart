@@ -363,7 +363,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   }
 
   Future<void> _doExport(String fileName, List<HttpRequest> requests) async {
-    var path = await FilePicker.saveFile(fileName: fileName);
+    var path = await FilePicker.platform.saveFile(fileName: fileName);
     if (path == null) {
       return;
     }

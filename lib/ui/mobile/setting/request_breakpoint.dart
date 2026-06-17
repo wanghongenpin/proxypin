@@ -195,7 +195,7 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
           : (indexes.toList()..sort());
       final data = keys.map((i) => rules[i].toJson()).toList();
       var bytes = utf8.encode(jsonEncode(data));
-      final path = await FilePicker.saveFile(fileName: 'request_breakpoints.json', bytes: bytes);
+      final path = await FilePicker.platform.saveFile(fileName: 'request_breakpoints.json', bytes: bytes);
       if (path == null) return;
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     } catch (e) {
@@ -206,7 +206,7 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
 
   Future<void> _import() async {
     try {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       if (result == null || result.files.isEmpty) return;
       File file = File(result.files.single.path!);
       String content = await file.readAsString();

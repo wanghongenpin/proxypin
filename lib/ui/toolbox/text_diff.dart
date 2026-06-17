@@ -16,16 +16,13 @@
 
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/text_diff.dart';
 
@@ -47,14 +44,13 @@ class TextDiffPage extends StatefulWidget {
 }
 
 class _TextDiffPageState extends State<TextDiffPage> {
-  late final CodeForgeController _left;
-  late final CodeForgeController _right;
+  late final TextEditingController _left;
+  late final TextEditingController _right;
 
   bool _wrap = true;
   String? _summary;
 
-  /// 上一次对比时左右文本的快照；用来判断 listener 收到的变化是不是真改了文本，
-  /// 因为 CodeForgeController 的 listener 选区 / 装饰变化也会触发。
+  /// 上一次对比时左右文本的快照；用来判断 listener 收到的变化是不是真改了文本。
   String _leftSnapshot = '';
   String _rightSnapshot = '';
 
@@ -63,8 +59,8 @@ class _TextDiffPageState extends State<TextDiffPage> {
   @override
   void initState() {
     super.initState();
-    _left = CodeForgeController()..text = widget.initialLeft ?? '';
-    _right = CodeForgeController()..text = widget.initialRight ?? '';
+    _left = TextEditingController(text: widget.initialLeft ?? '');
+    _right = TextEditingController(text: widget.initialRight ?? '');
     _left.addListener(_onLeftChanged);
     _right.addListener(_onRightChanged);
 
@@ -122,134 +118,19 @@ class _TextDiffPageState extends State<TextDiffPage> {
     if (_left.text.isEmpty && _right.text.isEmpty) return;
     final diffs = diffLines(_left.text, _right.text);
 
-    final addBg = Colors.green.withValues(alpha: 0.18);
-    final delBg = Colors.red.withValues(alpha: 0.18);
-    const addColor = Colors.green;
-    const delColor = Colors.red;
-
-    final leftGutterDecos = <GutterDecoration>[];
-    final rightGutterDecos = <GutterDecoration>[];
-
-    // 字符级高亮要走 controller.searchHighlights：那是按全文 utf16 offset 标范围。
-    // 这里先算每行起始 offset，后面把行号转成 offset。
-    final leftLineStarts = _lineStartOffsets(_left.text);
-    final rightLineStarts = _lineStartOffsets(_right.text);
-    final leftCharHighlights = <SearchHighlight>[];
-    final rightCharHighlights = <SearchHighlight>[];
-
-    // 整行底色只给"没参与字符配对"的纯增/纯删行——
-    // CodeForge 渲染顺序是 SearchHighlights 先于 LineDecorations，
-    // 整行 LineDecoration 会盖掉字符高亮。所以配对行不加整行色，靠
-    // gutter 色条 + 字符级 searchHighlights 即可表达差异。
-    final pairedDeleteLines = <int>{}; // 0-based 左侧行号
-    final pairedInsertLines = <int>{}; // 0-based 右侧行号
-
     var inserts = 0, deletes = 0;
     for (final d in diffs) {
       switch (d.type) {
         case LineDiffType.equal:
           break;
         case LineDiffType.delete:
-          // CodeForge 行号 0-based，LineDiff 行号 1-based
-          final ln = d.leftLine! - 1;
           deletes++;
-          leftGutterDecos.add(GutterDecoration(
-            id: 'del-g-$ln',
-            startLine: ln,
-            endLine: ln,
-            type: GutterDecorationType.colorBar,
-            color: delColor,
-          ));
+          break;
         case LineDiffType.insert:
-          final ln = d.rightLine! - 1;
           inserts++;
-          rightGutterDecos.add(GutterDecoration(
-            id: 'ins-g-$ln',
-            startLine: ln,
-            endLine: ln,
-            type: GutterDecorationType.colorBar,
-            color: addColor,
-          ));
+          break;
       }
     }
-
-    // 第二趟：扫描"紧邻的 delete + insert"做字符级配对。
-    // 新版 diffLines 用的是双指针 + 前瞻：发现错位时左 delete / 右 insert
-    // 总是紧贴出现（"同行修改"或"局部增删"），所以这里只需识别相邻配对，
-    // 不必再做全局匹配。
-    for (var k = 0; k + 1 < diffs.length; k++) {
-      final a = diffs[k];
-      final b = diffs[k + 1];
-      LineDiff? dl, dr;
-      if (a.type == LineDiffType.delete && b.type == LineDiffType.insert) {
-        dl = a;
-        dr = b;
-      } else if (a.type == LineDiffType.insert && b.type == LineDiffType.delete) {
-        dl = b;
-        dr = a;
-      }
-      if (dl == null || dr == null) continue;
-      // 已经被前一对消费过的行就跳过
-      final lLine = dl.leftLine! - 1;
-      final rLine = dr.rightLine! - 1;
-      if (pairedDeleteLines.contains(lLine) || pairedInsertLines.contains(rLine)) continue;
-
-      final cd = diffChars(dl.text, dr.text);
-      final lOff = leftLineStarts[lLine];
-      final rOff = rightLineStarts[rLine];
-      for (final r in cd.leftRanges) {
-        leftCharHighlights.add(SearchHighlight(start: lOff + r.start, end: lOff + r.end));
-      }
-      for (final r in cd.rightRanges) {
-        rightCharHighlights.add(SearchHighlight(start: rOff + r.start, end: rOff + r.end));
-      }
-      pairedDeleteLines.add(lLine);
-      pairedInsertLines.add(rLine);
-    }
-
-    // 第三趟：所有差异行都加整行底色——配对行也要加，让用户能扫到"这行有改动"。
-    // 整行 alpha 只有 0.18，字符级 searchHighlights 用 0.85+ 的深色压在上面，
-    // 叠加后差异字符仍然明显比整行其他位置深。
-    final leftLineDecos = <LineDecoration>[];
-    final rightLineDecos = <LineDecoration>[];
-    for (final d in diffs) {
-      if (d.type == LineDiffType.delete) {
-        final ln = d.leftLine! - 1;
-        leftLineDecos.add(LineDecoration(
-          id: 'del-$ln',
-          startLine: ln,
-          endLine: ln,
-          type: LineDecorationType.background,
-          color: delBg,
-        ));
-      } else if (d.type == LineDiffType.insert) {
-        final ln = d.rightLine! - 1;
-        rightLineDecos.add(LineDecoration(
-          id: 'ins-$ln',
-          startLine: ln,
-          endLine: ln,
-          type: LineDecorationType.background,
-          color: addBg,
-        ));
-      }
-    }
-
-    _left.clearLineDecorations();
-    _left.clearGutterDecorations();
-    _right.clearLineDecorations();
-    _right.clearGutterDecorations();
-    _left.addLineDecorations(leftLineDecos);
-    _left.addGutterDecorations(leftGutterDecos);
-    _right.addLineDecorations(rightLineDecos);
-    _right.addGutterDecorations(rightGutterDecos);
-
-    // searchHighlights 是个普通 List 字段，赋值后要 notify 让编辑器重绘。
-    _left.searchHighlights = leftCharHighlights;
-    _right.searchHighlights = rightCharHighlights;
-    _left.searchHighlightsChanged = true;
-    _right.searchHighlightsChanged = true;
-    _left.notifyListeners();
-    _right.notifyListeners();
 
     _leftSnapshot = _left.text;
     _rightSnapshot = _right.text;
@@ -275,23 +156,8 @@ class _TextDiffPageState extends State<TextDiffPage> {
   /// 清掉两侧高亮，但保留文本内容。
   void _clearHighlights() {
     if (_summary == null) return;
-    // 必须先翻成 false：clearLineDecorations / searchHighlights 赋值都会触发
-    // controller.notifyListeners → _onLeftChanged/_onRightChanged 重入，
-
-    _left.clearLineDecorations();
-    _left.clearGutterDecorations();
-    _right.clearLineDecorations();
-    _right.clearGutterDecorations();
-    if (_left.searchHighlights.isNotEmpty) {
-      _left.searchHighlights = [];
-      _left.searchHighlightsChanged = true;
-      _left.notifyListeners();
-    }
-    if (_right.searchHighlights.isNotEmpty) {
-      _right.searchHighlights = [];
-      _right.searchHighlightsChanged = true;
-      _right.notifyListeners();
-    }
+    // flutter_code_editor 0.3.5 不支持行高亮装饰，
+    // 这里简化处理，只重置摘要状态。
     setState(() => _summary = null);
   }
 
@@ -303,18 +169,18 @@ class _TextDiffPageState extends State<TextDiffPage> {
   }
 
   /// 文件选择填到指定一侧。macOS 子窗口走父进程 IPC，跟 Json/Xml 工具一致。
-  Future<void> _openFileInto(CodeForgeController target) async {
+  Future<void> _openFileInto(TextEditingController target) async {
     String? path;
     try {
       if (Platform.isMacOS && widget.windowId != null) {
         path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
         WindowController.fromWindowId(widget.windowId!).show();
       } else {
-        final result = await FilePicker.pickFiles(type: FileType.any);
+        final result = await FilePicker.platform.pickFiles(type: FileType.any);
         path = result?.files.single.path;
       }
     } catch (_) {
-      final result = await FilePicker.pickFiles();
+      final result = await FilePicker.platform.pickFiles();
       path = result?.files.single.path;
     }
 
@@ -417,26 +283,7 @@ class _TextDiffPageState extends State<TextDiffPage> {
     ]);
   }
 
-  Widget _editor(CodeForgeController controller, String title, {required bool isLeft}) {
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
-    final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
-    final pageBg = Theme.of(context).colorScheme.surface;
-    final editorTheme = isDark
-        ? {
-            ...baseTheme,
-            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-          }
-        : baseTheme;
-
-    // 字符级差异：左边删除（深红底），右边新增（深绿底）。
-    // 用接近不透明的 alpha：CodeForge 渲染顺序是 SearchHighlight 在 LineDecoration
-    // 之前，整行浅底色会盖在它上面（alpha blend），所以这里调到 0xCC 才能在
-    // 整行 0x2E 的浅红/浅绿之上保持可辨识对比。
-    final charStyle = isLeft
-        ? const TextStyle(backgroundColor: Color(0xCCE53935)) // 深红
-        : const TextStyle(backgroundColor: Color(0xCC43A047)); // 深绿
-    final matchStyle = MatchHighlightStyle(currentMatchStyle: charStyle, otherMatchStyle: charStyle);
-
+  Widget _editor(TextEditingController controller, String title, {required bool isLeft}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -458,18 +305,17 @@ class _TextDiffPageState extends State<TextDiffPage> {
         child: Container(
           margin: const EdgeInsets.fromLTRB(4, 0, 4, 4),
           decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-          child: CodeForge(
-            // CodeForge 的 lineWrap 是 late final，切换得新 key 重建；
-            // controller 在 State 持有，重建不丢文本与撤销栈。
+          child: TextField(
             key: ValueKey('diff-$title-$_wrap'),
             controller: controller,
-            lineWrap: _wrap,
-            enableGuideLines: false,
-            editorTheme: editorTheme,
-            textStyle: const TextStyle(fontSize: 14.5),
-            matchHighlightStyle: matchStyle,
-            finderBuilder: (c, controller) => FindPanelView(controller: controller),
-            selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+            maxLines: null,
+            expands: true,
+            style: const TextStyle(fontSize: 14.5),
+            cursorColor: Theme.of(context).colorScheme.primary,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.all(8),
+            ),
           ),
         ),
       ),

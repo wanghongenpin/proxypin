@@ -29,6 +29,7 @@ import 'package:proxypin/ui/component/domain_add_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../../network/components/host_filter.dart';
 
@@ -138,7 +139,7 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   Future<void> import() async {
-    final FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -396,10 +397,9 @@ class _DomainListState extends State<DomainList> {
     }
 
     final XFile file = XFile.fromData(utf8.encode(jsonEncode(list)), mimeType: 'config');
-    await SharePlus.instance.share(ShareParams(
-        files: [file],
+    await Share.shareXFiles([file],
         fileNameOverrides: [fileName],
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size));
+        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
   }
 
   //删除

@@ -42,6 +42,7 @@ import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 /// 收藏列表页面
 /// @author WangHongEn
@@ -63,7 +64,7 @@ class _FavoritesState extends State<MobileFavorites> {
     final favorites = await FavoriteStorage.favorites;
     final json = FavoriteStorage.toJson(favorites);
     final bytes = utf8.encode(json);
-    final path = await FilePicker.saveFile(fileName: 'favorites.json', bytes: bytes);
+    final path = await FilePicker.platform.saveFile(fileName: 'favorites.json', bytes: bytes);
     if (path == null) return;
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
@@ -97,7 +98,7 @@ class _FavoritesState extends State<MobileFavorites> {
                   tooltip: localizations.import,
                   icon: const Icon(Icons.download_for_offline_outlined, size: 20),
                   onPressed: () async {
-                    final result = await FilePicker.pickFiles(
+                    final result = await FilePicker.platform.pickFiles(
                         type: FileType.custom, allowedExtensions: ['json', 'har'], withData: true);
                     final file = result?.files.isNotEmpty == true ? result!.files.first : null;
                     if (file == null) return;

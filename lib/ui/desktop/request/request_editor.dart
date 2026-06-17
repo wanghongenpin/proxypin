@@ -17,27 +17,26 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/logger.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:proxypin/ui/component/split_view.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
-import 'package:proxypin/utils/highlight_languages.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/xml_formatter.dart';
 
@@ -426,7 +425,7 @@ class _HttpState extends State<_HttpWidget> {
   final headerKey = GlobalKey<KeyValState>();
   Map<String, List<String>> initHeader = {};
   HttpMessage? message;
-  CodeForgeController? body;
+  CodeController? body;
 
   /// 当前编辑器使用的语言；初始化时按 Content-Type 推导
   _BodyLanguage _bodyLanguage = _BodyLanguage.none;
@@ -451,7 +450,7 @@ class _HttpState extends State<_HttpWidget> {
     }
 
     message = widget.message;
-    body = CodeForgeController()..text = widget.message?.bodyAsString ?? '';
+    body = CodeController()..text = widget.message?.bodyAsString ?? '';
     _bodyLanguage = _resolveLanguage(widget.message);
     if (widget.message?.headers == null && !widget.readOnly) {
       initHeader["User-Agent"] = ["ProxyPin/${AppConfiguration.version}"];
@@ -545,9 +544,9 @@ class _HttpState extends State<_HttpWidget> {
 
     final isCN = localizations.localeName == 'zh';
     final isNone = _bodyLanguage == _BodyLanguage.none;
-    final ct = _bodyLanguageToContentType[_bodyLanguage];
-    final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
+    // final ct = _bodyLanguageToContentType[_bodyLanguage];
+    // final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
+    final isDark = ThemeCompat.brightnessOf(context) == Brightness.dark;
     final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
     final pageBg = Theme.of(context).colorScheme.surface;
     final editorTheme = isDark
@@ -571,20 +570,15 @@ class _HttpState extends State<_HttpWidget> {
                 )
               : Container(
                   decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                  child: CodeForge(
-                    // CodeForge 把 language 当作 late final 在 initState 里固定，
-                    // 切换数据类型后必须靠新的 key 重建组件才能让高亮实时生效；
-                    // controller 由本 State 持有，重建不会丢文本。
-                    key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
-                    controller: body!,
-                    autoFocus: true,
-                    lineWrap: _bodyWrap,
-                    language: language,
-                    enableGuideLines: false,
-                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                    editorTheme: editorTheme,
-                    textStyle: const TextStyle(fontSize: 14.2),
-                    finderBuilder: (c, controller) => FindPanelView(controller: controller),
+                  child: CodeTheme(
+                    data: CodeThemeData(styles: editorTheme),
+                    child: CodeField(
+                      key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
+                      controller: body!,
+                      wrap: _bodyWrap,
+                      cursorColor: Theme.of(context).colorScheme.primary,
+                      textStyle: const TextStyle(fontSize: 14.2),
+                    ),
                   ),
                 ),
         ),

@@ -83,7 +83,7 @@ class _CertHashPageState extends State<CertHashPage> {
           Wrap(alignment: WrapAlignment.end, children: [
             ElevatedButton.icon(
                 onPressed: () async {
-                  FilePickerResult? result = await FilePicker.pickFiles(
+                  FilePickerResult? result = await FilePicker.platform.pickFiles(
                       type: FileType.custom, allowedExtensions: ['crt', 'pem', 'cer', 'der']);
                   if (result == null) return;
 

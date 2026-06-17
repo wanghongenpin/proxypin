@@ -32,6 +32,7 @@ import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../component/http_method_popup.dart';
 import 'rewrite/rewrite_replace.dart';
@@ -91,7 +92,7 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
   //导入
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -561,7 +562,7 @@ class _RewriteRuleState extends State<RewriteRule> {
                             height: 50,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: ruleType,
+                              value: ruleType,
                               decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   errorStyle: TextStyle(height: 0, fontSize: 0),

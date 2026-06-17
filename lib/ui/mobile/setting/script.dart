@@ -19,21 +19,21 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:code_forge/code_forge.dart';
-import 'package:http/http.dart' as http;
-import 'package:get/get.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:re_highlight/styles/monokai-sublime.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:re_highlight/languages/javascript.dart';
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/widgets/floating_window.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
+import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -122,7 +122,7 @@ class _MobileScriptState extends State<MobileScript> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -403,7 +403,7 @@ class ScriptEdit extends StatefulWidget {
 }
 
 class _ScriptEditState extends State<ScriptEdit> {
-  late CodeForgeController script;
+  late CodeController script;
   late TextEditingController nameController;
   late List<TextEditingController> urlControllers;
   late TextEditingController remoteUrlController;
@@ -422,7 +422,8 @@ class _ScriptEditState extends State<ScriptEdit> {
             : (widget.url != null && widget.url!.isNotEmpty ? [widget.url!] : <String>[]));
     urlControllers =
         urls.isNotEmpty ? urls.map((u) => TextEditingController(text: u)).toList() : [TextEditingController()];
-    script = CodeForgeController()..text = widget.script ?? (_useRemote ? '' : ScriptManager.template);
+    script =
+        CodeController(text: widget.script ?? (_useRemote ? '' : ScriptManager.template), language: langJavascript);
     nameController = TextEditingController(text: widget.scriptItem?.name ?? widget.title ?? '');
     remoteUrlController = TextEditingController(text: widget.scriptItem?.remoteUrl ?? '');
   }
@@ -757,13 +758,13 @@ class _ScriptEditState extends State<ScriptEdit> {
                                 children: [
                                   SizedBox(
                                       height: 360,
-                                      child: CodeForge(
-                                        controller: script,
-                                        language: langJavascript,
-                                        editorTheme: monokaiSublimeTheme,
-                                        readOnly: _useRemote,
-                                        enableGuideLines: false,
-                                        textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                      child: CodeTheme(
+                                        data: CodeThemeData(styles: monokaiSublimeTheme),
+                                        child: CodeField(
+                                          controller: script,
+                                          readOnly: _useRemote,
+                                          textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                        ),
                                       )),
                                   if (_useRemote && script.text.trim().isEmpty)
                                     Positioned.fill(

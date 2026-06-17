@@ -320,16 +320,15 @@ void registerMethodHandler() {
 
     if (call.method == 'pickFiles') {
       var extensions = call.arguments != null ? call.arguments['allowedExtensions'] : null;
-      FilePickerResult? result = await FilePicker.pickFiles(
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
           type: extensions == null ? FileType.any : FileType.custom,
-          allowedExtensions: extensions == null ? null : List.from(extensions),
-          initialDirectory: "/Downloads");
+          allowedExtensions: extensions == null ? null : List.from(extensions));
       if (result == null || result.files.isEmpty) return null;
       return result.files.single.path;
     }
 
     if (call.method == 'saveFile') {
-      return await FilePicker.saveFile(fileName: call.arguments['fileName']);
+      return await FilePicker.platform.saveFile(fileName: call.arguments['fileName']);
     }
 
     if (call.method == 'getApplicationSupportDirectory') {

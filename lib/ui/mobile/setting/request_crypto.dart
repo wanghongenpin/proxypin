@@ -11,6 +11,7 @@ import 'package:proxypin/network/components/manager/request_crypto_manager.dart'
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 bool _refresh = false;
 
@@ -337,7 +338,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
 
   Future<void> _import(RequestCryptoManager manager) async {
     try {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       final path = result?.files.single.path;
       if (path == null) return;
       final content = await File(path).readAsString();
@@ -364,7 +365,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
           : (indexes.toList()..sort());
       final data = keys.map((i) => manager.rules[i].toJson()).toList();
       var bytes = utf8.encode(jsonEncode(data));
-      final path = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: bytes);
+      final path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json', bytes: bytes);
       if (path == null) return;
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     } catch (e) {

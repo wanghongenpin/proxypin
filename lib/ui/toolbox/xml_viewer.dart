@@ -17,17 +17,17 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
@@ -49,7 +49,7 @@ class XmlViewerPage extends StatefulWidget {
 }
 
 class _XmlViewerPageState extends State<XmlViewerPage> {
-  late final CodeForgeController _controller;
+  late final CodeController _controller;
 
   /// 编辑器自动换行；CodeForge 的 lineWrap 是 late final，切换需要靠新的 key 重建组件，
   /// controller 在本 State 持有，重建不会丢文本与撤销栈。
@@ -60,7 +60,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
   @override
   void initState() {
     super.initState();
-    _controller = CodeForgeController()..text = widget.initialText ?? '';
+    _controller = CodeController()..text = widget.initialText ?? '';
 
     if (Platforms.isDesktop() && widget.windowId != null) {
       HardwareKeyboard.instance.addHandler(_onKeyEvent);
@@ -120,12 +120,12 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
         path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
         WindowController.fromWindowId(widget.windowId!).show();
       } else {
-        final result = await FilePicker.pickFiles(type: FileType.any);
+        final result = await FilePicker.platform.pickFiles(type: FileType.any);
         path = result?.files.single.path;
       }
     } catch (_) {
       // 某些平台（e.g. Linux）custom + extensions 可能抛错，回退到任意类型
-      final result = await FilePicker.pickFiles();
+      final result = await FilePicker.platform.pickFiles();
       path = result?.files.single.path;
     }
 
@@ -148,8 +148,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       if (await Platforms.isIpad() && mounted) {
         box = context.findRenderObject() as RenderBox?;
       }
-      await SharePlus.instance.share(
-          ShareParams(files: [file], fileNameOverrides: const ['data.xml'], sharePositionOrigin: box?.paintBounds));
+      await Share.shareXFiles([file], fileNameOverrides: const ['data.xml'], sharePositionOrigin: box?.paintBounds);
       return;
     }
 
@@ -158,7 +157,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "data.xml"});
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      path = await FilePicker.saveFile(fileName: 'data.xml');
+      path = await FilePicker.platform.saveFile(fileName: 'data.xml');
     }
     if (path == null) return;
     try {
@@ -233,7 +232,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
   }
 
   Widget _textView() {
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
+    final isDark = ThemeCompat.brightnessOf(context) == Brightness.dark;
     final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
     final pageBg = Theme.of(context).colorScheme.surface;
     final editorTheme = isDark
@@ -243,22 +242,29 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
           }
         : baseTheme;
 
+    // 设置语言
+    _controller.language = HighlightLanguages.getLanguage(ContentType.xml);
+
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
         decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-        child: CodeForge(
-          // CodeForge 的 lineWrap 是 late final，切换换行靠新 key 重建；
-          // controller 在 State 里复用，文本不会丢。
-          key: ValueKey('xml-editor-wrap-$_wrap'),
-          controller: _controller,
-          lineWrap: _wrap,
-          language: HighlightLanguages.getLanguage(ContentType.xml),
-          enableGuideLines: false,
-          editorTheme: editorTheme,
-          textStyle: const TextStyle(fontSize: 13),
-          finderBuilder: (c, controller) => FindPanelView(controller: controller),
-          selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+        child: Scrollbar(
+          thumbVisibility: true,
+          trackVisibility: true,
+          thickness: 8,
+          radius: const Radius.circular(4),
+          child: CodeTheme(
+            data: CodeThemeData(styles: editorTheme),
+            child: CodeField(
+              key: ValueKey('xml-editor-wrap-$_wrap'),
+              controller: _controller,
+              wrap: _wrap,
+              expands: true,
+              cursorColor: Theme.of(context).colorScheme.primary,
+              textStyle: const TextStyle(fontSize: 13),
+            ),
+          ),
         ),
       ),
     );

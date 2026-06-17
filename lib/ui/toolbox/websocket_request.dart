@@ -145,7 +145,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
     try {
       String? path;
       if (Platforms.isMobile()) {
-        final result = await FilePicker.pickFiles(allowMultiple: false);
+        final result = await FilePicker.platform.pickFiles(allowMultiple: false);
         if (result == null || result.files.isEmpty) return;
         path = result.files.single.path;
       } else {

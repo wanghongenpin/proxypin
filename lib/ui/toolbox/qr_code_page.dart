@@ -218,14 +218,14 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
   //选择照片
   Future<String?> selectImage() async {
     if (Platforms.isMobile()) {
-      final result = await FilePicker.pickFiles(type: FileType.image, allowMultiple: false);
+      final result = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
       if (result == null || result.files.isEmpty) return null;
       return result.files.single.path;
     }
 
     if (Platforms.isDesktop()) {
       //<String>['jpg', 'png', 'jpeg']
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.image);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
       if (result == null || result.files.isEmpty) return null;
       return result.files.single.path;
     }
@@ -356,7 +356,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "qrcode.png"});
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      path = (await FilePicker.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads"));
+      path = (await FilePicker.platform.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads"));
     }
 
     if (path == null) return;

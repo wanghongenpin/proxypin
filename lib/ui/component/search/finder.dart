@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:proxypin/utils/code_editor_compat.dart';
 
 const EdgeInsetsGeometry _kFindMargin = EdgeInsets.only(right: 10);
 const double _kFindPanelWidth = 360;
@@ -15,7 +15,7 @@ const double _kFindInputFontSize = 13;
 const double _kFindResultFontSize = 12;
 
 class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
-  final FindController controller;
+  final CodeSearchController controller;
 
   const FindPanelView({super.key, required this.controller});
 
@@ -127,20 +127,29 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
                   _buildCheckText(
                     context: context,
                     text: 'Aa',
-                    checked: controller.caseSensitive,
-                    onPressed: controller.toggleCaseSensitive,
+                    checked: controller.settingsController.value.isCaseSensitive,
+                    onPressed: () {
+                      controller.settingsController.value = controller.settingsController.value.copyWith(
+                        isCaseSensitive: !controller.settingsController.value.isCaseSensitive,
+                      );
+                    },
                   ),
+                  // 匹配全词功能在 0.3.5 版本中不支持
                   _buildCheckText(
                     context: context,
                     text: 'W',
-                    checked: controller.matchWholeWord,
-                    onPressed: controller.toggleMatchWholeWord,
+                    checked: false,
+                    onPressed: () {},
                   ),
                   _buildCheckText(
                     context: context,
                     text: '.*',
-                    checked: controller.isRegex,
-                    onPressed: controller.toggleRegex,
+                    checked: controller.settingsController.value.isRegExp,
+                    onPressed: () {
+                      controller.settingsController.value = controller.settingsController.value.copyWith(
+                        isRegExp: !controller.settingsController.value.isRegExp,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -227,7 +236,7 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
         onSubmitted: onSubmit,
         decoration: InputDecoration(
           filled: true,
-          contentPadding: EdgeInsetsGeometry.fromLTRB(4, 5, iconsWidth, 5),
+          contentPadding: EdgeInsets.fromLTRB(4, 5, iconsWidth, 5),
           enabledBorder: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(4)),
             borderSide: BorderSide(
@@ -285,7 +294,7 @@ class FindPanelView extends StatelessWidget implements PreferredSizeWidget {
       style: IconButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       ),
-      padding: EdgeInsetsGeometry.symmetric(horizontal: 4, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       icon: Icon(icon, size: _kFindIconSize),
       constraints: const BoxConstraints(
         maxWidth: _kFindIconWidth,

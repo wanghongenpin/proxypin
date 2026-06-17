@@ -132,7 +132,7 @@ class MapLocaleState extends State<DesktopMapLocal> {
             SizedBox(
                 width: 90,
                 child: DropdownButtonFormField<String>(
-                    initialValue: bodyType.value,
+                    value: bodyType.value,
                     focusColor: Colors.transparent,
                     itemHeight: 48,
                     decoration: const InputDecoration(
@@ -177,7 +177,7 @@ class MapLocaleState extends State<DesktopMapLocal> {
                   path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
                   if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
                 } else {
-                  FilePickerResult? result = await FilePicker.pickFiles();
+                  FilePickerResult? result = await FilePicker.platform.pickFiles();
                   path = result?.files.single.path;
                 }
 

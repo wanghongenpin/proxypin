@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 /// - Color/MaterialColor.withValues({double? alpha, Map<int, Color>? values})
 ///   to emulate older/newer helper methods used in the codebase.
 /// - BuildContext.colorScheme getter as a convenience.
+/// - ThemeCompat.brightnessOf compatibility wrapper.
+/// - ColorSchemeCompatStatic.of compatibility wrapper.
+/// - EdgeInsetsGeometry.fromLTRB/symmetric compatibility.
 
 /// Provide a small set of ColorScheme getters that may be referenced in code
 /// compiled against newer Flutter SDKs. These return reasonable fallbacks so
@@ -15,6 +18,9 @@ extension ColorSchemeCompat on ColorScheme {
   /// newer `surfaceContainerLow` semantic is available in the SDK it would be
   /// preferred; here we emulate it with a slightly transparent surface color.
   Color get surfaceContainerLow => surface.withOpacity(0.05);
+
+  /// A higher-emphasis surface color variant.
+  Color get surfaceContainerHighest => surface.withOpacity(0.25);
 
   /// A mild outline-like color. Emulated from onSurface with low opacity.
   Color get outlineVariant => onSurface.withOpacity(0.12);
@@ -42,5 +48,30 @@ extension MaterialColorWithValues on MaterialColor {
 
 extension BuildContextColorScheme on BuildContext {
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
+}
+
+/// Theme compatibility wrapper
+class ThemeCompat {
+  static Brightness brightnessOf(BuildContext context) {
+    return Theme.of(context).brightness;
+  }
+}
+
+/// ColorScheme compatibility wrapper
+class ColorSchemeCompatStatic {
+  static ColorScheme of(BuildContext context) {
+    return Theme.of(context).colorScheme;
+  }
+}
+
+/// EdgeInsetsGeometry compatibility extension
+extension EdgeInsetsGeometryCompat on EdgeInsetsGeometry {
+  static EdgeInsets fromLTRB(double left, double top, double right, double bottom) {
+    return EdgeInsets.fromLTRB(left, top, right, bottom);
+  }
+
+  static EdgeInsets symmetric({double vertical = 0.0, double horizontal = 0.0}) {
+    return EdgeInsets.symmetric(vertical: vertical, horizontal: horizontal);
+  }
 }
 

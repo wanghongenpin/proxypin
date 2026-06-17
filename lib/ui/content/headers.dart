@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'package:code_forge/code_forge.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -38,7 +38,7 @@ class HeadersWidget extends StatefulWidget {
 
   /// Optional shared controller for raw-text mode, so caller can reuse
   /// controllers between rebuilds (e.g. separate for Request/Response).
-  final CodeForgeController? controller;
+  final CodeController? controller;
 
   const HeadersWidget({
     super.key,

@@ -401,7 +401,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
 
           if (Platforms.isDesktop()) {
             var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.png";
-            String? path = (await FilePicker.saveFile(fileName: fileName));
+            String? path = (await FilePicker.platform.saveFile(fileName: fileName));
             if (path == null) return;
 
             await File(path).writeAsBytes(bytes);

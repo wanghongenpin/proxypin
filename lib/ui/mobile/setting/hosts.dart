@@ -25,6 +25,7 @@ import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 /// Hosts page
 /// @author wanghongen
@@ -300,7 +301,7 @@ class _HostsPageState extends State<HostsPage> {
 
   //导入
   Future<void> import() async {
-    final FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
     var file = result?.files.single;
     if (file == null) {
       return;
@@ -348,7 +349,7 @@ class _HostsPageState extends State<HostsPage> {
       list.add(json);
     }
 
-    var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list)));
+    var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list)));
     if (path == null) {
       return;
     }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:highlight/highlight.dart' show Node, highlight;
 
 import 'search_controller.dart';
@@ -82,7 +82,7 @@ class HighlightTextDocument {
     }
 
     final spans = <InlineSpan>[];
-    final colorScheme = ColorScheme.of(context);
+    final colorScheme = ColorSchemeCompatStatic.of(context);
     final effectiveCurrentMatchIndex = currentMatchIndexOverride ?? currentMatchIndex;
     var matchIndex = 0;
     var consumed = 0;

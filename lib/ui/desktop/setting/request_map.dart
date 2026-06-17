@@ -15,6 +15,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_local.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_scipt.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../../../network/util/logger.dart';
 
@@ -147,7 +148,7 @@ class _RequestMapPageState extends State<RequestMapPage> {
       });
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
 
@@ -400,7 +401,7 @@ class _RequestMapListState extends State<RequestMapList> {
 
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      path = await FilePicker.saveFile(fileName: fileName);
+      path = await FilePicker.platform.saveFile(fileName: fileName);
     }
     if (path == null) {
       return;
@@ -530,7 +531,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                             height: 33,
                             child: DropdownButtonFormField<RequestMapType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: mapType,
+                              value: mapType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),

@@ -23,13 +23,13 @@ dependencies:
       url: https://gitee.com/wanghongenpin/flutter-plugins.git
       path: packages/desktop_multi_window
   path_provider: ^2.1.4
-  file_picker: ^7.1.0+1
+  file_picker: ^8.0.5
   proxy_manager: ^0.0.3
   easy_permission: ^1.0.0
   flutter_toastr: ^1.0.3
   share_plus: ^10.0.0
   flutter_js: ^0.8.1
-#  flutter_highlight: ^0.7.0
+  flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
   device_info_plus: ^10.1.2
   shared_preferences: ^2.2.3
@@ -42,7 +42,7 @@ dependencies:
 
   brotli: ^0.6.0
   html: ^0.15.6
-  xml: ^7.0.1
+  xml: ^6.5.0
   ffi: ^2.1.0
 #  macos_window_utils: 1.6.1
   win32audio: ^1.5.0
@@ -50,7 +50,7 @@ dependencies:
   get: ^4.7.2
   scrollable_positioned_list_nic: ^0.0.2
   tray_manager: ^0.5.3
-  code_forge: ^10.6.0
+  flutter_code_editor: ^0.3.5
 
 dev_dependencies:
   flutter_test:

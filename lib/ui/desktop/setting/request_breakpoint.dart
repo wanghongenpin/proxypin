@@ -15,9 +15,6 @@ import 'package:proxypin/ui/component/widgets.dart';
 import '../../component/app_dialog.dart' show CustomToast;
 import '../../component/http_method_popup.dart';
 
-// Compat helpers (withValues extension)
-import 'package:proxypin/utils/flutter_compat.dart';
-
 class RequestBreakpointPage extends StatefulWidget {
   final RequestBreakpointManager manager;
   final int? windowId;
@@ -58,7 +55,8 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       });
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
     if (path == null) return;
@@ -89,7 +87,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       outputFile = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_breakpoint_rules.json'});
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json');
+      outputFile = await FilePicker.platform.saveFile(fileName: 'request_breakpoint_rules.json');
     }
     if (outputFile == null) return;
     File file = File(outputFile);

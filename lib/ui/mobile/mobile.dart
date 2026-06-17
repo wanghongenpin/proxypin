@@ -20,8 +20,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/native/app_lifecycle.dart';
 import 'package:proxypin/native/pip.dart';
 import 'package:proxypin/native/vpn.dart';
@@ -31,32 +31,32 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
-import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/launch/launch.dart';
-import 'package:proxypin/ui/mobile/menu/drawer.dart';
+import 'package:proxypin/ui/mobile/debug/breakpoint_executor.dart';
 import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
+import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/menu/menu.dart';
 import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
 import 'package:proxypin/ui/mobile/widgets/pip.dart';
 import 'package:proxypin/ui/mobile/widgets/remote_device.dart';
+import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/utils/ip.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 import 'package:proxypin/utils/navigator.dart';
 
 import '../app_update/app_update_repository.dart';
-import 'package:proxypin/ui/component/multi_window.dart';
-import 'package:proxypin/ui/mobile/debug/breakpoint_executor.dart';
 
 ///移动端首页
 ///@author wanghongen
@@ -565,11 +565,12 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
         leading: bottomNavigation ? const SizedBox() : null,
         systemOverlayStyle:
-            // older SDKs may not have ColorScheme.of, use Theme.of(context).colorScheme for compatibility
+            // older SDKs may not have ColorSchemeCompatStatic.of, use Theme.of(context).colorScheme for compatibility
             Platform.isAndroid
-                ? SystemUiOverlayStyle(systemNavigationBarColor: Theme.of(context).colorScheme.surface,
-                statusBarColor: Theme.of(context).colorScheme.surface)
-             : null,
+                ? SystemUiOverlayStyle(
+                    systemNavigationBarColor: Theme.of(context).colorScheme.surface,
+                    statusBarColor: Theme.of(context).colorScheme.surface)
+                : null,
         title: MobileSearch(
             key: MobileApp.searchStateKey, onSearch: (val) => MobileApp.requestStateKey.currentState?.search(val)),
         actions: [

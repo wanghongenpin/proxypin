@@ -132,7 +132,7 @@ class MobileMapLocaleState extends State<MobileMapLocal> {
             SizedBox(
                 width: 90,
                 child: DropdownButtonFormField<String>(
-                    initialValue: bodyType.value,
+                    value: bodyType.value,
                     focusColor: Colors.transparent,
                     itemHeight: 48,
                     decoration: const InputDecoration(
@@ -175,7 +175,7 @@ class MobileMapLocaleState extends State<MobileMapLocal> {
           const SizedBox(width: 10),
           FilledButton(
               onPressed: () async {
-                FilePickerResult? result = await FilePicker.pickFiles();
+                FilePickerResult? result = await FilePicker.platform.pickFiles();
                 String? path = result?.files.single.path;
 
                 if (path == null) {

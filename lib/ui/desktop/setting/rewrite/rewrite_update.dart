@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:re_highlight/languages/json.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -52,9 +49,6 @@ class RewriteUpdateState extends State<DesktopRewriteUpdate> {
     super.initState();
 
     initItems(widget.ruleType, widget.items);
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   add();
-    // });
   }
 
   ///初始化重写项
@@ -122,8 +116,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   var keyController = TextEditingController();
   var valueController = TextEditingController();
-  final CodeForgeController _codeDataController = CodeForgeController();
-  late FindController _findController;
+  final HighlightTextEditingController _codeDataController = HighlightTextEditingController();
 
   bool jsonFormatted = false;
 
@@ -135,15 +128,13 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
-    _findController = FindController(_codeDataController);
-
     initTestData();
     keyController.addListener(onInputChangeMatch);
 
-    var textVersion = _codeDataController.contentVersion;
+    var lastText = _codeDataController.text;
     _codeDataController.addListener(() {
-      if (textVersion != _codeDataController.contentVersion) {
-        textVersion = _codeDataController.contentVersion;
+      if (lastText != _codeDataController.text) {
+        lastText = _codeDataController.text;
         onInputChangeMatch();
       }
     });
@@ -154,7 +145,6 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     keyController.dispose();
     valueController.dispose();
     _codeDataController.dispose();
-    _findController.dispose();
     super.dispose();
   }
 
@@ -211,7 +201,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                       SizedBox(
                           width: 140,
                           child: DropdownButtonFormField<RewriteType>(
-                              initialValue: rewriteType,
+                              value: rewriteType,
                               focusColor: Colors.transparent,
                               itemHeight: 48,
                               decoration: const InputDecoration(
@@ -265,14 +255,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                   Container(
                       height: 230,
                       decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                      child: CodeForge(
+                      child: TextField(
                         controller: _codeDataController,
-                        language: isJsonText() ? langJson : null,
-                        selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                        editorTheme:
-                            Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
-                        enableGuideLines: false,
-                        textStyle: const TextStyle(fontSize: 14),
+                        cursorColor: Theme.of(context).colorScheme.primary,
+                        style: const TextStyle(fontSize: 14),
+                        maxLines: null,
+                        expands: true,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(10),
+                        ),
                       )),
                 ]))));
   }
@@ -286,7 +278,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
 
   void initTestData() {
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
-    _findController.caseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
+    // Set case sensitivity
+    // final isCaseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
 
     valueController.removeListener(onInputChangeMatch);
     if (isRemove) {
@@ -304,7 +297,6 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     }
 
     if (rewriteType == RewriteType.updateQueryParam || rewriteType == RewriteType.removeQueryParam) {
-      // dataController.splitPattern = '&';
       _codeDataController.text = Uri.decodeQueryComponent(widget.request?.requestUri?.query ?? '');
       return;
     }
@@ -354,8 +346,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
         key = '$key${valueController.text}';
       }
 
-      _findController.find(key);
-      isMatch.value = _findController.matchCount > 0;
+      // Simple match counting using regex
+      if (key.isEmpty) {
+        isMatch.value = true;
+        _codeDataController.highlightPattern = null;
+      } else {
+        final pattern = RegExp(RegExp.escape(key), caseSensitive: false);
+        final matches = pattern.allMatches(_codeDataController.text).length;
+        isMatch.value = matches > 0;
+        _codeDataController.highlight(key, caseSensitive: false);
+      }
     });
   }
 
@@ -404,18 +404,11 @@ class _UpdateListState extends State<UpdateList> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.only(top: 10),
-        constraints: const BoxConstraints(minHeight: 330),
         decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
-        child: SingleChildScrollView(
-            child: Column(children: [
+        child: Column(children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
@@ -427,41 +420,41 @@ class _UpdateListState extends State<UpdateList> {
           ),
           const Divider(thickness: 0.5),
           Column(children: rows(widget.items))
-        ])));
+        ]));
   }
 
   int selected = -1;
 
   List<Widget> rows(List<RewriteItem> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return List.generate(list.length, (index) {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
           hoverColor: primaryColor.withValues(alpha: 0.3),
-          onDoubleTap: () => showDialog(
-                      context: context,
-                      builder: (context) =>
-                          RewriteUpdateAddDialog(item: list[index], ruleType: widget.ruleType, request: widget.request))
-                  .then((value) {
+          onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => RewriteUpdateAddDialog(
+                          item: list[index], ruleType: widget.ruleType, request: widget.request))).then((value) {
                 if (value != null) setState(() {});
               }),
-          onSecondaryTapDown: (details) => showMenus(details, index),
+          onLongPress: () => showMenus(index),
           child: Container(
               color: selected == index
                   ? primaryColor
                   : index.isEven
                       ? Colors.grey.withValues(alpha: 0.1)
                       : null,
-              height: 30,
+              constraints: const BoxConstraints(minHeight: 38, maxHeight: 45),
               padding: const EdgeInsets.all(5),
               child: Row(
                 children: [
                   SizedBox(
                       width: 130,
-                      child: Text(list[index].type.getDescribe(isCN), style: const TextStyle(fontSize: 13))),
+                      child: Text(list[index].type.getDescribe(localizations.localeName == 'zh'),
+                          style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 40,
                       child: SwitchWidget(
@@ -471,7 +464,9 @@ class _UpdateListState extends State<UpdateList> {
                             list[index].enabled = val;
                           })),
                   const SizedBox(width: 20),
-                  Expanded(child: Text(getText(list[index]).fixAutoLines(), style: const TextStyle(fontSize: 13))),
+                  Expanded(
+                      child:
+                          Text(getText(list[index]).fixAutoLines(), maxLines: 2, style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
@@ -487,39 +482,55 @@ class _UpdateListState extends State<UpdateList> {
     return "${item.key}=${item.value}";
   }
 
-  void showMenus(TapDownDetails details, int index) {
+  void showMenus(int index) {
     setState(() {
       selected = index;
     });
 
-    showContextMenu(context, details.globalPosition, items: [
-      PopupMenuItem(
-          height: 35,
-          child: Text(localizations.edit),
-          onTap: () async {
-            showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (BuildContext context) => RewriteUpdateAddDialog(
-                    item: widget.items[index], ruleType: widget.ruleType, request: widget.request)).then((value) {
-              if (value != null) {
-                setState(() {});
-              }
-            });
-          }),
-      PopupMenuItem(
-          height: 35,
-          child: widget.items[index].enabled ? Text(localizations.disabled) : Text(localizations.enable),
-          onTap: () => widget.items[index].enabled = !widget.items[index].enabled),
-      const PopupMenuDivider(),
-      PopupMenuItem(
-          height: 35,
-          child: Text(localizations.delete),
-          onTap: () async {
-            widget.items.removeAt(index);
-            if (mounted) FlutterToastr.show(localizations.deleteSuccess, context);
-          }),
-    ]).then((value) {
+    showModalBottomSheet(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(10))),
+        context: context,
+        enableDrag: true,
+        builder: (ctx) {
+          return Wrap(alignment: WrapAlignment.center, children: [
+            BottomSheetItem(
+                text: localizations.modify,
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => RewriteUpdateAddDialog(
+                              item: widget.items[index],
+                              ruleType: widget.ruleType,
+                              request: widget.request))).then((value) {
+                    if (value != null) {
+                      setState(() {});
+                    }
+                  });
+                }),
+            const Divider(thickness: 0.5),
+            BottomSheetItem(
+                text: widget.items[index].enabled ? localizations.disabled : localizations.enable,
+                onPressed: () => widget.items[index].enabled = !widget.items[index].enabled),
+            const Divider(thickness: 0.5),
+            BottomSheetItem(
+                text: localizations.delete,
+                onPressed: () async {
+                  widget.items.removeAt(index);
+                  if (mounted) FlutterToastr.show(localizations.deleteSuccess, context);
+                }),
+            Container(color: Theme.of(context).hoverColor, height: 8),
+            TextButton(
+                child: Container(
+                    height: 50,
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(localizations.cancel, textAlign: TextAlign.center)),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                }),
+          ]);
+        }).then((value) {
       setState(() {
         selected = -1;
       });

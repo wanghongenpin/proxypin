@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/utils/lang.dart';
 
