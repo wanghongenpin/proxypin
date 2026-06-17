@@ -43,8 +43,9 @@ class DomainList extends StatefulWidget {
   final ListenableList<HttpRequest> list;
   final ProxyServer proxyServer;
   final Function(List<HttpRequest>)? onRemove;
+  final VoidCallback? onInitialized;  // 初始化完成回调
 
-  const DomainList({super.key, required this.list, required this.proxyServer, this.onRemove});
+  const DomainList({super.key, required this.list, required this.proxyServer, this.onRemove, this.onInitialized});
 
   @override
   State<StatefulWidget> createState() {
@@ -83,6 +84,11 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
     super.initState();
     configuration = widget.proxyServer.configuration;
     initFromContainer();
+
+    // 通知父组件初始化完成
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onInitialized?.call();
+    });
   }
 
   void initFromContainer() {

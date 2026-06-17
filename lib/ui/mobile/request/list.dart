@@ -55,6 +55,9 @@ class RequestListState extends State<RequestListWidget> {
   //请求列表容器
   ListenableList<HttpRequest> container = ListenableList();
 
+  //当前搜索模型
+  SearchModel? _currentSearchModel;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -96,7 +99,15 @@ class RequestListState extends State<RequestListWidget> {
                   onRemove: sequenceRemove,
                   selectionController: widget.selectionController),
               DomainList(
-                  key: domainListKey, list: container, proxyServer: widget.proxyServer, onRemove: domainListRemove),
+                  key: domainListKey,
+                  list: container,
+                  proxyServer: widget.proxyServer,
+                  onRemove: domainListRemove,
+                  onInitialized: () {
+                    if (_currentSearchModel != null && _currentSearchModel!.isNotEmpty) {
+                      domainListKey.currentState?.search(_currentSearchModel!);
+                    }
+                  }),
             ],
           ),
         ));
@@ -130,6 +141,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   void search(SearchModel searchModel) {
+    _currentSearchModel = searchModel;  // 保存当前搜索状态
     requestSequenceKey.currentState?.search(searchModel);
     domainListKey.currentState?.search(searchModel);
   }

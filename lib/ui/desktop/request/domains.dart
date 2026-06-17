@@ -183,8 +183,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     //获取所有请求Widget
     List<RequestWidget> requests = containerMap.values.map((e) => e.body).expand((element) => element).toList();
     for (RequestWidget request in requests) {
-      GlobalKey key = request.key as GlobalKey<State>;
-      key.currentState?.setState(() {});
+      request.changeState();
     }
   }
 

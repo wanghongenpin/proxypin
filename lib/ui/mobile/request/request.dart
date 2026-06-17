@@ -54,6 +54,7 @@ class RequestRow extends StatefulWidget {
   final Function(HttpRequest)? onRemove;
   final MultiSelectController selectionController;
   final RequestSelectionHandlers selectionHandlers;
+  final Function(VoidCallback refresh)? onMount;  // 注册刷新回调
 
   const RequestRow({
     super.key,
@@ -64,6 +65,7 @@ class RequestRow extends StatefulWidget {
     required this.selectionController,
     required this.index,
     required this.selectionHandlers,
+    this.onMount,
   });
 
   @override
@@ -92,17 +94,15 @@ class RequestRowState extends State<RequestRow> {
 
   AppLocalizations get localizations => AppLocalizations.of(availableContext)!;
 
-  void change(HttpResponse response) {
-    setState(() {
-      this.response = response;
-    });
-  }
-
   @override
   void initState() {
     request = widget.request;
     response = request.response;
     super.initState();
+    // 注册响应刷新回调
+    widget.onMount?.call(() => setState(() {
+          response = request.response;
+        }));
   }
 
   Color? color(String url) {

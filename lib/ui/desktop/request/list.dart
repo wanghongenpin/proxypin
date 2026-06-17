@@ -18,9 +18,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
@@ -28,20 +28,20 @@ import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
-import 'package:proxypin/ui/desktop/request/request_sequence.dart';
+import 'package:proxypin/ui/desktop/request/report_servers.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
+import 'package:proxypin/ui/desktop/request/request_sequence.dart';
 import 'package:proxypin/ui/desktop/request/search.dart';
-import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../component/model/search_model.dart';
 import 'domains.dart';
-import 'package:proxypin/ui/desktop/request/report_servers.dart';
 
 /// @author wanghongen
 class DesktopRequestListWidget extends StatefulWidget {
@@ -168,6 +168,11 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                               onExportSelected: exportSelected,
                             ),
                             onRemove: sequenceRemove,
+                            onInitialized: () {
+                              if (searchKey.currentState?.searchModel.isNotEmpty == true) {
+                                requestSequenceKey.currentState?.search(searchKey.currentState!.searchModel);
+                              }
+                            },
                           ),
                         ])),
                       ])));
