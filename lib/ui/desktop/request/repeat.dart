@@ -49,7 +49,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
-  bool get isEN => Localizations.localeOf(context).languageCode == "en";
+  bool get isCN => Localizations.localeOf(context).languageCode == "zh";
 
   @override
   void initState() {
@@ -95,13 +95,13 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                   Row(
                     //间隔
                     children: [
-                      SizedBox(width: isEN ? 100 : 90, child: Text(localizations.repeatInterval)),
+                       SizedBox(width: !isCN ? 100 : 90, child: Text(localizations.repeatInterval)),
                       const SizedBox(height: 5),
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         //Checkbox样式 固定和随机
                         Row(children: [
                           SizedBox(
-                              width: isEN ? 107 : 84,
+                               width: !isCN ? 107 : 84,
                               height: 35,
                               child: Transform.scale(
                                   scale: 0.83,
@@ -119,7 +119,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
                         ]),
                         Row(children: [
                           SizedBox(
-                              width: isEN ? 107 : 84,
+                               width: !isCN ? 107 : 84,
                               height: 35,
                               child: Transform.scale(
                                   scale: 0.83,
@@ -312,7 +312,7 @@ class _CustomRepeatState extends State<CustomRepeatDialog> {
   Widget field(String label, Widget child) {
     return Row(
       children: [
-        SizedBox(width: isEN ? 110 : 95, child: Text(label)),
+        SizedBox(width: !isCN ? 110 : 95, child: Text(label)),
         Expanded(child: child),
       ],
     );

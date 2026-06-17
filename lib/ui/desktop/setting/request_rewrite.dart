@@ -91,7 +91,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Theme.of(context).dialogBackgroundColor,
+        backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
             title:
                 Text(localizations.requestRewrite, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
@@ -163,7 +163,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
       WindowController.fromWindowId(widget.windowId).show();
     } else {
       FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+          await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
       path = result?.files.single.path;
     }
 
@@ -259,7 +259,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 constraints: const BoxConstraints(maxHeight: 600, minHeight: 550),
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
                   Row(
@@ -304,13 +304,13 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   List<Widget> rows(List<RequestRewriteRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return List.generate(list.length, (index) {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onSecondaryTapDown: (details) => showMenus(details, index),
           onDoubleTap: () => showEdit(index),
           onHover: (hover) {
@@ -336,9 +336,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
           },
           child: Container(
               color: selected[index] == true
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 30,
               padding: const EdgeInsets.all(5),
@@ -360,7 +360,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                           Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
-                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                      child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
@@ -378,7 +378,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
-      path = await FilePicker.platform.saveFile(fileName: fileName);
+      path = await FilePicker.saveFile(fileName: fileName);
     }
 
     if (path == null) {
@@ -550,7 +550,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
             width: 550,
-            constraints: const BoxConstraints(minHeight: 200, maxHeight: 560),
+            constraints: const BoxConstraints(minHeight: 200, maxHeight: 564),
             child: Form(
                 key: formKey,
                 child: Column(
@@ -600,11 +600,11 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                       Row(children: [
                         SizedBox(width: 60, child: Text('${localizations.action}:')),
                         SizedBox(
-                            width: 150,
+                            width: 170,
                             height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              value: ruleType,
+                              initialValue: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),

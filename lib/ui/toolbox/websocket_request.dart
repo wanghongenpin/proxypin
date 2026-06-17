@@ -145,7 +145,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
     try {
       String? path;
       if (Platforms.isMobile()) {
-        final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+        final result = await FilePicker.pickFiles(allowMultiple: false);
         if (result == null || result.files.isEmpty) return;
         path = result.files.single.path;
       } else {
@@ -212,7 +212,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
       // prefer Scrollable.ensureVisible on the last message for more natural behavior
       try {
         final ctx = _lastMessageKey.currentContext;
-        if (ctx != null) {
+        if (ctx != null && ctx.mounted) {
           // use alignment slightly above bottom to avoid being hidden by input controls
           await Scrollable.ensureVisible(ctx,
               duration: const Duration(milliseconds: 350), curve: Curves.easeInOut, alignment: 0.9);

@@ -82,7 +82,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     _initAnimation();
   }
 
-  handle(String data) async {
+  Future<void> handle(String data) async {
     if (!isScan) return;
     _controller?.stopCamera();
     stop();
@@ -139,7 +139,7 @@ class _QrReaderViewState extends State<QeCodeScanView> with TickerProviderStateM
     });
   }
 
-  scanImage(String path) {
+  void scanImage(String path) {
     FlutterQrReader.imgScan(path).then((value) {
       stop();
       if (mounted) {

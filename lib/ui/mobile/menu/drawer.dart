@@ -216,7 +216,7 @@ class _SettingPage extends StatelessWidget {
     var textEditingController = TextEditingController(text: configuration.proxyPassDomains);
 
     AppLocalizations localizations = AppLocalizations.of(context)!;
-    bool isEn = appConfiguration.language?.languageCode == 'en';
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     Widget section(List<Widget> tiles) => Card(
           color: Colors.transparent,
@@ -245,7 +245,7 @@ class _SettingPage extends StatelessWidget {
               child: Column(children: [
                 PortWidget(
                     proxyServer: proxyServer,
-                    title: '${localizations.proxy}${isEn ? ' ' : ''}${localizations.port}',
+                    title: '${localizations.proxy}${isCN ? '' : ' '}${localizations.port}',
                     textStyle: const TextStyle(fontSize: 16)),
                 Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 if (Platform.isAndroid)
@@ -298,7 +298,7 @@ class _SettingPage extends StatelessWidget {
                         children: [
                           Text(localizations.proxyIgnoreDomain, style: const TextStyle(fontSize: 14)),
                           const SizedBox(height: 3),
-                          Text(isEn ? "Use ';' to separate multiple entries" : "多个使用;分割",
+                          Text(isCN ? "多个使用;分割" : "Use ';' to separate multiple entries",
                               style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                         ],
                       )),

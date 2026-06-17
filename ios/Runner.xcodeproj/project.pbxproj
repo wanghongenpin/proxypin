@@ -22,6 +22,7 @@
 		9B2A10C62B4CA9A6001C443F /* PictureInPictureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2A10C52B4CA9A6001C443F /* PictureInPictureView.swift */; };
 		9B2A10C82B4CBE32001C443F /* silience.mov in Resources */ = {isa = PBXBuildFile; fileRef = 9B2A10C72B4CBE32001C443F /* silience.mov */; };
 		9B5125AA2CAEE3350027996E /* ICMPPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5125A92CAEE3350027996E /* ICMPPacket.swift */; };
+		9B5D36A92FD5D245005E482E /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5D36A82FD5D241005E482E /* SceneDelegate.swift */; };
 		9B70772D2A5718FB00F184A9 /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B70772C2A5718FB00F184A9 /* AudioManager.swift */; };
 		9B7077362A5728B900F184A9 /* silence.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 9B7077352A5728B900F184A9 /* silence.mp3 */; };
 		9B90F5802C183CDE007D7A81 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9B90F5822C183CDE007D7A81 /* InfoPlist.strings */; };
@@ -123,6 +124,7 @@
 		9B2A10C52B4CA9A6001C443F /* PictureInPictureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PictureInPictureView.swift; sourceTree = "<group>"; };
 		9B2A10C72B4CBE32001C443F /* silience.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = silience.mov; sourceTree = "<group>"; };
 		9B5125A92CAEE3350027996E /* ICMPPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICMPPacket.swift; sourceTree = "<group>"; };
+		9B5D36A82FD5D241005E482E /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		9B70772C2A5718FB00F184A9 /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		9B7077352A5728B900F184A9 /* silence.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = silence.mp3; sourceTree = "<group>"; };
 		9B90F57C2C183C7E007D7A81 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Main.strings"; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
+				9B5D36A82FD5D241005E482E /* SceneDelegate.swift */,
 				9BE87B5A2DEA47DE00F4FCEF /* Handlers */,
 				9BC4B8D12B4C19ED0047DBDD /* pip */,
 				9B7077352A5728B900F184A9 /* silence.mp3 */,
@@ -647,6 +650,7 @@
 				9BE87B5C2DEA480000F4FCEF /* MethodHandler.swift in Sources */,
 				9B09121B2A5457B3001108B7 /* VpnManager.swift in Sources */,
 				9BC4B8CC2B4B48710047DBDD /* PictureInPictureManager.swift in Sources */,
+				9B5D36A92FD5D245005E482E /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

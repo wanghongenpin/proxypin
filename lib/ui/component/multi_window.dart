@@ -51,7 +51,11 @@ import '../desktop/setting/request_map.dart';
 import '../toolbox/cert_hash.dart';
 import '../toolbox/encoder.dart';
 import '../toolbox/js_run.dart';
+import '../toolbox/json_viewer.dart';
 import '../toolbox/qr_code_page.dart';
+import '../toolbox/text_diff.dart';
+import '../toolbox/text_editor.dart';
+import '../toolbox/xml_viewer.dart';
 import '../toolbox/regexp.dart';
 import '../toolbox/timestamp.dart';
 import '../toolbox/websocket_request.dart';
@@ -119,6 +123,22 @@ Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
 
   if (argument['name'] == 'QrCodePage') {
     return QrCodePage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'JsonViewerPage') {
+    return JsonViewerPage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'XmlViewerPage') {
+    return XmlViewerPage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'TextDiffPage') {
+    return TextDiffPage(windowId: windowId);
+  }
+
+  if (argument['name'] == 'TextEditorPage') {
+    return TextEditorPage(windowId: windowId);
   }
 
   if (argument['name'] == 'CertHashPage') {
@@ -300,7 +320,7 @@ void registerMethodHandler() {
 
     if (call.method == 'pickFiles') {
       var extensions = call.arguments != null ? call.arguments['allowedExtensions'] : null;
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
           type: extensions == null ? FileType.any : FileType.custom,
           allowedExtensions: extensions == null ? null : List.from(extensions),
           initialDirectory: "/Downloads");
@@ -309,7 +329,7 @@ void registerMethodHandler() {
     }
 
     if (call.method == 'saveFile') {
-      return await FilePicker.platform.saveFile(fileName: call.arguments['fileName']);
+      return await FilePicker.saveFile(fileName: call.arguments['fileName']);
     }
 
     if (call.method == 'getApplicationSupportDirectory') {

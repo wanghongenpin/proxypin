@@ -131,7 +131,7 @@ class RequestListState extends State<RequestListWidget> {
 
   void search(SearchModel searchModel) {
     requestSequenceKey.currentState?.search(searchModel);
-    domainListKey.currentState?.search(searchModel.keyword?.trim());
+    domainListKey.currentState?.search(searchModel);
   }
 
   Iterable<HttpRequest>? currentView() {

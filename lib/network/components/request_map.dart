@@ -17,7 +17,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/components/interceptor.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/file_read.dart';
@@ -30,7 +29,7 @@ import 'manager/script_manager.dart';
 /// @author Hongen Wang
 class RequestMapInterceptor extends Interceptor {
   static RequestMapInterceptor instance = RequestMapInterceptor._();
-  static JavascriptRuntime? flutterJs;
+  static JavaScriptRuntimePool? flutterJsPool;
   static Map<dynamic, dynamic> scriptSession = {};
 
   final managerInstance = RequestMapManager.instance;
@@ -92,14 +91,16 @@ class RequestMapInterceptor extends Interceptor {
 
   /// script执行
   Future<HttpResponse?> executeScript(HttpRequest request, RequestMapRule rule, String script) async {
-    flutterJs ??= await JavaScriptEngine.getJavaScript(consoleLog: ScriptManager.consoleLog);
+    flutterJsPool ??=
+        JavaScriptRuntimePool(size: JavaScriptEngine.defaultRuntimePoolSize, consoleLog: ScriptManager.consoleLog);
     var context = jsonEncode(scriptContext(rule));
     var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
 
-    var jsResult = await flutterJs!.evaluateAsync(
-        """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
-    // print("response: ${jsResult.isPromise} ${jsResult.isError} ${jsResult.rawResult}");
-    var result = await JavaScriptEngine.jsResultResolve(flutterJs!, jsResult);
+    var result = await flutterJsPool!.run((flutterJs) async {
+      var jsResult = await flutterJs.evaluateAsync(
+          """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
+      return await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
+    });
     if (result == null) {
       return null;
     }

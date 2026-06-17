@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import 'package:code_forge/code_forge.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
+import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:proxypin/ui/component/state_component.dart';
-import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:re_highlight/languages/json.dart';
 
 /// 重写替换
 /// @author wanghongen
@@ -39,8 +42,9 @@ class MobileRewriteReplace extends StatefulWidget {
 
 class RewriteReplaceState extends State<MobileRewriteReplace> {
   final _headerKey = GlobalKey<HeadersState>();
-  final bodyTextController = TextEditingController();
-  late ScrollController? bodyScrollController;
+  final bodyTextController = CodeForgeController();
+  late FindController findController;
+  VoidCallback? _bodyListener;
 
   late RuleType ruleType;
   List<RewriteItem> items = [];
@@ -48,16 +52,19 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
-  initState() {
+  void initState() {
     super.initState();
     initItems(widget.ruleType, widget.items);
-    bodyScrollController = trackingScroll(widget.scrollController);
+    findController = FindController(bodyTextController);
   }
 
   @override
-  dispose() {
+  void dispose() {
+    if (_bodyListener != null) {
+      bodyTextController.removeListener(_bodyListener!);
+      _bodyListener = null;
+    }
     bodyTextController.dispose();
-    bodyScrollController?.dispose();
     super.dispose();
   }
 
@@ -169,7 +176,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
         SizedBox(
             width: 90,
             child: DropdownButtonFormField<String>(
-                value: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
+                initialValue: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
                 focusColor: Colors.transparent,
                 itemHeight: 48,
                 decoration:
@@ -185,6 +192,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
                     }))),
         Expanded(
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          IconButton(icon: Icon(Icons.search, size: 20), onPressed: () => findController.toggleActive()),
           IconButton(
             tooltip: 'JSON Format',
             icon:
@@ -212,17 +220,40 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
       if (rewriteItem.bodyType == ReplaceBodyType.file.name)
         fileBodyEdit(rewriteItem)
       else
-        TextFormField(
-            controller: bodyTextController,
-            scrollPhysics: const BouncingScrollPhysics(),
-            scrollController: bodyScrollController,
-            style: const TextStyle(fontSize: 14),
-            minLines: 20,
-            maxLines: 23,
-            decoration: decoration(localizations.replaceBodyWith,
-                hintText: '${localizations.example} {"code":"200","data":{}}'),
-            onChanged: (val) => rewriteItem.body = val)
+        Container(
+            height: MediaQuery.of(context).size.height * 0.5,
+            decoration: BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.primary, width: 0.5)),
+            child: Builder(builder: (context) {
+              // ensure we update rewriteItem when editor text changes; remove previous listener to avoid duplicates
+              if (_bodyListener != null) {
+                bodyTextController.removeListener(_bodyListener!);
+                _bodyListener = null;
+              }
+              _bodyListener = () {
+                rewriteItem.body = bodyTextController.text;
+              };
+              bodyTextController.addListener(_bodyListener!);
+
+              return CodeForge(
+                controller: bodyTextController,
+                findController: findController,
+                lineWrap: true,
+                language: isJsonText() ? langJson : null,
+                enableGuideLines: false,
+                selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+                editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                textStyle: const TextStyle(fontSize: 14),
+                finderBuilder: (c, controller) => FindPanelView(controller: controller),
+              );
+            }))
     ]);
+  }
+
+  //判断是否是json格式
+  bool isJsonText() {
+    var bodyString = bodyTextController.text;
+    return (bodyString.startsWith('{') && bodyString.endsWith('}') ||
+        bodyString.startsWith('[') && bodyString.endsWith(']'));
   }
 
   Widget fileBodyEdit(RewriteItem item) {
@@ -231,7 +262,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         FilledButton(
             onPressed: () async {
-              FilePickerResult? result = await FilePicker.platform.pickFiles();
+              FilePickerResult? result = await FilePicker.pickFiles();
               if (result == null) {
                 return;
               }
@@ -295,7 +326,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
           SizedBox(
               width: 120,
               child: DropdownButtonFormField<String>(
-                  value: rewriteItem.method?.name ?? 'GET',
+                  initialValue: rewriteItem.method?.name ?? 'GET',
                   focusColor: Colors.transparent,
                   itemHeight: 48,
                   decoration: const InputDecoration(
@@ -475,7 +506,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     super.dispose();
   }
 
-  _clear() {
+  void _clear() {
     _headers.forEach((key, value) {
       key.dispose();
       value.dispose();

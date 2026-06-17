@@ -106,7 +106,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
       }
     });
 
-    if (widget.appConfiguration.upgradeNoticeV28) {
+    if (widget.appConfiguration.upgradeNoticeV29) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -181,7 +181,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
               actions: [
                 TextButton(
                     onPressed: () {
-                      widget.appConfiguration.upgradeNoticeV28 = false;
+                      widget.appConfiguration.upgradeNoticeV29 = false;
                       widget.appConfiguration.flushConfig();
                       Navigator.pop(context);
                     },
@@ -195,24 +195,24 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                       isCN
                           ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n'
                               '点击HTTPS抓包(加锁图标)，选择安装根证书，按照提示操作即可。\n\n'
-                              '1. 新增多选功能，支持批量删除、导出、重放；\n'
-                              '2. 增强请求重写，支持目标请求失败时自动重写；\n'
-                              '3. 新增最小化到托盘功能；\n'
-                              '4. 修复 macOS 退出后端口号占用问题；\n'
-                              '5. Windows 系统关闭系统代理时自动清理；\n'
-                              '6. 优化 Android 应用过滤列表的图标加载与缓存；\n'
-                              '7. 优化请求菜单，新增 Copy as fetch 等剪贴板相关操作；\n'
-                              '8. 服务上报新增分离式 report server 模式；\n'
+                              '1. 新增文本对比工具，支持逐行高亮与差异摘要；\n'
+                              '2. 新增文本编辑器，支持语法高亮与文件读写；\n'
+                              '3. 新增 JSON / XML 查看器，支持解析与格式化；\n'
+                              '4. 增强请求体编辑器，内容类型识别、格式化美化、大文本编辑等；\n'
+                              '5. 搜索能力升级：支持正则搜索，并优化匹配索引与缓存；\n'
+                              '6. 导出能力增强：支持导出请求/响应文本与 HAR，HAR 图片支持 Base64 编码；\n'
+                              '7. 优化：新增清空抓包前确认弹窗，清空默认系统代理忽略域名； \n'
+                              '8. 其他：HTML、JSON、CSS 代码格式化使用独立线程减少ui卡顿，修复 iPadOS 窗口模式返回按钮遮挡。\n'
                           : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n'
                               'Click the HTTPS capture (lock) icon, choose "Install Root Certificate", and follow the prompts to complete installation.\n\n'
-                              '1. Added multi-select support for batch delete, export, and replay;\n'
-                              '2. Improved request rewrite, supporting automatic rewrite when the target request fails;\n'
-                              '3. Added minimize to tray support;\n'
-                              '4. Fixed the port occupation issue after macOS exit;\n'
-                              '5. Added automatic system proxy cleanup when disabling system proxy on Windows;\n'
-                              '6. Optimized app icon loading and caching in Android app filter list;\n'
-                              '7. Optimized the request menu with clipboard actions such as Copy as fetch;\n'
-                              '8. Added a separated report server mode for reporting service;\n',
+                              '1. Added a text diff tool with line-by-line highlighting and a diff summary;\n'
+                              '2. Added a text editor with syntax highlighting and file read/write support;\n'
+                              '3. Added JSON/XML viewers with parsing and formatting support;\n'
+                              '4. Enhanced the request body editor with content-type detection, beautification, and large-text editing support;\n'
+                              '5. Upgraded search capabilities: added regex search and optimized match indexing and caching;\n'
+                              '6. Improved export capabilities: supports request/response text export and HAR export, with Base64 image support in HAR;\n'
+                              '7. Optimizations: added a confirmation dialog before clearing captured records, cleared default system proxy bypass domains;\n'
+                              '8. Other: moved HTML/JSON/CSS formatting to isolates to reduce UI jank, and fixed the back-button overlap issue in iPadOS window mode.\n',
                       style: const TextStyle(fontSize: 14))));
         });
   }

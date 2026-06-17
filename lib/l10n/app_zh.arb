@@ -227,7 +227,6 @@
   "trustCa": "信任证书",
   "exportCA": "导出根证书",
   "exportPrivateKey": "导出私钥",
-  "profileDownload": "已下载描述文件",
   "install": "安装",
   "installCaDescribe": "安装证书 设置 > 已下载描述文件 > 安装",
   "trustCaDescribe": "信任证书 设置 > 通用 > 关于本机 > 证书信任设置",
@@ -254,7 +253,7 @@
 
   "shareUrl": "分享请求链接",
   "shareCurl": "分享 cURL 请求",
-  "shareRequestResponse": "分享请求和响应",
+  "requestResponse": "请求和响应",
   "captureDetail": "抓包详情",
   "proxyPinSoftware": "ProxyPin全平台开源抓包软件",
 
@@ -291,6 +290,8 @@
   "bottomNavigationSubtitle": "底部导航栏是否显示，重启后生效",
   "memoryCleanup": "内存清理",
   "memoryCleanupSubtitle": "到内存限制自动清理请求，清理后保留最近32条请求",
+  "clearConfirm": "清理抓包记录前确认",
+  "clearConfirmSubtitle": "开启后，点击清理抓包记录会先弹出确认框",
   "unlimited": "无限制",
   "custom": "自定义",
 
@@ -331,6 +332,19 @@
   "systemCertName": "系统证书名称",
   "regExp": "正则表达式",
   "qrCode": "二维码",
+  "jsonViewer": "JSON 工具",
+  "xmlViewer": "XML 查看器",
+  "textDiff": "文本对比",
+  "textEditor": "文本编辑",
+  "compare": "对比",
+  "diffOriginal": "原文",
+  "diffChanged": "新文",
+  "diffIdentical": "两段文本完全相同",
+  "diffSummary": "新增 {added} · 删除 {removed}",
+  "text": "文本",
+  "format": "格式化",
+  "compact": "压缩",
+  "wordWrap": "自动换行",
   "generateQrCode": "生成二维码",
   "scanQrCode": "扫描二维码",
   "saveImage": "保存图片",
@@ -347,6 +361,7 @@
   "encrypt": "加密",
   "decrypt": "解密",
   "cipher": "加解密",
+  "view": "查看",
 
   "appUpdateCheckVersion": "检查更新",
   "appUpdateNotAvailableMsg": "已是最新版本",
@@ -370,7 +385,6 @@
   "sponsorSupport": "支持项目持续开发",
   "sponsorThanks": "感谢支持开源项目，可选择以下任意方式，帮助项目长期发展",
   "sponsorAfdian": "爱发电赞助",
-  "sponsorBuyMeCoffee": "Buy Me a Coffee",
 
   "privacyPolicy": "隐私协议",
   "privacyContent": "本项目为开源抓包工具，所有功能均在本地设备上运行；无任何后端服务器，不会收集、存储或上传任何用户信息。抓取的网络数据仅在本地处理，除非您主动使用远程转发功能。所需权限（如网络、存储、相机用于扫码）仅用于实现相应功能。您可在公开的源代码中审计其行为。",
@@ -386,5 +400,5 @@
 
   "local": "本地",
   "remoteUrl": "远程URL",
-  "view": "查看"
+  "preview": "预览"
 }

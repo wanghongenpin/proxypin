@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:proxypin/network/util/url_pattern.dart';
 
 /// 请求屏蔽
 /// @author wanghongen
@@ -114,9 +115,9 @@ class RequestBlockItem {
   RequestBlockItem(this.enabled, this.url, this.type);
 
   //匹配url
-  bool match(String url, BlockType blockType) {
-    urlReg ??= RegExp(this.url.replaceAll("*", ".*"));
-    return enabled && type == blockType && urlReg!.hasMatch(url);
+  bool match(String matchUrl, BlockType blockType) {
+    urlReg ??= UrlPattern.toHostRegExp(url);
+    return enabled && type == blockType && urlReg!.hasMatch(matchUrl);
   }
 
   factory RequestBlockItem.fromJson(Map<String, dynamic> json) {

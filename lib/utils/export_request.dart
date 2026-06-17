@@ -12,15 +12,15 @@ void exportRequest(HttpRequest request) async {
   String fileName = "request_${request.hostAndPort?.host}_${request.requestId}.txt";
   var json = copyRawRequest(request);
 
-  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export request to $path");
 }
 
 void exportRequestBody(HttpRequest request) async {
   String fileName = "request_body_${request.hostAndPort?.host}_${request.requestId}.txt";
 
-  var path = await FilePicker.platform
-      .saveFile(fileName: fileName, bytes: request.body == null ? null : Uint8List.fromList(request.body!));
+  var path = await FilePicker.saveFile(
+      fileName: fileName, bytes: request.body == null ? null : Uint8List.fromList(request.body!));
   logger.d("Export request body to $path");
 }
 
@@ -43,7 +43,7 @@ void exportResponse(HttpResponse? response) async {
   }
 
   var json = await copyRawResponse(response);
-  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export response to $path");
 }
 
@@ -54,9 +54,17 @@ void exportResponseBody(HttpResponse? response) async {
 
   String fileName = "response_body_${response.request?.hostAndPort?.host}_${response.requestId}.txt";
 
-  var path = await FilePicker.platform
-      .saveFile(fileName: fileName, bytes: response.body == null ? null : Uint8List.fromList(response.body!));
+  var path = await FilePicker.saveFile(
+      fileName: fileName, bytes: response.body == null ? null : Uint8List.fromList(response.body!));
   logger.d("Export response body to $path");
+}
+
+void exportRequestAndResponse(HttpRequest request, HttpResponse? response) async {
+  String fileName = "request_response_${request.hostAndPort?.host ?? ''}_${request.requestId}.txt";
+
+  var json = copyRequest(request, response);
+  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  logger.d("Export request and response to $path");
 }
 
 void exportHar(HttpRequest request) async {
@@ -81,6 +89,6 @@ void exportHar(HttpRequest request) async {
   };
   var json = jsonEncode(har);
 
-  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export har to $path");
 }

@@ -41,7 +41,23 @@ class ConnectionHandler {
 
 //         os_log("Handling packet length:%d, protocolNumber: %d", log: OSLog.default, type: .default, packet.count, ipHeader.protocolNumber)
 
-        var clientPacketData = packet.subdata(in: IPPacketFactory.IP4_HEADER_SIZE..<packet.count)
+        let ipHeaderLength = ipHeader.getIPHeaderLength()
+        guard ipHeaderLength >= IPPacketFactory.IP4_HEADER_SIZE, ipHeaderLength <= packet.count else {
+            os_log("Invalid IPv4 header length: %d, packet length: %d", log: OSLog.default, type: .error, ipHeaderLength, packet.count)
+            return
+        }
+
+        let totalLength = Int(ipHeader.totalLength)
+        guard totalLength >= ipHeaderLength, totalLength <= packet.count else {
+            os_log("Invalid IPv4 total length: %d, header length: %d, packet length: %d", log: OSLog.default, type: .error, totalLength, ipHeaderLength, packet.count)
+            return
+        }
+        guard ipHeader.fragmentOffset == 0, !ipHeader.lastFragment else {
+            os_log("Dropping fragmented IPv4 packet", log: OSLog.default, type: .debug)
+            return
+        }
+
+        var clientPacketData = packet.subdata(in: ipHeaderLength..<totalLength)
 
         switch ipHeader.protocolNumber {
             case ProtocolType.tcp.rawValue:
@@ -59,9 +75,11 @@ class ConnectionHandler {
     }
 
     func synchronized(_ lock: AnyObject, closure: () -> Void) {
-//        objc_sync_enter(lock)
-        closure()
-//        objc_sync_exit(lock)
+        if let connection = lock as? Connection {
+            connection.withLock(closure)
+        } else {
+            closure()
+        }
     }
     
     private func handleUDPPacket(clientPacketData: Data, ipHeader: IP4Header) {
@@ -100,7 +118,8 @@ class ConnectionHandler {
                 ioService.registerSession(connection: connection)
             }
 
-            let payload = clientPacketData.subdata(in: UDPPacketFactory.UDP_HEADER_LENGTH..<clientPacketData.count)
+            let payloadLength = Int(udpHeader.length) - UDPPacketFactory.UDP_HEADER_LENGTH
+            let payload = clientPacketData.subdata(in: UDPPacketFactory.UDP_HEADER_LENGTH..<UDPPacketFactory.UDP_HEADER_LENGTH + payloadLength)
 
             if ((payload.count + UDPPacketFactory.UDP_HEADER_LENGTH) != udpHeader.length) {
                 os_log("UDP  %{public}@  packet length mismatch: expected %d, got %d", log: OSLog.default, type: .error, connection.description, udpHeader.length, payload.count)
@@ -177,11 +196,13 @@ class ConnectionHandler {
                 if tcpHeader.isPSH() {
                     // Tell the NIO thread to immediately send data to the destination
                     pushDataToDestination(connection: connection, tcpHeader: tcpHeader)
-                } else if tcpHeader.isFIN() {
+                }
+                if tcpHeader.isFIN() {
                     //fin from vpn client is the last packet
                     //ack it
                     ackFinAck(ipHeader: ipHeader, tcpHeader: tcpHeader, connection: connection)
-                } else if tcpHeader.isRST() {
+                }
+                if tcpHeader.isRST() {
                     resetTCPConnection(ip: ipHeader, tcp: tcpHeader)
                 }
 
@@ -212,14 +233,12 @@ class ConnectionHandler {
         destinationPort: UInt16,
         connection: Connection
     ) {
-        guard !connection.isInitConnect else {
+        guard connection.withLock({ !connection.isInitConnect }) else {
             return
         }
 
-        connection.isInitConnect = true
-
         let supportsProtocol = supportsProtocol(packetData: packetData)
-        
+
         let endpoint: Network.NWEndpoint
         if (supportsProtocol && manager.proxyAddress != nil) {
             endpoint = manager.proxyAddress!
@@ -231,8 +250,10 @@ class ConnectionHandler {
         // 使用 TCP 协议
         let parameters = NWParameters.tcp
         let nwConnection = NWConnection(to: endpoint, using: parameters)
-        connection.channel = nwConnection
-        connection.isInitConnect = true
+        connection.withLock {
+            connection.channel = nwConnection
+            connection.isInitConnect = true
+        }
         self.ioService.registerSession(connection: connection)
     }
 
@@ -265,7 +286,9 @@ class ConnectionHandler {
     func resetTCPConnection(ip: IP4Header, tcp: TCPHeader) {
         let session = manager.getConnection(nwProtocol: .TCP, ip: ip.destinationIP, port: tcp.destinationPort, srcIp: ip.sourceIP, srcPort: tcp.sourcePort)
         if let session = session {
-            session.isAbortingConnection = true
+            session.withLock {
+                session.isAbortingConnection = true
+            }
         }
     }
 
@@ -307,14 +330,14 @@ class ConnectionHandler {
             connection.recSequence = tcpHeader.sequenceNumber
        }
 
-        if tcpHeader.ackNumber >= connection.sendUnAck - 1 || tcpHeader.ackNumber == connection.sendNext {
-            connection.sendUnAck = tcpHeader.ackNumber
+        let ackNumber = tcpHeader.ackNumber
+        if ackNumber >= connection.sendUnAck && ackNumber <= connection.sendNext {
+            connection.sendUnAck = ackNumber
 
             connection.timestampReplyTo = tcpHeader.timeStampSender
             connection.timestampSender = Int(Date().timeIntervalSince1970)
-        } else {
-            os_log("%{public}@ Not accepting ack# %d, it should be: %d", log: OSLog.default, type: .error, connection.description ,tcpHeader.ackNumber, connection.sendNext)
-            os_log("%{public}@ Previous sendUnAck: %d", log: OSLog.default, type: .error, connection.description, connection.sendUnAck)
+        } else if ackNumber != connection.sendUnAck {
+            os_log("%{public}@ Not accepting ack# %u, valid range: %u...%u", log: OSLog.default, type: .error, connection.description, ackNumber, connection.sendUnAck, connection.sendNext)
         }
     }
     
@@ -447,11 +470,7 @@ class ConnectionHandler {
     }
 
     private func isReachable(ipAddress: String) -> Bool {
-        do {
-            return true
-//            return try InetAddress.getByName(ipAddress).isReachable(timeout: 10000)
-        } catch {
-            return false
-        }
+        return true
+//        return try InetAddress.getByName(ipAddress).isReachable(timeout: 10000)
     }
 }

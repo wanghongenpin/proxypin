@@ -253,7 +253,7 @@
 
   "shareUrl": "Share Request URL",
   "shareCurl": "Share cURL Request",
-  "shareRequestResponse": "Share Request and Response",
+  "requestResponse": "Request and Response",
   "captureDetail": "Capture Detail",
   "proxyPinSoftware": "ProxyPin Open source traffic capture software for all platforms",
 
@@ -290,6 +290,8 @@
   "bottomNavigationSubtitle": "Bottom navigation bar is displayed, effective after restart",
   "memoryCleanup": "Memory Cleanup",
   "memoryCleanupSubtitle": "Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning",
+  "clearConfirm": "Confirm before clearing captured records",
+  "clearConfirmSubtitle": "Show a confirmation dialog before clearing captured records",
   "unlimited": "Unlimited",
   "custom": "Custom",
 
@@ -331,6 +333,25 @@
   "regExp": "RegExp",
   "systemCertName": "System Certificate Name",
   "qrCode": "QR Code",
+  "jsonViewer": "JSON Viewer",
+  "xmlViewer": "XML Viewer",
+  "textDiff": "Text Diff",
+  "textEditor": "Text Editor",
+  "compare": "Compare",
+  "diffOriginal": "Original",
+  "diffChanged": "Changed",
+  "diffIdentical": "Two texts are identical",
+  "diffSummary": "+{added} −{removed}",
+  "@diffSummary": {
+    "placeholders": {
+      "added": { "type": "int" },
+      "removed": { "type": "int" }
+    }
+  },
+  "text": "Text",
+  "format": "Format",
+  "compact": "Compact",
+  "wordWrap": "Word Wrap",
   "scanQrCode": "Scan QR Code",
   "generateQrCode": "Generate",
   "saveImage": "Save Image",
@@ -347,6 +368,7 @@
   "encrypt": "Encrypt",
   "decrypt": "Decrypt",
   "cipher": "Cipher",
+  "view": "View",
 
   "appUpdateCheckVersion": "Check for Updates",
   "appUpdateNotAvailableMsg": "Already Using The Latest Version",
@@ -369,7 +391,6 @@
   "sponsorSupport": "Support ongoing development",
   "sponsorThanks": "Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.",
   "sponsorAfdian": "AFDIAN",
-  "sponsorBuyMeCoffee": "Buy Me a Coffee",
 
   "privacyPolicy": "Privacy Policy",
   "privacyContent": "This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.",
@@ -385,5 +406,5 @@
 
   "local": "Local",
   "remoteUrl": "Remote URL",
-  "view": "View"
+  "preview": "Preview"
 }

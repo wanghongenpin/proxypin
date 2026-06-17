@@ -315,7 +315,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     }
 
     var fileName = _domainHarFileName(domain);
-    var path = await FilePicker.platform.saveFile(fileName: fileName);
+    var path = await FilePicker.saveFile(fileName: fileName);
     if (path == null) {
       return;
     }

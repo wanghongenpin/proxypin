@@ -17,22 +17,29 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:code_forge/code_forge.dart';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:proxypin/ui/component/split_view.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/xml_formatter.dart';
 
 import '../../component/http_method_popup.dart';
 
@@ -258,7 +265,7 @@ class RequestEditorState extends State<RequestEditor> {
     Map? proxyResult = await DesktopMultiWindow.invokeMethod(0, 'getProxyInfo');
     ProxyInfo? proxyInfo = proxyResult == null ? null : ProxyInfo.of(proxyResult['host'], proxyResult['port']);
 
-    HttpClients.proxyRequest(request, proxyInfo: proxyInfo, timeout: Duration(seconds: 15)).then((response) {
+    HttpClients.proxyRequest(request, proxyInfo: proxyInfo, timeout: Duration(seconds: 30)).then((response) {
       this.response = response;
       responseKey.currentState?.change(response);
       responseChange.value = 1;
@@ -370,16 +377,65 @@ class _HttpWidget extends StatefulWidget {
   }
 }
 
+/// 请求 Body 编辑器的数据类型选项。
+/// - NONE 表示请求不带 body（编辑器隐藏，发送时 body=null，并删除 Content-Type 头）。
+/// - RAW 表示无高亮且不修改 Content-Type；
+/// - 其余项对应一个 [ContentType]，用户手动切换时会写入 Content-Type 请求头。
+enum _BodyLanguage {
+  none,
+  raw,
+  text,
+  json,
+  xml,
+  formUrl,
+  formData,
+}
+
 class _HttpState extends State<_HttpWidget> {
+  /// 数据类型下拉显示的标签
+  static const Map<_BodyLanguage, String> _bodyLanguageLabels = {
+    _BodyLanguage.none: 'NONE',
+    _BodyLanguage.raw: 'RAW',
+    _BodyLanguage.text: 'TEXT',
+    _BodyLanguage.json: 'JSON',
+    _BodyLanguage.xml: 'XML',
+    _BodyLanguage.formUrl: 'FORM-URL',
+    _BodyLanguage.formData: 'FORM-DATA',
+  };
+
+  /// _BodyLanguage 与 ContentType 的对应关系；RAW 没有对应项
+  static const Map<_BodyLanguage, ContentType> _bodyLanguageToContentType = {
+    _BodyLanguage.text: ContentType.text,
+    _BodyLanguage.json: ContentType.json,
+    _BodyLanguage.xml: ContentType.xml,
+    _BodyLanguage.formUrl: ContentType.formUrl,
+    _BodyLanguage.formData: ContentType.formData,
+  };
+
+  /// 用户手动切换数据类型时，写入 Content-Type 请求头使用的 MIME 主类型。
+  /// FORM-DATA 由于需要 boundary 参数才合法，单独处理。
+  static const Map<_BodyLanguage, String> _bodyLanguageMime = {
+    _BodyLanguage.text: 'text/plain',
+    _BodyLanguage.json: 'application/json',
+    _BodyLanguage.xml: 'application/xml',
+    _BodyLanguage.formUrl: 'application/x-www-form-urlencoded',
+    _BodyLanguage.formData: 'multipart/form-data',
+  };
+
   List<String> tabs = ['Header', 'Body'];
   final headerKey = GlobalKey<KeyValState>();
   Map<String, List<String>> initHeader = {};
   HttpMessage? message;
-  TextEditingController? body;
+  CodeForgeController? body;
+
+  /// 当前编辑器使用的语言；初始化时按 Content-Type 推导
+  _BodyLanguage _bodyLanguage = _BodyLanguage.none;
+  bool _bodyWrap = true;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   String? getBody() {
+    if (_bodyLanguage == _BodyLanguage.none) return null;
     return body?.text;
   }
 
@@ -391,11 +447,12 @@ class _HttpState extends State<_HttpWidget> {
   void initState() {
     super.initState();
     if (widget.urlQueryNotifier != null) {
-      tabs.insert(0, "URL Params");
+      tabs.insert(0, "Params");
     }
 
     message = widget.message;
-    body = TextEditingController(text: widget.message?.bodyAsString);
+    body = CodeForgeController()..text = widget.message?.bodyAsString ?? '';
+    _bodyLanguage = _resolveLanguage(widget.message);
     if (widget.message?.headers == null && !widget.readOnly) {
       initHeader["User-Agent"] = ["ProxyPin/${AppConfiguration.version}"];
       initHeader["Accept"] = ["*/*"];
@@ -403,10 +460,40 @@ class _HttpState extends State<_HttpWidget> {
     }
   }
 
+  @override
+  void dispose() {
+    body?.dispose();
+    super.dispose();
+  }
+
   void change(HttpMessage? message) {
     this.message = message;
     body?.text = message?.bodyAsString ?? '';
+    _bodyLanguage = _resolveLanguage(message);
     headerKey.currentState?.refreshParam(message?.headers.getHeaders());
+  }
+
+  /// 根据消息推断编辑器初始语言；初始化推断不会回写 header。
+  /// - body 为空且方法是 GET/HEAD/DELETE/OPTIONS 或没有 Content-Type 头 → NONE
+  _BodyLanguage _resolveLanguage(HttpMessage? message) {
+    if (message == null) return _BodyLanguage.none;
+
+    final bodyEmpty = (message.bodyAsString.isEmpty);
+    final hasContentType = message.headers.contentType.isNotEmpty;
+    if (bodyEmpty && message is HttpRequest) {
+      const noBodyMethods = {HttpMethod.get, HttpMethod.head, HttpMethod.delete, HttpMethod.options};
+      if (noBodyMethods.contains(message.method) || !hasContentType) {
+        return _BodyLanguage.none;
+      }
+    } else if (bodyEmpty && !hasContentType) {
+      return _BodyLanguage.none;
+    }
+
+    final ct = message.contentType;
+    for (final entry in _bodyLanguageToContentType.entries) {
+      if (entry.value == ct) return entry.key;
+    }
+    return _BodyLanguage.json;
   }
 
   @override
@@ -456,7 +543,160 @@ class _HttpState extends State<_HttpWidget> {
           child: SingleChildScrollView(child: HttpBodyWidget(httpMessage: message, hideRequestRewrite: true)));
     }
 
-    return TextFormField(autofocus: true, controller: body, readOnly: widget.readOnly, minLines: 20, maxLines: 20);
+    final isCN = localizations.localeName == 'zh';
+    final isNone = _bodyLanguage == _BodyLanguage.none;
+    final ct = _bodyLanguageToContentType[_bodyLanguage];
+    final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
+    final isDark = Theme.brightnessOf(context) == Brightness.dark;
+    final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
+    final pageBg = Theme.of(context).colorScheme.surface;
+    final editorTheme = isDark
+        ? {
+            ...baseTheme,
+            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
+          }
+        : baseTheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, right: 10, bottom: 10),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _bodyToolbar(),
+        const SizedBox(height: 3),
+        Expanded(
+          child: isNone
+              ? Center(
+                  child: Text(
+                    isCN ? '此请求无消息体' : 'This request has no body',
+                    style: TextStyle(color: Theme.of(context).hintColor),
+                  ),
+                )
+              : Container(
+                  decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                  child: CodeForge(
+                    // CodeForge 把 language 当作 late final 在 initState 里固定，
+                    // 切换数据类型后必须靠新的 key 重建组件才能让高亮实时生效；
+                    // controller 由本 State 持有，重建不会丢文本。
+                    key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
+                    controller: body!,
+                    autoFocus: true,
+                    lineWrap: _bodyWrap,
+                    language: language,
+                    enableGuideLines: false,
+                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+                    editorTheme: editorTheme,
+                    textStyle: const TextStyle(fontSize: 14.2),
+                    finderBuilder: (c, controller) => FindPanelView(controller: controller),
+                  ),
+                ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _bodyToolbar() {
+    final localizations = AppLocalizations.of(context)!;
+    final isCN = localizations.localeName == 'zh';
+    final color = Theme.of(context).colorScheme.primary;
+
+    return SizedBox(
+        height: 34,
+        child: Row(children: [
+          Text(isCN ? '数据类型' : 'Type', style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 8),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<_BodyLanguage>(
+              value: _bodyLanguage,
+              isDense: true,
+              icon: const Icon(Icons.arrow_drop_down, size: 18),
+              items: _BodyLanguage.values
+                  .map((e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(_bodyLanguageLabels[e] ?? e.name.toUpperCase(),
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500))))
+                  .toList(),
+              onChanged: (val) {
+                if (val == null || val == _bodyLanguage) return;
+                setState(() => _bodyLanguage = val);
+                _syncContentTypeHeader(val);
+              },
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            tooltip: localizations.wordWrap,
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            icon: Icon(Icons.wrap_text, color: _bodyWrap ? color : null),
+            onPressed: _bodyLanguage == _BodyLanguage.none ? null : () => setState(() => _bodyWrap = !_bodyWrap),
+          ),
+          SizedBox(width: 3),
+          IconButton(
+            tooltip: localizations.format,
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.auto_fix_high),
+            onPressed: _bodyLanguage == _BodyLanguage.none ? null : _beautifyBody,
+          ),
+          SizedBox(width: 3),
+          IconButton(
+            tooltip: localizations.copy,
+            iconSize: 16,
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.copy),
+            onPressed: _bodyLanguage == _BodyLanguage.none
+                ? null
+                : () {
+                    final text = body?.text ?? '';
+                    if (text.isEmpty) return;
+                    Clipboard.setData(ClipboardData(text: text));
+                    FlutterToastr.show(localizations.copied, context);
+                  },
+          ),
+        ]));
+  }
+
+  /// 用户主动切换数据类型时，把 Content-Type 请求头改成对应 MIME。
+  /// - NONE：删除 Content-Type；body 不发。
+  /// - RAW：保持原 header 不动。
+  /// - 其他：写入对应 MIME。
+  void _syncContentTypeHeader(_BodyLanguage lang) {
+    if (lang == _BodyLanguage.raw) return;
+    final headerState = headerKey.currentState;
+    if (headerState == null) return;
+
+    if (lang == _BodyLanguage.none) {
+      headerState.removeParam('Content-Type');
+      return;
+    }
+
+    String mime = _bodyLanguageMime[lang] ?? 'text/plain';
+    headerState.setParam('Content-Type', mime);
+  }
+
+  /// 根据当前数据类型对 body 文本做格式化
+  void _beautifyBody() {
+    final controller = body;
+    if (controller == null) return;
+    final text = controller.text;
+    if (text.isEmpty) return;
+    String formatted;
+    switch (_bodyLanguage) {
+      case _BodyLanguage.json:
+        formatted = JSON.pretty(text);
+        break;
+      case _BodyLanguage.xml:
+        formatted = XML.pretty(text);
+        break;
+      default:
+        FlutterToastr.show(
+            AppLocalizations.of(context)!.localeName == 'zh'
+                ? '当前数据类型不支持美化'
+                : 'Beautify is not supported for this type',
+            context);
+        return;
+    }
+    if (formatted != text) {
+      controller.text = formatted;
+    }
   }
 }
 
@@ -649,6 +889,45 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
         }
       });
     });
+  }
+
+  /// 设置或更新单条 header（不区分大小写匹配 key）。已存在则原地改 value，不存在则追加。
+  void setParam(String name, String value) {
+    KeyVal? matched;
+    for (var kv in _params) {
+      if (kv.key.text.toLowerCase() == name.toLowerCase()) {
+        matched = kv;
+        break;
+      }
+    }
+    setState(() {
+      if (matched != null) {
+        matched.enabled = true;
+        matched.value.text = value;
+      } else {
+        _params.add(KeyVal(TextEditingController(text: name), TextEditingController(text: value)));
+      }
+    });
+    notifierChange();
+  }
+
+  /// 删除指定 header（不区分大小写匹配 key）。
+  void removeParam(String name) {
+    final removed = <KeyVal>[];
+    setState(() {
+      _params.removeWhere((kv) {
+        if (kv.key.text.toLowerCase() == name.toLowerCase()) {
+          removed.add(kv);
+          return true;
+        }
+        return false;
+      });
+    });
+    for (final kv in removed) {
+      kv.key.dispose();
+      kv.value.dispose();
+    }
+    if (removed.isNotEmpty) notifierChange();
   }
 
   ///获取所有请求头

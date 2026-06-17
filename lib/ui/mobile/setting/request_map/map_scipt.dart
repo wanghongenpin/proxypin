@@ -1,8 +1,8 @@
+import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
-import 'package:flutter_highlight/themes/monokai-sublime.dart';
-import 'package:highlight/languages/javascript.dart';
+import 'package:re_highlight/styles/monokai-sublime.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:re_highlight/languages/javascript.dart';
 
 class MobileMapScript extends StatefulWidget {
   final String? script;
@@ -30,7 +30,7 @@ async function onRequest(context, request) {
   return response;
 }
   """;
-  late CodeController script;
+  late CodeForgeController script;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -41,7 +41,7 @@ async function onRequest(context, request) {
   @override
   void initState() {
     super.initState();
-    script = CodeController(language: javascript, text: widget.script ?? template);
+    script = CodeForgeController()..text = widget.script ?? template;
   }
 
   @override
@@ -53,16 +53,15 @@ async function onRequest(context, request) {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        // height: double.infinity,
-        child: CodeTheme(
-            data: CodeThemeData(styles: monokaiSublimeTheme),
-            child: SingleChildScrollView(
-              child: CodeField(
-                  textStyle: const TextStyle(fontSize: 13),
-                  enableSuggestions: true,
-                  gutterStyle: const GutterStyle(width: 50, margin: 0),
-                  onTapOutside: (event) => FocusScope.of(context).unfocus(),
-                  controller: script),
-            )));
+      height: 380,
+      child: CodeForge(
+        controller: script,
+        language: langJavascript,
+        editorTheme: monokaiSublimeTheme,
+        enableGuideLines: false,
+        autoFocus: true,
+        textStyle: const TextStyle(fontSize: 13),
+      ),
+    );
   }
 }

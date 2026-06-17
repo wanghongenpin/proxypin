@@ -91,7 +91,7 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
   //导入
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -168,7 +168,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
         persistentFooterButtons: multiple ? [globalMenu()] : null,
         body: Container(
             padding: const EdgeInsets.only(top: 10, bottom: 30),
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+            decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
             child: Scrollbar(
                 child: ListView(
               children: [
@@ -194,7 +194,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
           height: 50,
           width: double.infinity,
           margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2)))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2)))),
       Positioned(
           top: 0,
           left: 0,
@@ -232,12 +232,12 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   List<Widget> rows(List<RequestRewriteRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isEN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'en');
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
     return List.generate(list.length, (index) {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onLongPress: () => showMenus(index),
           onTap: () async {
             if (multiple) {
@@ -252,9 +252,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
           },
           child: Container(
               color: selected.contains(index)
-                  ? primaryColor.withOpacity(0.8)
+                  ? primaryColor.withValues(alpha: 0.8)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 45,
               padding: const EdgeInsets.all(5),
@@ -278,7 +278,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   const SizedBox(width: 3),
                   SizedBox(
                       width: 60,
-                      child: Text(isEN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                      child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
                           textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                 ],
               )));
@@ -557,11 +557,11 @@ class _RewriteRuleState extends State<RewriteRule> {
                             child: Text('${localizations.action}:',
                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                         SizedBox(
-                            width: 165,
+                            width: 185,
                             height: 50,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              value: ruleType,
+                              initialValue: ruleType,
                               decoration: const InputDecoration(
                                   border: OutlineInputBorder(),
                                   errorStyle: TextStyle(height: 0, fontSize: 0),

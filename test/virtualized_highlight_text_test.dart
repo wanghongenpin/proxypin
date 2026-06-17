@@ -32,6 +32,7 @@ void main() {
 
       expect(find.byType(ScrollablePositionedList), findsOneWidget);
       expect(controller.totalMatchCount.value, 1);
+      expect(find.text('line 180 target'), findsOneWidget);
 
       await _disposeController(tester, controller);
     });
@@ -65,8 +66,10 @@ void main() {
 
       controller.moveNext();
       await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(controller.currentMatchIndex.value, 1);
+      expect(find.text('line 260 target'), findsOneWidget);
 
       await _disposeController(tester, controller);
     });

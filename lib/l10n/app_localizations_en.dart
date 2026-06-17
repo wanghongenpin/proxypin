@@ -746,7 +746,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareCurl => 'Share cURL Request';
 
   @override
-  String get shareRequestResponse => 'Share Request and Response';
+  String get requestResponse => 'Request and Response';
 
   @override
   String get captureDetail => 'Capture Detail';
@@ -854,6 +854,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get memoryCleanupSubtitle =>
       'Automatically clean up requests on memory limit reached and keep 32 most recent after cleaning';
+
+  @override
+  String get clearConfirm => 'Confirm before clearing captured records';
+
+  @override
+  String get clearConfirmSubtitle => 'Show a confirmation dialog before clearing captured records';
 
   @override
   String get unlimited => 'Unlimited';
@@ -969,6 +975,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get qrCode => 'QR Code';
 
   @override
+  String get jsonViewer => 'JSON Viewer';
+
+  @override
+  String get xmlViewer => 'XML Viewer';
+
+  @override
+  String get textDiff => 'Text Diff';
+
+  @override
+  String get textEditor => 'Text Editor';
+
+  @override
+  String get compare => 'Compare';
+
+  @override
+  String get diffOriginal => 'Original';
+
+  @override
+  String get diffChanged => 'Changed';
+
+  @override
+  String get diffIdentical => 'Two texts are identical';
+
+  @override
+  String diffSummary(int added, int removed) {
+    return '+$added −$removed';
+  }
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get format => 'Format';
+
+  @override
+  String get compact => 'Compact';
+
+  @override
+  String get wordWrap => 'Word Wrap';
+
+  @override
   String get scanQrCode => 'Scan QR Code';
 
   @override
@@ -1015,6 +1062,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cipher => 'Cipher';
+
+  @override
+  String get view => 'View';
 
   @override
   String get appUpdateCheckVersion => 'Check for Updates';
@@ -1075,9 +1125,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sponsorAfdian => 'AFDIAN';
 
   @override
-  String get sponsorBuyMeCoffee => 'Buy Me a Coffee';
-
-  @override
   String get privacyPolicy => 'Privacy Policy';
 
   @override
@@ -1112,5 +1159,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remoteUrl => 'Remote URL';
 
   @override
-  String get view => 'View';
+  String get preview => 'Preview';
 }

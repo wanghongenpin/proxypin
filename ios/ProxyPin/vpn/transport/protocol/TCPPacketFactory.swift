@@ -25,13 +25,13 @@ class TCPPacketFactory {
         var offset = 0
 
         func readUInt16() -> UInt16 {
-            let value = data.withUnsafeBytes { $0.load(fromByteOffset: offset, as: UInt16.self).bigEndian }
+            let value = UInt16(data[offset]) << 8 | UInt16(data[offset + 1])
             offset += 2
             return value
         }
 
         func readUInt32() -> UInt32 {
-            let value = data.withUnsafeBytes { $0.load(fromByteOffset: offset, as: UInt32.self).bigEndian }
+            let value = UInt32(data[offset]) << 24 | UInt32(data[offset + 1]) << 16 | UInt32(data[offset + 2]) << 8 | UInt32(data[offset + 3])
             offset += 4
             return value
         }
@@ -45,6 +45,12 @@ class TCPPacketFactory {
         let dataOffsetAndReserved = data[offset]
         offset += 1
         let dataOffset = UInt8((dataOffsetAndReserved & 0xF0) >> 4)
+        let headerLength = Int(dataOffset) * 4
+        guard dataOffset >= 5, headerLength <= data.count else {
+            os_log("Invalid TCP data offset: %d, packet length: %d", log: OSLog.default, type: .error, dataOffset, data.count)
+            return nil
+        }
+
         let isNs = (dataOffsetAndReserved & 0x01) == 1
         let flags = UInt8(data[offset])
         offset += 1
@@ -53,12 +59,12 @@ class TCPPacketFactory {
         let checksum = readUInt16()
         let urgentPointer = readUInt16()
 
-        var optionsSize = Int(dataOffset) - 5
+        let optionsSize = headerLength - TCP_HEADER_LENGTH
         var options: Data?
         if (optionsSize > 0) {
-            optionsSize *= 4
             options = data.subdata(in: offset..<offset + optionsSize)
         }
+        offset = headerLength
 
         let payload: Data? = offset < data.count ? data.subdata(in: offset..<data.count) : nil
         return TCPHeader(

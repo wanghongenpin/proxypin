@@ -304,7 +304,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   Future<void> _doExport(String fileName, List<HttpRequest> requests) async {
     var json = await Har.writeJson(requests, title: fileName);
-    final path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
+    final path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
     if (path == null) {
       return;
     }

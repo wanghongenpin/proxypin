@@ -19,13 +19,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:code_forge/code_forge.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:re_highlight/styles/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:highlight/languages/javascript.dart';
+import 'package:re_highlight/languages/javascript.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -122,7 +122,7 @@ class _MobileScriptState extends State<MobileScript> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.any);
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
     if (result == null || result.files.isEmpty) {
       return;
     }
@@ -403,7 +403,7 @@ class ScriptEdit extends StatefulWidget {
 }
 
 class _ScriptEditState extends State<ScriptEdit> {
-  late CodeController script;
+  late CodeForgeController script;
   late TextEditingController nameController;
   late List<TextEditingController> urlControllers;
   late TextEditingController remoteUrlController;
@@ -422,7 +422,7 @@ class _ScriptEditState extends State<ScriptEdit> {
             : (widget.url != null && widget.url!.isNotEmpty ? [widget.url!] : <String>[]));
     urlControllers =
         urls.isNotEmpty ? urls.map((u) => TextEditingController(text: u)).toList() : [TextEditingController()];
-    script = CodeController(language: javascript, text: widget.script ?? (_useRemote ? '' : ScriptManager.template));
+    script = CodeForgeController()..text = widget.script ?? (_useRemote ? '' : ScriptManager.template);
     nameController = TextEditingController(text: widget.scriptItem?.name ?? widget.title ?? '');
     remoteUrlController = TextEditingController(text: widget.scriptItem?.remoteUrl ?? '');
   }
@@ -742,55 +742,63 @@ class _ScriptEditState extends State<ScriptEdit> {
                                     onPressed: _useRemote
                                         ? null
                                         : () {
-                                      script.text = '';
-                                      setState(() {});
-                                    }))
+                                            script.text = '';
+                                            setState(() {});
+                                          }))
                           ]),
-                          CodeTheme(
-                              data: CodeThemeData(styles: monokaiSublimeTheme),
-                              child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                          color: Colors.grey.shade900,
-                                          border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
-                                      child: Stack(children: [
-                                        SingleChildScrollView(
-                                            child: CodeField(
-                                          readOnly: _useRemote,
-                                          enableSuggestions: true,
-                                          minLines: 15,
-                                          maxLines: 50,
-                                          textStyle: const TextStyle(fontSize: 13, color: Colors.white),
-                                          controller: script,
-                                          gutterStyle: const GutterStyle(width: 50, margin: 0),
-                                        )),
-                                        if (_useRemote && script.text.trim().isEmpty)
-                                          Positioned.fill(
-                                              child: Center(
-                                                  child: Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                      decoration: BoxDecoration(
-                                                          color: Colors.black.withValues(alpha: 0.28),
-                                                          borderRadius: BorderRadius.circular(8)),
-                                                      child: RichText(
-                                                          text: TextSpan(
-                                                              style: const TextStyle(
-                                                                  fontSize: 12, color: Colors.white70),
-                                                              children: [
-                                                                TextSpan(text: '${localizations.click} “'),
-                                                                TextSpan(
-                                                                text: localizations.view,
-                                                                style: const TextStyle(
-                                                                    color: Colors.blue,
-                                                                    fontSize: 12,
-                                                                    decoration: TextDecoration.underline),
-                                                                recognizer:
-                                                                    TapGestureRecognizer()..onTap = _fetchRemoteScript),
-                                                                TextSpan(text: '” ${localizations.loadRemoteScript}'),
-                                                          ]))))),
-                                      ])))),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade900,
+                                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                              ),
+                              child: Stack(
+                                children: [
+                                  SizedBox(
+                                      height: 360,
+                                      child: CodeForge(
+                                        controller: script,
+                                        language: langJavascript,
+                                        editorTheme: monokaiSublimeTheme,
+                                        readOnly: _useRemote,
+                                        enableGuideLines: false,
+                                        textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                      )),
+                                  if (_useRemote && script.text.trim().isEmpty)
+                                    Positioned.fill(
+                                      child: Center(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.28),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: RichText(
+                                            text: TextSpan(
+                                              style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                              children: [
+                                                TextSpan(text: '${localizations.click} “'),
+                                                TextSpan(
+                                                  text: localizations.preview,
+                                                  style: const TextStyle(
+                                                    color: Colors.blue,
+                                                    fontSize: 12,
+                                                    decoration: TextDecoration.underline,
+                                                  ),
+                                                  recognizer: TapGestureRecognizer()..onTap = _fetchRemoteScript,
+                                                ),
+                                                TextSpan(text: '” ${localizations.loadRemoteScript}'),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ]))),
               ],
             )));

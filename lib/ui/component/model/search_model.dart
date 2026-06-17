@@ -25,6 +25,9 @@ class SearchModel {
   //是否区分大小写
   RxBool caseSensitive = RxBool(false);
 
+  //是否使用正则表达式
+  RxBool isRegExp = RxBool(false);
+
   //搜索范围
   Set<Option> searchOptions = {Option.url};
 
@@ -79,12 +82,38 @@ class SearchModel {
     searchModel.durationToMs = durationToMs;
     searchModel.protocols = Set.from(protocols);
     searchModel.caseSensitive = RxBool(caseSensitive.value);
+    searchModel.isRegExp = RxBool(isRegExp.value);
     return searchModel;
   }
 
   @override
   String toString() {
-    return 'SearchModel{keyword: $keyword, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusRange: [$statusCodeFrom-$statusCodeTo], durationRangeMs: [$durationFromMs-$durationToMs], protocols: $protocols}';
+    return 'SearchModel{keyword: $keyword, isRegExp: ${isRegExp.value}, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusRange: [$statusCodeFrom-$statusCodeTo], durationRangeMs: [$durationFromMs-$durationToMs], protocols: $protocols}';
+  }
+
+  /// 根据 keyword、caseSensitive、isRegExp 构造一个文本匹配函数。
+  /// keyword 为空时返回 null，调用方应自行处理（视作不过滤）。
+  /// 正则编译失败时返回一个永远不匹配的 matcher，避免输入半截正则时一直抛异常。
+  bool Function(String) buildMatcher() {
+    final pattern = keyword;
+    if (pattern == null || pattern.isEmpty) {
+      return (_) => true;
+    }
+
+    if (isRegExp.value) {
+      try {
+        final regex = RegExp(pattern, caseSensitive: caseSensitive.value);
+        return regex.hasMatch;
+      } catch (_) {
+        return (_) => false;
+      }
+    }
+
+    if (caseSensitive.value) {
+      return (text) => text.contains(pattern);
+    }
+    final lowered = pattern.toLowerCase();
+    return (text) => text.toLowerCase().contains(lowered);
   }
 
   ///是否匹配
@@ -144,8 +173,9 @@ class SearchModel {
       return true;
     }
 
+    final matches = buildMatcher();
     for (var option in searchOptions) {
-      if (keywordFilter(keyword!, caseSensitive.value, option, request, response)) {
+      if (keywordFilter(matches, option, request, response)) {
         return true;
       }
     }
@@ -169,27 +199,23 @@ class SearchModel {
   }
 
   ///关键字过滤
-  bool keywordFilter(String keyword, bool caseSensitive, Option option, HttpRequest request, HttpResponse? response) {
+  bool keywordFilter(
+      bool Function(String) matches, Option option, HttpRequest request, HttpResponse? response) {
     if (option == Option.url) {
-      if (caseSensitive) {
-        return request.requestUrl.contains(keyword);
-      }
-      return request.requestUrl.toLowerCase().contains(keyword.toLowerCase());
+      return matches(request.requestUrl);
     }
 
     if (option == Option.method) {
-      return caseSensitive
-          ? request.method.name.contains(keyword)
-          : request.method.name.toLowerCase().contains(keyword.toLowerCase());
+      return matches(request.method.name);
     }
-    if (option == Option.responseContentType && response?.headers.contentType.contains(keyword) == true) {
+    if (option == Option.responseContentType && response != null && matches(response.headers.contentType)) {
       return true;
     }
 
-    if (option == Option.requestBody && request.bodyAsString.contains(keyword) == true) {
+    if (option == Option.requestBody && matches(request.bodyAsString)) {
       return true;
     }
-    if (option == Option.responseBody && response?.bodyAsString.contains(keyword) == true) {
+    if (option == Option.responseBody && response != null && matches(response.bodyAsString)) {
       return true;
     }
 
@@ -197,15 +223,8 @@ class SearchModel {
       var entries = option == Option.requestHeader ? request.headers.entries : response?.headers.entries ?? [];
 
       for (var entry in entries) {
-        if (caseSensitive) {
-          if (entry.key.contains(keyword) || entry.value.any((element) => element.contains(keyword))) {
-            return true;
-          }
-        } else {
-          if (entry.key.toLowerCase() == keyword.toLowerCase() ||
-              entry.value.any((element) => element.toLowerCase().contains(keyword.toLowerCase()))) {
-            return true;
-          }
+        if (matches(entry.key) || entry.value.any(matches)) {
+          return true;
         }
       }
     }

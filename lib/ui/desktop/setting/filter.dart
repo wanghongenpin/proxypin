@@ -25,6 +25,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/domain_add_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 
@@ -160,10 +161,9 @@ class _DomainFilterState extends State<DomainFilter> {
   }
 
   //导入
-  import() async {
-
-    final FilePickerResult? result =
-        await FilePicker.platform.pickFiles(allowedExtensions: ['config'], type: FileType.custom, initialDirectory: "/Downloads");
+  Future<void> import() async {
+    final FilePickerResult? result = await FilePicker.pickFiles(
+        allowedExtensions: ['config'], type: FileType.custom, initialDirectory: "/Downloads");
     var file = result?.files.single;
     if (file == null) {
       return;
@@ -202,53 +202,6 @@ class _DomainFilterState extends State<DomainFilter> {
   }
 }
 
-class DomainAddDialog extends StatelessWidget {
-  final HostList hostList;
-  final int? index;
-
-  const DomainAddDialog({super.key, required this.hostList, this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    AppLocalizations localizations = AppLocalizations.of(context)!;
-
-    GlobalKey formKey = GlobalKey<FormState>();
-    String? host = index == null ? null : hostList.list.elementAt(index!).pattern.replaceAll(".*", "*");
-    return AlertDialog(
-        scrollable: true,
-        content: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Form(
-                key: formKey,
-                child: Column(children: <Widget>[
-                  TextFormField(
-                      initialValue: host,
-                      decoration: const InputDecoration(labelText: 'Host', hintText: '*.example.com'),
-                      validator: (val) => val == null || val.trim().isEmpty ? localizations.cannotBeEmpty : null,
-                      onChanged: (val) => host = val)
-                ]))),
-        actions: [
-          TextButton(child: Text(localizations.cancel), onPressed: () => Navigator.of(context).pop()),
-          TextButton(
-              child: Text(localizations.save),
-              onPressed: () {
-                if (!(formKey.currentState as FormState).validate()) {
-                  return;
-                }
-                try {
-                  if (index != null) {
-                    hostList.list[index!] = RegExp(host!.trim().replaceAll("*", ".*"));
-                  } else {
-                    hostList.add(host!.trim());
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-                }
-                Navigator.of(context).pop(host);
-              }),
-        ]);
-  }
-}
 
 ///域名列表
 class DomainList extends StatefulWidget {
@@ -302,7 +255,7 @@ class _DomainListState extends State<DomainList> {
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
                 height: 380,
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
                   Row(
@@ -324,7 +277,7 @@ class _DomainListState extends State<DomainList> {
       return InkWell(
           highlightColor: Colors.transparent,
           splashColor: Colors.transparent,
-          hoverColor: primaryColor.withOpacity(0.3),
+          hoverColor: primaryColor.withValues(alpha: 0.3),
           onSecondaryTapDown: (details) => showMenus(details, index),
           //right click menus
           onDoubleTap: () => showEdit(index),
@@ -351,9 +304,9 @@ class _DomainListState extends State<DomainList> {
           },
           child: Container(
               color: selected[index] == true
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withOpacity(0.1)
+                      ? Colors.grey.withValues(alpha: 0.1)
                       : null,
               height: 38,
               padding: const EdgeInsets.symmetric(vertical: 3),
@@ -372,7 +325,7 @@ class _DomainListState extends State<DomainList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'host-filters.config';
-    String? saveLocation = (await FilePicker.platform.saveFile(fileName: fileName));
+    String? saveLocation = (await FilePicker.saveFile(fileName: fileName));
     if (saveLocation == null) {
       return;
     }

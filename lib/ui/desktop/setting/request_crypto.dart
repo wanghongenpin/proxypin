@@ -83,7 +83,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool isEN = Localizations.localeOf(context).languageCode == 'en';
+    bool isCN = Localizations.localeOf(context).languageCode == 'zh';
     return Scaffold(
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
@@ -96,7 +96,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     SizedBox(
-                        width: isEN ? 310 : 225,
+                        width: !isCN ? 310 : 225,
                         child: ListTile(
                             title: Text("${localizations.enable} ${localizations.requestCrypto}"),
                             trailing: SwitchWidget(
@@ -141,8 +141,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
       });
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
     if (path == null) return;
@@ -246,7 +245,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
       return InkWell(
         highlightColor: Colors.transparent,
         splashColor: Colors.transparent,
-        hoverColor: primaryColor.withOpacity(0.3),
+        hoverColor: primaryColor.withValues(alpha: 0.3),
         onDoubleTap: () => showEdit(index),
         onSecondaryTapDown: (details) => showMenus(details, index),
         onHover: (hover) {
@@ -272,9 +271,9 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
         },
         child: Container(
           color: selected.contains(index)
-              ? primaryColor.withOpacity(0.6)
+              ? primaryColor.withValues(alpha: 0.6)
               : index.isEven
-                  ? Colors.grey.withOpacity(0.1)
+                  ? Colors.grey.withValues(alpha: 0.1)
                   : null,
           height: 32,
           padding: const EdgeInsets.all(5),
@@ -383,7 +382,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
       path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_crypto.json'});
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json');
+      path = await FilePicker.saveFile(fileName: 'request_crypto.json');
     }
     if (path == null) return;
     await File(path).writeAsString(jsonEncode(data));
@@ -665,7 +664,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                         Row(children: [
                           Container(
                             height: 42,
-                            constraints:  const BoxConstraints(minWidth: 92),
+                            constraints: const BoxConstraints(minWidth: 92),
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             decoration: BoxDecoration(
                               border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),

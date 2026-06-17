@@ -112,7 +112,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
     return Scaffold(
       body: Container(
         padding: const EdgeInsets.only(top: 10, bottom: 30),
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
+        decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
         child: rules.isEmpty
             ? const Center(child: Text('-'))
             : Scrollbar(
@@ -133,7 +133,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
                   return InkWell(
                       highlightColor: Colors.transparent,
                       splashColor: Colors.transparent,
-                      hoverColor: primaryColor.withOpacity(0.3),
+                      hoverColor: primaryColor.withValues(alpha: 0.3),
                       onLongPress: () => _showRuleActions(manager, index),
                       onTap: () {
                         if (selectionMode) {
@@ -148,9 +148,9 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
                       },
                       child: Container(
                           color: selected.contains(index)
-                              ? primaryColor.withOpacity(0.8)
+                              ? primaryColor.withValues(alpha: 0.8)
                               : index.isEven
-                                  ? Colors.grey.withOpacity(0.1)
+                                  ? Colors.grey.withValues(alpha: 0.1)
                                   : null,
                           height: 45,
                           padding: const EdgeInsets.all(5),
@@ -188,7 +188,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
           height: 50,
           width: double.infinity,
           margin: const EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2)))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2)))),
       Positioned(
           top: 0,
           left: 0,
@@ -337,8 +337,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
 
   Future<void> _import(RequestCryptoManager manager) async {
     try {
-      FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       final path = result?.files.single.path;
       if (path == null) return;
       final content = await File(path).readAsString();
@@ -365,7 +364,7 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
           : (indexes.toList()..sort());
       final data = keys.map((i) => manager.rules[i].toJson()).toList();
       var bytes = utf8.encode(jsonEncode(data));
-      final path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json', bytes: bytes);
+      final path = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: bytes);
       if (path == null) return;
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     } catch (e) {
@@ -463,7 +462,7 @@ class _MobileCryptoRuleEditPageState extends State<MobileCryptoRuleEditPage> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.withOpacity(0.8)),
+      hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.8)),
       isDense: true,
       border: const OutlineInputBorder(),
     );

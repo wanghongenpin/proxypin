@@ -19,6 +19,8 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
   double? overlayTop;
   double? overlayRight;
 
+  String? _lastPattern;
+
   bool shouldSearch() {
     return isSearchOverlayVisible && patternController.text.isNotEmpty;
   }
@@ -43,12 +45,15 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
     totalMatchCount.value = count;
     if (count == 0) {
       currentMatchIndex.value = 0;
+      value = value.copyWith(currentMatchIndex: currentMatchIndex.value);
       return;
     }
 
     if (currentMatchIndex.value >= count) {
       currentMatchIndex.value = count - 1;
     }
+
+    value = value.copyWith(currentMatchIndex: currentMatchIndex.value);
   }
 
   void movePrevious() {
@@ -72,6 +77,8 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
   }
 
   void closeSearch() {
+    _lastPattern = patternController.text;
+    patternController.clear();
     removeSearchOverlay();
   }
 
@@ -110,7 +117,6 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
   void dispose() {
     WidgetsBinding.instance.removeObserver(this); // 移除监听器
     logger.d('Disposing SearchTextController');
-    super.didChangeMetrics();
     removeSearchOverlay();
     patternController.dispose();
     totalMatchCount.close();
@@ -125,6 +131,9 @@ class SearchTextController extends ValueNotifier<SearchSettings> with WidgetsBin
       return;
     }
 
+    if (_lastPattern?.isNotEmpty == true) {
+      patternController.text = _lastPattern!;
+    }
     _searchPopup = _buildSearchOverlay(context, top: top, right: right);
     Overlay.of(context).insert(_searchPopup!);
   }

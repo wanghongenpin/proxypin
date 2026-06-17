@@ -19,6 +19,7 @@ import 'dart:math';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -400,7 +401,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
 
           if (Platforms.isDesktop()) {
             var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.png";
-            String? path = (await FilePicker.platform.saveFile(fileName: fileName));
+            String? path = (await FilePicker.saveFile(fileName: fileName));
             if (path == null) return;
 
             await File(path).writeAsBytes(bytes);
@@ -493,6 +494,28 @@ class _Body extends StatefulWidget {
   }
 }
 
+// Top-level isolate function for compute()
+// Accepts a Map<String, String> with keys: 'type' and 'body'.
+String _formatTextBodyIsolate(Map<String, String> args) {
+  final typeName = args['type'] ?? 'text';
+  final body = args['body'] ?? '';
+  final type = ViewType.values.firstWhere((v) => v.name == typeName, orElse: () => ViewType.text);
+
+  try {
+    if (type == ViewType.formUrl) return Uri.decodeFull(body);
+    if (type == ViewType.html) return HTML.pretty(body);
+    if (type == ViewType.xml) return XML.pretty(body);
+    if (type == ViewType.css) return CSS.pretty(body);
+    if (type == ViewType.js) return JS.pretty(body);
+    if (type == ViewType.jsonText || type == ViewType.json) {
+      final jsonObject = json.decode(body);
+      return const JsonEncoder.withIndent("  ").convert(jsonObject);
+    }
+  } catch (_) {}
+
+  return body;
+}
+
 class _BodyState extends State<_Body> {
   static const int _virtualizedThreshold = 100000;
 
@@ -525,35 +548,44 @@ class _BodyState extends State<_Body> {
     return message;
   }
 
-  String _formatTextBody(ViewType type, String body) {
+  Future<String> _formatTextBody(ViewType type, String body) async {
     try {
       if (type == ViewType.formUrl) {
         return Uri.decodeFull(body);
       }
 
-      if (type == ViewType.html) {
-        return HTML.pretty(body);
+      final heavyTypes = {
+        ViewType.html,
+        ViewType.xml,
+        ViewType.css,
+        ViewType.js,
+        ViewType.json,
+        ViewType.jsonText,
+      };
+
+      // For small bodies avoid isolate overhead
+      if (!heavyTypes.contains(type) || body.length < 10000) {
+        try {
+          if (type == ViewType.html) return HTML.pretty(body);
+          if (type == ViewType.xml) return XML.pretty(body);
+          if (type == ViewType.css) return CSS.pretty(body);
+          if (type == ViewType.js) return JS.pretty(body);
+          if (type == ViewType.jsonText || type == ViewType.json) {
+            final jsonObject = json.decode(body);
+            return const JsonEncoder.withIndent("  ").convert(jsonObject);
+          }
+        } catch (_) {
+          return body;
+        }
+        return body;
       }
 
-      if (type == ViewType.xml) {
-        return XML.pretty(body);
-      }
-
-      if (type == ViewType.css) {
-        return CSS.pretty(body);
-      }
-
-      if (type == ViewType.js) {
-        return JS.pretty(body);
-      }
-
-      if (type == ViewType.jsonText || type == ViewType.json) {
-        var jsonObject = json.decode(body);
-        return const JsonEncoder.withIndent("  ").convert(jsonObject);
-      }
-    } catch (_) {}
-
-    return body;
+      // Use compute to perform heavy formatting in an isolate
+      final result = await compute(_formatTextBodyIsolate, {'type': type.name, 'body': body});
+      return result;
+    } catch (_) {
+      return body;
+    }
   }
 
   Future<String?> getBody() async {
@@ -580,7 +612,7 @@ class _BodyState extends State<_Body> {
       return body;
     }
 
-    return _formatTextBody(viewType, body);
+    return await _formatTextBody(viewType, body);
   }
 
   Widget _getBody(ViewType type) {
@@ -632,7 +664,7 @@ class _BodyState extends State<_Body> {
 
     if (type == ViewType.formUrl) {
       return HighlightTextWidget(
-          text: _formatTextBody(type, message.getBodyString()),
+          text: _formatTextBodyIsolate({'type': type.name, 'body': message.getBodyString()}),
           searchController: widget.searchController,
           contextMenuBuilder: contextMenu);
     }
@@ -688,23 +720,32 @@ class _BodyState extends State<_Body> {
     HttpMessage? message,
   }) {
     final language = _languageForViewType(type, message);
-    final formattedText = language != null ? _formatTextBody(type, text) : text;
-    final showVirtualized = formattedText.length > _virtualizedThreshold;
-    if (showVirtualized) {
-      return VirtualizedHighlightText(
-        text: formattedText,
-        language: language,
-        contextMenuBuilder: contextMenu,
-        searchController: widget.searchController,
-        scrollController: widget.scrollController,
-      );
-    }
+    final showVirtualized = text.length > _virtualizedThreshold;
 
-    return HighlightTextWidget(
-        language: language,
-        text: formattedText,
-        searchController: widget.searchController,
-        contextMenuBuilder: contextMenu);
+    // Format asynchronously (may use compute)
+    final futureFormatted = _formatTextBody(type, text);
+
+    return futureWidget(
+      initialData: text.substring(0, min(text.length, 10000)), // Show a preview while formatting
+      futureFormatted,
+      (formattedText) {
+        if (showVirtualized) {
+          return VirtualizedHighlightText(
+            text: formattedText,
+            language: language,
+            contextMenuBuilder: contextMenu,
+            searchController: widget.searchController,
+            scrollController: widget.scrollController,
+          );
+        }
+
+        return HighlightTextWidget(
+            language: language,
+            text: formattedText,
+            searchController: widget.searchController,
+            contextMenuBuilder: contextMenu);
+      },
+    );
   }
 }
 

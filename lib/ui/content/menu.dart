@@ -53,7 +53,7 @@ class ShareWidget extends StatelessWidget {
           ),
           PopupMenuItem(
               padding: const EdgeInsets.only(left: 10, right: 2),
-              child: Text(localizations.shareRequestResponse),
+              child: Text("${localizations.share} ${localizations.requestResponse}"),
               onTap: () async {
                 if (request == null) {
                   FlutterToastr.show(localizations.emptyData, context);
@@ -65,7 +65,7 @@ class ShareWidget extends StatelessWidget {
                 await Share.shareXFiles(
                   [file],
                   fileNameOverrides: ['request.txt'],
-                  text: localizations.proxyPinSoftware,
+                  subject: localizations.proxyPinSoftware,
                   sharePositionOrigin: await _sharePositionOrigin(context),
                 );
               }),
@@ -82,7 +82,7 @@ class ShareWidget extends StatelessWidget {
                 await Share.shareXFiles(
                   [file],
                   fileNameOverrides: ["cURL.txt"],
-                  text: localizations.proxyPinSoftware,
+                  subject: localizations.proxyPinSoftware,
                   sharePositionOrigin: await _sharePositionOrigin(context),
                 );
               }),
@@ -219,7 +219,6 @@ class DetailMenuWidget extends StatelessWidget {
                                         FlutterToastr.show(localizations.copied, context);
                                       },
                                     ),
-
                                   ],
                                 ),
                               ),
@@ -285,6 +284,34 @@ class DetailMenuWidget extends StatelessWidget {
                                         });
                                       },
                                     ),
+                                    ListTile(
+                                      visualDensity: const VisualDensity(vertical: -3),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                      title: Text(localizations.requestResponse),
+                                      onTap: () {
+                                        Navigator.of(menuContext).pop();
+                                        if (request == null) {
+                                          return;
+                                        }
+                                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                                          exportRequestAndResponse(request!, request?.response);
+                                        });
+                                      },
+                                    ),
+                                    ListTile(
+                                      visualDensity: const VisualDensity(vertical: -3),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                      title: Text("HAR"),
+                                      onTap: () {
+                                        Navigator.of(menuContext).pop();
+                                        if (request == null) {
+                                          return;
+                                        }
+                                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                                          exportHar(request!);
+                                        });
+                                      },
+                                    ),
                                   ],
                                 ),
                               ));
@@ -307,7 +334,6 @@ class DetailMenuWidget extends StatelessWidget {
                           context, MobileRequestMapEdit(url: request?.domainPath, title: request?.hostAndPort?.host));
                     });
                   }),
-
             ],
         child: const SizedBox(height: 38, width: 38, child: Icon(Icons.more_vert, size: 28)));
   }

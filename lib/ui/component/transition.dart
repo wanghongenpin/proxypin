@@ -54,7 +54,7 @@ class ColorTransitionState extends State<ColorTransition> with SingleTickerProvi
     }
   }
 
-  show() {
+  void show() {
     _animationController.reset();
     _animationController.forward();
   }
@@ -67,7 +67,7 @@ class ColorTransitionState extends State<ColorTransition> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Material(
       color: _animation.value,
       child: widget.child,
     );

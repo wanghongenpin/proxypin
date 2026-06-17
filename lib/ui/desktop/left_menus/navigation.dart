@@ -72,7 +72,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
           }
 
           return Container(
-            width: localizations.localeName == 'en' ? 70 : 57,
+            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 57 : 70,
             decoration:
                 BoxDecoration(border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2))),
             child: Column(children: <Widget>[

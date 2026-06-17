@@ -58,8 +58,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       });
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
     if (path == null) return;
@@ -90,7 +89,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
       outputFile = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_breakpoint_rules.json'});
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      outputFile = await FilePicker.platform.saveFile(fileName: 'request_breakpoint_rules.json');
+      outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json');
     }
     if (outputFile == null) return;
     File file = File(outputFile);
@@ -139,7 +138,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool isEN = Localizations.localeOf(context).languageCode == 'en';
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Scaffold(
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
@@ -153,7 +152,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     SizedBox(
-                        width: isEN ? 280 : 250,
+                        width: isCN ? 250 : 280,
                         child: ListTile(
                             title: Text("${localizations.enable} ${localizations.breakpoint}"),
                             contentPadding: const EdgeInsets.only(left: 2),

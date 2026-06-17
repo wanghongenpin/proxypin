@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
-import 'package:flutter_highlight/themes/atom-one-dark.dart';
-import 'package:flutter_highlight/themes/atom-one-light.dart';
-import 'package:highlight/languages/http.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/search/highlight_text.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
-import 'package:flutter/services.dart';
-import 'package:proxypin/utils/platform.dart';
+
+import '../component/search/search_controller.dart';
 
 /// A reusable panel to display request/response headers.
 ///
@@ -37,7 +38,7 @@ class HeadersWidget extends StatefulWidget {
 
   /// Optional shared controller for raw-text mode, so caller can reuse
   /// controllers between rebuilds (e.g. separate for Request/Response).
-  final CodeController? controller;
+  final CodeForgeController? controller;
 
   const HeadersWidget({
     super.key,
@@ -55,7 +56,6 @@ class HeadersWidget extends StatefulWidget {
 class _HeadersWidgetState extends State<HeadersWidget> {
   // 静态缓存：按 title 区分的展开状态（保持同一进程内跨页面实例）
   static final Map<String, bool> _lastExpanded = {};
-  late CodeController _controller;
 
   // 当前实例展开状态
   late bool _expanded;
@@ -63,8 +63,6 @@ class _HeadersWidgetState extends State<HeadersWidget> {
   @override
   void initState() {
     super.initState();
-    _controller =
-        widget.controller ?? CodeController(readOnly: true, language: http, text: _buildRawHeaders(widget.message));
     // 优先使用按 type 缓存，其次使用全局配置，最后使用 widget 默认
     final key = widget.title;
     _expanded = _lastExpanded[key] ?? AppConfiguration.current?.headerExpanded ?? widget.initiallyExpanded;
@@ -72,12 +70,28 @@ class _HeadersWidgetState extends State<HeadersWidget> {
 
   @override
   void dispose() {
-    _controller.dispose();
     super.dispose();
   }
 
-  Widget _buildHeaderModeToggle(BuildContext context) {
+  Widget _buildCopyButton(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final text = _buildRawHeaders(widget.message);
+    return IconButton(
+      visualDensity: VisualDensity.comfortable,
+      iconSize: 16,
+      tooltip: localizations.copy,
+      onPressed: text.isEmpty
+          ? null
+          : () async {
+              await Clipboard.setData(ClipboardData(text: text));
+              if (!context.mounted) return;
+              FlutterToastr.show(localizations.copied, context);
+            },
+      icon: const Icon(Icons.copy),
+    );
+  }
 
+  Widget _buildHeaderModeToggle(BuildContext context) {
     final config = AppConfiguration.current;
     if (config == null) return const SizedBox();
     final isText = config.headerViewMode == 'text';
@@ -88,8 +102,8 @@ class _HeadersWidgetState extends State<HeadersWidget> {
     }
 
     return IconButton(
-      visualDensity: VisualDensity.compact,
-      iconSize: 18,
+      visualDensity: VisualDensity.comfortable,
+      iconSize: 16,
       tooltip: isText ? 'Headers: Text' : 'Headers: Table',
       onPressed: () => setMode(!isText),
       icon: Icon(isText ? Icons.text_snippet : Icons.table_rows),
@@ -107,6 +121,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
           Expanded(
               child:
                   Text('${widget.title} Headers', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14))),
+          _buildCopyButton(context),
           _buildHeaderModeToggle(context),
         ],
       ),
@@ -119,28 +134,19 @@ class _HeadersWidgetState extends State<HeadersWidget> {
         if (mounted) setState(() {});
       },
       shape: const Border(),
+      expandedAlignment: Alignment.centerLeft,
       children: !isTextMode ? _buildHeaderRows(widget.message) : buildTextMode(widget.message),
     );
   }
 
   List<Widget> buildTextMode(HttpMessage? message) {
     final text = _buildRawHeaders(message);
-    if (_controller.text != text) {
-      _controller = CodeController(readOnly: true, language: http, text: text);
-    }
 
     return [
-      CodeTheme(
-        data: CodeThemeData(
-            styles: Theme.of(context).brightness == Brightness.light ? atomOneLightTheme : atomOneDarkTheme),
-        child: CodeField(
-          background: Colors.transparent,
-          readOnly: Platforms.isMobile(),
-          wrap: true,
-          gutterStyle: const GutterStyle(margin: 0, width: 52, showErrors: false),
-          textStyle: const TextStyle(fontSize: 15.3),
-          controller: _controller,
-        ),
+      HighlightTextWidget(
+        text: text,
+        language: 'http',
+        searchController: SearchTextController(),
       ),
     ];
   }
