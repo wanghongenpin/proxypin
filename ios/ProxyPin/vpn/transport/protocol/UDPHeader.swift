@@ -31,10 +31,14 @@ class UDPPacketFactory {
             return nil
         }
 
-        let srcPort = data.withUnsafeBytes { $0.load(fromByteOffset: 0, as: UInt16.self).bigEndian }
-        let destPort = data.withUnsafeBytes { $0.load(fromByteOffset: 2, as: UInt16.self).bigEndian }
-        let length = data.withUnsafeBytes { $0.load(fromByteOffset: 4, as: UInt16.self).bigEndian }
-        let checksum = data.withUnsafeBytes { $0.load(fromByteOffset: 6, as: UInt16.self).bigEndian }
+        let srcPort = UInt16(data[0]) << 8 | UInt16(data[1])
+        let destPort = UInt16(data[2]) << 8 | UInt16(data[3])
+        let length = UInt16(data[4]) << 8 | UInt16(data[5])
+        let checksum = UInt16(data[6]) << 8 | UInt16(data[7])
+        guard length >= UInt16(UDP_HEADER_LENGTH), Int(length) <= data.count else {
+            os_log("Invalid UDP length: %d, packet length: %d", log: OSLog.default, type: .error, length, data.count)
+            return nil
+        }
 
         return UDPHeader(sourcePort: srcPort, destinationPort: destPort, length: length, checksum: checksum)
     }

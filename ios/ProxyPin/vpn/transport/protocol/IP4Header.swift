@@ -123,6 +123,12 @@ class IPPacketFactory {
        }
 
        let internetHeaderLength = versionAndHeaderLength & 0x0F
+       let headerLength = Int(internetHeaderLength) * 4
+       guard internetHeaderLength >= 5, headerLength <= data.count else {
+           os_log("Invalid IPv4 header length: %d, packet length: %d", log: OSLog.default, type: .error, headerLength, data.count)
+           return nil
+       }
+
        let typeOfService = buffer[1]
        let diffTypeOfService = typeOfService >> 2
        let ecn = typeOfService & 0x03

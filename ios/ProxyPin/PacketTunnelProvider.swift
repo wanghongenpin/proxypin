@@ -11,18 +11,56 @@ import os.log
 
 class PacketTunnelProvider: NEPacketTunnelProvider {
     private var proxyVpnService: ProxyVpnService?
-    
+
+    private static func isIPv4Address(_ value: String) -> Bool {
+        let parts = value.split(separator: ".")
+        guard parts.count == 4 else {
+            return false
+        }
+        return parts.allSatisfy { part in
+            guard let number = Int(part), number >= 0, number <= 255 else {
+                return false
+            }
+            return String(number) == part
+        }
+    }
+
+    private static func makeError(_ message: String) -> NSError {
+        return NSError(domain: "ProxyPin.PacketTunnelProvider", code: -1, userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
     override func startTunnel(options: [String : NSObject]?, completionHandler: @escaping (Error?) -> Void) {
         NSLog("startTunnel")
 
-        guard let conf = (protocolConfiguration as! NETunnelProviderProtocol).providerConfiguration else{
-            NSLog("[ERROR] No ProtocolConfiguration Found")
-            exit(EXIT_FAILURE)
+        guard let tunnelProtocol = protocolConfiguration as? NETunnelProviderProtocol else {
+            let error = Self.makeError("Invalid tunnel protocol configuration")
+            NSLog("[ERROR] \(error.localizedDescription)")
+            completionHandler(error)
+            return
+        }
+        guard let conf = tunnelProtocol.providerConfiguration else {
+            let error = Self.makeError("No ProtocolConfiguration Found")
+            NSLog("[ERROR] \(error.localizedDescription)")
+            completionHandler(error)
+            return
         }
 
-        let host = conf["proxyHost"] as! String
-        let proxyPort = conf["proxyPort"] as! Int
-        let ipProxy = conf["ipProxy"] as! Bool? ?? false
+        guard let host = conf["proxyHost"] as? String, !host.isEmpty else {
+            let error = Self.makeError("Missing proxyHost")
+            NSLog("[ERROR] \(error.localizedDescription)")
+            completionHandler(error)
+            return
+        }
+        guard let proxyPort = conf["proxyPort"] as? Int,
+              proxyPort > 0,
+              proxyPort <= Int(UInt16.max),
+              let nwProxyPort = NWEndpoint.Port(rawValue: UInt16(proxyPort)) else {
+            let error = Self.makeError("Invalid proxyPort")
+            NSLog("[ERROR] \(error.localizedDescription)")
+            completionHandler(error)
+            return
+        }
+        let ipProxy = conf["ipProxy"] as? Bool ?? false
 
         // parse proxyPassDomains: accept either [String] or comma-separated String
         var proxyPassDomains: [String]? = nil
@@ -36,30 +74,28 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 //        let networkSettings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: "127.0.0.1")
         let networkSettings = NEPacketTunnelNetworkSettings(tunnelRemoteAddress: host)
         NSLog(conf.debugDescription)
-     
+
         networkSettings.mtu = 1500
-        
+
         let ipv4Settings = NEIPv4Settings(addresses: ["10.0.0.2"], subnetMasks: ["255.255.255.255"])
-       
+
         if (ipProxy){
             ipv4Settings.includedRoutes = [NEIPv4Route.default()]
-           ipv4Settings.excludedRoutes = [
-               NEIPv4Route(destinationAddress: "10.0.0.0", subnetMask: "255.0.0.0"),
-               NEIPv4Route(destinationAddress: "100.64.0.0", subnetMask: "255.192.0.0"),
-//                NEIPv4Route(destinationAddress: "127.0.0.0", subnetMask: "255.0.0.0"),
-               NEIPv4Route(destinationAddress: "169.254.0.0", subnetMask: "255.255.0.0"),
-               NEIPv4Route(destinationAddress: "172.16.0.0", subnetMask: "255.240.0.0"),
-               NEIPv4Route(destinationAddress: "192.168.0.0", subnetMask: "255.255.0.0"),
-               NEIPv4Route(destinationAddress: "17.0.0.0", subnetMask: "255.0.0.0"),
-           ]
-            
-           let dns = "223.5.5.5,8.8.8.8"
-           let dnsSettings = NEDNSSettings(servers: dns.components(separatedBy: ","))
-           dnsSettings.matchDomains = [""]
-           dnsSettings.matchDomainsNoSearch = true
-           networkSettings.dnsSettings = dnsSettings
+            var excludedRoutes = [
+                NEIPv4Route(destinationAddress: "127.0.0.0", subnetMask: "255.0.0.0"),
+                NEIPv4Route(destinationAddress: "169.254.0.0", subnetMask: "255.255.0.0"),
+                NEIPv4Route(destinationAddress: "224.0.0.0", subnetMask: "240.0.0.0"),
+                NEIPv4Route(destinationAddress: "240.0.0.0", subnetMask: "240.0.0.0"),
+            ]
+            if Self.isIPv4Address(host) {
+                excludedRoutes.append(NEIPv4Route(destinationAddress: host, subnetMask: "255.255.255.255"))
+            } else {
+                NSLog("[WARN] proxyHost is not an IPv4 address, cannot add excluded route: \(host)")
+            }
+            ipv4Settings.excludedRoutes = excludedRoutes
+
         }
-        
+
         //http代理
         let proxySettings = NEProxySettings()
         proxySettings.httpEnabled = true
@@ -69,13 +105,13 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
         // If a proxyPassDomains list was provided, use it as the exceptionList so these domains bypass the proxy.
         if let pass = proxyPassDomains {
             proxySettings.exceptionList = pass
-        } 
+        }
 
         proxySettings.matchDomains = [""]
         networkSettings.proxySettings =  proxySettings
 
         networkSettings.ipv4Settings = ipv4Settings
-        
+
         setTunnelNetworkSettings(networkSettings) { error in
            guard error == nil else {
                NSLog("startTunnel Encountered an error setting up the network: \(error.debugDescription)")
@@ -84,7 +120,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
            }
 
            if (ipProxy){
-             let proxyAddress =  Network.NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: UInt16(proxyPort))!)
+             let proxyAddress =  Network.NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: nwProxyPort)
              self.proxyVpnService = ProxyVpnService(packetFlow: self.packetFlow, proxyAddress: proxyAddress)
              self.proxyVpnService!.start()
            }
@@ -94,6 +130,7 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
 
     override func stopTunnel(with reason: NEProviderStopReason, completionHandler: @escaping () -> Void) {
         proxyVpnService?.stop()
+        proxyVpnService = nil
         completionHandler()
     }
 

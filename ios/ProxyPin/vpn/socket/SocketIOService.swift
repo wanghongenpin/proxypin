@@ -33,26 +33,48 @@ class SocketIOService {
 
     //从connection接受数据 写到client
     public func registerSession(connection: Connection) {
-        
-        connection.channel!.stateUpdateHandler = { state in
+        guard let channel = connection.withLock({ connection.channel }) else {
+            os_log("Missing channel for %{public}@", log: OSLog.default, type: .error, connection.description)
+            connection.closeConnection()
+            return
+        }
+
+        channel.stateUpdateHandler = { [weak self, weak connection] state in
+            guard let self = self, let connection = connection else { return }
 //             os_log("Connection %{public}@ state changed to %{public}@", log: OSLog.default, type: .default, connection.description, String(describing: state))
             switch state {
 
             case .ready:
-                connection.isConnected = true
+                connection.withLock {
+                    connection.isConnected = true
+                    connection.isAbortingConnection = false
+                    connection.lastActiveAt = Date()
+                }
                 os_log("Connected to %{public}@ on receiveMessage", log: OSLog.default, type: .default, connection.description)
 
                 //接受远程服务器的数据
                 connection.sendToDestination()
                 self.receiveMessage(connection: connection)
             case .cancelled:
-                connection.isConnected = false
+                connection.withLock {
+                    connection.isConnected = false
+                }
                 os_log("Connection cancelled  %{public}@", log: OSLog.default, type: .default, connection.description)
-                connection.closeConnection()
                 self.sendFin(connection: connection)
+                connection.closeConnection()
 
+            case .waiting(let error):
+                connection.withLock {
+                    connection.isConnected = false
+                    connection.isAbortingConnection = true
+                }
+                os_log("Connection waiting: %{public}@ %{public}@", log: OSLog.default, type: .error, connection.description, error.localizedDescription)
+                connection.closeConnection()
             case .failed(let error):
-                connection.isConnected = false
+                connection.withLock {
+                    connection.isConnected = false
+                    connection.isAbortingConnection = true
+                }
                 os_log("Failed to connect: %{public}@ %{public}@", log: OSLog.default, type: .error,connection.description, error.localizedDescription)
                 connection.closeConnection()
             default:
@@ -61,7 +83,7 @@ class SocketIOService {
             }
         }
 
-        connection.channel!.start(queue: self.queue)
+        channel.start(queue: self.queue)
     }
 
     private func receiveMessage(connection: Connection) {
@@ -76,7 +98,7 @@ class SocketIOService {
             readTCP(connection: connection)
         }
 
-        if (connection.isAbortingConnection) {
+        if connection.withLock({ connection.isAbortingConnection }) {
             os_log("Connection is aborting", log: OSLog.default, type: .default)
             connection.closeConnection()
             return
@@ -85,12 +107,12 @@ class SocketIOService {
 
     func readTCP(connection: Connection) {
 //         os_log("Reading from TCP socket")
-        if connection.isAbortingConnection {
+        if connection.withLock({ connection.isAbortingConnection }) {
             os_log("Connection is aborting", log: OSLog.default, type: .default)
             return
         }
 
-        guard let channel = connection.channel else {
+        guard let channel = connection.withLock({ connection.channel }) else {
             os_log("Invalid channel type", log: OSLog.default, type: .error)
             return
         }
@@ -100,19 +122,25 @@ class SocketIOService {
 //                 os_log("[SocketIOService] Received TCP data packet %{public}@ length %d", log: OSLog.default, type: .default, connection.description, data?.count ?? -1)
                 if let error = error {
                     os_log("Failed to read from TCP socket: %@", log: OSLog.default, type: .error, error as CVarArg)
-                    connection.isAbortingConnection = true
+                    connection.withLock {
+                        connection.isAbortingConnection = true
+                    }
+                    connection.closeConnection()
                     return
                 }
 
-                self.pushDataToClient(buffer: data ?? Data() , connection: connection)
+                if let data = data, !data.isEmpty {
+                    self.pushDataToClient(buffer: data, connection: connection)
+                }
+
+                if (isComplete) {
+                    self.sendFin(connection: connection)
+                    connection.closeConnection()
+                    return
+                }
 
                 // Recursively call readTCP to continue reading messages
                 self.receiveMessage(connection: connection)
-                
-                if (isComplete) {
-                    connection.isAbortingConnection = true
-                    return
-                }
             }
         }
     }
@@ -122,39 +150,42 @@ class SocketIOService {
         closure()
 //        objc_sync_exit(lock)
     }
-    
+
     ///create packet data and send it to VPN client
     private func pushDataToClient(buffer: Data, connection: Connection) {
         // Last piece of data is usually smaller than MAX_RECEIVE_BUFFER_SIZE. We use this as a
         // trigger to set PSH on the resulting TCP packet that goes to the VPN.
 
-        connection.hasReceivedLastSegment = buffer.count <= 0
+        guard let data = connection.withLock({ () -> Data? in
+            connection.hasReceivedLastSegment = false
 
-        guard let ipHeader = connection.lastIpHeader, let tcpHeader = connection.lastTcpHeader else {
-            os_log("Invalid ipHeader or tcpHeader", log: OSLog.default, type: .error)
-            return
-        }
+            guard let ipHeader = connection.lastIpHeader, let tcpHeader = connection.lastTcpHeader else {
+                return nil
+            }
 
-        synchronized(connection) {
             let unAck = connection.sendNext
-            //处理益处问题
+            //处理溢出问题
             let nextUnAck = UInt32(truncatingIfNeeded: (connection.sendNext + UInt32(buffer.count)) % UInt32.max)
             connection.sendNext = nextUnAck
+            connection.lastActiveAt = Date()
 
-            let data = TCPPacketFactory.createResponsePacketData(
+            return TCPPacketFactory.createResponsePacketData(
                 ipHeader: ipHeader,
                 tcpHeader: tcpHeader,
                 packetData: buffer,
-                isPsh: connection.hasReceivedLastSegment,
+                isPsh: true,
                 ackNumber: connection.recSequence,
                 seqNumber: unAck,
                 timeSender: connection.timestampSender,
                 timeReplyTo: connection.timestampReplyTo
             )
-
-            self.clientPacketWriter.writePackets([data], withProtocols: [NSNumber(value: AF_INET)])
-//              os_log("[SocketIOService] Sent TCP data packet to client %{public}@ length:%d  seq:%u ack:%u", log: OSLog.default, type: .default, connection.description, buffer.count, unAck, connection.recSequence)
+        }) else {
+            os_log("Invalid ipHeader or tcpHeader", log: OSLog.default, type: .error)
+            return
         }
+
+        self.clientPacketWriter.writePackets([data], withProtocols: [NSNumber(value: AF_INET)])
+//              os_log("[SocketIOService] Sent TCP data packet to client %{public}@ length:%d", log: OSLog.default, type: .default, connection.description, buffer.count)
     }
 
     private func sendFin(connection: Connection) {
@@ -162,12 +193,12 @@ class SocketIOService {
             return
         }
         
-        guard let ipHeader = connection.lastIpHeader, let tcpHeader = connection.lastTcpHeader else {
-            os_log("Invalid ipHeader or tcpHeader", log: OSLog.default, type: .error)
-            return
-        }
-        synchronized(connection) {
-            let data = TCPPacketFactory.createFinData(
+        guard let data = connection.withLock({ () -> Data? in
+            guard let ipHeader = connection.lastIpHeader, let tcpHeader = connection.lastTcpHeader else {
+                return nil
+            }
+
+            return TCPPacketFactory.createFinData(
                 ipHeader: ipHeader,
                 tcpHeader: tcpHeader,
                 ackNumber: connection.recSequence,
@@ -175,14 +206,17 @@ class SocketIOService {
                 timeSender: connection.timestampSender,
                 timeReplyTo: connection.timestampReplyTo
             )
-            
-            self.clientPacketWriter.writePackets([data], withProtocols: [NSNumber(value: AF_INET)])
+        }) else {
+            os_log("Invalid ipHeader or tcpHeader", log: OSLog.default, type: .error)
+            return
         }
+
+        self.clientPacketWriter.writePackets([data], withProtocols: [NSNumber(value: AF_INET)])
     }
     
     func readUDP(connection: Connection) {
  
-        guard let channel = connection.channel else {
+        guard let channel = connection.withLock({ connection.channel }) else {
             os_log("Invalid channel type", log: OSLog.default, type: .error)
             return
         }

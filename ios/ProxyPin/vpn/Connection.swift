@@ -26,6 +26,11 @@ class Connection{
     var isAbortingConnection: Bool = false
     var isAckedToFin: Bool = false
 
+    var createdAt = Date()
+    var lastActiveAt = Date()
+    var cleanupWorkItem: DispatchWorkItem?
+
+    private let lock = NSRecursiveLock()
     private let connectionCloser: ConnectionManager
 
     init(nwProtocol: NWProtocol, sourceIp: UInt32, sourcePort: UInt16, destinationIp: UInt32, destinationPort: UInt16, connectionCloser: ConnectionManager) {
@@ -71,29 +76,71 @@ class Connection{
     func closeConnection() {
         connectionCloser.closeConnection(connection: self)
     }
-    
-    func addSendData(data: Data) {
-       self.sendBuffer.append(data)
 
-        if (self.channel?.state != .ready) {
-           os_log("Connection %{public}@ is not ready, cannot send data", log: OSLog.default, type: .debug, self.description)
-           return
-       }
-
-        self.sendToDestination()
+    func withLock<T>(_ closure: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try closure()
     }
-    
-    //发送到目标服务器的数据
-    func sendToDestination() {
-//         os_log("Sending data to destination key %{public}@", log: OSLog.default, type: .debug, self.description)
-        if (self.sendBuffer.count == 0) {
+
+    func takeChannelForClose() -> NWConnection? {
+        return withLock {
+            cleanupWorkItem?.cancel()
+            cleanupWorkItem = nil
+            channel?.stateUpdateHandler = nil
+            let currentChannel = channel
+            channel = nil
+            isConnected = false
+            isAbortingConnection = true
+            return currentChannel
+        }
+    }
+
+    func scheduleCleanup(_ workItem: DispatchWorkItem) {
+        withLock {
+            cleanupWorkItem?.cancel()
+            cleanupWorkItem = workItem
+        }
+    }
+
+    var idleTime: TimeInterval {
+        return withLock { Date().timeIntervalSince(lastActiveAt) }
+    }
+
+    func addSendData(data: Data) {
+        let isReady = withLock { () -> Bool in
+            self.lastActiveAt = Date()
+            self.sendBuffer.append(data)
+            return self.channel?.state == .ready
+        }
+
+        if !isReady {
+            os_log("Connection %{public}@ is not ready, cannot send data", log: OSLog.default, type: .debug, self.description)
             return
         }
 
-        let data = self.sendBuffer
-        self.sendBuffer.removeAll()
+        self.sendToDestination()
+    }
 
-        self.channel?.send(content: data, completion: .contentProcessed({ error in
+    //发送到目标服务器的数据
+    func sendToDestination() {
+//         os_log("Sending data to destination key %{public}@", log: OSLog.default, type: .debug, self.description)
+        let pending = withLock { () -> (NWConnection?, Data?) in
+            if self.sendBuffer.count == 0 {
+                return (nil, nil)
+            }
+
+            let data = self.sendBuffer
+            self.sendBuffer.removeAll()
+            self.lastActiveAt = Date()
+            return (self.channel, data)
+        }
+
+        guard let channel = pending.0, let data = pending.1 else {
+            return
+        }
+
+        channel.send(content: data, completion: .contentProcessed({ error in
             if let error = error {
                 os_log("Failed to send data to destination key %{public}@ error: %{public}@", log: OSLog.default, type: .error, self.description, error.localizedDescription)
                 self.closeConnection()
