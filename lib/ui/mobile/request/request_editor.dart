@@ -867,6 +867,13 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
     return map;
   }
 
+  Future<void> _copyParam(KeyVal keyVal) async {
+    final text = '${keyVal.key}: ${keyVal.value}';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    FlutterToastr.show(localizations.copied, context);
+  }
+
   //刷新param
   void refreshParam(Map<String, List<String>>? headers) {
     _params.clear();
@@ -944,10 +951,11 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
 
     for (var element in _params) {
       Widget headerWidget = Padding(padding: const EdgeInsets.only(top: 5, bottom: 5), child: row(element));
-      if (!widget.readOnly) {
-        headerWidget =
-            InkWell(onTap: () => modifyParam(element), onLongPress: () => deleteHeader(element), child: headerWidget);
-      }
+      headerWidget = InkWell(
+        onTap: () => modifyParam(element),
+        onLongPress: widget.readOnly ? () => _copyParam(element) : () => deleteHeader(element),
+        child: headerWidget,
+      );
 
       list.add(headerWidget);
       list.add(const Divider(thickness: 0.2));
@@ -977,10 +985,11 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
             return AlertDialog(
               titlePadding: const EdgeInsets.only(left: 25, top: 10),
               actionsPadding: const EdgeInsets.only(right: 10, bottom: 10),
-              title: Text(localizations.modifyRequestHeader, style: const TextStyle(fontSize: 18)),
+              title: Text(widget.readOnly ? localizations.responseHeader : localizations.modifyRequestHeader,
+                  style: const TextStyle(fontSize: 16)),
               content: Wrap(
                 children: [
-                  if (widget.suggestions != null)
+                  if (widget.suggestions != null && !widget.readOnly)
                     Autocomplete<String>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (textEditingValue.text.isEmpty) {
@@ -1045,13 +1054,14 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
                       minLines: 1,
                       maxLines: 3,
                       initialValue: headerName,
+                      readOnly: widget.readOnly,
                       decoration: InputDecoration(labelText: localizations.headerName),
                       onChanged: (value) {
                         headerName = value;
                         setState(() {});
                       },
                     ),
-                  if (HttpHeaders.commonHeaderValues.containsKey(headerName))
+                  if (HttpHeaders.commonHeaderValues.containsKey(headerName) && !widget.readOnly)
                     Autocomplete<String>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (textEditingValue.text.isEmpty) {
@@ -1111,23 +1121,27 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
                       minLines: 1,
                       maxLines: 8,
                       initialValue: val,
+                      readOnly: widget.readOnly,
                       decoration: InputDecoration(labelText: localizations.value),
                       onChanged: (value) => val = value,
                     )
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: Text(localizations.cancel)),
                 TextButton(
-                    onPressed: () {
-                      this.setState(() {
-                        keyVal.key = headerName;
-                        keyVal.value = val;
-                      });
-                      notifierChange();
-                      Navigator.pop(ctx);
-                    },
-                    child: Text(localizations.modify)),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(widget.readOnly ? localizations.close : localizations.cancel)),
+                if (!widget.readOnly)
+                  TextButton(
+                      onPressed: () {
+                        this.setState(() {
+                          keyVal.key = headerName;
+                          keyVal.value = val;
+                        });
+                        notifierChange();
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(localizations.modify)),
               ],
             );
           });
@@ -1135,7 +1149,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
   }
 
   //删除
-  deleteHeader(KeyVal keyVal) {
+  void deleteHeader(KeyVal keyVal) {
     showDialog(
         context: context,
         builder: (ctx) {

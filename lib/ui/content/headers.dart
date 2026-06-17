@@ -15,6 +15,9 @@
  */
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/search/highlight_text.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -70,6 +73,24 @@ class _HeadersWidgetState extends State<HeadersWidget> {
     super.dispose();
   }
 
+  Widget _buildCopyButton(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final text = _buildRawHeaders(widget.message);
+    return IconButton(
+      visualDensity: VisualDensity.comfortable,
+      iconSize: 16,
+      tooltip: localizations.copy,
+      onPressed: text.isEmpty
+          ? null
+          : () async {
+              await Clipboard.setData(ClipboardData(text: text));
+              if (!context.mounted) return;
+              FlutterToastr.show(localizations.copied, context);
+            },
+      icon: const Icon(Icons.copy),
+    );
+  }
+
   Widget _buildHeaderModeToggle(BuildContext context) {
     final config = AppConfiguration.current;
     if (config == null) return const SizedBox();
@@ -81,8 +102,8 @@ class _HeadersWidgetState extends State<HeadersWidget> {
     }
 
     return IconButton(
-      visualDensity: VisualDensity.compact,
-      iconSize: 18,
+      visualDensity: VisualDensity.comfortable,
+      iconSize: 16,
       tooltip: isText ? 'Headers: Text' : 'Headers: Table',
       onPressed: () => setMode(!isText),
       icon: Icon(isText ? Icons.text_snippet : Icons.table_rows),
@@ -100,6 +121,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
           Expanded(
               child:
                   Text('${widget.title} Headers', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14))),
+          _buildCopyButton(context),
           _buildHeaderModeToggle(context),
         ],
       ),

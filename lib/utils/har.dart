@@ -169,7 +169,12 @@ class Har {
     List<HttpRequest> list = [];
 
     for (var value in lines) {
-      var har = jsonDecode(value.substring(0, value.length - 1));
+      var line = value.trim();
+      if (line.isEmpty) continue;
+      if (line.endsWith(',')) {
+        line = line.substring(0, line.length - 1);
+      }
+      var har = jsonDecode(line);
       var request = toRequest(har);
       list.add(request);
     }
@@ -215,11 +220,16 @@ class Har {
         httpResponse.headers.add(element['name'], element['value']);
       }
 
-      if (httpResponse.contentType.isBinary) {
-        try {
-          httpResponse.body = base64Decode(response['content']['text']);
-        } catch (e) {
-          httpResponse.body = response['content']['text'].toString().codeUnits;
+      var responseText = response['content']?['text'];
+      if (responseText != null) {
+        if (httpResponse.contentType.isBinary) {
+          try {
+            httpResponse.body = base64Decode(responseText);
+          } catch (e) {
+            httpResponse.body = responseText.toString().codeUnits;
+          }
+        } else {
+          httpResponse.body = responseText.toString().codeUnits;
         }
       }
     }
