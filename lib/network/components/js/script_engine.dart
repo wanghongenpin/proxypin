@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,7 +14,89 @@ import '../../util/uri.dart';
 import 'file.dart';
 import 'md5.dart';
 
+class JavaScriptRuntimePool {
+  final int size;
+  final Function(dynamic args)? consoleLog;
+
+  final List<_PooledJavaScriptRuntime> _runtimes = [];
+
+  JavaScriptRuntimePool({required int size, this.consoleLog}) : size = size < 1 ? 1 : size;
+
+  Future<T> run<T>(Future<T> Function(JavascriptRuntime flutterJs) action) async {
+    final runtime = _selectRuntime();
+    runtime.pending++;
+    try {
+      final flutterJs = await runtime.flutterJs.onError((error, stackTrace) {
+        _runtimes.remove(runtime);
+        throw error!;
+      });
+      return await JavaScriptEngine.synchronized(flutterJs, () => action(flutterJs));
+    } on TimeoutException catch (e) {
+      _runtimes.remove(runtime);
+      logger.e('JavaScript runtime timed out and was removed from pool: $e');
+      rethrow;
+    } finally {
+      runtime.pending--;
+    }
+  }
+
+  Future<void> dispose() async {
+    final runtimes = List<_PooledJavaScriptRuntime>.of(_runtimes);
+    _runtimes.clear();
+    for (final runtime in runtimes) {
+      (await runtime.flutterJs).dispose();
+    }
+  }
+
+  _PooledJavaScriptRuntime _selectRuntime() {
+    for (final runtime in _runtimes) {
+      if (runtime.pending == 0) {
+        return runtime;
+      }
+    }
+
+    if (_runtimes.length < size) {
+      final runtime = _PooledJavaScriptRuntime(JavaScriptEngine.getJavaScript(consoleLog: consoleLog));
+      _runtimes.add(runtime);
+      return runtime;
+    }
+
+    return _runtimes.reduce((current, next) => current.pending <= next.pending ? current : next);
+  }
+}
+
+class _PooledJavaScriptRuntime {
+  final Future<JavascriptRuntime> flutterJs;
+  int pending = 0;
+
+  _PooledJavaScriptRuntime(this.flutterJs);
+}
+
 class JavaScriptEngine {
+  static final _runtimeLocks = Expando<Future<void>>('javascriptRuntimeLocks');
+
+  static int defaultRuntimePoolSize = 4;
+  static Duration runtimeTimeout = const Duration(seconds: 30);
+
+  static Future<T> synchronized<T>(JavascriptRuntime flutterJs, Future<T> Function() action) async {
+    while (_runtimeLocks[flutterJs] != null) {
+      await _runtimeLocks[flutterJs]!.timeout(runtimeTimeout);
+    }
+
+    final completer = Completer<void>();
+    _runtimeLocks[flutterJs] = completer.future;
+    var completed = false;
+    try {
+      return await action().timeout(runtimeTimeout);
+    } finally {
+      _runtimeLocks[flutterJs] = null;
+      if (!completed) {
+        completed = true;
+        completer.complete();
+      }
+    }
+  }
+
   static Future<JavascriptRuntime> getJavaScript({Function(dynamic args)? consoleLog}) async {
     final JavascriptRuntime flutterJs = getJavascriptRuntime(xhr: false);
 

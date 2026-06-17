@@ -386,8 +386,8 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
       streamDependency = dependency & 0x7FFFFFFF; // 获取低 31 位
       weight = payload.readByte(); // 读取权重
 
-      logger.d(
-          "PRIORITY frame parsed: streamId:${frameHeader.streamIdentifier} streamDependency=$streamDependency, weight=$weight $exclusiveDependency");
+      // logger.d(
+      //     "PRIORITY frame parsed: streamId:${frameHeader.streamIdentifier} streamDependency=$streamDependency, weight=$weight $exclusiveDependency");
     }
 
     var headerBlockLength = payload.length - payload.readerIndex - padLength;

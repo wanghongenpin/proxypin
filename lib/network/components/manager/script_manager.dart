@@ -18,7 +18,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:flutter_js/flutter_js.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -64,7 +63,7 @@ async function onResponse(context, request, response) {
 
   final ExpiringCache<ScriptItem, String> _scriptMap = ExpiringCache<ScriptItem, String>(Duration(minutes: 15));
 
-  static late JavascriptRuntime flutterJs;
+  static late JavaScriptRuntimePool flutterJsPool;
 
   static String? deviceId;
 
@@ -77,7 +76,7 @@ async function onResponse(context, request, response) {
     if (_instance == null) {
       _instance = ScriptManager._();
       await _instance?.reloadScript();
-      flutterJs = await JavaScriptEngine.getJavaScript(consoleLog: consoleLog);
+      flutterJsPool = JavaScriptRuntimePool(size: JavaScriptEngine.defaultRuntimePoolSize, consoleLog: consoleLog);
       deviceId = await DeviceUtils.deviceId();
 
       logger.d('init script manager $deviceId');
@@ -99,7 +98,7 @@ async function onResponse(context, request, response) {
 
   static void registerLogHandler(LogHandler logHandler) {
     if (_logHandlers.any((it) => it.channelId == logHandler.channelId)) {
-       _logHandlers.removeWhere((it) => it.channelId == logHandler.channelId);
+      _logHandlers.removeWhere((it) => it.channelId == logHandler.channelId);
     }
     _logHandlers.add(logHandler);
   }
@@ -281,9 +280,11 @@ async function onResponse(context, request, response) {
           continue;
         }
 
-        var jsResult = await flutterJs.evaluateAsync(
-            """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
-        var result = await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
+        var result = await flutterJsPool.run((flutterJs) async {
+          var jsResult = await flutterJs.evaluateAsync(
+              """var request = $jsRequest, context = $context;  request['scriptContext'] = context; $script\n  onRequest(context, request)""");
+          return await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
+        });
         if (result == null) {
           return null;
         }
@@ -313,11 +314,12 @@ async function onResponse(context, request, response) {
           continue;
         }
 
-        var jsResult = await flutterJs.evaluateAsync(
-            """var response = $jsResponse, context = $context;  response['scriptContext'] = context; $script
+        var result = await flutterJsPool.run((flutterJs) async {
+          var jsResult = await flutterJs.evaluateAsync(
+              """var response = $jsResponse, context = $context;  response['scriptContext'] = context; $script
             \n  onResponse(context, $jsRequest, response);""");
-        // print("response: ${jsResult.isPromise} ${jsResult.isError} ${jsResult.rawResult}");
-        var result = await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
+          return await JavaScriptEngine.jsResultResolve(flutterJs, jsResult);
+        });
         if (result == null) {
           return null;
         }
