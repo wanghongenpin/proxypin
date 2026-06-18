@@ -371,10 +371,10 @@ class _RequestWidgetState extends State<RequestWidget> {
         exportRequestBody(widget.request);
         break;
       case _RequestExportMenuAction.response:
-        exportResponse(widget.response.get());
+        exportResponse(widget.response.get() ?? widget.request.response);
         break;
       case _RequestExportMenuAction.responseBody:
-        exportResponseBody(widget.response.get());
+        exportResponseBody(widget.response.get() ?? widget.request.response);
         break;
       case _RequestExportMenuAction.har:
         exportHar(widget.request);

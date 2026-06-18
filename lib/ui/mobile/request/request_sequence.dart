@@ -1,7 +1,5 @@
 import 'dart:collection';
-import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -15,7 +13,7 @@ import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/ui/mobile/request/request.dart';
-import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
@@ -247,6 +245,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                       final requestId = request.requestId;
 
                       return RequestRow(
+                          key: ValueKey(requestId),
                           index: sortDesc ? view.length - index : index,
                           request: request,
                           proxyServer: widget.proxyServer,
@@ -262,7 +261,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                               view.remove(item);
                               responseCallbacks.remove(requestId);
                             });
-                            selectionController.remove(request.requestId);
+                            selectionController.remove(item.requestId);
                             widget.onRemove?.call([item]);
                           });
                     })))
@@ -293,7 +292,10 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       return;
     }
 
-    _doExport('ProxyPin_selected_${DateTime.now().dateFormat()}.har', selected);
+    final folderName = 'proxypin_export_${DateTime.now().dateFormat()}';
+    showExportDialog(context, selected, folderName, onExportSuccess: () {
+      selectionController.clear();
+    });
   }
 
   void repeatSelected() {
@@ -303,18 +305,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     }
 
     _repeatRequests(selected);
-  }
-
-  Future<void> _doExport(String fileName, List<HttpRequest> requests) async {
-    var json = await Har.writeJson(requests, title: fileName);
-    final path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
-    if (path == null) {
-      return;
-    }
-    selectionController.clear();
-    if (mounted) {
-      FlutterToastr.show(localizations.exportSuccess, context);
-    }
   }
 
   Future<void> _repeatRequests(List<HttpRequest> requests) async {

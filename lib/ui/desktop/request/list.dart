@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -27,7 +24,6 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
-import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -37,7 +33,7 @@ import 'package:proxypin/ui/desktop/request/report_servers.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/ui/desktop/request/request_sequence.dart';
 import 'package:proxypin/ui/desktop/request/search.dart';
-import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
@@ -198,7 +194,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
             _menuItem(_RequestListMenuAction.repeat,
                 icon: const Icon(Icons.repeat, size: 16), text: localizations.repeatAllRequests),
             _menuItem(_RequestListMenuAction.select,
-                icon: const Icon(Icons.checklist_outlined, size: 16), text: localizations.selectAction),
+                icon: const Icon(Icons.checklist_outlined, size: 16), text: localizations.select),
             _menuItem(_RequestListMenuAction.sort,
                 icon: const Icon(Icons.sort, size: 16),
                 text: sortDesc ? localizations.timeAsc : localizations.timeDesc),
@@ -355,127 +351,10 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
       return;
     }
 
-    _showExportFormatDialog(selectedRequests, 'export');
-  }
-
-  void _showExportFormatDialog(List<HttpRequest> requests, String suffix) {
-    final localizations = AppLocalizations.of(context)!;
-    final folderName = 'proxypin_${suffix}_${DateTime.now().dateFormat()}';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(localizations.export),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: Text(localizations.request),
-                onTap: () {
-                  Navigator.pop(context);
-                  _exportRequestsToFolder(requests, folderName, _ExportType.request);
-                },
-              ),
-              ListTile(
-                title: Text(localizations.response),
-                onTap: () {
-                  Navigator.pop(context);
-                  _exportRequestsToFolder(requests, folderName, _ExportType.response);
-                },
-              ),
-              ListTile(
-                title: Text(localizations.requestResponse),
-                onTap: () {
-                  Navigator.pop(context);
-                  _exportRequestsToFolder(requests, folderName, _ExportType.requestResponse);
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                title: const Text('HAR'),
-                onTap: () {
-                  Navigator.pop(context);
-                  final fileName = 'ProxyPin_${suffix}_${DateTime.now().dateFormat()}.har';
-                  _doExportHar(fileName, requests);
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(localizations.cancel),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _exportRequestsToFolder(List<HttpRequest> requests, String folderName, _ExportType type) async {
-    // 选择保存目录
-    String? selectedDirectory = await FilePicker.saveFile(
-      fileName: folderName,
-      type: FileType.custom,
-      allowedExtensions: [''],
-    ).then((path) => path != null ? Directory(path).parent.path : null);
-    if (selectedDirectory == null) return;
-
-    // 创建主文件夹
-    final folder = Directory('$selectedDirectory/$folderName');
-    if (!await folder.exists()) {
-      await folder.create(recursive: true);
-    }
-
-    int successCount = 0;
-    for (var i = 0; i < requests.length; i++) {
-      try {
-        var request = requests[i];
-        var host = request.hostAndPort?.host ?? 'unknown';
-        var safeHost = host.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
-        var prefix = '${i + 1}_$safeHost';
-
-        switch (type) {
-          case _ExportType.request:
-            var content = copyRawRequest(request);
-            var file = File('${folder.path}/${prefix}_request.txt');
-            await file.writeAsString(content);
-            break;
-          case _ExportType.response:
-            if (request.response != null) {
-              var content = await _copyRawResponse(request.response!);
-              var file = File('${folder.path}/${prefix}_response.txt');
-              await file.writeAsString(content);
-            }
-            break;
-          case _ExportType.requestResponse:
-            var content = copyRequest(request, request.response);
-            var file = File('${folder.path}/${prefix}_request_response.txt');
-            await file.writeAsString(content);
-            break;
-        }
-        successCount++;
-      } catch (e) {
-        logger.e('Export error: $e');
-      }
-    }
-
-    selectionController.clear();
-    if (mounted) {
-      FlutterToastr.show('导出成功: $successCount/${requests.length} 个文件', context);
-    }
-  }
-
-  Future<String> _copyRawResponse(HttpResponse response) async {
-    var sb = StringBuffer();
-    sb.writeln("${response.protocolVersion} ${response.status.code} ${response.status.reasonPhrase}");
-    sb.write(response.headers.headerLines());
-    if (response.bodyAsString.isNotEmpty) {
-      sb.writeln();
-      sb.write(await response.decodeBodyString());
-    }
-    return sb.toString();
+    final folderName = 'proxypin_export_${DateTime.now().dateFormat()}';
+    showExportDialog(context, selectedRequests, folderName, onExportSuccess: () {
+      selectionController.clear();
+    });
   }
 
   ///导出
@@ -483,19 +362,8 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     //获取请求
     List<HttpRequest>? requests = currentView();
     if (requests == null) return;
-    _showExportFormatDialog(requests, DateTime.now().dateFormat());
-  }
-
-  Future<void> _doExportHar(String fileName, List<HttpRequest> requests) async {
-    var path = await FilePicker.saveFile(fileName: fileName);
-    if (path == null) {
-      return;
-    }
-    var file = await File(path).create();
-    await Har.writeFile(requests, file, title: fileName);
-
-    selectionController.clear();
-    if (mounted) FlutterToastr.show(AppLocalizations.of(context)!.exportSuccess, context);
+    final folderName = 'proxypin_${DateTime.now().dateFormat()}';
+    showExportDialog(context, requests, folderName);
   }
 
   ///重发所有请求
@@ -532,9 +400,3 @@ class _ClearSelectionIntent extends Intent {
 }
 
 enum _RequestListMenuAction { search, export, repeat, select, sort, report }
-
-enum _ExportType {
-  request,
-  response,
-  requestResponse,
-}

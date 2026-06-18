@@ -15,25 +15,23 @@
  */
 
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:date_format/date_format.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/model/search_model.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
-import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
@@ -43,7 +41,7 @@ class DomainList extends StatefulWidget {
   final ListenableList<HttpRequest> list;
   final ProxyServer proxyServer;
   final Function(List<HttpRequest>)? onRemove;
-  final VoidCallback? onInitialized;  // 初始化完成回调
+  final VoidCallback? onInitialized; // 初始化完成回调
 
   const DomainList({super.key, required this.list, required this.proxyServer, this.onRemove, this.onInitialized});
 
@@ -370,24 +368,16 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
       return;
     }
 
-    var fileName = _domainHarFileName(hostAndPort);
-    var json = await Har.writeJson(requests, title: fileName);
-    var bytes = utf8.encode(json);
-
-    var path = await FilePicker.saveFile(fileName: fileName, bytes: bytes);
-    if (path == null) {
-      return;
-    }
-
-    if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
+    var folderName = _domainFileName(hostAndPort, '').replaceAll('.', '');
+    showExportDialog(context, requests, folderName);
   }
 
-  String _domainHarFileName(HostAndPort hostAndPort) {
+  String _domainFileName(HostAndPort hostAndPort, String extension) {
     var suffix = (hostAndPort.port == 80 || hostAndPort.port == 443) ? '' : '_${hostAndPort.port}';
     var safeDomain = '${hostAndPort.host}$suffix'.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     if (safeDomain.isEmpty) {
       safeDomain = 'domain';
     }
-    return 'ProxyPin_${safeDomain}_${DateTime.now().dateFormat()}.har';
+    return 'proxypin_${safeDomain}_${DateTime.now().dateFormat()}.$extension';
   }
 }

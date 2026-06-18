@@ -139,6 +139,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
         final request = view.elementAt(index);
         return RequestWidget(
           request,
+          key: ValueKey(request.requestId),
           index: sortDesc ? view.length - index : index,
           trailing: appIcon(request),
           proxyServer: widget.proxyServer,

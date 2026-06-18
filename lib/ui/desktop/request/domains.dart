@@ -420,6 +420,7 @@ class DomainRequests extends StatefulWidget {
     if (requestMap.containsKey(requestId)) return;
 
     var requestWidget = RequestWidget(request,
+        key: ValueKey(request.requestId),
         index: body.length,
         proxyServer: proxyServer,
         displayDomain: false,

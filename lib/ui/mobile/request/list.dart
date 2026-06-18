@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -26,10 +24,8 @@ import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/mobile/request/domians.dart';
 import 'package:proxypin/ui/mobile/request/request.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
-import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/listenable_list.dart';
-import 'package:proxypin/utils/platform.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../component/model/search_model.dart';
 
@@ -141,7 +137,7 @@ class RequestListState extends State<RequestListWidget> {
   }
 
   void search(SearchModel searchModel) {
-    _currentSearchModel = searchModel;  // 保存当前搜索状态
+    _currentSearchModel = searchModel; // 保存当前搜索状态
     requestSequenceKey.currentState?.search(searchModel);
     domainListKey.currentState?.search(searchModel);
   }
@@ -174,24 +170,12 @@ class RequestListState extends State<RequestListWidget> {
     RequestRowState.removeAutoReadByIds(removeRange.map((request) => request.requestId));
   }
 
-  //导出har
+  //导出har或文件夹
   Future<void> export(BuildContext context, String title) async {
-    //文件名称
-    String fileName =
-        '${title.contains("ProxyPin") ? '' : 'ProxyPin'}$title.har'.replaceAll(" ", "_").replaceAll(":", "_");
-    //获取请求
     var view = currentView()!;
-    var json = await Har.writeJson(view.toList(), title: title);
-    var file = XFile.fromData(utf8.encode(json), name: fileName, mimeType: "har");
+    var folderName = '${title.contains("ProxyPin") ? '' : 'ProxyPin'}$title'.replaceAll(" ", "_").replaceAll(":", "_");
 
-    RenderBox? box;
-    if (await Platforms.isIpad() && context.mounted) {
-      box = context.findRenderObject() as RenderBox?;
-    }
-    SharePlus.instance.share(ShareParams(
-        files: [file],
-        fileNameOverrides: [fileName],
-        sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size));
+    showExportDialog(context, view.toList(), folderName);
   }
 
   void sort(bool sortDesc) {

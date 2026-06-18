@@ -253,7 +253,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
                 alignment: Alignment.centerLeft,
                 child: Padding(
                     padding: EdgeInsets.only(left: 20, top: 5),
-                    child: Text(localizations.selectAction, style: Theme.of(context).textTheme.bodyLarge)),
+                    child: Text(localizations.select, style: Theme.of(context).textTheme.bodyLarge)),
               ),
               //copy
               menuItem(
