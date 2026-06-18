@@ -1,0 +1,26 @@
+名称: Android CI
+
+关于:
+ 用力:
+ 分支: [ “主” ]
+ pull_request:
+ 分支: [ “主” ]
+
+工作:
+ 建造:
+
+ 继续: Ubuntu-最新
+
+ 步骤:
+    - 用途: 动作/checkout@v4
+    - 名称: 成立JDK 11
+ 用途: 操作/设置java@v4
+ 其中:
+ Java 版本: '11'
+ 分布: “特穆林”
+ 缓存: 格拉德尔
+
+    - 名称: 授予 gradlew 执行许可
+ 跑: chmod +x gradlew
+    - 名称: 用Gradle组装
+ 跑: ./gradlew 构建
