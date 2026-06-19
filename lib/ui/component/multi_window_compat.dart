@@ -117,11 +117,14 @@ class DesktopMultiWindow {
           return windowManager.center();
         case 'window_setTitle':
           return windowManager.setTitle(call.arguments as String);
-        case 'window_setFrame':
+        case 'window_setTitleBarStyle':
+          return windowManager.setTitleBarStyle(
+            call.arguments == 'hidden' ? TitleBarStyle.hidden : TitleBarStyle.normal,
+          );
+        case 'window_setSize':
           final arguments = call.arguments as Map<dynamic, dynamic>;
-          return windowManager.setBounds(Rect.fromLTWH(
-            (arguments['left'] as num).toDouble(),
-            (arguments['top'] as num).toDouble(),
+
+          return windowManager.setSize(Size(
             (arguments['width'] as num).toDouble(),
             (arguments['height'] as num).toDouble(),
           ));
@@ -145,12 +148,10 @@ extension WindowControllerCompat on WindowController {
     return _invokeWindowMethod('window_setTitle', title);
   }
 
-  Future<void> setFrame(Rect frame) {
-    return _invokeWindowMethod('window_setFrame', {
-      'left': frame.left,
-      'top': frame.top,
-      'width': frame.width,
-      'height': frame.height,
+  Future<void> setSize(Size size) {
+    return _invokeWindowMethod('window_setSize', {
+      'width': size.width,
+      'height': size.height,
     });
   }
 

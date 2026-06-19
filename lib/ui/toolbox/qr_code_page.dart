@@ -350,13 +350,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       return;
     }
 
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": "qrcode.png"});
-      WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = (await FilePicker.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads"));
-    }
+    String? path = await FilePicker.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads");
 
     if (path == null) return;
 

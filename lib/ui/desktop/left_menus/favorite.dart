@@ -279,7 +279,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     ));
     window.setTitle(localizations.requestEdit);
     window
-      ..setFrame(const Offset(100, 100) & Size(960 * ratio, size.height * ratio))
+      ..setSize(Size(960 * ratio, size.height * ratio))
       ..center()
       ..show();
   }

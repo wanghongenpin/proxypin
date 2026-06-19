@@ -36,6 +36,7 @@ import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 bool _refresh = false;
 
@@ -168,16 +169,8 @@ class _ScriptWidgetState extends State<ScriptWidget> {
 
   //导入js
   Future<void> import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
-        "allowedExtensions": ['json']
-      });
-      WindowController.fromWindowId(widget.windowId).show();
-    } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final path = result?.files.single.path;
 
     if (path == null) {
       return;
@@ -442,12 +435,9 @@ class _ScriptEditState extends State<ScriptEdit> {
             text: localizations.useGuide,
             style: const TextStyle(color: Colors.blue, fontSize: 14),
             recognizer: TapGestureRecognizer()
-              ..onTap = () => DesktopMultiWindow.invokeMethod(
-                  0,
-                  "launchUrl",
-                  isCN
-                      ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%84%9A%E6%9C%AC'
-                      : 'https://github.com/wanghongenpin/proxypin/wiki/Script'))),
+              ..onTap = () => launchUrl(Uri.parse(isCN
+                  ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%84%9A%E6%9C%AC'
+                  : 'https://github.com/wanghongenpin/proxypin/wiki/Script')))),
         const Expanded(child: Align(alignment: Alignment.topRight, child: CloseButton()))
       ]),
       contentPadding: const EdgeInsets.only(left: 15, right: 15),
@@ -958,13 +948,7 @@ class _ScriptListState extends State<ScriptList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'proxypin-scripts.json';
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": fileName});
-      WindowController.fromWindowId(widget.windowId).show();
-    } else {
-      path = await FilePicker.saveFile(fileName: fileName);
-    }
+    String? path = await FilePicker.saveFile(fileName: fileName);
     if (path == null) {
       return;
     }

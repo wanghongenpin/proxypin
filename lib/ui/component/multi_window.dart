@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2023 Hongen Wang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:proxypin/ui/component/multi_window_compat.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/request_crypto_manager.dart';
 import 'package:proxypin/network/components/manager/request_breakpoint_manager.dart';
@@ -32,7 +30,6 @@ import 'package:proxypin/network/components/manager/script_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/components/request_breakpoint.dart';
-import 'package:proxypin/ui/component/device.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -42,7 +39,6 @@ import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/desktop/setting/script.dart';
 import 'package:proxypin/ui/toolbox/aes_page.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../desktop/setting/request_breakpoint.dart';
@@ -224,8 +220,11 @@ class MultiWindow {
     final window = await DesktopMultiWindow.createWindow(jsonEncode(
       {'name': widgetName, ...?args},
     ));
-    await window.setTitle(title);
-    await window.setFrame(const Offset(50, -10) & Size(size.width * ratio, size.height * ratio));
+
+    if (!Platform.isMacOS) {
+      window.setTitle(title);
+    }
+    await window.setSize(Size(size.width * ratio, size.height * ratio));
     await window.center();
     await window.show();
 
@@ -317,35 +316,9 @@ void registerMethodHandler() {
       return 'done';
     }
 
-    if (call.method == 'pickFiles') {
-      var extensions = call.arguments != null ? call.arguments['allowedExtensions'] : null;
-      FilePickerResult? result = await FilePicker.pickFiles(
-          type: extensions == null ? FileType.any : FileType.custom,
-          allowedExtensions: extensions == null ? null : List.from(extensions),
-          initialDirectory: "/Downloads");
-      if (result == null || result.files.isEmpty) return null;
-      return result.files.single.path;
-    }
-
-    if (call.method == 'saveFile') {
-      return await FilePicker.saveFile(fileName: call.arguments['fileName']);
-    }
-
-    if (call.method == 'getApplicationSupportDirectory') {
-      return getApplicationSupportDirectory().then((it) => it.path);
-    }
-
-    if (call.method == 'launchUrl') {
-      return launchUrl(Uri.parse(call.arguments));
-    }
-
     if (call.method == 'registerConsoleLog') {
       ScriptManager.registerConsoleLog(fromWindowId);
       return "done";
-    }
-
-    if (call.method == 'deviceId') {
-      return await DeviceUtils.desktopDeviceId();
     }
 
     if (call.method == 'resumeRequest') {
@@ -387,7 +360,7 @@ Future<void> encodeWindow(EncoderType type, BuildContext context, [String? text]
   ));
   if (!context.mounted) return;
   await window.setTitle(AppLocalizations.of(context)!.encode);
-  await window.setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio));
+  await window.setSize(Size(900 * ratio, 600 * ratio));
   await window.center();
   await window.show();
 }
@@ -401,7 +374,7 @@ Future<void> openScriptConsoleWindow() async {
     {'name': 'ScriptConsoleWidget'},
   ));
   await window.setTitle('Script Console');
-  await window.setFrame(const Offset(50, 0) & Size(900 * ratio, 650 * ratio));
+  await window.setSize(Size(900 * ratio, 650 * ratio));
   await window.center();
   await window.show();
 }

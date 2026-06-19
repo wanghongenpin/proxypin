@@ -116,13 +116,8 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      if (Platform.isMacOS && widget.windowId != null) {
-        path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
-        WindowController.fromWindowId(widget.windowId!).show();
-      } else {
-        final result = await FilePicker.pickFiles(type: FileType.any);
-        path = result?.files.single.path;
-      }
+      final result = await FilePicker.pickFiles(type: FileType.any);
+      path = result?.files.single.path;
     } catch (_) {
       // 某些平台（e.g. Linux）custom + extensions 可能抛错，回退到任意类型
       final result = await FilePicker.pickFiles();
@@ -153,13 +148,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       return;
     }
 
-    String? path;
-    if (Platform.isMacOS && widget.windowId != null) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": "data.xml"});
-      WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = await FilePicker.saveFile(fileName: 'data.xml');
-    }
+    String? path = await FilePicker.saveFile(fileName: 'data.xml');
     if (path == null) return;
     try {
       await File(path).writeAsString(text);

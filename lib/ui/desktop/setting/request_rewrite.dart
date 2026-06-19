@@ -33,6 +33,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_replace.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../component/http_method_popup.dart';
 
@@ -155,17 +156,8 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   Future<void> import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
-        "allowedExtensions": ['config', 'json']
-      });
-      WindowController.fromWindowId(widget.windowId).show();
-    } else {
-      FilePickerResult? result =
-          await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    String? path = result?.files.single.path;
 
     if (path == null) {
       return;
@@ -372,14 +364,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
-
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": fileName});
-      WindowController.fromWindowId(widget.windowId).show();
-    } else {
-      path = await FilePicker.saveFile(fileName: fileName);
-    }
+    String? path = await FilePicker.saveFile(fileName: fileName);
 
     if (path == null) {
       return;
@@ -540,12 +525,9 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
               text: localizations.useGuide,
               style: const TextStyle(color: Colors.blue, fontSize: 14),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => DesktopMultiWindow.invokeMethod(
-                    0,
-                    "launchUrl",
-                    isCN
-                        ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
-                        : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite'))),
+                ..onTap = () => launchUrl(Uri.parse(isCN
+                    ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                    : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite')))),
         ]),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import 'dart:io';
 import 'package:re_highlight/languages/json.dart';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -279,14 +277,8 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
       const SizedBox(width: 10),
       FilledButton(
           onPressed: () async {
-            String? path;
-            if (Platform.isMacOS) {
-              path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
-              if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-            } else {
-              FilePickerResult? result = await FilePicker.pickFiles();
-              path = result?.files.single.path;
-            }
+            FilePickerResult? result = await FilePicker.pickFiles();
+            final path = result?.files.single.path;
 
             if (path == null) {
               return;

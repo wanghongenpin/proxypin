@@ -302,17 +302,11 @@ class _TextDiffPageState extends State<TextDiffPage> {
     _clearHighlights();
   }
 
-  /// 文件选择填到指定一侧。macOS 子窗口走父进程 IPC，跟 Json/Xml 工具一致。
   Future<void> _openFileInto(CodeForgeController target) async {
     String? path;
     try {
-      if (Platform.isMacOS && widget.windowId != null) {
-        path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
-        WindowController.fromWindowId(widget.windowId!).show();
-      } else {
-        final result = await FilePicker.pickFiles(type: FileType.any);
-        path = result?.files.single.path;
-      }
+      final result = await FilePicker.pickFiles(type: FileType.any);
+      path = result?.files.single.path;
     } catch (_) {
       final result = await FilePicker.pickFiles();
       path = result?.files.single.path;

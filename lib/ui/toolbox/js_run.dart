@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -99,17 +98,9 @@ class _JavaScriptState extends State<JavaScript> {
                   //选择文件
                   ElevatedButton.icon(
                       onPressed: () async {
-                        String? path;
-                        if (Platform.isMacOS) {
-                          path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
-                            "allowedExtensions": ['js']
-                          });
-                          WindowController.fromWindowId(widget.windowId!).show();
-                        } else {
-                          FilePickerResult? result =
-                              await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
-                          path = result?.files.single.path;
-                        }
+                        FilePickerResult? result =
+                            await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
+                        final path = result?.files.single.path;
 
                         if (path != null) {
                           File file = File(path);

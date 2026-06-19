@@ -48,16 +48,8 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   }
 
   Future<void> _import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
-        "allowedExtensions": ['json']
-      });
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final path = result?.files.single.path;
     if (path == null) return;
     File file = File(path);
     try {
@@ -81,14 +73,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   Future<void> _export(List<RequestBreakpointRule> exportRules) async {
     if (exportRules.isEmpty) return;
 
-    String? outputFile;
-    if (Platform.isMacOS) {
-      outputFile =
-          await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": 'request_breakpoint_rules.json'});
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json');
-    }
+    String? outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json');
     if (outputFile == null) return;
     File file = File(outputFile);
     try {

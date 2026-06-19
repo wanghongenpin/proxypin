@@ -140,16 +140,8 @@ class _RequestMapPageState extends State<RequestMapPage> {
 
   //导入js
   Future<void> import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
-        "allowedExtensions": ['json']
-      });
-      WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final path = result?.files.single.path;
 
     if (path == null) {
       return;
@@ -394,14 +386,7 @@ class _RequestMapListState extends State<RequestMapList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'request_map.json';
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": fileName});
-
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = await FilePicker.saveFile(fileName: fileName);
-    }
+    String? path = await FilePicker.saveFile(fileName: fileName);
     if (path == null) {
       return;
     }

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -149,8 +148,8 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
         if (result == null || result.files.isEmpty) return;
         path = result.files.single.path;
       } else {
-        path = path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
-        if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+        final result = await FilePicker.pickFiles(allowMultiple: false);
+        path = result?.files.single.path;
       }
       if (path == null) return;
       final file = File(path);

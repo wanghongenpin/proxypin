@@ -29,6 +29,7 @@ import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/utils/desktop_support.dart';
 import 'package:proxypin/utils/navigator.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'l10n/app_localizations.dart';
 
@@ -40,17 +41,26 @@ void main(List<String> args) async {
 
   final windowController = Platforms.isDesktop() ? await DesktopMultiWindow.ensureInitialized() : null;
 
+  var instance = AppConfiguration.instance;
+
   //多窗口
   if (args.firstOrNull == 'multi_window') {
     final windowId = windowController!.windowId;
     final argument =
         windowController.arguments.isEmpty ? const {} : jsonDecode(windowController.arguments) as Map<String, dynamic>;
     DesktopMultiWindow.initializeFromArguments(argument);
-    runApp(FluentApp(multiWindow(windowId, argument), (await AppConfiguration.instance)));
+    var appConfiguration = await instance;
+
+    if (Platform.isMacOS) {
+      windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    }
+    if (appConfiguration.themeMode != ThemeMode.system) {
+      windowManager.setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
+    }
+    runApp(FluentApp(multiWindow(windowId, argument), appConfiguration));
     return;
   }
 
-  var instance = AppConfiguration.instance;
   var configuration = Configuration.instance;
   //移动端
   if (Platforms.isMobile()) {

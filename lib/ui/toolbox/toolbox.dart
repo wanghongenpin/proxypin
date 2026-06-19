@@ -91,7 +91,7 @@ class _ToolboxState extends State<Toolbox> {
                       ));
                       window.setTitle('JavaScript');
                       window
-                        ..setFrame(const Offset(100, 100) & Size(960 * ratio, size.height * ratio))
+                        ..setSize(Size(960 * ratio, size.height * ratio))
                         ..center()
                         ..show();
                     },
@@ -271,7 +271,7 @@ class _ToolboxState extends State<Toolbox> {
     ));
     window.setTitle(localizations.httpRequest);
     window
-      ..setFrame(const Offset(100, 100) & Size(960 * ratio, size.height * ratio))
+      ..setSize(Size(960 * ratio, size.height * ratio))
       ..center()
       ..show();
   }

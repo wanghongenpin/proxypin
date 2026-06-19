@@ -134,16 +134,8 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
   }
 
   Future<void> _import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
-        "allowedExtensions": ['json']
-      });
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final path = result?.files.single.path;
     if (path == null) return;
     try {
       final content = await File(path).readAsString();
@@ -377,13 +369,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
     if (indexes.isEmpty) return;
     indexes.sort();
     final data = indexes.map((i) => manager.rules[i].toJson()).toList();
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": 'request_crypto.json'});
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = await FilePicker.saveFile(fileName: 'request_crypto.json');
-    }
+    String? path = await FilePicker.saveFile(fileName: 'request_crypto.json');
     if (path == null) return;
     await File(path).writeAsString(jsonEncode(data));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);

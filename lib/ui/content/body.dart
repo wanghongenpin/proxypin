@@ -463,7 +463,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
       ));
       window
         ..setTitle(widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody)
-        ..setFrame(const Offset(100, 100) & Size(800 * ratio, size.height * ratio))
+        ..setSize(Size(800 * ratio, size.height * ratio))
         ..center()
         ..show();
       return;

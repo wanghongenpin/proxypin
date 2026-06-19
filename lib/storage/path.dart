@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:path_provider/path_provider.dart';
 
 class Paths {
@@ -14,11 +13,7 @@ class Paths {
   static Future<String> homePath() async {
     if (_homePath != null) return _homePath!;
 
-    if (Platform.isMacOS) {
-      _homePath = await DesktopMultiWindow.invokeMainWindowMethod("getApplicationSupportDirectory");
-    } else {
-      _homePath = await getApplicationSupportDirectory().then((it) => it.path);
-    }
+    _homePath = await getApplicationSupportDirectory().then((it) => it.path);
     return _homePath!;
   }
 
