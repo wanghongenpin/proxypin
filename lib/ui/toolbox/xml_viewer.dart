@@ -18,7 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,7 +39,7 @@ import 'package:xml/xml.dart';
 ///
 /// @author Hongen Wang
 class XmlViewerPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final String? initialText;
 
   const XmlViewerPage({super.key, this.windowId, this.initialText});
@@ -117,7 +117,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
     String? path;
     try {
       if (Platform.isMacOS && widget.windowId != null) {
-        path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+        path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
         WindowController.fromWindowId(widget.windowId!).show();
       } else {
         final result = await FilePicker.pickFiles(type: FileType.any);
@@ -155,7 +155,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
 
     String? path;
     if (Platform.isMacOS && widget.windowId != null) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "data.xml"});
+      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": "data.xml"});
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
       path = await FilePicker.saveFile(fileName: 'data.xml');

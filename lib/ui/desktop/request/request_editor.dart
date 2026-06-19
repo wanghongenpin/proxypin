@@ -18,7 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
@@ -262,7 +262,7 @@ class RequestEditorState extends State<RequestEditor> {
     responseKey.currentState?.change(null);
     responseChange.value = 0;
 
-    Map? proxyResult = await DesktopMultiWindow.invokeMethod(0, 'getProxyInfo');
+    Map? proxyResult = await DesktopMultiWindow.invokeMainWindowMethod('getProxyInfo');
     ProxyInfo? proxyInfo = proxyResult == null ? null : ProxyInfo.of(proxyResult['host'], proxyResult['port']);
 
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo, timeout: Duration(seconds: 30)).then((response) {

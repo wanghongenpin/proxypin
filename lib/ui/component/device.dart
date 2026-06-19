@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 class DeviceUtils {
@@ -13,7 +13,7 @@ class DeviceUtils {
       return deviceInfoPlugin.iosInfo.then((it) => it.identifierForVendor);
     }
 
-    return await DesktopMultiWindow.invokeMethod(0, "deviceId", null);
+    return await DesktopMultiWindow.invokeMainWindowMethod("deviceId", null);
   }
 
   /// Get the desktop device id

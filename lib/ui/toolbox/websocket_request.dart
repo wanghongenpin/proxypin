@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -16,7 +16,7 @@ import '../component/json/theme.dart';
 
 /// Simple WebSocket request page: connect to ws/wss URL, send text, view messages
 class WebSocketRequestPage extends StatefulWidget {
-  final int? windowId; // optional for desktop multi-window
+  final String? windowId; // optional for desktop multi-window
   const WebSocketRequestPage({super.key, this.windowId});
 
   @override
@@ -149,7 +149,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
         if (result == null || result.files.isEmpty) return;
         path = result.files.single.path;
       } else {
-        path = path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+        path = path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
         if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
       }
       if (path == null) return;

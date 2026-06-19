@@ -17,7 +17,7 @@
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -36,7 +36,7 @@ import 'package:proxypin/utils/text_diff.dart';
 ///
 /// @author Hongen Wang
 class TextDiffPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final String? initialLeft;
   final String? initialRight;
 
@@ -307,7 +307,7 @@ class _TextDiffPageState extends State<TextDiffPage> {
     String? path;
     try {
       if (Platform.isMacOS && widget.windowId != null) {
-        path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+        path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles");
         WindowController.fromWindowId(widget.windowId!).show();
       } else {
         final result = await FilePicker.pickFiles(type: FileType.any);

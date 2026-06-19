@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -34,7 +34,7 @@ import 'menu.dart';
 ///@Author: wanghongen
 class NetworkTabController extends StatefulWidget {
   static GlobalKey<NetworkTabState>? currentKey;
-  final int? windowId;
+  final String? windowId;
   final ProxyServer? proxyServer;
   final ValueWrap<HttpRequest> request = ValueWrap();
   final ValueWrap<HttpResponse> response = ValueWrap();

@@ -18,7 +18,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -36,7 +36,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 ///二维码
 ///@author Hongen Wang
 class QrCodePage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const QrCodePage({super.key, this.windowId});
 
@@ -114,7 +114,7 @@ class _QrCodePageState extends State<QrCodePage> with SingleTickerProviderStateM
 }
 
 class _QrDecode extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const _QrDecode({this.windowId});
 
@@ -234,7 +234,7 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
 }
 
 class _QrEncode extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const _QrEncode({this.windowId});
 
@@ -352,7 +352,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
 
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "qrcode.png"});
+      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": "qrcode.png"});
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
       path = (await FilePicker.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads"));

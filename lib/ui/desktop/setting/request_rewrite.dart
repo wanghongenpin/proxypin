@@ -16,7 +16,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +39,7 @@ import '../../component/http_method_popup.dart';
 /// @author wanghongen
 /// 2023/10/8
 class RequestRewriteWidget extends StatefulWidget {
-  final int windowId;
+  final String windowId;
   final RequestRewriteManager requestRewrites;
 
   const RequestRewriteWidget({super.key, required this.windowId, required this.requestRewrites});
@@ -157,7 +157,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
   Future<void> import() async {
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
         "allowedExtensions": ['config', 'json']
       });
       WindowController.fromWindowId(widget.windowId).show();
@@ -205,7 +205,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
 ///请求重写规则列表
 class RequestRuleList extends StatefulWidget {
-  final int windowId;
+  final String windowId;
   final RequestRewriteManager requestRewrites;
 
   const RequestRuleList(this.requestRewrites, {super.key, required this.windowId});
@@ -375,7 +375,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
       path = await FilePicker.saveFile(fileName: fileName);
@@ -479,7 +479,7 @@ class RewriteRuleEdit extends StatefulWidget {
   final RequestRewriteRule? rule;
   final List<RewriteItem>? items;
   final HttpRequest? request;
-  final int? windowId;
+  final String? windowId;
 
   const RewriteRuleEdit({super.key, this.rule, this.items, this.windowId, this.request});
 

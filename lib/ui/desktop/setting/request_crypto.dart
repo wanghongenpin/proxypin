@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   if (force) {
     _refresh = false;
     await RequestCryptoManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestCrypto");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestCrypto");
     return;
   }
 
@@ -32,12 +32,12 @@ Future<void> _refreshConfig({bool force = false}) async {
   Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await RequestCryptoManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestCrypto");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestCrypto");
   });
 }
 
 class RequestCryptoPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final RequestCryptoManager manager;
 
   const RequestCryptoPage({super.key, this.windowId, required this.manager});
@@ -136,7 +136,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
   Future<void> _import() async {
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
         "allowedExtensions": ['json']
       });
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
@@ -162,7 +162,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
 
 // Reusable rule list component extracted from _RequestCryptoPageState
 class CryptoRuleList extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final RequestCryptoManager manager;
 
   const CryptoRuleList({
@@ -379,7 +379,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
     final data = indexes.map((i) => manager.rules[i].toJson()).toList();
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_crypto.json'});
+      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": 'request_crypto.json'});
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
       path = await FilePicker.saveFile(fileName: 'request_crypto.json');

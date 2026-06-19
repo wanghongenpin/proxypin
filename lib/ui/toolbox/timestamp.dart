@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -11,11 +11,10 @@ import 'package:proxypin/utils/platform.dart';
 
 import '../component/text_field.dart';
 
-
 /// Timestamp page
 /// @author Hongen Wang
 class TimestampPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const TimestampPage({super.key, this.windowId});
 

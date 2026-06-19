@@ -17,7 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -84,7 +84,7 @@ async function onResponse(context, request, response) {
     return _instance!;
   }
 
-  static void registerConsoleLog(int fromWindowId) {
+  static void registerConsoleLog(String fromWindowId) {
     LogHandler logHandler = LogHandler(
         channelId: fromWindowId,
         handle: (logInfo) {
@@ -103,7 +103,7 @@ async function onResponse(context, request, response) {
     _logHandlers.add(logHandler);
   }
 
-  static void removeLogHandler(int channelId) {
+  static void removeLogHandler(String channelId) {
     _logHandlers.removeWhere((element) => channelId == element.channelId);
   }
 
@@ -332,7 +332,7 @@ async function onResponse(context, request, response) {
 }
 
 class LogHandler {
-  final int channelId;
+  final String channelId;
   final Function(LogInfo logInfo) handle;
 
   LogHandler({required this.channelId, required this.handle});

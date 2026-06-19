@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -26,7 +26,7 @@ import 'package:proxypin/utils/platform.dart';
 ///正则表达式工具
 ///@author Hongen Wang
 class RegExpPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const RegExpPage({super.key, this.windowId});
 

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +17,7 @@ import '../../component/http_method_popup.dart';
 
 class RequestBreakpointPage extends StatefulWidget {
   final RequestBreakpointManager manager;
-  final int? windowId;
+  final String? windowId;
 
   const RequestBreakpointPage({super.key, this.windowId, required this.manager});
 
@@ -38,7 +38,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
 
   Future<void> _refreshConfig() async {
     if (widget.windowId != null) {
-      await DesktopMultiWindow.invokeMethod(0, "refreshRequestBreakpoint");
+      await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestBreakpoint");
     }
   }
 
@@ -50,7 +50,7 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   Future<void> _import() async {
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
         "allowedExtensions": ['json']
       });
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
@@ -83,7 +83,8 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
 
     String? outputFile;
     if (Platform.isMacOS) {
-      outputFile = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_breakpoint_rules.json'});
+      outputFile =
+          await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": 'request_breakpoint_rules.json'});
       if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
     } else {
       outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json');
