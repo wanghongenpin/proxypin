@@ -12,7 +12,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   share_plus
   tray_manager
   url_launcher_windows
-  vclibs
   win32audio
   window_manager
   zstandard_windows

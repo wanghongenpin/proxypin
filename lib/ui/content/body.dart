@@ -391,7 +391,9 @@ class HttpBodyState extends State<HttpBodyWidget> {
             return;
           }
           var bytes = Uint8List.fromList(body);
-          if (Platforms.isMobile()) {
+          var extension = _imageExtension(bytes, bodyKey.currentState?.message?.headers.contentType);
+          var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.$extension";
+          if (Platform.isIOS) {
             String? path = await ImagePickers.saveByteDataImageToGallery(bytes);
             if (path != null && mounted) {
               FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
@@ -399,17 +401,61 @@ class HttpBodyState extends State<HttpBodyWidget> {
             return;
           }
 
-          if (Platforms.isDesktop()) {
-            var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.png";
-            String? path = (await FilePicker.saveFile(fileName: fileName));
-            if (path == null) return;
-
-            await File(path).writeAsBytes(bytes);
-            if (mounted) {
-              FlutterToastr.show(localizations.saveSuccess, context, duration: 2);
-            }
+          String? path = await FilePicker.saveFile(fileName: fileName, bytes: bytes, type: FileType.image);
+          if (path != null && mounted) {
+            FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
           }
         });
+  }
+
+  String _imageExtension(Uint8List bytes, String? contentType) {
+    var type = contentType?.toLowerCase() ?? '';
+    if (type.contains('jpeg') || type.contains('jpg')) return 'jpg';
+    if (type.contains('png')) return 'png';
+    if (type.contains('webp')) return 'webp';
+    if (type.contains('gif')) return 'gif';
+    if (type.contains('bmp')) return 'bmp';
+    if (type.contains('svg')) return 'svg';
+
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return 'webp';
+    }
+    if (bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47 &&
+        bytes[4] == 0x0D &&
+        bytes[5] == 0x0A &&
+        bytes[6] == 0x1A &&
+        bytes[7] == 0x0A) {
+      return 'png';
+    }
+    if (bytes.length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
+      return 'jpg';
+    }
+    if (bytes.length >= 6 &&
+        bytes[0] == 0x47 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x38 &&
+        (bytes[4] == 0x37 || bytes[4] == 0x39) &&
+        bytes[5] == 0x61) {
+      return 'gif';
+    }
+    if (bytes.length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D) {
+      return 'bmp';
+    }
+
+    return 'png';
   }
 
   ///展示请求重写

@@ -15,7 +15,6 @@
 #include <share_plus/share_plus_windows_plugin_c_api.h>
 #include <tray_manager/tray_manager_plugin.h>
 #include <url_launcher_windows/url_launcher_windows.h>
-#include <vclibs/vclibs_plugin_c_api.h>
 #include <win32audio/win32audio_plugin_c_api.h>
 #include <window_manager/window_manager_plugin.h>
 #include <zstandard_windows/zstandard_windows_plugin_c_api.h>
@@ -39,8 +38,6 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("TrayManagerPlugin"));
   UrlLauncherWindowsRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("UrlLauncherWindows"));
-  VclibsPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("VclibsPluginCApi"));
   Win32audioPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("Win32audioPluginCApi"));
   WindowManagerPluginRegisterWithRegistrar(

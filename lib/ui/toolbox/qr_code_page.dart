@@ -340,7 +340,7 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       return;
     }
 
-    if (Platforms.isMobile()) {
+    if (Platform.isIOS) {
       var imageBytes = await toImageBytes();
       if (imageBytes == null) return;
       String? path = await ImagePickers.saveByteDataImageToGallery(imageBytes);
@@ -349,15 +349,11 @@ class _QrEncodeState extends State<_QrEncode> with AutomaticKeepAliveClientMixin
       }
       return;
     }
-
-    String? path = await FilePicker.saveFile(fileName: "qrcode.png", initialDirectory: "~/Downloads");
-
-    if (path == null) return;
-
     var imageBytes = await toImageBytes();
     if (imageBytes == null) return;
 
-    await File(path).writeAsBytes(imageBytes);
+    String? path = await FilePicker.saveFile(fileName: "qrcode.png", bytes: imageBytes, type: FileType.image);
+    if (path == null) return;
     if (mounted) {
       CustomToast.success(localizations.saveSuccess).show(context);
     }
