@@ -172,7 +172,7 @@ class ScriptConsoleLog extends StatefulWidget {
 }
 
 class _ScriptConsoleLogState extends State<ScriptConsoleLog> {
-  int channelId = "ScriptConsoleLog".hashCode;
+  String channelId = "ScriptConsoleLog";
 
   static final List<LogInfo> logs = [];
   static FloatingWindowManager floatingWindowManager = FloatingWindowManager();
@@ -300,11 +300,11 @@ class _ScriptLogSmallWindowState extends State<ScriptLogSmallWindow> {
   void initState() {
     super.initState();
     LogHandler logHandler = LogHandler(
-        channelId: hashCode,
+        channelId: hashCode.toString(),
         handle: (log) {
           logs.add(log);
           if (!mounted) {
-            ScriptManager.removeLogHandler(hashCode);
+            ScriptManager.removeLogHandler(hashCode.toString());
             return;
           }
           setState(() {});
@@ -316,8 +316,8 @@ class _ScriptLogSmallWindowState extends State<ScriptLogSmallWindow> {
   @override
   void dispose() {
     _scrollController.dispose();
-    logger.d("dispose small window log handler $hashCode");
-    ScriptManager.removeLogHandler(hashCode);
+    logger.d("dispose small window log handler ${hashCode.toString()}");
+    ScriptManager.removeLogHandler(hashCode.toString());
     super.dispose();
   }
 

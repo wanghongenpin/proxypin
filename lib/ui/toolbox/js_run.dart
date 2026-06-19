@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +17,7 @@ import 'package:proxypin/network/components/js/md5.dart';
 import 'package:proxypin/network/components/js/xhr.dart';
 
 class JavaScript extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const JavaScript({super.key, this.windowId});
 
@@ -101,7 +101,7 @@ class _JavaScriptState extends State<JavaScript> {
                       onPressed: () async {
                         String? path;
                         if (Platform.isMacOS) {
-                          path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+                          path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
                             "allowedExtensions": ['js']
                           });
                           WindowController.fromWindowId(widget.windowId!).show();

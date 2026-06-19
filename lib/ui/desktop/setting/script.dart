@@ -17,7 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +44,7 @@ Future<void> _refreshScript({bool force = false}) async {
   if (force) {
     _refresh = false;
     await ScriptManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshScript");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshScript");
   }
   if (_refresh) {
     return;
@@ -53,14 +53,14 @@ Future<void> _refreshScript({bool force = false}) async {
   Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await ScriptManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshScript");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshScript");
   });
 }
 
 /// @author wanghongen
 /// 2023/10/8
 class ScriptWidget extends StatefulWidget {
-  final int windowId;
+  final String windowId;
 
   const ScriptWidget({super.key, required this.windowId});
 
@@ -170,7 +170,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
   Future<void> import() async {
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+      path = await DesktopMultiWindow.invokeMainWindowMethod("pickFiles", {
         "allowedExtensions": ['json']
       });
       WindowController.fromWindowId(widget.windowId).show();
@@ -219,7 +219,7 @@ class _ScriptWidgetState extends State<ScriptWidget> {
 }
 
 class ScriptConsoleWidget extends StatefulWidget {
-  final int windowId;
+  final String windowId;
 
   const ScriptConsoleWidget({super.key, required this.windowId});
 
@@ -237,7 +237,7 @@ class _ScriptConsoleState extends State<ScriptConsoleWidget> {
   @override
   void initState() {
     super.initState();
-    DesktopMultiWindow.invokeMethod(0, "registerConsoleLog", widget.windowId);
+    DesktopMultiWindow.invokeMainWindowMethod("registerConsoleLog", widget.windowId);
     DesktopMultiWindow.setMethodHandler((call, fromWindowId) async {
       if (call.method == 'consoleLog') {
         setState(() {
@@ -745,7 +745,7 @@ class _ScriptEditState extends State<ScriptEdit> {
 
 /// 脚本列表
 class ScriptList extends StatefulWidget {
-  final int windowId;
+  final String windowId;
   final List<ScriptItem> scripts;
 
   const ScriptList({super.key, required this.scripts, required this.windowId});
@@ -960,7 +960,7 @@ class _ScriptListState extends State<ScriptList> {
     String fileName = 'proxypin-scripts.json';
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+      path = await DesktopMultiWindow.invokeMainWindowMethod("saveFile", {"fileName": fileName});
       WindowController.fromWindowId(widget.windowId).show();
     } else {
       path = await FilePicker.saveFile(fileName: fileName);

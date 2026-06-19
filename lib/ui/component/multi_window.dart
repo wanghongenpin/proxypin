@@ -17,7 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -63,7 +63,7 @@ import '../toolbox/websocket_request.dart';
 bool isMultiWindow = false;
 
 ///多窗口
-Widget multiWindow(int windowId, Map<dynamic, dynamic> argument) {
+Widget multiWindow(String windowId, Map<dynamic, dynamic> argument) {
   isMultiWindow = true;
   //请求编辑器
   if (argument['name'] == 'RequestEditor') {
@@ -200,7 +200,7 @@ class MultiWindow {
   /// 刷新请求重写
   static Future<void> invokeRefreshRewrite(Operation operation,
       {int? index, RequestRewriteRule? rule, List<RewriteItem>? items, bool? enabled}) async {
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestRewrite", {
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestRewrite", {
       "enabled": enabled,
       "operation": operation.name,
       'index': index,
@@ -213,7 +213,7 @@ class MultiWindow {
       {Size size = const Size(800, 680), Map<String, dynamic>? args}) async {
     if (Platform.isAndroid || Platform.isIOS) {
       onOpenWindow?.call(widgetName, args);
-      return WindowController.fromWindowId(0); // Dummy controller
+      return WindowController.fromWindowId('0'); // Dummy controller
     }
 
     var ratio = 1.0;
@@ -224,11 +224,10 @@ class MultiWindow {
     final window = await DesktopMultiWindow.createWindow(jsonEncode(
       {'name': widgetName, ...?args},
     ));
-    window.setTitle(title);
-    window
-      ..setFrame(const Offset(50, -10) & Size(size.width * ratio, size.height * ratio))
-      ..center();
-    window.show();
+    await window.setTitle(title);
+    await window.setFrame(const Offset(50, -10) & Size(size.width * ratio, size.height * ratio));
+    await window.center();
+    await window.show();
 
     return window;
   }
@@ -387,11 +386,10 @@ Future<void> encodeWindow(EncoderType type, BuildContext context, [String? text]
     {'name': 'EncoderWidget', 'type': type.name, 'text': text},
   ));
   if (!context.mounted) return;
-  window.setTitle(AppLocalizations.of(context)!.encode);
-  window
-    ..setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio))
-    ..center()
-    ..show();
+  await window.setTitle(AppLocalizations.of(context)!.encode);
+  await window.setFrame(const Offset(80, 80) & Size(900 * ratio, 600 * ratio));
+  await window.center();
+  await window.show();
 }
 
 Future<void> openScriptConsoleWindow() async {
@@ -402,9 +400,8 @@ Future<void> openScriptConsoleWindow() async {
   final window = await DesktopMultiWindow.createWindow(jsonEncode(
     {'name': 'ScriptConsoleWidget'},
   ));
-  window.setTitle('Script Console');
-  window
-    ..setFrame(const Offset(50, 0) & Size(900 * ratio, 650 * ratio))
-    ..center();
-  window.show();
+  await window.setTitle('Script Console');
+  await window.setFrame(const Offset(50, 0) & Size(900 * ratio, 650 * ratio));
+  await window.center();
+  await window.show();
 }

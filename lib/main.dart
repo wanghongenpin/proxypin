@@ -21,6 +21,7 @@ import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
@@ -37,11 +38,14 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await RustLib.init();
 
+  final windowController = Platforms.isDesktop() ? await DesktopMultiWindow.ensureInitialized() : null;
 
   //多窗口
   if (args.firstOrNull == 'multi_window') {
-    final windowId = int.parse(args[1]);
-    final argument = args[2].isEmpty ? const {} : jsonDecode(args[2]) as Map<String, dynamic>;
+    final windowId = windowController!.windowId;
+    final argument =
+        windowController.arguments.isEmpty ? const {} : jsonDecode(windowController.arguments) as Map<String, dynamic>;
+    DesktopMultiWindow.initializeFromArguments(argument);
     runApp(FluentApp(multiWindow(windowId, argument), (await AppConfiguration.instance)));
     return;
   }
