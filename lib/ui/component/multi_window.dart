@@ -224,8 +224,8 @@ class MultiWindow {
     if (!Platform.isMacOS) {
       window.setTitle(title);
     }
-    await window.setSize(Size(size.width * ratio, size.height * ratio));
     await window.center();
+    await window.setSize(Size(size.width * ratio, size.height * ratio));
     await window.show();
 
     return window;

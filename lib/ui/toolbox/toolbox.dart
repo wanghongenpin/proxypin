@@ -1,7 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
-
-import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -11,7 +7,6 @@ import 'package:proxypin/ui/toolbox/qr_code_page.dart';
 import 'package:proxypin/ui/toolbox/regexp.dart';
 import 'package:proxypin/ui/toolbox/timestamp.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:window_manager/window_manager.dart';
 
 import 'aes_page.dart';
 import 'cert_hash.dart';
@@ -81,19 +76,7 @@ class _ToolboxState extends State<Toolbox> {
                       }
 
                       var size = MediaQuery.of(context).size;
-                      var ratio = 1.0;
-                      if (Platform.isWindows) {
-                        ratio = WindowManager.instance.getDevicePixelRatio();
-                      }
-
-                      final window = await DesktopMultiWindow.createWindow(jsonEncode(
-                        {'name': 'JavaScript'},
-                      ));
-                      window.setTitle('JavaScript');
-                      window
-                        ..setSize(Size(960 * ratio, size.height * ratio))
-                        ..center()
-                        ..show();
+                      MultiWindow.openWindow('JavaScript', 'JavaScript', size: Size(960, size.height));
                     },
                   ),
                 ],
@@ -261,19 +244,8 @@ class _ToolboxState extends State<Toolbox> {
     }
 
     var size = MediaQuery.of(context).size;
-    var ratio = 1.0;
-    if (Platform.isWindows) {
-      ratio = WindowManager.instance.getDevicePixelRatio();
-    }
 
-    final window = await DesktopMultiWindow.createWindow(jsonEncode(
-      {'name': 'RequestEditor'},
-    ));
-    window.setTitle(localizations.httpRequest);
-    window
-      ..setSize(Size(960 * ratio, size.height * ratio))
-      ..center()
-      ..show();
+    MultiWindow.openWindow(localizations.httpRequest, "RequestEditor", size: Size(960, size.height));
   }
 }
 

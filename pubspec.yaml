@@ -40,9 +40,8 @@ dependencies:
   html: ^0.15.6
   xml: ^7.0.1
   ffi: ^2.1.0
-#  macos_window_utils: 1.6.1
   win32audio: ^1.5.0
-  vclibs: ^0.1.3
+#  vclibs: ^0.1.3
   scrollable_positioned_list_nic: ^0.0.2
   tray_manager: ^0.5.3
   code_forge: ^10.6.0
