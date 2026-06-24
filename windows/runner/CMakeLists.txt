@@ -15,6 +15,7 @@ add_executable(${BINARY_NAME} WIN32
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
   "Runner.rc"
   "runner.exe.manifest"
+  "crash_handler.cpp"
 )
 
 # Apply the standard set of build settings. This can be removed for applications
