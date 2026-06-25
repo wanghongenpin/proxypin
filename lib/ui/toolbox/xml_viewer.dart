@@ -148,14 +148,9 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'data.xml');
+    String? path = await FilePicker.saveFile(fileName: 'data.xml', bytes: utf8.encode(text));
     if (path == null) return;
-    try {
-      await File(path).writeAsString(text);
-      if (mounted) _toast(localizations.saveSuccess);
-    } catch (e) {
-      _toast('${localizations.fail}: $e');
-    }
+    if (mounted) _toast(localizations.saveSuccess);
   }
 
   void _toast(String msg) {

@@ -33,6 +33,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/listenable_list.dart';
+import 'package:proxypin/utils/platform.dart';
 
 import '../../content/panel.dart';
 import '../request/list.dart';
@@ -330,7 +331,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");
 
-    final String? path = await FilePicker.saveFile(fileName: fileName);
+    final String? path = await Platforms.saveFileAdaptive(fileName: fileName);
     if (path == null) {
       return;
     }

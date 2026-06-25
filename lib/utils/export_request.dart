@@ -33,7 +33,7 @@ void exportRequestBody(HttpRequest request) async {
   String fileName = "request_body_${request.hostAndPort?.host}_${request.requestId}.txt";
 
   var path = await FilePicker.saveFile(
-      fileName: fileName, bytes: request.body == null ? null : Uint8List.fromList(request.body!));
+      fileName: fileName, bytes: request.body == null ? Uint8List(0) : Uint8List.fromList(request.body!));
   logger.d("Export request body to $path");
 }
 
@@ -57,7 +57,7 @@ void exportResponseBody(HttpResponse? response) async {
   String fileName = "response_body_${response.request?.hostAndPort?.host}_${response.requestId}.txt";
 
   var path = await FilePicker.saveFile(
-      fileName: fileName, bytes: response.body == null ? null : Uint8List.fromList(response.body!));
+      fileName: fileName, bytes: response.body == null ? Uint8List(0) : Uint8List.fromList(response.body!));
   logger.d("Export response body to $path");
 }
 
@@ -165,10 +165,8 @@ Future<void> exportRequestsAsFiles(
 
       if (isDesktop) {
         selectedDirectory = await FilePicker.saveFile(
-          fileName: folderName,
-          type: FileType.custom,
-          allowedExtensions: [''],
-        ).then((path) => path != null ? "${Directory(path).parent.path}/$folderName" : null);
+                fileName: folderName, type: FileType.custom, allowedExtensions: [''], bytes: Uint8List(0))
+            .then((path) => path != null ? "${Directory(path).parent.path}/$folderName" : null);
       } else {
         selectedDirectory = await FilePicker.getDirectoryPath();
       }

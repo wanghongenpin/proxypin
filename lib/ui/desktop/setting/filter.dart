@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
@@ -321,22 +320,19 @@ class _DomainListState extends State<DomainList> {
   }
 
   //导出
-  export(List<int> indexes) async {
+  Future<void> export(List<int> indexes) async {
     if (indexes.isEmpty) return;
 
     String fileName = 'host-filters.config';
-    String? saveLocation = (await FilePicker.saveFile(fileName: fileName));
-    if (saveLocation == null) {
-      return;
-    }
-
     var list = [];
     for (var index in indexes) {
       String rule = widget.hostList.list[index].pattern.replaceAll(".*", "*");
       list.add(rule);
     }
-
-    await File(saveLocation).writeAsBytes(utf8.encode(jsonEncode(list)));
+    String? saveLocation = (await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list))));
+    if (saveLocation == null) {
+      return;
+    }
 
     if (mounted) {
       FlutterToastr.show(localizations.exportSuccess, context);

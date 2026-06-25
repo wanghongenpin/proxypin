@@ -203,14 +203,9 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'data.json');
+    String? path = await FilePicker.saveFile(fileName: 'data.json', bytes: utf8.encode(text));
     if (path == null) return;
-    try {
-      await File(path).writeAsString(text);
-      if (mounted) _toast(localizations.saveSuccess);
-    } catch (e) {
-      _toast('${localizations.fail}: $e');
-    }
+    if (mounted) _toast(localizations.saveSuccess);
   }
 
   void _toast(String msg) {

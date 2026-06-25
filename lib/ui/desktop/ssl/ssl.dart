@@ -10,6 +10,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/utils/ip.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SslWidget extends StatefulWidget {
@@ -129,7 +130,7 @@ class _SslState extends State<SslWidget> {
                   padding: const EdgeInsets.only(left: 10, right: 10),
                   child: Text(localizations.exportCA, style: const TextStyle(fontSize: 14))),
               onPressed: () async {
-                String? path = (await FilePicker.saveFile(fileName: "ProxyPinCA.crt"));
+                String? path = (await Platforms.saveFileAdaptive(fileName: "ProxyPinCA.crt"));
                 if (path == null) return;
 
                 var caFile = await CertificateManager.certificateFile();
@@ -164,9 +165,9 @@ class _SslState extends State<SslWidget> {
                               TextButton(onPressed: () => Navigator.pop(context), child: Text(localizations.cancel)),
                               TextButton(
                                 onPressed: () async {
-                                  String? path = (await FilePicker.saveFile(fileName: "ProxyPinPkcs12.p12"));
+                                  String? path = (await Platforms.saveFileAdaptive(
+                                      fileName: "ProxyPinPkcs12.p12"));
                                   if (path == null) return;
-
                                   var p12Bytes = await CertificateManager.generatePkcs12(
                                       password?.isNotEmpty == true ? password : null);
                                   await File(path).writeAsBytes(p12Bytes);
@@ -183,7 +184,7 @@ class _SslState extends State<SslWidget> {
                   padding: const EdgeInsets.only(left: 10, right: 10),
                   child: Text(localizations.exportPrivateKey, style: const TextStyle(fontSize: 14))),
               onPressed: () async {
-                String? path = (await FilePicker.saveFile(fileName: "ProxyPinKey.pem"));
+                String? path = (await Platforms.saveFileAdaptive(fileName: "ProxyPinKey.pem"));
                 if (path == null) return;
 
                 var keyFile = await CertificateManager.privateKeyFile();

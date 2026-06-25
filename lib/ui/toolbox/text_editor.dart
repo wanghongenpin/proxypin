@@ -252,14 +252,9 @@ class _TextEditorPageState extends State<TextEditorPage> {
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'text.txt');
+    String? path = await FilePicker.saveFile(fileName: 'text.txt', bytes: utf8.encode(text));
     if (path == null) return;
-    try {
-      await File(path).writeAsString(text);
-      if (mounted) _toast(localizations.saveSuccess);
-    } catch (e) {
-      _toast('${localizations.fail}: $e');
-    }
+    if (mounted) _toast(localizations.saveSuccess);
   }
 
   void _toast(String msg) {

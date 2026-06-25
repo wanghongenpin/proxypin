@@ -15,7 +15,6 @@
  */
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
@@ -383,18 +382,15 @@ class _HostsDialogState extends State<HostsDialog> {
     if (items.isEmpty) return;
 
     String fileName = 'hosts.json';
-    var path = await FilePicker.saveFile(fileName: fileName);
-    if (path == null) {
-      return;
-    }
-
     var list = [];
     for (var item in items) {
       var json = item.toJson();
       list.add(json);
     }
-
-    await File(path).writeAsBytes(utf8.encode(jsonEncode(list)));
+    var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list)));
+    if (path == null) {
+      return;
+    }
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 }

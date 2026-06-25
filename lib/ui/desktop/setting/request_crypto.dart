@@ -369,9 +369,8 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
     if (indexes.isEmpty) return;
     indexes.sort();
     final data = indexes.map((i) => manager.rules[i].toJson()).toList();
-    String? path = await FilePicker.saveFile(fileName: 'request_crypto.json');
+    String? path = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: utf8.encode(jsonEncode(data)));
     if (path == null) return;
-    await File(path).writeAsString(jsonEncode(data));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 

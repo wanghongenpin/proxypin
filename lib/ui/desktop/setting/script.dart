@@ -36,6 +36,7 @@ import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 bool _refresh = false;
@@ -948,10 +949,11 @@ class _ScriptListState extends State<ScriptList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'proxypin-scripts.json';
-    String? path = await FilePicker.saveFile(fileName: fileName);
+    String? path = await Platforms.saveFileAdaptive(fileName: fileName);
     if (path == null) {
       return;
     }
+
     var scriptManager = await ScriptManager.instance;
     List<dynamic> json = [];
     for (var idx in indexes) {

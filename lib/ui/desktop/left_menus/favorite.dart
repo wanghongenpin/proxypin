@@ -38,6 +38,7 @@ import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -348,7 +349,7 @@ class _FavoritesActions extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                   icon: const Icon(Icons.upload_file, size: 18),
                   onPressed: () async {
-                    final path = await FilePicker.saveFile(fileName: 'favorites.json');
+                    final path = await Platforms.saveFileAdaptive(fileName: 'favorites.json');
                     if (path == null) return;
                     await FavoriteStorage.exportToFile(path);
                     if (context.mounted) CustomToast.success(localizations.exportSuccess).show(context);

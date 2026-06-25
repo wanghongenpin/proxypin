@@ -15,6 +15,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_local.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_scipt.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 
 import '../../../../network/util/logger.dart';
 
@@ -386,7 +387,7 @@ class _RequestMapListState extends State<RequestMapList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'request_map.json';
-    String? path = await FilePicker.saveFile(fileName: fileName);
+    String? path = await Platforms.saveFileAdaptive(fileName: fileName);
     if (path == null) {
       return;
     }

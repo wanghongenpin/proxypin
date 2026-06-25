@@ -70,9 +70,9 @@ class _FavoritesState extends State<MobileFavorites> {
 
   Future<String?> _materializePickedFile(PlatformFile file) async {
     if (file.path != null) return file.path!;
-    if (file.bytes == null) return null;
+    final bytes = await file.readAsBytes();
     final tmp = await File('${Directory.systemTemp.path}/${file.name}').create();
-    await tmp.writeAsBytes(file.bytes!, flush: true);
+    await tmp.writeAsBytes(bytes, flush: true);
     return tmp.path;
   }
 
@@ -98,7 +98,7 @@ class _FavoritesState extends State<MobileFavorites> {
                   icon: const Icon(Icons.download_for_offline_outlined, size: 20),
                   onPressed: () async {
                     final result = await FilePicker.pickFiles(
-                        type: FileType.custom, allowedExtensions: ['json', 'har'], withData: true);
+                        type: FileType.custom, allowedExtensions: ['json', 'har']);
                     final file = result?.files.isNotEmpty == true ? result!.files.first : null;
                     if (file == null) return;
                     final path = await _materializePickedFile(file);

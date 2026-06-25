@@ -73,12 +73,10 @@ class _RequestBreakpointPageState extends State<RequestBreakpointPage> {
   Future<void> _export(List<RequestBreakpointRule> exportRules) async {
     if (exportRules.isEmpty) return;
 
-    String? outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json');
+    var json = exportRules.map((e) => e.toJson()).toList();
+    String? outputFile = await FilePicker.saveFile(fileName: 'request_breakpoint_rules.json', bytes: utf8.encode(jsonEncode(json)));
     if (outputFile == null) return;
-    File file = File(outputFile);
     try {
-      var json = exportRules.map((e) => e.toJson()).toList();
-      await file.writeAsString(jsonEncode(json));
       if (mounted) CustomToast.success(localizations.exportSuccess).show(context);
     } catch (e) {
       if (mounted) CustomToast.error(localizations.exportFailed).show(context);
