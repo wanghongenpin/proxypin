@@ -28,7 +28,8 @@ dependencies:
   flutter_js: ^0.8.7
 #  flutter_highlight: ^0.7.0
   flutter_desktop_context_menu: ^0.2.0
-  device_info_plus: ^12.4.0
+  # 12.4.0 uses `NSProcessInfo.isiOSAppOnVision`, which breaks the current iOS CI image.
+  device_info_plus: '>=12.3.0 <12.4.0'
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   toastification: ^3.0.2
