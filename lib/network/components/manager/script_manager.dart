@@ -290,7 +290,10 @@ async function onResponse(context, request, response) {
         }
         request.attributes['scriptContext'] = result['scriptContext'];
         scriptSession = result['scriptContext']['session'] ?? {};
-        request = JavaScriptEngine.convertHttpRequest(request, result);
+        // 脚本未改动请求时保留原始字节，避免 query 重编码/header 重排破坏签名
+        if (!JavaScriptEngine.isRequestUnchanged(jsRequest, result)) {
+          request = JavaScriptEngine.convertHttpRequest(request, result);
+        }
       }
     }
     return request;

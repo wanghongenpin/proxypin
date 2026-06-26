@@ -155,6 +155,18 @@ class JavaScriptEngine {
     };
   }
 
+  /// 脚本是否未修改请求：返回对象去掉 scriptContext 后与原始序列化逐字节一致即视为未改动。
+  /// 用于在脚本未真正改动请求时跳过 convertHttpRequest 的有损重建（避免 query 重编码/header 重排破坏签名）。
+  static bool isRequestUnchanged(String originalRequestJson, dynamic result) {
+    if (result is! Map) return false;
+    try {
+      final copy = Map<dynamic, dynamic>.of(result)..remove('scriptContext');
+      return jsonEncode(copy) == originalRequestJson;
+    } catch (_) {
+      return false;
+    }
+  }
+
   //转换js response
   static Future<Map<String, dynamic>> convertJsResponse(HttpResponse response) async {
     dynamic body = await response.decodeBodyString();
