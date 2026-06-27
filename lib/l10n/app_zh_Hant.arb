@@ -268,8 +268,6 @@
   "windowModeSubTitle": "開啟抓包後 如果應用程式退回到背景，顯示一個小視窗",
   "pipIcon": "視窗快捷圖示",
   "pipIconDescribe": "展示快捷進入小視窗Icon",
-  "headerExpanded": "Headers自動展開",
-  "headerExpandedSubtitle": "詳情頁Headers欄是否自動展開",
   "bottomNavigation": "底部導航",
   "bottomNavigationSubtitle": "底部導航欄是否顯示，重新啟動後生效",
   "memoryCleanup": "記憶體清理",

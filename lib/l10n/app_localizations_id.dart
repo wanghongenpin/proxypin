@@ -833,12 +833,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get pipIconDescribe => 'Tampilkan ikon akses cepat ke jendela kecil';
 
   @override
-  String get headerExpanded => 'Header diperluas';
-
-  @override
-  String get headerExpandedSubtitle => 'Perluas Headers secara default';
-
-  @override
   String get bottomNavigation => 'Navigasi bawah';
 
   @override

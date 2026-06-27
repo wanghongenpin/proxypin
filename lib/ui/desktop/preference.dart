@@ -149,17 +149,6 @@ class _PreferenceState extends State<Preference> {
                       })),
               ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(localizations.headerExpanded, style: titleStyle),
-                  subtitle: Text(localizations.headerExpandedSubtitle, style: subtitleStyle),
-                  trailing: SwitchWidget(
-                      scale: 0.75,
-                      value: appConfiguration.headerExpanded,
-                      onChanged: (value) {
-                        appConfiguration.headerExpanded = value;
-                        appConfiguration.flushConfig();
-                      })),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
                   title: Text(localizations.clearConfirm, style: titleStyle),
                   subtitle: Text(localizations.clearConfirmSubtitle, style: subtitleStyle),
                   trailing: SwitchWidget(

@@ -833,12 +833,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pipIconDescribe => 'แสดงไอคอนเปิดหน้าต่างย่อ';
 
   @override
-  String get headerExpanded => 'ขยาย Headers';
-
-  @override
-  String get headerExpandedSubtitle => 'ขยาย Headers เป็นค่าเริ่มต้น';
-
-  @override
   String get bottomNavigation => 'แถบนำทางด้านล่าง';
 
   @override

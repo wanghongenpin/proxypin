@@ -837,12 +837,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pipIconDescribe => 'Show quick access to small window Icon';
 
   @override
-  String get headerExpanded => 'Headers Expanded';
-
-  @override
-  String get headerExpandedSubtitle => 'Details page Headers is expanded by default';
-
-  @override
   String get bottomNavigation => 'Bottom Navigation';
 
   @override

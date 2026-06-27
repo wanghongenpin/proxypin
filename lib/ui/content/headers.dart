@@ -65,7 +65,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
     super.initState();
     // 优先使用按 type 缓存，其次使用全局配置，最后使用 widget 默认
     final key = widget.title;
-    _expanded = _lastExpanded[key] ?? AppConfiguration.current?.headerExpanded ?? widget.initiallyExpanded;
+    _expanded = _lastExpanded[key] ?? widget.initiallyExpanded;
   }
 
   @override

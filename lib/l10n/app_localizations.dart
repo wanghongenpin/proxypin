@@ -1714,18 +1714,6 @@ abstract class AppLocalizations {
   /// **'Show quick access to small window Icon'**
   String get pipIconDescribe;
 
-  /// No description provided for @headerExpanded.
-  ///
-  /// In en, this message translates to:
-  /// **'Headers Expanded'**
-  String get headerExpanded;
-
-  /// No description provided for @headerExpandedSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Details page Headers is expanded by default'**
-  String get headerExpandedSubtitle;
-
   /// No description provided for @bottomNavigation.
   ///
   /// In en, this message translates to:

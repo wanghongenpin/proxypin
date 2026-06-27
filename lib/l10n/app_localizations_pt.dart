@@ -837,12 +837,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pipIconDescribe => 'Show quick access to small window Icon';
 
   @override
-  String get headerExpanded => 'Headers Expanded';
-
-  @override
-  String get headerExpandedSubtitle => 'Details page Headers is expanded by default';
-
-  @override
   String get bottomNavigation => 'Bottom Navigation';
 
   @override
@@ -1749,12 +1743,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get pipIconDescribe => 'Mostrar ícone de acesso rápido à janela pequena';
-
-  @override
-  String get headerExpanded => 'Cabeçalhos expandidos';
-
-  @override
-  String get headerExpandedSubtitle => 'Expandir cabeçalhos por padrão';
 
   @override
   String get bottomNavigation => 'Navegação inferior';

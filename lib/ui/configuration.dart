@@ -79,9 +79,6 @@ class AppConfiguration {
   /// 显示画中画图标
   ValueNotifier<bool> pipIcon = ValueNotifier(Platform.isAndroid);
 
-  /// header默认展示
-  bool headerExpanded = true;
-
   /// Headers展示模式: table(逐行) / text(原始文本)
   String headerViewMode = "table";
 
@@ -211,7 +208,6 @@ class AppConfiguration {
           : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
-      headerExpanded = config['headerExpanded'] ?? true;
       headerViewMode = config['headerViewMode'] ?? "table";
       bottomNavigation = config['bottomNavigation'] ?? true;
       memoryCleanupThreshold = config['memoryCleanupThreshold'];
@@ -259,7 +255,6 @@ class AppConfiguration {
       'upgradeNoticeV29': upgradeNoticeV29,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
-      "headerExpanded": headerExpanded,
       "headerViewMode": headerViewMode,
       "autoReadEnabled": autoReadEnabled,
       "clearConfirm": clearConfirm,

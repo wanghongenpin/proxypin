@@ -828,12 +828,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pipIconDescribe => '展示快捷进入小窗口Icon';
 
   @override
-  String get headerExpanded => 'Headers自动展开';
-
-  @override
-  String get headerExpandedSubtitle => '详情页Headers栏是否自动展开';
-
-  @override
   String get bottomNavigation => '底部导航';
 
   @override
@@ -1966,12 +1960,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get pipIconDescribe => '展示快捷進入小視窗Icon';
-
-  @override
-  String get headerExpanded => 'Headers自動展開';
-
-  @override
-  String get headerExpandedSubtitle => '詳情頁Headers欄是否自動展開';
 
   @override
   String get bottomNavigation => '底部導航';

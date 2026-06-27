@@ -833,12 +833,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pipIconDescribe => 'Hiển thị biểu tượng truy cập nhanh vào cửa sổ nhỏ';
 
   @override
-  String get headerExpanded => 'Mở rộng Headers';
-
-  @override
-  String get headerExpandedSubtitle => 'Mở rộng Headers theo mặc định';
-
-  @override
   String get bottomNavigation => 'Thanh điều hướng dưới';
 
   @override

@@ -284,8 +284,6 @@
   "windowModeSubTitle": "Enabled Packet Capture, Enter the background, Display a small window",
   "pipIcon": "Window shortcut icon",
   "pipIconDescribe": "Show quick access to small window Icon",
-  "headerExpanded": "Headers Expanded",
-  "headerExpandedSubtitle": "Details page Headers is expanded by default",
   "bottomNavigation": "Bottom Navigation",
   "bottomNavigationSubtitle": "Bottom navigation bar is displayed, effective after restart",
   "memoryCleanup": "Memory Cleanup",

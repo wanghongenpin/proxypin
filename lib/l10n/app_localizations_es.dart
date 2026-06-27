@@ -833,12 +833,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pipIconDescribe => 'Mostrar icono de acceso rápido a la ventana pequeña';
 
   @override
-  String get headerExpanded => 'Headers expandidos';
-
-  @override
-  String get headerExpandedSubtitle => 'Expandir Headers por defecto';
-
-  @override
   String get bottomNavigation => 'Barra inferior';
 
   @override

@@ -88,8 +88,6 @@
   "generateCADescribe": "Tem certeza de que deseja gerar um novo certificado raiz?",
   "gray": "Cinza",
   "green": "Verde",
-  "headerExpanded": "Cabeçalhos expandidos",
-  "headerExpandedSubtitle": "Expandir cabeçalhos por padrão",
   "history": "Histórico",
   "historyEmptyName": "O nome não pode estar vazio",
   "historyRecord": "Histórico",

@@ -88,8 +88,6 @@
   "generateCADescribe": "ต้องการสร้างใบรับรองรากใหม่หรือไม่?",
   "gray": "เทา",
   "green": "เขียว",
-  "headerExpanded": "ขยาย Headers",
-  "headerExpandedSubtitle": "ขยาย Headers เป็นค่าเริ่มต้น",
   "history": "ประวัติ",
   "historyEmptyName": "ชื่อห้ามว่าง",
   "historyRecord": "ประวัติ",
