@@ -155,16 +155,32 @@ class JavaScriptEngine {
     };
   }
 
-  /// 脚本是否未修改请求：返回对象去掉 scriptContext 后与原始序列化逐字节一致即视为未改动。
+  /// 脚本是否未修改请求：返回对象去掉 scriptContext 后与原始请求结构一致即视为未改动。
   /// 用于在脚本未真正改动请求时跳过 convertHttpRequest 的有损重建（避免 query 重编码/header 重排破坏签名）。
-  static bool isRequestUnchanged(String originalRequestJson, dynamic result) {
+  /// 直接复用 runScript 已构建的请求 Map 做结构化深比较，无需再次序列化。
+  static bool isRequestUnchanged(Map<dynamic, dynamic> originalRequest, dynamic result) {
     if (result is! Map) return false;
-    try {
-      final copy = Map<dynamic, dynamic>.of(result)..remove('scriptContext');
-      return jsonEncode(copy) == originalRequestJson;
-    } catch (_) {
-      return false;
+    final copy = Map<dynamic, dynamic>.of(result)..remove('scriptContext');
+    return _deepEquals(copy, originalRequest);
+  }
+
+  static bool _deepEquals(dynamic a, dynamic b) {
+    if (identical(a, b)) return true;
+    if (a is Map && b is Map) {
+      if (a.length != b.length) return false;
+      for (final key in a.keys) {
+        if (!b.containsKey(key) || !_deepEquals(a[key], b[key])) return false;
+      }
+      return true;
     }
+    if (a is List && b is List) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (!_deepEquals(a[i], b[i])) return false;
+      }
+      return true;
+    }
+    return a == b;
   }
 
   //转换js response

@@ -274,7 +274,8 @@ async function onResponse(context, request, response) {
     for (var item in list) {
       if (item.enabled && item.match(url)) {
         var context = jsonEncode(scriptContext(item));
-        var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
+        var jsRequestMap = await JavaScriptEngine.convertJsRequest(request);
+        var jsRequest = jsonEncode(jsRequestMap);
         String? script = await getScript(item);
         if (script == null) {
           continue;
@@ -291,7 +292,7 @@ async function onResponse(context, request, response) {
         request.attributes['scriptContext'] = result['scriptContext'];
         scriptSession = result['scriptContext']['session'] ?? {};
         // 脚本未改动请求时保留原始字节，避免 query 重编码/header 重排破坏签名
-        if (!JavaScriptEngine.isRequestUnchanged(jsRequest, result)) {
+        if (!JavaScriptEngine.isRequestUnchanged(jsRequestMap, result)) {
           request = JavaScriptEngine.convertHttpRequest(request, result);
         }
       }
