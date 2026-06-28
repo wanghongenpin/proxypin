@@ -158,6 +158,10 @@ class RewriteItem {
 
   set key(String? key) => values['key'] = key;
 
+  bool get useRegex => values['useRegex'] != false;
+
+  set useRegex(bool useRegex) => values['useRegex'] = useRegex;
+
   String? get value => values['value'];
 
   set value(String? value) => values['value'] = value;

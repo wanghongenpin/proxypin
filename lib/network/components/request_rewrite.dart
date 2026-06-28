@@ -38,6 +38,18 @@ class RequestRewriteInterceptor extends Interceptor {
 
   RequestRewriteInterceptor._();
 
+  /// 构造 RegExp；若未启用正则则自动转义为字面量匹配，若 pattern 不合法则回退为字面量匹配
+  static RegExp _toRegExp(String pattern, {bool useRegex = true, bool caseSensitive = true}) {
+    if (!useRegex) {
+      return RegExp(RegExp.escape(pattern), caseSensitive: caseSensitive);
+    }
+    try {
+      return RegExp(pattern, caseSensitive: caseSensitive);
+    } catch (_) {
+      return RegExp(RegExp.escape(pattern), caseSensitive: caseSensitive);
+    }
+  }
+
   @override
   Future<HttpRequest?> onRequest(HttpRequest request) async {
     //重写请求
@@ -159,7 +171,7 @@ class RequestRewriteInterceptor extends Interceptor {
         case RewriteType.removeQueryParam:
           if (item.value?.trim().isNotEmpty == true) {
             var val = queryParameters[item.key!];
-            if (val == null || !RegExp(item.value!).hasMatch(val)) {
+            if (val == null || !_toRegExp(item.value!, useRegex: item.useRegex).hasMatch(val)) {
               break;
             }
           }
@@ -170,7 +182,7 @@ class RequestRewriteInterceptor extends Interceptor {
           if (itemKey == null || itemKey.trim().isEmpty) return;
 
           var entries = Map.of(queryParameters).entries;
-          var regExp = RegExp(item.key!);
+          var regExp = _toRegExp(item.key!, useRegex: item.useRegex);
 
           for (var entry in entries) {
             var line = "${entry.key}=${entry.value}";
@@ -203,7 +215,7 @@ class RequestRewriteInterceptor extends Interceptor {
   //修改消息
   Future<void> _updateMessage(HttpMessage message, RewriteItem item) async {
     if (item.type == RewriteType.updateBody && message.body != null) {
-      String body = (await message.decodeBodyString()).replaceAllMapped(RegExp(item.key!), (match) {
+      String body = (await message.decodeBodyString()).replaceAllMapped(_toRegExp(item.key!, useRegex: item.useRegex), (match) {
         if (match.groupCount > 0 && item.value?.contains("\$1") == true) {
           return item.value!.replaceAll("\$1", match.group(1)!);
         }
@@ -225,7 +237,7 @@ class RequestRewriteInterceptor extends Interceptor {
     if (item.type == RewriteType.removeHeader) {
       if (item.value?.trim().isNotEmpty == true) {
         var val = message.headers.get(item.key!);
-        if (val == null || !RegExp(item.value!).hasMatch(val)) {
+        if (val == null || !_toRegExp(item.value!, useRegex: item.useRegex).hasMatch(val)) {
           return;
         }
       }
@@ -237,7 +249,7 @@ class RequestRewriteInterceptor extends Interceptor {
       if (item.key == null || item.key?.trim().isEmpty == true) return;
 
       var headers = Map.of(message.headers.getHeaders());
-      var regExp = RegExp(item.key!, caseSensitive: false);
+      var regExp = _toRegExp(item.key!, useRegex: item.useRegex, caseSensitive: false);
 
       headers.forEach((key, values) {
         var line = "$key: ${values.firstOrNull ?? ''}";

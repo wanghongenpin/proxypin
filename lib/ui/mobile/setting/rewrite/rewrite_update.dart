@@ -127,6 +127,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   late FindController _findController;
 
   bool jsonFormatted = false;
+  bool useRegex = true;
 
   AppLocalizations get i18n => AppLocalizations.of(context)!;
 
@@ -135,6 +136,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     super.initState();
     rewriteType = widget.item?.type ?? RewriteType.updateBody;
     rewriteItem = widget.item ?? RewriteItem(rewriteType, true);
+    useRegex = widget.item?.useRegex ?? true;
 
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
@@ -195,6 +197,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                     rewriteItem.key = keyController.text;
                     rewriteItem.value = valueController.text;
                     rewriteItem.type = rewriteType;
+                    rewriteItem.useRegex = useRegex;
                     Navigator.of(context).pop(rewriteItem);
                   },
                   child: Text(i18n.confirm)),
@@ -230,7 +233,25 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                 ],
               ),
               const SizedBox(height: 15),
-              textField(isUpdate ? i18n.match : i18n.name, keyTips, controller: keyController, required: !isDelete),
+              textField(isUpdate ? i18n.match : i18n.name, keyTips,
+                  controller: keyController,
+                  required: !isDelete,
+                  suffix: (isUpdate || isDelete)
+                      ? InkWell(
+                          onTap: () => setState(() => useRegex = !useRegex),
+                          child: Tooltip(
+                            message: i18n.regExp,
+                            padding: const EdgeInsets.only(right: 2, left: 2),
+                            child: Text(
+                              '.*',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: useRegex ? Theme.of(context).colorScheme.primary : Colors.grey,
+                                fontWeight: useRegex ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ))
+                      : null),
               const SizedBox(height: 15),
               textField(isUpdate ? i18n.replace : i18n.value, valueTips, controller: valueController),
               const SizedBox(height: 10),
@@ -352,14 +373,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     });
   }
 
-  Widget textField(String label, String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+  Widget textField(String label, String hint,
+      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return Row(children: [
       SizedBox(width: 55, child: Text(label)),
-      Expanded(child: formField(hint, required: required, lines: lines, controller: controller))
+      Expanded(child: formField(hint, required: required, lines: lines, controller: controller, suffix: suffix))
     ]);
   }
 
-  Widget formField(String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+  Widget formField(String hint,
+      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 14),
@@ -374,6 +397,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
           errorStyle: const TextStyle(height: 0, fontSize: 0),
           focusedBorder: focusedBorder(),
           isDense: true,
+          suffix: suffix,
           border: const OutlineInputBorder()),
     );
   }

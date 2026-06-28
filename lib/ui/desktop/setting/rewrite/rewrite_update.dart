@@ -16,8 +16,6 @@
 
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -27,6 +25,8 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:re_highlight/languages/json.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -126,12 +126,14 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   late FindController _findController;
 
   bool jsonFormatted = false;
+  bool useRegex = true;
 
   @override
   void initState() {
     super.initState();
     rewriteType = widget.item?.type ?? RewriteType.updateBody;
     rewriteItem = widget.item ?? RewriteItem(rewriteType, true);
+    useRegex = widget.item?.useRegex ?? true;
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
@@ -194,6 +196,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                 rewriteItem.key = keyController.text;
                 rewriteItem.value = valueController.text;
                 rewriteItem.type = rewriteType;
+                rewriteItem.useRegex = useRegex;
                 Navigator.of(context).pop(rewriteItem);
               },
               child: Text(localizations.confirm)),
@@ -232,7 +235,26 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                   ),
                   const SizedBox(height: 15),
                   textField(isUpdate ? localizations.match : localizations.name, keyTips,
-                      controller: keyController, required: !isDelete),
+                      controller: keyController,
+                      required: !isDelete,
+                      suffix: (isUpdate || isDelete)
+                          ? InkWell(
+                              onTap: () => setState(() => useRegex = !useRegex),
+                              child: Tooltip(
+                                message: localizations.regExp,
+                                mouseCursor: SystemMouseCursors.click,
+                                padding: const EdgeInsets.only(right: 2, left: 2),
+                                child: Text(
+                                  '.*',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: useRegex ? Theme.of(context).colorScheme.primary : Colors.grey,
+                                    fontWeight: useRegex ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : null),
                   const SizedBox(height: 15),
                   textField(isUpdate ? localizations.replace : localizations.value, valueTips,
                       controller: valueController),
@@ -359,14 +381,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     });
   }
 
-  Widget textField(String label, String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+  Widget textField(String label, String hint,
+      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return Row(children: [
       SizedBox(width: 60, child: Text(label)),
-      Expanded(child: formField(hint, required: required, lines: lines, controller: controller))
+      Expanded(child: formField(hint, required: required, lines: lines, controller: controller, suffix: suffix))
     ]);
   }
 
-  Widget formField(String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+  Widget formField(String hint,
+      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 14),
@@ -380,6 +404,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
           errorStyle: const TextStyle(height: 0, fontSize: 0),
           focusedBorder: focusedBorder(),
           isDense: true,
+          suffix: suffix,
           border: const OutlineInputBorder()),
     );
   }
