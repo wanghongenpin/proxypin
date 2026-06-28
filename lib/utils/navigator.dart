@@ -37,16 +37,16 @@ class NavigatorHelper {
 NavigatorHelper navigatorHelper = NavigatorHelper();
 
 class NavigatorPage extends StatelessWidget {
-  final GlobalKey navigatorKey;
+  final GlobalKey<NavigatorState> navigatorKey;
   final Widget child;
 
   const NavigatorPage({super.key, required this.child, required this.navigatorKey});
 
   bool onPopInvoked() {
-    var context = navigatorKey.currentState?.context;
-    if (context == null) return false;
-    if (Navigator.canPop(context)) {
-      Navigator.maybePop(context);
+    var state = navigatorKey.currentState;
+    if (state == null) return false;
+    if (state.canPop()) {
+      state.maybePop();
       return true;
     }
     return false;

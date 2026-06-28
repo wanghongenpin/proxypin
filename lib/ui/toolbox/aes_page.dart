@@ -99,7 +99,7 @@ class _AesWidgetState extends State<AesPage> {
                   ),
                 ])),
             SizedBox(
-                width: 195,
+                width: 196,
                 child: Row(children: [
                   Text("Padding"),
                   const SizedBox(width: 15),
@@ -142,7 +142,7 @@ class _AesWidgetState extends State<AesPage> {
                 SizedBox(
                     width: 230,
                     child: Row(children: [
-                      const SizedBox(width: 25, child: Text("Key")),
+                      const SizedBox(width: 26, child: Text("Key")),
                       const SizedBox(width: 15),
                       SizedBox(
                           width: 180,
