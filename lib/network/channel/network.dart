@@ -185,8 +185,9 @@ class Server extends Network {
   /// ssl握手
   void ssl(ChannelContext channelContext, Channel channel, Uint8List data) async {
     var hostAndPort = channelContext.host;
+    String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
+    Channel? remoteChannel;
     try {
-      String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
       bool isHttp = true;
 
       if (hostAndPort == null) {
@@ -211,7 +212,7 @@ class Server extends Network {
       hostAndPort.scheme = HostAndPort.httpsScheme;
       channelContext.putAttribute(AttributeKeys.domain, hostAndPort.host);
 
-      Channel? remoteChannel = channelContext.serverChannel;
+      remoteChannel = channelContext.serverChannel;
 
       if (!isHttp || HostFilter.filter(hostAndPort.host) || !configuration.enableSsl) {
         remoteChannel = remoteChannel ?? await channelContext.connectServerChannel(hostAndPort, RelayHandler(channel));
@@ -246,6 +247,19 @@ class Server extends Network {
       }
     } catch (error, trace) {
       logger.e('[${channelContext.clientChannel?.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
+
+      //客户端ssl验证失败时, 拉取远程服务器真实证书重新生成叶子证书, 客户端重连后即可通过校验
+      if (error is TlsException && serviceName != null) {
+        try {
+          var refreshed = await CertificateManager.generateByRemoteCert(serviceName, remoteChannel?.peerCertificate);
+          if (refreshed) {
+            logger.i('[${channelContext.clientChannel?.id}] $serviceName regenerate certificate by remote cert');
+          }
+        } catch (ignore) {
+          /*ignore*/
+        }
+      }
+
       try {
         channelContext.processInfo ??=
             await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');

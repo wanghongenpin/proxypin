@@ -44,7 +44,11 @@ enum StartState { uninitialized, initializing, initialized }
 class CertificateManager {
   /// 证书缓存
   static final ExpiringCache<String, SecurityContext> _certificateMap =
-      ExpiringCache<String, SecurityContext>(const Duration(minutes: 15));
+      ExpiringCache<String, SecurityContext>(const Duration(minutes: 30));
+
+  /// 远程服务器真实证书缓存(ssl验证失败时拉取, 用于生成更贴近真实证书的叶子证书)
+  static final ExpiringCache<String, X509CertificateData> _remoteCertMap =
+      ExpiringCache<String, X509CertificateData>(const Duration(minutes: 15));
 
   /// 服务端密钥
   static AsymmetricKeyPair _serverKeyPair = CryptoUtils.generateRSAKeyPair();
@@ -68,6 +72,7 @@ class CertificateManager {
   /// 清除缓存
   static void cleanCache() {
     _certificateMap.clear();
+    _remoteCertMap.clear();
   }
 
   /// 获取域名自签名证书
@@ -81,17 +86,53 @@ class CertificateManager {
       await initCAConfig();
     }
 
-    String cer = generate(_caCert!, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host);
+    return _createSecurityContext(host, remoteCert: _remoteCertMap[host]);
+  }
 
+  /// ssl验证失败时, 根据远程服务器真实证书重新生成叶子证书并刷新缓存
+  ///
+  /// [host] 域名
+  /// [peerCertificate] 远程服务器证书(来自 [SecureSocket.peerCertificate])
+  ///
+  /// 返回 true 表示成功拉取并刷新了证书缓存; 若已经针对该域名拉取过, 或解析失败, 返回 false
+  static Future<bool> generateByRemoteCert(String host, X509Certificate? peerCertificate) async {
+    if (peerCertificate == null) {
+      return false;
+    }
+
+    //同一域名只拉取一次, 避免重连风暴
+    if (_remoteCertMap.containsKey(host)) {
+      return false;
+    }
+
+    try {
+      var remoteCert = X509Utils.x509CertificateFromPem(peerCertificate.pem);
+      _remoteCertMap[host] = remoteCert;
+
+      if (_state != StartState.initialized) {
+        await initCAConfig();
+      }
+
+      _createSecurityContext(host, remoteCert: remoteCert);
+      logger.d('regenerate certificate by remote cert for $host');
+      return true;
+    } catch (e, t) {
+      logger.e('generate certificate by remote cert error: $host', error: e, stackTrace: t);
+      return false;
+    }
+  }
+
+  /// 生成域名叶子证书的 [SecurityContext] 并写入缓存
+  static SecurityContext _createSecurityContext(String host, {X509CertificateData? remoteCert}) {
+    String cer = generate(_caCert!, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host, remoteCert: remoteCert);
     var rsaPrivateKey = _serverKeyPair.privateKey as RSAPrivateKey;
 
-    securityContext = SecurityContext(withTrustedRoots: true)
+    var securityContext = SecurityContext(withTrustedRoots: true)
       ..useCertificateChainBytes(cer.codeUnits)
       ..allowLegacyUnsafeRenegotiation = true
       ..usePrivateKeyBytes(CryptoUtils.encodeRSAPrivateKeyToPemPkcs1(rsaPrivateKey).codeUnits);
 
     _certificateMap[host] = securityContext;
-
     return securityContext;
   }
 
@@ -104,21 +145,54 @@ class CertificateManager {
   }
 
   /// 生成证书
-  static String generate(X509CertificateData caRoot, RSAPublicKey serverPubKey, RSAPrivateKey caPriKey, String host) {
-    //根据CA证书subject来动态生成目标服务器证书的issuer和subject
+  ///
+  /// [remoteCert] 远程服务器真实证书, 若提供则复制其 Subject、SAN、有效期, 以通过客户端严格校验
+  static String generate(X509CertificateData caRoot, RSAPublicKey serverPubKey, RSAPrivateKey caPriKey, String host,
+      {X509CertificateData? remoteCert}) {
+    //默认 subject 模板, 以及仅包含域名本身的 SAN
     Map<String, String> x509Subject = {
       'C': 'CN',
       'ST': 'BJ',
       'L': 'Beijing',
       'O': 'Proxy',
       'OU': 'ProxyPin',
+      'CN': host,
     };
+    List<String> sans = [host];
+    DateTime? notBefore;
+    DateTime? notAfter;
 
-    x509Subject['CN'] = host;
+    //存在远程真实证书时, 复制其 Subject、SAN、有效期, 以通过客户端严格校验
+    if (remoteCert != null) {
+      x509Subject = _remoteSubject(remoteCert) ?? x509Subject;
+      sans = _remoteSans(remoteCert) ?? sans;
+      notBefore = remoteCert.validity.notBefore;
+      notAfter = remoteCert.validity.notAfter;
+    }
 
-    var csrPem = X509Utils.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 365,
-        sans: [host], serialNumber: Random().nextInt(1000000).toString(), subject: x509Subject);
-    return csrPem;
+    return X509Utils.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 36,
+        sans: sans,
+        serialNumber: Random().nextInt(1000000).toString(),
+        subject: x509Subject,
+        notBefore: notBefore,
+        notAfter: notAfter);
+  }
+
+  /// 提取远程证书的 subject (key 为 OID 字符串, 如 2.5.4.3=CN), 整体替换默认模板避免 CN 重复; 为空返回 null
+  static Map<String, String>? _remoteSubject(X509CertificateData remoteCert) {
+    Map<String, String> subject = {};
+    remoteCert.subject.forEach((key, value) {
+      if (value != null && value.isNotEmpty) {
+        subject[key] = value;
+      }
+    });
+    return subject.isEmpty ? null : subject;
+  }
+
+  /// 提取远程证书的 DNS 类型 SAN, 过滤 DirName 等非 DNS 条目; 为空返回 null
+  static List<String>? _remoteSans(X509CertificateData remoteCert) {
+    var sans = remoteCert.subjectAlternativNames?.where((e) => !e.startsWith('DirName:')).toList();
+    return (sans == null || sans.isEmpty) ? null : sans;
   }
 
   /// 获取证书主题hash

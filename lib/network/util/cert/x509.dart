@@ -137,6 +137,8 @@ class X509Utils {
     ExtensionKeyUsage? keyUsage,
     List<ExtendedKeyUsage>? extKeyUsage,
     BasicConstraints? basicConstraints,
+    DateTime? notBefore,
+    DateTime? notAfter,
   }) {
     var data = ASN1Sequence();
 
@@ -166,8 +168,8 @@ class X509Utils {
 
     // Add Validity
     var validitySeq = ASN1Sequence();
-    validitySeq.add(ASN1UtcTime(DateTime.now().subtract(const Duration(days: 3)).toUtc()));
-    validitySeq.add(ASN1UtcTime(DateTime.now().add(Duration(days: days)).toUtc()));
+    validitySeq.add(ASN1UtcTime((notBefore ?? DateTime.now().subtract(const Duration(days: 3))).toUtc()));
+    validitySeq.add(ASN1UtcTime((notAfter ?? DateTime.now().add(Duration(days: days))).toUtc()));
     data.add(validitySeq);
 
     // Add Subject
