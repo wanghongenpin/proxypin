@@ -127,6 +127,11 @@ class SystemProxy {
 class MacSystemProxy implements SystemProxy {
   static String? _hardwarePort;
 
+  /// 缓存的活跃网络服务名列表。
+  /// 仅在启用代理（[_setSystemProxy]）和禁用代理（[_setProxyEnable]）时刷新，
+  /// 因为这两次调用之间用户可能连接/断开了 VPN 或虚拟网卡；其余方法直接复用缓存。
+  List<String>? _cachedServices;
+
   // Helper to safely quote a string for sh (single-quote and escape any internal single quotes)
   static String _shellQuote(String s) {
     // Replace ' with '\'' which is the safe way to include single quotes inside single-quoted strings in shell
@@ -179,61 +184,134 @@ class MacSystemProxy implements SystemProxy {
     return null;
   }
 
-  ///mac设置代理地址
-  @override
-  Future<bool> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) async {
-    _hardwarePort = _hardwarePort ?? await hardwarePort();
-    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
-      logger.e('hardwarePort is empty, cannot set system proxy');
+  /// 通过 `networksetup -listallnetworkservices` 获取所有活跃网络服务名。
+  /// 输出首行为标题，需跳过；以 `*` 开头的服务被禁用，需排除。
+  /// 命令失败或无活跃服务时，依次回退到 [hardwarePort]（动态探测的主服务）
+  /// 和硬编码的 `['Wi-Fi']`（避免遗漏如 Mac mini 这类仅有有线网卡的设备）。
+  static Future<List<String>> _listNetworkServices() async {
+    try {
+      var result = await Process.run('networksetup', ['-listallnetworkservices']);
+      if (result.exitCode == 0) {
+        var services = result.stdout
+            .toString()
+            .split(RegExp(r'\r?\n'))
+            // 跳过首行（标题行）
+            .skip(1)
+            .map((s) => s.trim())
+            // 排除被禁用的服务（以 '*' 开头）和空行
+            .where((s) => s.isNotEmpty && !s.startsWith('*'))
+            .toList();
+        if (services.isNotEmpty) return services;
+        logger.w('listallnetworkservices returned no active services, using fallback');
+      } else {
+        logger.w('listallnetworkservices failed, stderr: ${result.stderr}, using fallback');
+      }
+    } catch (e) {
+      logger.w('listallnetworkservices error: $e, using fallback');
+    }
+    // 动态回退：基于默认路由的硬件端口探测主服务。
+    // 对于没有 Wi-Fi 接口的设备，优于硬编码的 'Wi-Fi'。
+    var primary = await hardwarePort();
+    if (primary.isNotEmpty) return [primary];
+    return ['Wi-Fi'];
+  }
+
+  /// 对忽略代理的域名列表进行安全转义，便于拼接到 shell 命令中。
+  /// 输入以 `;` 或空白符分隔（ProxyPin 用 `;` 作为分隔符）；
+  /// 每个 token 都用 [_shellQuote] 包裹，避免用户输入的特殊字符
+  /// （`;`、`` ` ``、`$()`、`|`、`&` 等）破坏 networksetup 参数。
+  /// 列表为空时返回单个空引号参数，以清空忽略列表，与原 `""` 行为一致。
+  static String _quoteBypassDomains(String raw) {
+    var tokens = raw.split(RegExp(r'[;\s]+')).where((t) => t.isNotEmpty).toList();
+    if (tokens.isEmpty) return "''";
+    return tokens.map(_shellQuote).join(' ');
+  }
+
+  /// 获取已缓存的服务列表，[refresh] 为 true 时重新探测。
+  Future<List<String>> _services({bool refresh = false}) async {
+    if (refresh || _cachedServices == null) {
+      _cachedServices = await _listNetworkServices();
+    }
+    return _cachedServices!;
+  }
+
+  /// 对每个网络服务分别执行一次 [commandBuilder] 生成的命令。
+  /// 每个服务单独起一个 `bash -c`（内部命令用 `&&` 连接），
+  /// 因此某个服务失败不会跳过其他服务的命令。
+  /// 只要任一服务成功即视为整体成功（单个不活跃/虚拟网卡不应中断整个操作）；
+  /// 单个服务失败仅记为 warning。仅当所有服务都失败时，才回退到 [setProxyWithAuth]（弹 sudo）。
+  /// [refresh] 为 true 时先重建缓存的服务列表（用户可能在上次调用后连接/断开了 VPN）。
+  Future<bool> _runForAllServices(
+    Iterable<String> Function(String service) commandBuilder, {
+    String? logLabel,
+    bool refresh = false,
+  }) async {
+    var services = await _services(refresh: refresh);
+    Map<String, List<String>> byService = {};
+    for (var service in services) {
+      var cmds = commandBuilder(service).where((c) => c.isNotEmpty).toList();
+      if (cmds.isNotEmpty) byService[service] = cmds;
+    }
+
+    if (byService.isEmpty) {
+      logger.w('${logLabel ?? 'runForAllServices'}: no commands generated for services $services');
       return false;
     }
 
-    final quotedName = _shellQuote(_hardwarePort!);
-    var bypass = proxyPassDomains.replaceAll(";", " ");
-    if (bypass.isEmpty) {
-      bypass = '""';
+    logger.d('${logLabel ?? 'runForAllServices'} running for services: $byService');
+    int failed = 0;
+    String? lastErr;
+    for (var entry in byService.entries) {
+      var perService = await Process.run('bash', ['-c', _concatCommands(entry.value)]);
+      if (perService.exitCode != 0) {
+        failed++;
+        lastErr = perService.stderr.toString();
+        logger.w('$logLabel failed for service "${entry.key}", stderr: ${perService.stderr}');
+      }
     }
+    // 任一服务成功即可；仅当全部失败时才升级处理。
+    bool overallSuccess = failed < byService.length;
+    if (!overallSuccess) {
+      logger.e('$logLabel failed for all services, last stderr: $lastErr');
+      return setProxyWithAuth(byService.values.expand((c) => c).toList());
+    }
+    return true;
+  }
 
-    List<String> commands = [
-      'networksetup -setwebproxy $quotedName 127.0.0.1 $port',
-      sslSetting == true ? 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port' : '',
-      'networksetup -setproxybypassdomains $quotedName $bypass',
-      'networksetup -setsocksfirewallproxystate $quotedName off',
-    ];
-    print("Running commands:\n${commands.where((c) => c.isNotEmpty).join('\n')}");
-    var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
-    logger.d('set proxyServer, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
-    bool success = results.exitCode == 0;
-    if (!success) {
-      logger.e('setSystemProxy failed, stderr: ${results.stderr}');
-      return setProxyWithAuth(commands);
-    }
-    return success;
+  ///mac设置代理地址
+  @override
+  Future<bool> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) async {
+    final quotedBypass = _quoteBypassDomains(proxyPassDomains);
+
+    return _runForAllServices(
+      (service) {
+        final quotedName = _shellQuote(service);
+        return [
+          'networksetup -setwebproxy $quotedName 127.0.0.1 $port',
+          if (sslSetting == true) 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port',
+          'networksetup -setproxybypassdomains $quotedName $quotedBypass',
+          'networksetup -setsocksfirewallproxystate $quotedName off',
+        ];
+      },
+      logLabel: 'setSystemProxy',
+      refresh: true,
+    );
   }
 
   ///设置Https代理
   @override
-  Future<bool> _setSslProxyEnable(bool proxyEnable, port) async {
-    var name = _hardwarePort ?? await hardwarePort();
-    if (name.isEmpty) {
-      logger.e('hardwarePort is empty, cannot set ssl proxy state');
-      return false;
-    }
-    final quotedName = _shellQuote(name);
-
-    List<String> commands = [
-      proxyEnable
-          ? 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port'
-          : 'networksetup -setsecurewebproxystate $quotedName off'
-    ];
-
-    var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
-    bool success = results.exitCode == 0;
-    if (!success) {
-      logger.e('setSystemProxy failed, stderr: ${results.stderr}');
-      return setProxyWithAuth(commands);
-    }
-    return success;
+  Future<bool> _setSslProxyEnable(bool proxyEnable, int port) async {
+    return _runForAllServices(
+      (service) {
+        final quotedName = _shellQuote(service);
+        return [
+          proxyEnable
+              ? 'networksetup -setsecurewebproxy $quotedName 127.0.0.1 $port'
+              : 'networksetup -setsecurewebproxystate $quotedName off'
+        ];
+      },
+      logLabel: 'setSslProxyEnable',
+    );
   }
 
   ///mac获取当前网络名称
@@ -254,42 +332,35 @@ class MacSystemProxy implements SystemProxy {
   ///设置代理忽略地址
   @override
   Future<void> _setProxyPassDomains(String proxyPassDomains) async {
-    _hardwarePort ??= await hardwarePort();
-    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
-      logger.e('hardwarePort is empty, cannot set proxy bypass domains');
-      return;
-    }
-    final quotedName = _shellQuote(_hardwarePort!);
-    var pass = proxyPassDomains.replaceAll(";", " ");
-    if (pass.isEmpty) {
-      pass = '""';
-    }
-    var results = await Process.run('bash', ['-c', 'networksetup -setproxybypassdomains $quotedName $pass']);
-    logger.d('set proxyPassDomains, name: $_hardwarePort, exitCode: ${results.exitCode}, stdout: ${results.stdout}');
+    final quotedBypass = _quoteBypassDomains(proxyPassDomains);
+
+    await _runForAllServices(
+      (service) {
+        final quotedName = _shellQuote(service);
+        return ['networksetup -setproxybypassdomains $quotedName $quotedBypass'];
+      },
+      logLabel: 'setProxyPassDomains',
+    );
   }
 
   ///mac设置代理是否启用
   @override
   Future<void> _setProxyEnable(bool proxyEnable, bool sslSetting) async {
     var proxyMode = proxyEnable ? 'on' : 'off';
-    _hardwarePort ??= await hardwarePort();
-    if (_hardwarePort == null || _hardwarePort!.isEmpty) {
-      logger.e('hardwarePort is empty, cannot set proxy enable state');
-      return;
-    }
-    logger.d('set proxyEnable: $proxyEnable, name: $_hardwarePort');
-    final quotedName = _shellQuote(_hardwarePort!);
-    List<String> commands = [
-      'networksetup -setwebproxystate $quotedName $proxyMode',
-      sslSetting ? 'networksetup -setsecurewebproxystate $quotedName $proxyMode' : ''
-    ];
-
-    var results = await Process.run('bash', ['-c', _concatCommands(commands)]);
-
-    if (results.exitCode != 0) {
-      logger.e('setProxyEnable failed, stderr: ${results.stderr}');
-      await setProxyWithAuth(commands);
-    }
+    await _runForAllServices(
+      (service) {
+        final quotedName = _shellQuote(service);
+        return [
+          'networksetup -setwebproxystate $quotedName $proxyMode',
+          if (sslSetting) 'networksetup -setsecurewebproxystate $quotedName $proxyMode',
+        ];
+      },
+      logLabel: 'setProxyEnable',
+      // 关闭代理时也要刷新：若用户在启用代理后又连接了 VPN/TUN，
+      // 该新接口不在缓存列表中，会导致其代理状态未被清理。
+      // 清理时漏掉新接口的后果比启用时更严重，故仅在关闭时刷新。
+      refresh: !proxyEnable,
+    );
   }
 
   Future<bool> setProxyWithAuth(List<String> commands) async {
