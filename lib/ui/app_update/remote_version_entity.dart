@@ -51,7 +51,7 @@ class RemoteVersionEntity {
 
   /// 选择当前桌面平台最合适的可下载资产。
   /// macOS: 优先 mac/macos/darwin/osx 的 .zip, 否则 .dmg。
-  /// Windows: 优先 win/windows 的 .zip。
+  /// Windows: 均优先 .zip 原地更新; 非 Win7 没有 zip 时回退到 setup.exe。
   /// 其它平台返回 null(走打开链接的旧逻辑)。
   ReleaseAsset? desktopAsset() {
     if (assets.isEmpty) return null;
@@ -70,8 +70,21 @@ class RemoteVersionEntity {
     }
 
     if (Platform.isWindows) {
-      final zip = assets.where((a) => a.installerType == 'zip' && nameMatches(a, ['win', 'windows']));
-      if (zip.isNotEmpty) return zip.first;
+      // Win7 检测: Windows 6.x 开头为 Win7 / Win8 (含 6.1=Win7)
+      final isWin7 = Platform.operatingSystemVersion.startsWith('Windows 6.');
+      final zips = assets.where((a) => a.installerType == 'zip' && nameMatches(a, ['win', 'windows']));
+      if (isWin7) {
+        // Win7: 优先 win7 专用 zip, 无则回退到任意 windows zip
+        final win7Zip = zips.where((a) => nameMatches(a, ['windows7', 'win7']));
+        if (win7Zip.isNotEmpty) return win7Zip.first;
+        if (zips.isNotEmpty) return zips.first;
+        return null;
+      }
+      // 非 Win7: 优先非 win7 的 windows zip, 无则回退到 setup.exe
+      final nonWin7 = zips.where((a) => !nameMatches(a, ['windows7', 'win7']));
+      if (nonWin7.isNotEmpty) return nonWin7.first;
+      final exe = assets.where((a) => a.installerType == 'exe' && nameMatches(a, ['setup']));
+      if (exe.isNotEmpty) return exe.first;
       return null;
     }
 
