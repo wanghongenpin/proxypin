@@ -1083,6 +1083,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'Abaikan';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'Peta permintaan';
 
   @override

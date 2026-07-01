@@ -2200,6 +2200,30 @@ abstract class AppLocalizations {
   /// **'Ignore'**
   String get appUpdateIgnoreBtnTxt;
 
+  /// No description provided for @appUpdateInstallNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Now'**
+  String get appUpdateInstallNow;
+
+  /// No description provided for @appUpdateRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get appUpdateRetry;
+
+  /// No description provided for @appUpdateBackgroundDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download in background'**
+  String get appUpdateBackgroundDownload;
+
+  /// No description provided for @appUpdateOpenDownloadPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Download Page'**
+  String get appUpdateOpenDownloadPage;
+
   /// No description provided for @requestMap.
   ///
   /// In en, this message translates to:

@@ -1075,6 +1075,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => '忽略';
 
   @override
+  String get appUpdateInstallNow => '立即安装';
+
+  @override
+  String get appUpdateRetry => '重试';
+
+  @override
+  String get appUpdateBackgroundDownload => '后台下载';
+
+  @override
+  String get appUpdateOpenDownloadPage => '打开下载页面';
+
+  @override
   String get requestMap => '请求映射';
 
   @override

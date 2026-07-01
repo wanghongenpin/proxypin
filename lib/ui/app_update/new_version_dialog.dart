@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/app_update/desktop_update_dialog.dart';
 import 'package:proxypin/ui/app_update/remote_version_entity.dart';
+import 'package:proxypin/utils/navigator.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -85,6 +88,16 @@ class NewVersionDialog extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
+              // 桌面端且有匹配的安装包: 走应用内下载安装流程
+              final asset = Platforms.isDesktop() ? newVersion.desktopAsset() : null;
+              if (asset != null) {
+                final rootContext = NavigatorHelper().navigatorKey.currentContext;
+                Navigator.pop(context);
+                if (rootContext != null && rootContext.mounted) {
+                  await showDesktopUpdateDialog(rootContext, newVersion, asset);
+                }
+                return;
+              }
               await launchUrl(Uri.parse(newVersion.url), mode: LaunchMode.externalApplication);
             },
             child: Text(localizations.appUpdateUpdateNowBtnTxt),

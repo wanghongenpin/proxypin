@@ -370,6 +370,10 @@
   "appUpdateUpdateNowBtnTxt": "现在更新",
   "appUpdateLaterBtnTxt": "以后再说",
   "appUpdateIgnoreBtnTxt": "忽略",
+  "appUpdateInstallNow": "立即安装",
+  "appUpdateRetry": "重试",
+  "appUpdateBackgroundDownload": "后台下载",
+  "appUpdateOpenDownloadPage": "打开下载页面",
 
   "requestMap": "请求映射",
   "requestMapDescribe": "不请求远程服务，使用本地配置或脚本进行响应",

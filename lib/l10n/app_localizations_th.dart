@@ -1082,6 +1082,18 @@ class AppLocalizationsTh extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'ข้าม';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'แม็ปคำขอ';
 
   @override

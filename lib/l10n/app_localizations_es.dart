@@ -1083,6 +1083,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'Omitir';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'Mapeo de solicitudes';
 
   @override
