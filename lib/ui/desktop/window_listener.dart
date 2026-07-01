@@ -35,7 +35,7 @@ class WindowChangeListener extends WindowListener {
   @override
   void onWindowMoved() async {
     final windowPosition = await windowManager.getPosition();
-    // logger.d("windowPosition: $windowPosition");
+    logger.d("windowPosition: $windowPosition");
     appConfiguration.windowPosition = windowPosition;
     appConfiguration.flushConfig();
   }
