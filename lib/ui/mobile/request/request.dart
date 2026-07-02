@@ -54,7 +54,7 @@ class RequestRow extends StatefulWidget {
   final Function(HttpRequest)? onRemove;
   final MultiSelectController selectionController;
   final RequestSelectionHandlers selectionHandlers;
-  final Function(VoidCallback refresh)? onMount;  // 注册刷新回调
+  final Function(VoidCallback refresh)? onMount; // 注册刷新回调
 
   const RequestRow({
     super.key,
@@ -100,9 +100,11 @@ class RequestRowState extends State<RequestRow> {
     response = request.response;
     super.initState();
     // 注册响应刷新回调
-    widget.onMount?.call(() => setState(() {
-          response = request.response;
-        }));
+    widget.onMount?.call(() {
+      response = request.response;
+      if (!mounted) return;
+      setState(() {});
+    });
   }
 
   Color? color(String url) {

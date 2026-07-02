@@ -93,6 +93,8 @@ class Server extends Network {
       channelContext.clientChannel = channel;
       channelContext.listener = listener;
       listen(channel, channelContext);
+    }, onError: (error, StackTrace trace) {
+      logger.e('server socket listen error on port $port', error: error, stackTrace: trace);
     });
     isRunning = true;
     _connectionCleanupTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
@@ -274,13 +276,17 @@ class Server extends Network {
 }
 
 class Client extends Network {
+  /// IPv6 地址在传给 [Socket.connect]/[SecureSocket.connect] 前需去掉方括号, 否则无法解析连接
+  static String _stripIPv6Brackets(String host) {
+    if (host.startsWith('[') && host.endsWith(']')) {
+      return host.substring(1, host.length - 1);
+    }
+    return host;
+  }
+
   Future<Channel> connect(HostAndPort hostAndPort, ChannelContext channelContext,
       {Duration timeout = const Duration(seconds: 3)}) async {
-    String host = hostAndPort.host;
-    //说明支持ipv6
-    // if (host.startsWith("[") && host.endsWith(']')) {
-    //   host = host.substring(1, host.length - 1);
-    // }
+    String host = _stripIPv6Brackets(hostAndPort.host);
 
     // logger.d('Connecting to $host:${hostAndPort.port}');
     return Socket.connect(host, hostAndPort.port, timeout: timeout).then((socket) {
@@ -295,7 +301,7 @@ class Client extends Network {
 
   /// ssl连接
   Future<Channel> secureConnect(HostAndPort hostAndPort, ChannelContext channelContext) async {
-    return SecureSocket.connect(hostAndPort.host, hostAndPort.port,
+    return SecureSocket.connect(_stripIPv6Brackets(hostAndPort.host), hostAndPort.port,
         timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
       var channel = Channel(socket);
       channelContext.serverChannel = channel;

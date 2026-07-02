@@ -261,12 +261,17 @@ class MacSystemProxy implements SystemProxy {
     logger.d('${logLabel ?? 'runForAllServices'} running for services: $byService');
     int failed = 0;
     String? lastErr;
-    for (var entry in byService.entries) {
-      var perService = await Process.run('bash', ['-c', _concatCommands(entry.value)]);
-      if (perService.exitCode != 0) {
+    var results = await Future.wait(
+      byService.entries.map((entry) async {
+        var perService = await Process.run('bash', ['-c', _concatCommands(entry.value)]);
+        return MapEntry(entry.key, perService);
+      }),
+    );
+    for (var entry in results) {
+      if (entry.value.exitCode != 0) {
         failed++;
-        lastErr = perService.stderr.toString();
-        logger.w('$logLabel failed for service "${entry.key}", stderr: ${perService.stderr}');
+        lastErr = entry.value.stderr.toString();
+        logger.w('$logLabel failed for service "${entry.key}", stderr: ${entry.value.stderr}');
       }
     }
     // 任一服务成功即可；仅当全部失败时才升级处理。

@@ -59,6 +59,9 @@ class CertificateManager {
   /// ca私钥
   static late RSAPrivateKey _caPriKey;
 
+  /// ca证书 subject DN 的原始 ASN.1 字节, 用作签发叶子证书的 issuer, 保证与 CA 二进制精确匹配
+  static Uint8List? _caSubjectDnBytes;
+
   /// 是否初始化
   static StartState _state = StartState.uninitialized;
   static Completer<void> _initializationCompleter = Completer<void>();
@@ -174,6 +177,7 @@ class CertificateManager {
         sans: sans,
         serialNumber: Random().nextInt(1000000).toString(),
         subject: x509Subject,
+        issuerRawBytes: _caSubjectDnBytes,
         notBefore: notBefore,
         notAfter: notAfter);
   }
@@ -278,7 +282,10 @@ class CertificateManager {
 
       //从项目目录加入ca根证书
       var caPemFile = await certificateFile();
-      _caCert = X509Utils.x509CertificateFromPem(await caPemFile.readAsString());
+      var caPem = await caPemFile.readAsString();
+      _caCert = X509Utils.x509CertificateFromPem(caPem);
+      //提取 CA subject DN 原始字节, 供签发叶子证书时作为 issuer, 保证与 CA 二进制精确匹配(兼容 iOS 严格校验)
+      _caSubjectDnBytes = X509Utils.subjectDnBytesFromPem(caPem);
       //根据CA证书subject来动态生成目标服务器证书的issuer和subject
 
       //从项目目录加入ca私钥
