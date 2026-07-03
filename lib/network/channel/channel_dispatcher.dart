@@ -216,13 +216,13 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     channel.dispatcher.channelHandle(rawCodec, SseChannelHandler(remoteChannel, response));
     remoteChannel.dispatcher.channelHandle(rawCodec, RelayHandler(channel));
 
-    // Flush any initial body bytes that were already read
+    // Flush any initial body bytes that were already read alongside the
+    // headers. Feed them straight to the new handler — going through `buffer`
+    // would replay the response-line/headers we already consumed, corrupting
+    // the SSE stream.
     if (initialBody != null && initialBody.isNotEmpty) {
-      // Place existing buffered bytes and let handler consume
-      buffer.add(initialBody);
-      var body = buffer.bytes;
       buffer.clear();
-      handler.channelRead(channelContext, channel, body);
+      handler.channelRead(channelContext, channel, Uint8List.fromList(initialBody));
     }
   }
 

@@ -48,7 +48,7 @@ class SearchModel {
   int? durationFromMs;
   int? durationToMs;
 
-  // 协议过滤，可选：HTTP (any), WS, HTTP1, H2. 如果为空则不过滤
+  // 协议过滤，可选：HTTP (any), WS, SSE, HTTP1, H2. 如果为空则不过滤
   Set<Protocol> protocols = {};
 
   SearchModel([this.keyword]);
@@ -191,6 +191,8 @@ class SearchModel {
         return request.requestUrl.startsWith('http://');
       case Protocol.ws:
         return request.isWebSocket || (response != null && response.isWebSocket == true);
+      case Protocol.sse:
+        return response?.contentType == ContentType.sse;
       case Protocol.http1:
         return request.protocolVersion == 'HTTP/1.1';
       case Protocol.h2:
@@ -243,4 +245,4 @@ enum Option {
 }
 
 /// 协议快速筛选
-enum Protocol { http, https, ws, http1, h2 }
+enum Protocol { http, https, ws, sse, http1, h2 }

@@ -168,11 +168,17 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
     //请求头
     bool isChunked = message.headers.isChunked;
-    message.headers.remove(HttpHeaders.TRANSFER_ENCODING);
+    // Only drop chunked encoding when we actually have the full body to
+    // re-frame as Content-Length. For streaming responses (body == null,
+    // e.g. SSE/video handoff), keep Transfer-Encoding: chunked so the header
+    // stays consistent with the chunk-framed bytes we relay afterwards.
+    if (body != null) {
+      message.headers.remove(HttpHeaders.TRANSFER_ENCODING);
+    }
 
     if (body != null && (body.isNotEmpty || isChunked)) {
       message.headers.contentLength = body.length;
-    } else if (message.contentLength != 0) {
+    } else if (body != null && message.contentLength != 0) {
       message.headers.remove(HttpHeaders.CONTENT_LENGTH);
     }
 
