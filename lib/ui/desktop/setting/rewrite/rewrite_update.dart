@@ -138,7 +138,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     valueController.text = rewriteItem.value ?? '';
 
     _findController = FindController(_codeDataController);
-
+    _findController.isRegex = useRegex;
     initTestData();
     keyController.addListener(onInputChangeMatch);
 
@@ -239,7 +239,11 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                       required: !isDelete,
                       suffix: (isUpdate || isDelete)
                           ? InkWell(
-                              onTap: () => setState(() => useRegex = !useRegex),
+                              onTap: () {
+                                setState(() => useRegex = !useRegex);
+                                _findController.isRegex = useRegex;
+                                onInputChangeMatch();
+                              },
                               child: Tooltip(
                                 message: localizations.regExp,
                                 mouseCursor: SystemMouseCursors.click,
