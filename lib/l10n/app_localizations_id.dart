@@ -1161,4 +1161,28 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get preview => 'Pratinjau';
+
+  @override
+  String get environment => 'Environment';
+
+  @override
+  String get environmentVariables => 'Variabel Environment';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Kelola Environment…';
+
+  @override
+  String get envNone => 'Tanpa Environment';
+
+  @override
+  String get envDeleteConfirm => 'Hapus environment ini?';
+
+  @override
+  String get envEmptyHint => 'Belum ada variabel. Klik + untuk menambahkan.';
+
+  @override
+  String get envUsageHint => 'Gunakan %s di aturan rewrite atau context.env.name di skrip.';
 }

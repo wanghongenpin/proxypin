@@ -1166,4 +1166,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get preview => 'Preview';
+
+  @override
+  String get environment => 'Environment';
+
+  @override
+  String get environmentVariables => 'Environment Variables';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Manage Environments…';
+
+  @override
+  String get envNone => 'No Environment';
+
+  @override
+  String get envDeleteConfirm => 'Delete this environment?';
+
+  @override
+  String get envEmptyHint => 'No variables yet. Click + to add.';
+
+  @override
+  String get envUsageHint => 'Use %s in rewrite rules or context.env.name in scripts.';
 }

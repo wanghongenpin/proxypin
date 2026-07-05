@@ -1159,4 +1159,28 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get preview => 'Xem trước';
+
+  @override
+  String get environment => 'Môi trường';
+
+  @override
+  String get environmentVariables => 'Biến môi trường';
+
+  @override
+  String get envGlobal => 'Toàn cục';
+
+  @override
+  String get envManage => 'Quản lý môi trường…';
+
+  @override
+  String get envNone => 'Không có môi trường';
+
+  @override
+  String get envDeleteConfirm => 'Xóa môi trường này?';
+
+  @override
+  String get envEmptyHint => 'Chưa có biến. Nhấn + để thêm.';
+
+  @override
+  String get envUsageHint => 'Dùng %s trong quy tắc rewrite hoặc context.env.name trong script.';
 }

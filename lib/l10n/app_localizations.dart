@@ -2355,6 +2355,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview'**
   String get preview;
+
+  /// No description provided for @environment.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment'**
+  String get environment;
+
+  /// No description provided for @environmentVariables.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment Variables'**
+  String get environmentVariables;
+
+  /// No description provided for @envGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get envGlobal;
+
+  /// No description provided for @envManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Environments…'**
+  String get envManage;
+
+  /// No description provided for @envNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No Environment'**
+  String get envNone;
+
+  /// No description provided for @envDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this environment?'**
+  String get envDeleteConfirm;
+
+  /// No description provided for @envEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No variables yet. Click + to add.'**
+  String get envEmptyHint;
+
+  /// No description provided for @envUsageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use %s in rewrite rules or context.env.name in scripts.'**
+  String get envUsageHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

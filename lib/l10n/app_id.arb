@@ -241,5 +241,14 @@
   "encode": "Encode",
   "view": "Lihat",
   "cipher": "Sandi",
-  "other": "Lainnya"
+  "other": "Lainnya",
+
+  "environment": "Environment",
+  "environmentVariables": "Variabel Environment",
+  "envGlobal": "Global",
+  "envManage": "Kelola Environment…",
+  "envNone": "Tanpa Environment",
+  "envDeleteConfirm": "Hapus environment ini?",
+  "envEmptyHint": "Belum ada variabel. Klik + untuk menambahkan.",
+  "envUsageHint": "Gunakan %s di aturan rewrite atau context.env.name di skrip."
 }

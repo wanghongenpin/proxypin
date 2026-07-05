@@ -408,5 +408,14 @@
 
   "local": "Local",
   "remoteUrl": "Remote URL",
-  "preview": "Preview"
+  "preview": "Preview",
+
+  "environment": "Environment",
+  "environmentVariables": "Environment Variables",
+  "envGlobal": "Global",
+  "envManage": "Manage Environments…",
+  "envNone": "No Environment",
+  "envDeleteConfirm": "Delete this environment?",
+  "envEmptyHint": "No variables yet. Click + to add.",
+  "envUsageHint": "Use %s in rewrite rules or context.env.name in scripts."
 }

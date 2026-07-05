@@ -402,5 +402,14 @@
 
   "local": "本地",
   "remoteUrl": "远程URL",
-  "preview": "预览"
+  "preview": "预览",
+
+  "environment": "环境",
+  "environmentVariables": "环境变量",
+  "envGlobal": "全局",
+  "envManage": "管理环境…",
+  "envNone": "无环境",
+  "envDeleteConfirm": "确定删除该环境?",
+  "envEmptyHint": "暂无变量,点击 + 添加。",
+  "envUsageHint": "在重写规则中使用 %s ,脚本中使用 context.env.name。"
 }

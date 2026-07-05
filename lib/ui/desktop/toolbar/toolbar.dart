@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/toolbar/phone_connect.dart';
+import 'package:proxypin/ui/desktop/toolbar/environment_switcher.dart';
 import 'package:proxypin/ui/desktop/setting/setting.dart';
 import 'package:proxypin/ui/desktop/ssl/ssl.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -115,6 +116,8 @@ class _ToolbarState extends State<Toolbar> {
             final ips = await localIps(readCache: false);
             phoneConnect(ips, widget.proxyServer.port);
           }),
+      const Padding(padding: EdgeInsets.only(left: 18)),
+      const EnvironmentSwitcher(), // 环境变量切换器
       const Padding(padding: EdgeInsets.only(left: 10)),
     ]);
   }

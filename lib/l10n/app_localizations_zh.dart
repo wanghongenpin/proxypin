@@ -1152,6 +1152,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get preview => '预览';
+
+  @override
+  String get environment => '环境';
+
+  @override
+  String get environmentVariables => '环境变量';
+
+  @override
+  String get envGlobal => '全局';
+
+  @override
+  String get envManage => '管理环境…';
+
+  @override
+  String get envNone => '无环境';
+
+  @override
+  String get envDeleteConfirm => '确定删除该环境?';
+
+  @override
+  String get envEmptyHint => '暂无变量,点击 + 添加。';
+
+  @override
+  String get envUsageHint => '在重写规则中使用 %s ,脚本中使用 context.env.name。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2238,4 +2262,28 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get preview => '預覽';
+
+  @override
+  String get environment => '環境';
+
+  @override
+  String get environmentVariables => '環境變數';
+
+  @override
+  String get envGlobal => '全域';
+
+  @override
+  String get envManage => '管理環境…';
+
+  @override
+  String get envNone => '無環境';
+
+  @override
+  String get envDeleteConfirm => '確定刪除此環境?';
+
+  @override
+  String get envEmptyHint => '尚無變數,點擊 + 新增。';
+
+  @override
+  String get envUsageHint => '在改寫規則中使用 %s ,腳本中使用 context.env.name。';
 }

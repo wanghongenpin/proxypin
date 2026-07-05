@@ -18,6 +18,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:proxypin/network/components/interceptor.dart';
+import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/http/constants.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -48,6 +49,43 @@ class RequestRewriteInterceptor extends Interceptor {
     } catch (_) {
       return RegExp(RegExp.escape(pattern), caseSensitive: caseSensitive);
     }
+  }
+
+  /// 用环境变量渲染 {{name}}。若 EnvironmentManager 未加载或未启用,返回原字符串。
+  /// 注意:只对写入请求/响应的字段渲染,key(匹配正则)不做变量替换,避免正则元字符与变量语法混淆。
+  static String? _renderEnv(String? input) {
+    if (input == null || input.isEmpty || !input.contains('{{')) return input;
+    final mgr = EnvironmentManager.instanceOrNull;
+    if (mgr == null || !mgr.enabled) return input;
+    return mgr.render(input);
+  }
+
+  /// 生成一个副本,其中所有会输出到请求/响应的字段(value/redirectUrl/body/headers/path/queryParam)已做变量渲染。
+  /// 原始配置不修改。
+  static RewriteItem _renderItem(RewriteItem item) {
+    if (EnvironmentManager.instanceOrNull?.enabled != true) return item;
+    // 快速判断:所有相关字符串字段都不含 `{{` 时直接返回原对象,避免拷贝开销
+    bool hasToken(dynamic v) => v is String && v.contains('{{');
+    final values = item.values;
+    if (!hasToken(values['value']) &&
+        !hasToken(values['redirectUrl']) &&
+        !hasToken(values['body']) &&
+        !hasToken(values['path']) &&
+        !hasToken(values['queryParam']) &&
+        !(values['headers'] is Map && (values['headers'] as Map).values.any(hasToken))) {
+      return item;
+    }
+    final copy = RewriteItem(item.type, item.enabled, values: Map.of(values));
+    copy.value = _renderEnv(copy.value);
+    copy.redirectUrl = _renderEnv(copy.redirectUrl);
+    copy.body = _renderEnv(copy.body);
+    copy.path = _renderEnv(copy.path);
+    copy.queryParam = _renderEnv(copy.queryParam);
+    final headers = copy.headers;
+    if (headers != null) {
+      copy.headers = headers.map((k, v) => MapEntry(k, _renderEnv(v) ?? v));
+    }
+    return copy;
   }
 
   @override
@@ -81,10 +119,13 @@ class RequestRewriteInterceptor extends Interceptor {
 
     var rewriteItems = await manager.getRewriteItems(rewriteRule);
     var redirectUrl = rewriteItems?.firstWhereOrNull((element) => element.enabled)?.redirectUrl;
+    // 先做通配符替换(基于模板中的字面 `*`),再做环境变量渲染;
+    // 顺序反过来会把变量值中的 `*` 也当成通配符替换,破坏 URL。
     if (rewriteRule.url.contains("*") && redirectUrl?.contains("*") == true) {
       String ruleUrl = rewriteRule.url.replaceAll("*", "");
       redirectUrl = redirectUrl?.replaceAll("*", url!.replaceAll(ruleUrl, ""));
     }
+    redirectUrl = _renderEnv(redirectUrl);
     return redirectUrl;
   }
 
@@ -100,7 +141,7 @@ class RequestRewriteInterceptor extends Interceptor {
       }
       for (var item in rewriteItems) {
         if (item.enabled) {
-          await _replaceRequest(request, item);
+          await _replaceRequest(request, _renderItem(item));
         }
       }
     }
@@ -112,7 +153,7 @@ class RequestRewriteInterceptor extends Interceptor {
       }
       for (var item in rewriteItems) {
         if (item.enabled) {
-          await _updateRequest(request, item);
+          await _updateRequest(request, _renderItem(item));
         }
       }
     }
@@ -134,7 +175,7 @@ class RequestRewriteInterceptor extends Interceptor {
       }
       for (var item in rewriteItems) {
         if (item.enabled) {
-          await _replaceResponse(response, item);
+          await _replaceResponse(response, _renderItem(item));
         }
       }
       return true;
@@ -148,7 +189,7 @@ class RequestRewriteInterceptor extends Interceptor {
 
       for (var item in rewriteItems) {
         if (item.enabled) {
-          await _updateMessage(response, item);
+          await _updateMessage(response, _renderItem(item));
         }
       }
       return true;

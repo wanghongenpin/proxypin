@@ -36,6 +36,7 @@ import 'package:proxypin/ui/mobile/setting/preference.dart';
 import 'package:proxypin/ui/mobile/request/favorite.dart';
 import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/setting/app_filter.dart';
+import 'package:proxypin/ui/mobile/setting/environment.dart';
 import 'package:proxypin/ui/mobile/setting/filter.dart';
 import 'package:proxypin/ui/mobile/setting/request_block.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
@@ -173,6 +174,10 @@ class DrawerWidget extends StatelessWidget {
                     navigator(context, MobileRequestBreakpointPage(manager: manager));
                   }
                 }),
+            ListTile(
+                title: Text(localizations.environmentVariables),
+                leading: const Icon(Icons.public),
+                onTap: () => navigator(context, const MobileEnvironmentPage())),
             ListTile(
                 title: Text(localizations.setting),
                 leading: const Icon(Icons.settings),

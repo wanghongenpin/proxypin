@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -62,6 +64,8 @@ void main(List<String> args) async {
   }
 
   var configuration = Configuration.instance;
+  // 预热环境变量,避免第一个请求命中时才 IO
+  unawaited(EnvironmentManager.preload());
   //移动端
   if (Platforms.isMobile()) {
     var appConfiguration = await instance;

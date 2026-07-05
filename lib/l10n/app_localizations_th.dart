@@ -1159,4 +1159,28 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get preview => 'ดูตัวอย่าง';
+
+  @override
+  String get environment => 'สภาพแวดล้อม';
+
+  @override
+  String get environmentVariables => 'ตัวแปรสภาพแวดล้อม';
+
+  @override
+  String get envGlobal => 'ส่วนกลาง';
+
+  @override
+  String get envManage => 'จัดการสภาพแวดล้อม…';
+
+  @override
+  String get envNone => 'ไม่มีสภาพแวดล้อม';
+
+  @override
+  String get envDeleteConfirm => 'ลบสภาพแวดล้อมนี้?';
+
+  @override
+  String get envEmptyHint => 'ยังไม่มีตัวแปร คลิก + เพื่อเพิ่ม';
+
+  @override
+  String get envUsageHint => 'ใช้ %s ในกฎ rewrite หรือ context.env.name ในสคริปต์';
 }

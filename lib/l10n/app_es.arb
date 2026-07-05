@@ -241,5 +241,14 @@
   "encode": "Codificar",
   "view": "Ver",
   "cipher": "Cifrado",
-  "other": "Otros"
+  "other": "Otros",
+
+  "environment": "Entorno",
+  "environmentVariables": "Variables de entorno",
+  "envGlobal": "Global",
+  "envManage": "Gestionar entornos…",
+  "envNone": "Sin entorno",
+  "envDeleteConfirm": "¿Eliminar este entorno?",
+  "envEmptyHint": "Sin variables. Pulsa + para añadir.",
+  "envUsageHint": "Usa %s en reglas o context.env.name en scripts."
 }

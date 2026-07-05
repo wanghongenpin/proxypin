@@ -359,5 +359,14 @@
 
   "local": "本地",
   "remoteUrl": "遠端URL",
-  "preview": "預覽"
+  "preview": "預覽",
+
+  "environment": "環境",
+  "environmentVariables": "環境變數",
+  "envGlobal": "全域",
+  "envManage": "管理環境…",
+  "envNone": "無環境",
+  "envDeleteConfirm": "確定刪除此環境?",
+  "envEmptyHint": "尚無變數,點擊 + 新增。",
+  "envUsageHint": "在改寫規則中使用 %s ,腳本中使用 context.env.name。"
 }

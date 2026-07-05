@@ -241,5 +241,14 @@
   "encode": "เข้ารหัส",
   "view": "ดู",
   "cipher": "รหัสลับ",
-  "other": "อื่นๆ"
+  "other": "อื่นๆ",
+
+  "environment": "สภาพแวดล้อม",
+  "environmentVariables": "ตัวแปรสภาพแวดล้อม",
+  "envGlobal": "ส่วนกลาง",
+  "envManage": "จัดการสภาพแวดล้อม…",
+  "envNone": "ไม่มีสภาพแวดล้อม",
+  "envDeleteConfirm": "ลบสภาพแวดล้อมนี้?",
+  "envEmptyHint": "ยังไม่มีตัวแปร คลิก + เพื่อเพิ่ม",
+  "envUsageHint": "ใช้ %s ในกฎ rewrite หรือ context.env.name ในสคริปต์"
 }

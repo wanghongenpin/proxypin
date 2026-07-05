@@ -17,8 +17,8 @@ dependencies:
   pointycastle: ^4.0.0
   logger: ^2.7.0
   date_format: ^2.0.9
-  window_manager: ^0.5.1
-  screen_retriever: ^0.2.1
+  window_manager: ^0.5.2
+  screen_retriever: ^0.2.2
   desktop_multi_window: ^0.3.0
   path_provider: ^2.1.5
   file_picker: ^12.0.0-beta.7

@@ -1166,6 +1166,30 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get preview => 'Preview';
+
+  @override
+  String get environment => 'Environment';
+
+  @override
+  String get environmentVariables => 'Environment Variables';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Manage Environments…';
+
+  @override
+  String get envNone => 'No Environment';
+
+  @override
+  String get envDeleteConfirm => 'Delete this environment?';
+
+  @override
+  String get envEmptyHint => 'No variables yet. Click + to add.';
+
+  @override
+  String get envUsageHint => 'Use %s in rewrite rules or context.env.name in scripts.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1907,4 +1931,28 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get preview => 'Visualizar';
+
+  @override
+  String get environment => 'Ambiente';
+
+  @override
+  String get environmentVariables => 'Variáveis de Ambiente';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Gerenciar Ambientes…';
+
+  @override
+  String get envNone => 'Sem Ambiente';
+
+  @override
+  String get envDeleteConfirm => 'Excluir este ambiente?';
+
+  @override
+  String get envEmptyHint => 'Nenhuma variável. Clique em + para adicionar.';
+
+  @override
+  String get envUsageHint => 'Use %s em regras ou context.env.name em scripts.';
 }
