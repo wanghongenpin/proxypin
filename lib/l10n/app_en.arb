@@ -417,5 +417,5 @@
   "envNone": "No Environment",
   "envDeleteConfirm": "Delete this environment?",
   "envEmptyHint": "No variables yet. Click + to add.",
-  "envUsageHint": "Use %s in rewrite rules or context.env.name in scripts."
+  "envUsageHint": "Reference variables as %s in rules, or read/write via context.env in scripts."
 }

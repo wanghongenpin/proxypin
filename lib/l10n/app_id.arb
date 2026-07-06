@@ -250,5 +250,5 @@
   "envNone": "Tanpa Environment",
   "envDeleteConfirm": "Hapus environment ini?",
   "envEmptyHint": "Belum ada variabel. Klik + untuk menambahkan.",
-  "envUsageHint": "Gunakan %s di aturan rewrite atau context.env.name di skrip."
+  "envUsageHint": "Gunakan %s di aturan atau baca/tulis context.env di skrip."
 }

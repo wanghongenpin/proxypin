@@ -411,5 +411,5 @@
   "envNone": "无环境",
   "envDeleteConfirm": "确定删除该环境?",
   "envEmptyHint": "暂无变量,点击 + 添加。",
-  "envUsageHint": "在重写规则中使用 %s ,脚本中使用 context.env.name。"
+  "envUsageHint": "规则中使用 %s 引用变量,脚本中通过 context.env 读写。"
 }

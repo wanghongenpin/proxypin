@@ -1189,7 +1189,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get envEmptyHint => 'No variables yet. Click + to add.';
 
   @override
-  String get envUsageHint => 'Use %s in rewrite rules or context.env.name in scripts.';
+  String get envUsageHint => 'Reference variables as %s in rules, or read/write via context.env in scripts.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1954,5 +1954,5 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get envEmptyHint => 'Nenhuma variável. Clique em + para adicionar.';
 
   @override
-  String get envUsageHint => 'Use %s em regras ou context.env.name em scripts.';
+  String get envUsageHint => 'Use %s em regras ou leia/escreva context.env em scripts.';
 }

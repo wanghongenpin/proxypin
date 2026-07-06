@@ -250,5 +250,5 @@
   "envNone": "ไม่มีสภาพแวดล้อม",
   "envDeleteConfirm": "ลบสภาพแวดล้อมนี้?",
   "envEmptyHint": "ยังไม่มีตัวแปร คลิก + เพื่อเพิ่ม",
-  "envUsageHint": "ใช้ %s ในกฎ rewrite หรือ context.env.name ในสคริปต์"
+  "envUsageHint": "ใช้ %s ในกฎ หรืออ่าน/เขียน context.env ในสคริปต์"
 }

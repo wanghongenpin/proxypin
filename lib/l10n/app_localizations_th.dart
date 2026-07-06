@@ -1182,5 +1182,5 @@ class AppLocalizationsTh extends AppLocalizations {
   String get envEmptyHint => 'ยังไม่มีตัวแปร คลิก + เพื่อเพิ่ม';
 
   @override
-  String get envUsageHint => 'ใช้ %s ในกฎ rewrite หรือ context.env.name ในสคริปต์';
+  String get envUsageHint => 'ใช้ %s ในกฎ หรืออ่าน/เขียน context.env ในสคริปต์';
 }

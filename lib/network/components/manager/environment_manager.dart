@@ -203,6 +203,18 @@ class EnvironmentManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 重命名命名环境(仅改名,不动 variables)
+  bool renameEnvironment(String id, String name) {
+    final target = environments.firstWhere(
+      (e) => e.id == id && !e.isGlobal,
+      orElse: () => Environment(id: '', name: ''),
+    );
+    if (target.id.isEmpty || target.name == name) return false;
+    target.name = name;
+    notifyListeners();
+    return true;
+  }
+
   void removeEnvironment(String id) {
     final removed = environments.firstWhere(
       (e) => e.id == id && !e.isGlobal,
@@ -217,6 +229,9 @@ class EnvironmentManager extends ChangeNotifier {
   /// 用一份工作副本替换当前所有环境(用于 UI"保存"时的批量提交)。
   /// - 保证仍存在一个 isGlobal=true 的 Global 环境。
   /// - 若激活环境在新列表中不存在(或被降为 global),则清空 activeId。
+  ///
+  /// 注意:调用方需自行处理"环境结构(存在/命名)已经实时落库,只需要同步 variables"
+  /// 的场景 —— 此方法会整表替换。
   void applyFrom(List<Environment> workingCopy) {
     environments
       ..clear()
@@ -226,6 +241,63 @@ class EnvironmentManager extends ChangeNotifier {
       activeId = null;
     }
     notifyListeners();
+  }
+
+  /// 脚本侧写入变量:优先写入激活环境,无激活时写入 Global。
+  /// - 若该变量在激活环境已存在,原地更新;
+  /// - 若只在 Global 存在,在激活环境新增一条覆盖(Global 不动);
+  /// - 无激活环境时直接写 Global。
+  /// value == null 视作删除。
+  /// 返回 true 表示有实际变更。
+  bool setVariableFromScript(String name, String? value) {
+    final target = active ?? global;
+    final existing = target.variables.firstWhere(
+      (v) => v.key == name,
+      orElse: () => EnvironmentVariable(key: '', value: ''),
+    );
+
+    if (value == null) {
+      // 删除:仅从目标环境删除;若目标只有 global 中同名条目而 active 中没有,不动 global
+      if (existing.key.isEmpty) return false;
+      target.variables.remove(existing);
+      notifyListeners();
+      return true;
+    }
+
+    if (existing.key.isNotEmpty) {
+      if (existing.value == value && existing.enabled) return false;
+      existing.value = value;
+      existing.enabled = true;
+    } else {
+      target.variables.add(EnvironmentVariable(key: name, value: value));
+    }
+    notifyListeners();
+    return true;
+  }
+
+  /// 计算脚本运行后 env map 的差异并应用。返回是否有变更。
+  /// [before] / [after] 是脚本运行前/后由 [flatMap] 展平的视图。
+  bool applyScriptEnvChanges(Map<String, String> before, Map<dynamic, dynamic> after) {
+    if (!enabled) return false;
+    bool changed = false;
+    // 新增/修改
+    after.forEach((k, v) {
+      if (k is! String) return;
+      final newVal = v?.toString();
+      if (newVal == null) return; // 视作删除,交给下面统一处理
+      if (before[k] != newVal) {
+        if (setVariableFromScript(k, newVal)) changed = true;
+      }
+    });
+    // 删除:脚本里显式设 null/undefined 或 delete
+    before.forEach((k, _) {
+      final v = after[k];
+      final present = after.containsKey(k) && v != null;
+      if (!present) {
+        if (setVariableFromScript(k, null)) changed = true;
+      }
+    });
+    return changed;
   }
 
   void setActive(String? id) {
@@ -279,5 +351,14 @@ class EnvironmentManager extends ChangeNotifier {
       final v = resolve(m.group(1)!);
       return v ?? m.group(0)!;
     });
+  }
+
+  /// 便利入口:热路径拦截器统一调用,处理 null / empty / manager 未加载 / disabled 情况。
+  /// 输入为 null 时返回 null,其余情况返回渲染后的字符串。
+  static String? tryRender(String? input) {
+    if (input == null || input.isEmpty || !input.contains('{{')) return input;
+    final mgr = _instance;
+    if (mgr == null || !mgr.enabled) return input;
+    return mgr.render(input);
   }
 }

@@ -53,12 +53,7 @@ class RequestRewriteInterceptor extends Interceptor {
 
   /// 用环境变量渲染 {{name}}。若 EnvironmentManager 未加载或未启用,返回原字符串。
   /// 注意:只对写入请求/响应的字段渲染,key(匹配正则)不做变量替换,避免正则元字符与变量语法混淆。
-  static String? _renderEnv(String? input) {
-    if (input == null || input.isEmpty || !input.contains('{{')) return input;
-    final mgr = EnvironmentManager.instanceOrNull;
-    if (mgr == null || !mgr.enabled) return input;
-    return mgr.render(input);
-  }
+  static String? _renderEnv(String? input) => EnvironmentManager.tryRender(input);
 
   /// 生成一个副本,其中所有会输出到请求/响应的字段(value/redirectUrl/body/headers/path/queryParam)已做变量渲染。
   /// 原始配置不修改。

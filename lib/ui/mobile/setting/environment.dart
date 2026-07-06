@@ -9,10 +9,12 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/ui/component/utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// 环境变量管理页(移动端)
 ///
@@ -108,10 +110,15 @@ class _MobileEnvironmentPageState extends State<MobileEnvironmentPage> {
   void _addEnvironment() async {
     final name = await _promptText(
         title: _join(localizations.add, localizations.environment), hint: localizations.name);
-    if (name == null || name.trim().isEmpty || _draft == null) return;
+    final m = manager;
+    if (name == null || name.trim().isEmpty || m == null || _draft == null) return;
     final env = Environment(id: RandomUtil.randomString(8), name: name.trim());
+    // 实时落库
+    m.upsertEnvironment(env);
+    await m.flushConfig();
+    if (!mounted) return;
     setState(() {
-      _draft!.add(env);
+      _draft!.add(env.copy());
       currentId = env.id;
     });
   }
@@ -120,19 +127,43 @@ class _MobileEnvironmentPageState extends State<MobileEnvironmentPage> {
     if (env.isGlobal) return;
     final name = await _promptText(
         title: localizations.edit, hint: localizations.name, initial: env.name);
-    if (name == null || name.trim().isEmpty) return;
+    final m = manager;
+    if (name == null || name.trim().isEmpty || m == null) return;
+    // 实时落库
+    m.renameEnvironment(env.id, name.trim());
+    await m.flushConfig();
+    if (!mounted) return;
     setState(() => env.name = name.trim());
   }
 
   void _deleteEnvironment(Environment env) {
     if (env.isGlobal || _draft == null) return;
-    showConfirmDialog(context, content: localizations.envDeleteConfirm, onConfirm: () {
+    showConfirmDialog(context, content: localizations.envDeleteConfirm, onConfirm: () async {
+      final m = manager;
+      if (m == null) return;
+      // 实时落库
+      m.removeEnvironment(env.id);
+      await m.flushConfig();
+      if (!mounted) return;
       setState(() {
         _draft!.remove(env);
         if (_draftActiveId == env.id) _draftActiveId = null;
         currentId = _draftGlobal.id;
       });
     });
+  }
+
+  Future<void> _openGuide() async {
+    final cn = 'https://github.com/wanghongenpin/proxypin/wiki/%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F';
+    final en = 'https://github.com/wanghongenpin/proxypin/wiki/Environment-Variables';
+    final url = localizations.localeName.startsWith('zh') ? cn : en;
+    try {
+      if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
+        if (mounted) FlutterToastr.show('Open guide failed', context);
+      }
+    } catch (_) {
+      if (mounted) FlutterToastr.show('Open guide failed', context);
+    }
   }
 
   @override
@@ -148,6 +179,11 @@ class _MobileEnvironmentPageState extends State<MobileEnvironmentPage> {
           toolbarHeight: 36,
           centerTitle: true,
           actions: [
+            IconButton(
+              tooltip: localizations.useGuide,
+              onPressed: _openGuide,
+              icon: const Icon(Icons.help_outline, size: 20),
+            ),
             TextButton(
               onPressed: _save,
               child: Text(localizations.save, style: const TextStyle(fontSize: 14)),

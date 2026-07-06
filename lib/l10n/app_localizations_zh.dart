@@ -1175,7 +1175,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get envEmptyHint => '暂无变量,点击 + 添加。';
 
   @override
-  String get envUsageHint => '在重写规则中使用 %s ,脚本中使用 context.env.name。';
+  String get envUsageHint => '规则中使用 %s 引用变量,脚本中通过 context.env 读写。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2285,5 +2285,5 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get envEmptyHint => '尚無變數,點擊 + 新增。';
 
   @override
-  String get envUsageHint => '在改寫規則中使用 %s ,腳本中使用 context.env.name。';
+  String get envUsageHint => '規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。';
 }

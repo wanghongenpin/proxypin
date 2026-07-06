@@ -1182,5 +1182,5 @@ class AppLocalizationsVi extends AppLocalizations {
   String get envEmptyHint => 'Chưa có biến. Nhấn + để thêm.';
 
   @override
-  String get envUsageHint => 'Dùng %s trong quy tắc rewrite hoặc context.env.name trong script.';
+  String get envUsageHint => 'Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script.';
 }

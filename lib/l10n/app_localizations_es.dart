@@ -1183,5 +1183,5 @@ class AppLocalizationsEs extends AppLocalizations {
   String get envEmptyHint => 'Sin variables. Pulsa + para añadir.';
 
   @override
-  String get envUsageHint => 'Usa %s en reglas o context.env.name en scripts.';
+  String get envUsageHint => 'Usa %s en reglas o lee/escribe context.env en scripts.';
 }

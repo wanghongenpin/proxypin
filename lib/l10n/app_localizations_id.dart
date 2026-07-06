@@ -1184,5 +1184,5 @@ class AppLocalizationsId extends AppLocalizations {
   String get envEmptyHint => 'Belum ada variabel. Klik + untuk menambahkan.';
 
   @override
-  String get envUsageHint => 'Gunakan %s di aturan rewrite atau context.env.name di skrip.';
+  String get envUsageHint => 'Gunakan %s di aturan atau baca/tulis context.env di skrip.';
 }

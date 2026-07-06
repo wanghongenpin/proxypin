@@ -9,9 +9,11 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/util/random.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// 环境变量管理弹窗
 ///
@@ -76,8 +78,12 @@ class _EnvironmentDialogState extends State<EnvironmentDialog> {
     );
     if (name == null || name.trim().isEmpty) return;
     final env = Environment(id: RandomUtil.randomString(8), name: name.trim());
+    // 实时落库:新环境结构立刻可见,不需要等"保存"
+    manager.upsertEnvironment(env);
+    await manager.flushConfig();
+    if (!mounted) return;
     setState(() {
-      _draft.add(env);
+      _draft.add(env.copy());
       selectedId = env.id;
     });
   }
@@ -90,6 +96,10 @@ class _EnvironmentDialogState extends State<EnvironmentDialog> {
       initial: env.name,
     );
     if (name == null || name.trim().isEmpty) return;
+    // 实时落库:改名立刻同步到工具栏和磁盘
+    manager.renameEnvironment(env.id, name.trim());
+    await manager.flushConfig();
+    if (!mounted) return;
     setState(() => env.name = name.trim());
   }
 
@@ -97,6 +107,10 @@ class _EnvironmentDialogState extends State<EnvironmentDialog> {
     if (env.isGlobal) return;
     final ok = await _confirm(localizations.envDeleteConfirm);
     if (ok != true) return;
+    // 实时落库:删除立刻生效
+    manager.removeEnvironment(env.id);
+    await manager.flushConfig();
+    if (!mounted) return;
     setState(() {
       _draft.remove(env);
       selectedId = _draftGlobal.id;
@@ -136,6 +150,19 @@ class _EnvironmentDialogState extends State<EnvironmentDialog> {
     );
   }
 
+  Future<void> _openGuide() async {
+    final cn = 'https://github.com/wanghongenpin/proxypin/wiki/%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F';
+    final en = 'https://github.com/wanghongenpin/proxypin/wiki/Environment-Variables';
+    final url = localizations.localeName.startsWith('zh') ? cn : en;
+    try {
+      if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
+        if (mounted) FlutterToastr.show('Open guide failed', context);
+      }
+    } catch (_) {
+      if (mounted) FlutterToastr.show('Open guide failed', context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final envs = [_draftGlobal, ..._draftNamed];
@@ -147,8 +174,15 @@ class _EnvironmentDialogState extends State<EnvironmentDialog> {
       title: Row(children: [
         Text(localizations.environmentVariables, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
         const SizedBox(width: 12),
-        Text(localizations.envUsageHint.replaceFirst('%s', '{{name}}'),
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+        Expanded(
+          child: Text(localizations.envUsageHint.replaceFirst('%s', '{{name}}'),
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+        ),
+        IconButton(
+          tooltip: localizations.useGuide,
+          onPressed: _openGuide,
+          icon: const Icon(Icons.help_outline, size: 18),
+        ),
       ]),
       content: SizedBox(
         width: 780,

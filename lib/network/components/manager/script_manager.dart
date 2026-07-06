@@ -273,6 +273,19 @@ async function onResponse(context, request, response) {
     };
   }
 
+  /// 处理脚本可能修改的 env:diff 后写回 EnvironmentManager 并持久化。
+  Future<void> _applyScriptEnv(Map<String, String> envBefore, Map<dynamic, dynamic>? scriptContextResult) async {
+    if (scriptContextResult == null) return;
+    final envAfter = scriptContextResult['env'];
+    if (envAfter is! Map) return;
+    final mgr = EnvironmentManager.instanceOrNull;
+    if (mgr == null || !mgr.enabled) return;
+    final changed = mgr.applyScriptEnvChanges(envBefore, envAfter);
+    if (changed) {
+      await mgr.flushConfig();
+    }
+  }
+
   ///运行脚本
   Future<HttpRequest?> runScript(HttpRequest request) async {
     if (!enabled) {
@@ -281,7 +294,10 @@ async function onResponse(context, request, response) {
     var url = request.domainPath;
     for (var item in list) {
       if (item.enabled && item.match(url)) {
-        var context = jsonEncode(scriptContext(item));
+        final ctxMap = scriptContext(item);
+        // 记录脚本运行前的 env 快照,便于运行后做 diff
+        final envBefore = Map<String, String>.from(ctxMap['env'] as Map);
+        var context = jsonEncode(ctxMap);
         var jsRequestMap = await JavaScriptEngine.convertJsRequest(request);
         var jsRequest = jsonEncode(jsRequestMap);
         String? script = await getScript(item);
@@ -299,6 +315,7 @@ async function onResponse(context, request, response) {
         }
         request.attributes['scriptContext'] = result['scriptContext'];
         scriptSession = result['scriptContext']['session'] ?? {};
+        await _applyScriptEnv(envBefore, result['scriptContext']);
         // 脚本未改动请求时保留原始字节，避免 query 重编码/header 重排破坏签名
         if (!JavaScriptEngine.isRequestUnchanged(jsRequestMap, result)) {
           request = JavaScriptEngine.convertHttpRequest(request, result);
@@ -318,7 +335,14 @@ async function onResponse(context, request, response) {
     var url = request.domainPath;
     for (var item in list) {
       if (item.enabled && item.match(url)) {
-        var context = jsonEncode(request.attributes['scriptContext'] ?? scriptContext(item));
+        // 响应阶段:优先复用请求阶段设置好的 scriptContext(含中途修改过的 env),
+        // 否则新构建一个。用于 diff 的 envBefore 从最终传给 JS 的 context 中取。
+        final ctxMap =
+            (request.attributes['scriptContext'] as Map?)?.cast<String, dynamic>() ?? scriptContext(item);
+        final envBefore = Map<String, String>.from(((ctxMap['env'] as Map?) ?? const {}).map(
+          (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
+        ));
+        var context = jsonEncode(ctxMap);
         var jsRequest = jsonEncode(await JavaScriptEngine.convertJsRequest(request));
         var jsResponse = jsonEncode(await JavaScriptEngine.convertJsResponse(response));
         String? script = await getScript(item);
@@ -336,6 +360,7 @@ async function onResponse(context, request, response) {
           return null;
         }
         scriptSession = result['scriptContext']['session'] ?? {};
+        await _applyScriptEnv(envBefore, result['scriptContext']);
         response = JavaScriptEngine.convertHttpResponse(response, result);
       }
     }

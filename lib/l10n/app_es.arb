@@ -250,5 +250,5 @@
   "envNone": "Sin entorno",
   "envDeleteConfirm": "¿Eliminar este entorno?",
   "envEmptyHint": "Sin variables. Pulsa + para añadir.",
-  "envUsageHint": "Usa %s en reglas o context.env.name en scripts."
+  "envUsageHint": "Usa %s en reglas o lee/escribe context.env en scripts."
 }

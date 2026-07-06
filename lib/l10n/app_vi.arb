@@ -250,5 +250,5 @@
   "envNone": "Không có môi trường",
   "envDeleteConfirm": "Xóa môi trường này?",
   "envEmptyHint": "Chưa có biến. Nhấn + để thêm.",
-  "envUsageHint": "Dùng %s trong quy tắc rewrite hoặc context.env.name trong script."
+  "envUsageHint": "Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script."
 }

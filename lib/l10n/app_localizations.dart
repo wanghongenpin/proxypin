@@ -2401,7 +2401,7 @@ abstract class AppLocalizations {
   /// No description provided for @envUsageHint.
   ///
   /// In en, this message translates to:
-  /// **'Use %s in rewrite rules or context.env.name in scripts.'**
+  /// **'Reference variables as %s in rules, or read/write via context.env in scripts.'**
   String get envUsageHint;
 }
 

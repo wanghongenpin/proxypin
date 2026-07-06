@@ -368,5 +368,5 @@
   "envNone": "無環境",
   "envDeleteConfirm": "確定刪除此環境?",
   "envEmptyHint": "尚無變數,點擊 + 新增。",
-  "envUsageHint": "在改寫規則中使用 %s ,腳本中使用 context.env.name。"
+  "envUsageHint": "規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。"
 }
