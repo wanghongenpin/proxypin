@@ -100,7 +100,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
             toolbarHeight: 34,
             centerTitle: true),
         body: Padding(
-            padding: const EdgeInsets.only(left: 15, right: 10),
+            padding: const EdgeInsets.only(left: 15, right: 10, bottom: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 SizedBox(
@@ -145,7 +145,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
                 const SizedBox(width: 15)
               ]),
               const SizedBox(height: 10),
-              RequestRuleList(widget.requestRewrites, windowId: widget.windowId),
+              Expanded(child: RequestRuleList(widget.requestRewrites, windowId: widget.windowId)),
             ])));
   }
 
@@ -251,7 +251,6 @@ class _RequestRuleListState extends State<RequestRuleList> {
             },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
-                constraints: const BoxConstraints(maxHeight: 600, minHeight: 550),
                 decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [

@@ -1639,13 +1639,13 @@ abstract class AppLocalizations {
   /// No description provided for @ipLayerProxy.
   ///
   /// In en, this message translates to:
-  /// **'IP Layer Proxy(Beta)'**
+  /// **'IP Layer Proxy'**
   String get ipLayerProxy;
 
   /// No description provided for @ipLayerProxyDesc.
   ///
   /// In en, this message translates to:
-  /// **'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR'**
+  /// **'IP layer proxy can capture Flutter app requests'**
   String get ipLayerProxyDesc;
 
   /// No description provided for @inputAddress.

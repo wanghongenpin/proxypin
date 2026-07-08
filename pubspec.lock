@@ -77,10 +77,10 @@ packages:
     dependency: "direct main"
     description:
       name: code_forge
-      sha256: "9445afa82aa12d7d96522516033d54ae282bbcc039fb6209786f7dc78fdb000c"
+      sha256: "9630d958923cc9dd5dc2782c6a0755b3cbea8c7c6a3bc9480317cff9b4ea5677"
       url: "https://pub.dev"
     source: hosted
-    version: "10.7.0"
+    version: "10.7.1"
   collection:
     dependency: transitive
     description:

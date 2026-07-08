@@ -789,10 +789,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disconnect => '断开连接';
 
   @override
-  String get ipLayerProxy => 'IP层代理(Beta)';
+  String get ipLayerProxy => 'IP层代理';
 
   @override
-  String get ipLayerProxyDesc => 'IP层代理可抓取Flutter应用请求，目前不是很稳定,欢迎提交PR';
+  String get ipLayerProxyDesc => 'IP层代理可抓取Flutter应用请求';
 
   @override
   String get inputAddress => '输入地址';
