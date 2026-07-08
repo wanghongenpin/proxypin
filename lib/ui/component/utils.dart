@@ -100,6 +100,7 @@ String copyRawRequest(HttpRequest request) {
 }
 
 String copyRequest(HttpRequest request, HttpResponse? response) {
+  response ??= request.response;
   var sb = StringBuffer();
   sb.writeln("Request");
   sb.writeln("${request.method.name} ${request.requestUrl} ${request.protocolVersion}");

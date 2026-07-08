@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
@@ -27,6 +31,7 @@ import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/utils/desktop_support.dart';
 import 'package:proxypin/utils/navigator.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'l10n/app_localizations.dart';
 
@@ -34,17 +39,33 @@ import 'l10n/app_localizations.dart';
 ///@author wanghongen
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await RustLib.init();
+
+  final windowController = Platforms.isDesktop() ? await DesktopMultiWindow.ensureInitialized() : null;
+
+  var instance = AppConfiguration.instance;
 
   //多窗口
   if (args.firstOrNull == 'multi_window') {
-    final windowId = int.parse(args[1]);
-    final argument = args[2].isEmpty ? const {} : jsonDecode(args[2]) as Map<String, dynamic>;
-    runApp(FluentApp(multiWindow(windowId, argument), (await AppConfiguration.instance)));
+    final windowId = windowController!.windowId;
+    final argument =
+        windowController.arguments.isEmpty ? const {} : jsonDecode(windowController.arguments) as Map<String, dynamic>;
+    DesktopMultiWindow.initializeFromArguments(argument);
+    var appConfiguration = await instance;
+
+    if (Platform.isMacOS) {
+      windowManager.setTitleBarStyle(TitleBarStyle.hidden);
+    }
+    if (appConfiguration.themeMode != ThemeMode.system) {
+      windowManager.setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
+    }
+    runApp(FluentApp(multiWindow(windowId, argument), appConfiguration));
     return;
   }
 
-  var instance = AppConfiguration.instance;
   var configuration = Configuration.instance;
+  // 预热环境变量,避免第一个请求命中时才 IO
+  unawaited(EnvironmentManager.preload());
   //移动端
   if (Platforms.isMobile()) {
     var appConfiguration = await instance;
@@ -92,7 +113,7 @@ class FluentApp extends StatelessWidget {
 
     Color? themeColor = isDark ? appConfiguration.themeColor : appConfiguration.themeColor;
     Color? cardColor = isDark ? Color(0XFF3C3C3C) : Colors.white;
-    // Color? surfaceContainer = isDark ? Colors.grey[800] : Colors.white;
+    Color? surfaceContainer = isDark ? Colors.grey[800] : Colors.white;
 
     Color? secondary = useMaterial3 ? null : themeColor;
     if (themeColor is MaterialColor) {
@@ -100,12 +121,15 @@ class FluentApp extends StatelessWidget {
     }
 
     var colorScheme = ColorScheme.fromSeed(
-        brightness: brightness,
-        seedColor: themeColor,
-        primary: themeColor,
-        surface: cardColor,
-        secondary: secondary,
-        onPrimary: isDark ? Colors.white : null);
+      brightness: brightness,
+      seedColor: themeColor,
+      primary: themeColor,
+      surface: cardColor,
+      secondary: secondary,
+      onPrimary: isDark ? Colors.white : null,
+      surfaceContainer: surfaceContainer,
+      surfaceContainerHigh: surfaceContainer,
+    );
 
     var themeData =
         ThemeData(brightness: brightness, useMaterial3: appConfiguration.useMaterial3, colorScheme: colorScheme);

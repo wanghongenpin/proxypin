@@ -1,8 +1,7 @@
 import 'dart:collection';
-import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -14,7 +13,7 @@ import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/ui/mobile/request/request.dart';
-import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
@@ -48,13 +47,14 @@ class RequestSequence extends StatefulWidget {
 }
 
 class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliveClientMixin {
-  ///请求id和对应的row的映射
-  Map<String, GlobalKey<RequestRowState>> indexes = HashMap();
   late final MultiSelectListener<String> selectionListener;
 
   ///显示的请求列表 最新的在前面
   Queue<HttpRequest> view = Queue();
   bool changing = false;
+
+  ///请求id对应的响应刷新回调
+  final Map<String, VoidCallback> responseCallbacks = {};
 
   bool sortDesc = true;
 
@@ -115,15 +115,15 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   ///添加响应
   void addResponse(HttpResponse response) {
-    var state = indexes.remove(response.request?.requestId);
-    state?.currentState?.change(response);
+    final callback = responseCallbacks.remove(response.request?.requestId);
+    callback?.call();
 
     if (searchModel == null || searchModel!.isEmpty || response.request == null) {
       return;
     }
 
     //搜索视图
-    if (searchModel?.filter(response.request!, response) == true && state == null) {
+    if (searchModel?.filter(response.request!, response) == true && callback == null) {
       if (!view.contains(response.request)) {
         view.addFirst(response.request!);
         changeState();
@@ -135,7 +135,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     widget.selectionController.clear();
     setState(() {
       view.clear();
-      indexes.clear();
+      responseCallbacks.clear();
 
       view.addAll(widget.container.source.reversed);
     });
@@ -146,7 +146,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     setState(() {
       view.removeWhere((element) => list.contains(element));
       for (final requestId in removedRequestIds) {
-        indexes.remove(requestId);
+        responseCallbacks.remove(requestId);
       }
     });
     selectionController.prune(view.map((request) => request.requestId));
@@ -178,7 +178,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       final removedRequestIds = selected.map((request) => request.requestId).toSet();
       setState(() {
         view.removeWhere((request) => removedRequestIds.contains(request.requestId));
-        indexes.removeWhere((requestId, _) => removedRequestIds.contains(requestId));
+        responseCallbacks.removeWhere((requestId, _) => removedRequestIds.contains(requestId));
         selectionController.clear();
         widget.onRemove?.call(selected);
       });
@@ -232,20 +232,21 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                 controller: PrimaryScrollController.maybeOf(context),
                 child: ListView.separated(
                     controller: PrimaryScrollController.maybeOf(context),
-                    cacheExtent: 1000,
+                    scrollCacheExtent: ScrollCacheExtent.viewport(2.0),
                     separatorBuilder: (context, index) =>
                         Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
                     itemCount: view.length,
                     itemBuilder: (context, index) {
+                      // 安全边界检查：防止 view 数据变化时索引越界
+                      if (index >= view.length) {
+                        return const SizedBox.shrink();
+                      }
                       final request = view.elementAt(index);
                       final requestId = request.requestId;
 
-                      final key = GlobalKey<RequestRowState>();
-                      indexes[requestId] = key;
-
                       return RequestRow(
+                          key: ValueKey(requestId),
                           index: sortDesc ? view.length - index : index,
-                          key: key,
                           request: request,
                           proxyServer: widget.proxyServer,
                           displayDomain: widget.displayDomain,
@@ -254,12 +255,13 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                               onDeleteSelected: deleteSelected,
                               onExportSelected: exportSelected,
                               onRepeatSelected: repeatSelected),
+                          onMount: (callback) => responseCallbacks[requestId] = callback,
                           onRemove: (item) {
                             setState(() {
                               view.remove(item);
-                              indexes.remove(requestId);
+                              responseCallbacks.remove(requestId);
                             });
-                            selectionController.remove(request.requestId);
+                            selectionController.remove(item.requestId);
                             widget.onRemove?.call([item]);
                           });
                     })))
@@ -290,7 +292,10 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       return;
     }
 
-    _doExport('ProxyPin_selected_${DateTime.now().dateFormat()}.har', selected);
+    final folderName = 'proxypin_export_${DateTime.now().dateFormat()}';
+    showExportDialog(context, selected, folderName, onExportSuccess: () {
+      selectionController.clear();
+    });
   }
 
   void repeatSelected() {
@@ -300,18 +305,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     }
 
     _repeatRequests(selected);
-  }
-
-  Future<void> _doExport(String fileName, List<HttpRequest> requests) async {
-    var json = await Har.writeJson(requests, title: fileName);
-    final path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
-    if (path == null) {
-      return;
-    }
-    selectionController.clear();
-    if (mounted) {
-      FlutterToastr.show(localizations.exportSuccess, context);
-    }
   }
 
   Future<void> _repeatRequests(List<HttpRequest> requests) async {

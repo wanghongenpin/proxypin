@@ -38,9 +38,13 @@ class ProcessInfo(name: CharSequence, packageName: String, icon: ByteArray?, ver
             val packageName = app.packageName
             val icon =
                 if (withIcon) drawableToByteArray(app.loadIcon(packageManager)) else ByteArray(0)
-            val packageInfo = packageManager.getPackageInfo(app.packageName, 0)
-            // 部分应用可能没有设置versionName，将导致获取列表操作失败
-            val versionName = packageInfo.versionName ?: ""
+            // 部分应用可能没有设置versionName，或在枚举过程中被卸载/更新导致
+            // getPackageInfo抛出NameNotFoundException，将导致获取列表操作失败
+            val versionName = try {
+                packageManager.getPackageInfo(app.packageName, 0).versionName ?: ""
+            } catch (e: PackageManager.NameNotFoundException) {
+                ""
+            }
 
             return ProcessInfo(name, packageName, icon, versionName)
         }

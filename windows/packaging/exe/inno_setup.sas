@@ -16,6 +16,11 @@ SetupIconFile={{SETUP_ICON_FILE}}
 WizardStyle=modern
 CloseApplications=force
 
+[InstallDelete]
+Type: files; Name: "{app}\msvcp140.dll"
+Type: files; Name: "{app}\vcruntime140.dll"
+Type: files; Name: "{app}\vcruntime140_1.dll"
+
 [Languages]
 {% for locale in LOCALES %}
 {% if locale == 'en' %}Name: "english"; MessagesFile: "compiler:Default.isl"{% endif %}

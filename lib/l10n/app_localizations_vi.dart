@@ -833,12 +833,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pipIconDescribe => 'Hiển thị biểu tượng truy cập nhanh vào cửa sổ nhỏ';
 
   @override
-  String get headerExpanded => 'Mở rộng Headers';
-
-  @override
-  String get headerExpandedSubtitle => 'Mở rộng Headers theo mặc định';
-
-  @override
   String get bottomNavigation => 'Thanh điều hướng dưới';
 
   @override
@@ -1088,6 +1082,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'Bỏ qua';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'Ánh xạ yêu cầu';
 
   @override
@@ -1153,4 +1159,28 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get preview => 'Xem trước';
+
+  @override
+  String get environment => 'Môi trường';
+
+  @override
+  String get environmentVariables => 'Biến môi trường';
+
+  @override
+  String get envGlobal => 'Toàn cục';
+
+  @override
+  String get envManage => 'Quản lý môi trường…';
+
+  @override
+  String get envNone => 'Không có môi trường';
+
+  @override
+  String get envDeleteConfirm => 'Xóa môi trường này?';
+
+  @override
+  String get envEmptyHint => 'Chưa có biến. Nhấn + để thêm.';
+
+  @override
+  String get envUsageHint => 'Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script.';
 }

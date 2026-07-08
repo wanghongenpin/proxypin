@@ -27,6 +27,7 @@ import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
+import 'package:proxypin/ui/mobile/setting/environment.dart';
 import 'package:proxypin/ui/mobile/setting/hosts.dart';
 import 'package:proxypin/ui/mobile/setting/preference.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
@@ -173,7 +174,13 @@ class _ConfigPageState extends State<ConfigPage> {
                     if (context.mounted) {
                       navigator(context, MobileRequestBreakpointPage(manager: manager));
                     }
-                  })
+                  }),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+              ListTile(
+                  title: Text(localizations.environmentVariables),
+                  leading: Icon(Icons.public, color: color),
+                  trailing: arrow,
+                  onTap: () => navigator(context, const MobileEnvironmentPage()))
             ]),
             const SizedBox(height: 16)
           ],

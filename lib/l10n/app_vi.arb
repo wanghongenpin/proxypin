@@ -88,8 +88,6 @@
   "generateCADescribe": "Bạn có chắc muốn tạo chứng chỉ gốc mới không?",
   "gray": "Xám",
   "green": "Xanh lá",
-  "headerExpanded": "Mở rộng Headers",
-  "headerExpandedSubtitle": "Mở rộng Headers theo mặc định",
   "history": "Lịch sử",
   "historyEmptyName": "Tên không được để trống",
   "historyRecord": "Lịch sử",
@@ -243,5 +241,14 @@
   "encode": "Mã hóa",
   "view": "Xem",
   "cipher": "Mật mã",
-  "other": "Khác"
+  "other": "Khác",
+
+  "environment": "Môi trường",
+  "environmentVariables": "Biến môi trường",
+  "envGlobal": "Toàn cục",
+  "envManage": "Quản lý môi trường…",
+  "envNone": "Không có môi trường",
+  "envDeleteConfirm": "Xóa môi trường này?",
+  "envEmptyHint": "Chưa có biến. Nhấn + để thêm.",
+  "envUsageHint": "Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script."
 }

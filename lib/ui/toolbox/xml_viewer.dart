@@ -17,7 +17,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,7 +40,7 @@ import 'package:xml/xml.dart';
 ///
 /// @author Hongen Wang
 class XmlViewerPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final String? initialText;
 
   const XmlViewerPage({super.key, this.windowId, this.initialText});
@@ -116,13 +117,8 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      if (Platform.isMacOS && widget.windowId != null) {
-        path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
-        WindowController.fromWindowId(widget.windowId!).show();
-      } else {
-        final result = await FilePicker.platform.pickFiles(type: FileType.any);
-        path = result?.files.single.path;
-      }
+      final result = await FilePicker.pickFiles(type: FileType.any);
+      path = result?.files.single.path;
     } catch (_) {
       // 某些平台（e.g. Linux）custom + extensions 可能抛错，回退到任意类型
       final result = await FilePicker.platform.pickFiles();
@@ -152,20 +148,9 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       return;
     }
 
-    String? path;
-    if (Platform.isMacOS && widget.windowId != null) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "data.xml"});
-      WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = await FilePicker.platform.saveFile(fileName: 'data.xml');
-    }
+    String? path = await FilePicker.saveFile(fileName: 'data.xml', bytes: utf8.encode(text));
     if (path == null) return;
-    try {
-      await File(path).writeAsString(text);
-      if (mounted) _toast(localizations.saveSuccess);
-    } catch (e) {
-      _toast('${localizations.fail}: $e');
-    }
+    if (mounted) _toast(localizations.saveSuccess);
   }
 
   void _toast(String msg) {

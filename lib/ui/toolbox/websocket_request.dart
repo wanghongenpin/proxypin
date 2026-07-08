@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -16,7 +15,7 @@ import '../component/json/theme.dart';
 
 /// Simple WebSocket request page: connect to ws/wss URL, send text, view messages
 class WebSocketRequestPage extends StatefulWidget {
-  final int? windowId; // optional for desktop multi-window
+  final String? windowId; // optional for desktop multi-window
   const WebSocketRequestPage({super.key, this.windowId});
 
   @override
@@ -145,12 +144,12 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
     try {
       String? path;
       if (Platforms.isMobile()) {
-        final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-        if (result == null || result.files.isEmpty) return;
-        path = result.files.single.path;
+        final file = await FilePicker.pickFile();
+        if (file == null) return;
+        path = file.path;
       } else {
-        path = path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
-        if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+        final file = await FilePicker.pickFile();
+        path = file?.path;
       }
       if (path == null) return;
       final file = File(path);
@@ -344,8 +343,8 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
                         color: Theme.of(context).colorScheme.primary,
                         shape: BoxShape.circle,
                         boxShadow: [
-                          // use withOpacity for compatibility
-                          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 3))
+                          BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 3))
                         ],
                       ),
                       child: const Icon(Icons.send, color: Colors.white, size: 20),
@@ -399,7 +398,8 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
                         color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(20.0),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.24), blurRadius: 8, offset: const Offset(0, 4))
+                          BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.24), blurRadius: 8, offset: const Offset(0, 4))
                         ],
                       ),
                       child: const Icon(Icons.arrow_downward, color: Colors.white, size: 18),
@@ -455,8 +455,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
         final bubble = Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            // replace withOpacity to support broader SDK versions
-            color: displayOnLeft ? Colors.green.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
+            color: displayOnLeft ? Colors.green.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
           ),
           child: SelectableText(bubbleText),
@@ -465,7 +464,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
           onPressed: () {
             showDialog(context: context, builder: (context) => _PreviewDialog(bytes: m.bytes));
           },
-          icon: Icon(Icons.expand_more, color: Theme.of(context).colorScheme.primary),
+          icon: Icon(Icons.expand_more, color: ColorScheme.of(context).primary),
         );
         // attach key to the last message so we can ensureVisible it
         final widgetKey = index == _messages.length - 1 ? _lastMessageKey : null;

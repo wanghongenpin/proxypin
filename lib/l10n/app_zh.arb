@@ -271,8 +271,8 @@
   "notConnected": "未连接",
   "inputAddress": "输入地址",
   "disconnect": "断开连接",
-  "ipLayerProxy": "IP层代理(Beta)",
-  "ipLayerProxyDesc": "IP层代理可抓取Flutter应用请求，目前不是很稳定,欢迎提交PR",
+  "ipLayerProxy": "IP层代理",
+  "ipLayerProxyDesc": "IP层代理可抓取Flutter应用请求",
   "syncConfig": "同步配置",
   "pullConfigFail": "拉取配置失败, 请检查网络连接",
   "sync": "同步",
@@ -284,8 +284,6 @@
   "windowModeSubTitle": "开启抓包后 如果应用退回到后台，显示一个小窗口",
   "pipIcon": "窗口快捷图标",
   "pipIconDescribe": "展示快捷进入小窗口Icon",
-  "headerExpanded": "Headers自动展开",
-  "headerExpandedSubtitle": "详情页Headers栏是否自动展开",
   "bottomNavigation": "底部导航",
   "bottomNavigationSubtitle": "底部导航栏是否显示，重启后生效",
   "memoryCleanup": "内存清理",
@@ -372,6 +370,10 @@
   "appUpdateUpdateNowBtnTxt": "现在更新",
   "appUpdateLaterBtnTxt": "以后再说",
   "appUpdateIgnoreBtnTxt": "忽略",
+  "appUpdateInstallNow": "立即安装",
+  "appUpdateRetry": "重试",
+  "appUpdateBackgroundDownload": "后台下载",
+  "appUpdateOpenDownloadPage": "打开下载页面",
 
   "requestMap": "请求映射",
   "requestMapDescribe": "不请求远程服务，使用本地配置或脚本进行响应",
@@ -400,5 +402,14 @@
 
   "local": "本地",
   "remoteUrl": "远程URL",
-  "preview": "预览"
+  "preview": "预览",
+
+  "environment": "环境",
+  "environmentVariables": "环境变量",
+  "envGlobal": "全局",
+  "envManage": "管理环境…",
+  "envNone": "无环境",
+  "envDeleteConfirm": "确定删除该环境?",
+  "envEmptyHint": "暂无变量,点击 + 添加。",
+  "envUsageHint": "规则中使用 %s 引用变量,脚本中通过 context.env 读写。"
 }

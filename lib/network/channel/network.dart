@@ -93,6 +93,8 @@ class Server extends Network {
       channelContext.clientChannel = channel;
       channelContext.listener = listener;
       listen(channel, channelContext);
+    }, onError: (error, StackTrace trace) {
+      logger.e('server socket listen error on port $port', error: error, stackTrace: trace);
     });
     isRunning = true;
     _connectionCleanupTimer = Timer.periodic(const Duration(seconds: 120), (timer) {
@@ -185,8 +187,9 @@ class Server extends Network {
   /// ssl握手
   void ssl(ChannelContext channelContext, Channel channel, Uint8List data) async {
     var hostAndPort = channelContext.host;
+    String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
+    Channel? remoteChannel;
     try {
-      String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
       bool isHttp = true;
 
       if (hostAndPort == null) {
@@ -211,7 +214,7 @@ class Server extends Network {
       hostAndPort.scheme = HostAndPort.httpsScheme;
       channelContext.putAttribute(AttributeKeys.domain, hostAndPort.host);
 
-      Channel? remoteChannel = channelContext.serverChannel;
+      remoteChannel = channelContext.serverChannel;
 
       if (!isHttp || HostFilter.filter(hostAndPort.host) || !configuration.enableSsl) {
         remoteChannel = remoteChannel ?? await channelContext.connectServerChannel(hostAndPort, RelayHandler(channel));
@@ -246,6 +249,19 @@ class Server extends Network {
       }
     } catch (error, trace) {
       logger.e('[${channelContext.clientChannel?.id}] $hostAndPort ssl error', error: error, stackTrace: trace);
+
+      //客户端ssl验证失败时, 拉取远程服务器真实证书重新生成叶子证书, 客户端重连后即可通过校验
+      if (error is TlsException && serviceName != null) {
+        try {
+          var refreshed = await CertificateManager.generateByRemoteCert(serviceName, remoteChannel?.peerCertificate);
+          if (refreshed) {
+            logger.i('[${channelContext.clientChannel?.id}] $serviceName regenerate certificate by remote cert');
+          }
+        } catch (ignore) {
+          /*ignore*/
+        }
+      }
+
       try {
         channelContext.processInfo ??=
             await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, hostAndPort?.domain ?? 'unknown');
@@ -260,13 +276,17 @@ class Server extends Network {
 }
 
 class Client extends Network {
+  /// IPv6 地址在传给 [Socket.connect]/[SecureSocket.connect] 前需去掉方括号, 否则无法解析连接
+  static String _stripIPv6Brackets(String host) {
+    if (host.startsWith('[') && host.endsWith(']')) {
+      return host.substring(1, host.length - 1);
+    }
+    return host;
+  }
+
   Future<Channel> connect(HostAndPort hostAndPort, ChannelContext channelContext,
       {Duration timeout = const Duration(seconds: 3)}) async {
-    String host = hostAndPort.host;
-    //说明支持ipv6
-    // if (host.startsWith("[") && host.endsWith(']')) {
-    //   host = host.substring(1, host.length - 1);
-    // }
+    String host = _stripIPv6Brackets(hostAndPort.host);
 
     // logger.d('Connecting to $host:${hostAndPort.port}');
     return Socket.connect(host, hostAndPort.port, timeout: timeout).then((socket) {
@@ -281,7 +301,7 @@ class Client extends Network {
 
   /// ssl连接
   Future<Channel> secureConnect(HostAndPort hostAndPort, ChannelContext channelContext) async {
-    return SecureSocket.connect(hostAndPort.host, hostAndPort.port,
+    return SecureSocket.connect(_stripIPv6Brackets(hostAndPort.host), hostAndPort.port,
         timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
       var channel = Channel(socket);
       channelContext.serverChannel = channel;

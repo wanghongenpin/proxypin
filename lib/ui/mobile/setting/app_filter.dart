@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2023 Hongen Wang
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,8 @@ class _AppWhitelistState extends State<AppWhitelist> {
   late Configuration configuration;
 
   bool changed = false;
+  bool isLoading = true;
+  List<AppInfo> appInfoList = [];
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -45,6 +47,24 @@ class _AppWhitelistState extends State<AppWhitelist> {
   void initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
+    _loadApps();
+  }
+
+  void _loadApps() async {
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+    var futures = <Future<AppInfo>>[];
+    for (var element in configuration.appWhitelist) {
+      futures.add(InstalledApps.getAppInfo(element).catchError((e) {
+        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element, inValid: true);
+      }));
+    }
+    var list = await Future.wait(futures);
+    if (mounted) {
+      setState(() {
+        appInfoList = list;
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -62,13 +82,6 @@ class _AppWhitelistState extends State<AppWhitelist> {
   Widget build(BuildContext context) {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
-    var appWhitelist = <Future<AppInfo>>[];
-    for (var element in configuration.appWhitelist) {
-      appWhitelist.add(InstalledApps.getAppInfo(element).catchError((e) {
-        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element, inValid: true);
-      }));
-    }
-
     return Scaffold(
         appBar: AppBar(
           title: Text(localizations.appWhitelist, style: const TextStyle(fontSize: 16)),
@@ -76,40 +89,38 @@ class _AppWhitelistState extends State<AppWhitelist> {
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () async {
-                //添加
-                List<AppInfo> list = await Future.wait(appWhitelist);
-                if (context.mounted) {
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                    return InstalledAppsWidget(addedList: list);
-                  })).then((value) {
-                    if (value != null) {
-                      if (configuration.appWhitelist.contains(value)) {
-                        return;
-                      }
-                      setState(() {
-                        configuration.appWhitelist.add(value);
-                        changed = true;
-                      });
-                    }
+                final packageName = await Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => InstalledAppsWidget(addedList: appInfoList),
+                ));
+                if (packageName != null && !configuration.appWhitelist.contains(packageName)) {
+                  configuration.appWhitelist.add(packageName);
+                  changed = true;
+                  bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+                  var newApp = await InstalledApps.getAppInfo(packageName).catchError((e) {
+                    return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: packageName, inValid: true);
                   });
+                  if (mounted) {
+                    setState(() => appInfoList.add(newApp));
+                  }
                 }
               },
             ),
             IconButton(
               tooltip: isCN ? '清除失效应用' : 'clear invalid apps',
-              onPressed: () async {
+              onPressed: () {
                 if (configuration.appWhitelist.isEmpty) return;
-                List<AppInfo> list = await Future.wait(appWhitelist);
-                for (AppInfo appInfo in list) {
-                  if (appInfo.inValid == true) {
-                    configuration.appWhitelist.remove(appInfo.packageName);
-                  }
-                }
                 setState(() {
+                  appInfoList.removeWhere((appInfo) {
+                    if (appInfo.inValid == true) {
+                      configuration.appWhitelist.remove(appInfo.packageName);
+                      return true;
+                    }
+                    return false;
+                  });
                   changed = true;
                 });
               },
-              icon: Icon(Icons.cleaning_services_outlined),
+              icon: const Icon(Icons.cleaning_services_outlined),
             ),
           ],
         ),
@@ -126,12 +137,10 @@ class _AppWhitelistState extends State<AppWhitelist> {
               }),
           const SizedBox(height: 5),
           Expanded(
-              child: FutureBuilder(
-                  future: Future.wait(appWhitelist),
-                  builder: (BuildContext context, AsyncSnapshot<List<AppInfo>> snapshot) {
-                    if (snapshot.hasData) {
-                      if (snapshot.data!.isEmpty) {
-                        return Center(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : appInfoList.isEmpty
+                      ? Center(
                           child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 15),
                               child: Text(
@@ -139,13 +148,11 @@ class _AppWhitelistState extends State<AppWhitelist> {
                                       ? "未设置白名单应用时会对所有应用抓包"
                                       : "When no whitelist application is set, all applications will be captured",
                                   style: const TextStyle(color: Colors.grey))),
-                        );
-                      }
-
-                      return ListView.builder(
-                          itemCount: snapshot.data!.length,
+                        )
+                      : ListView.builder(
+                          itemCount: appInfoList.length,
                           itemBuilder: (BuildContext context, int index) {
-                            AppInfo appInfo = snapshot.data![index];
+                            AppInfo appInfo = appInfoList[index];
                             return ListTile(
                               leading:
                                   appInfo.icon == null ? const Icon(Icons.question_mark) : Image.memory(appInfo.icon!),
@@ -154,21 +161,15 @@ class _AppWhitelistState extends State<AppWhitelist> {
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete),
                                 onPressed: () {
-                                  //删除
                                   setState(() {
                                     configuration.appWhitelist.remove(appInfo.packageName);
+                                    appInfoList.remove(appInfo);
                                     changed = true;
                                   });
                                 },
                               ),
                             );
-                          });
-                    } else {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    }
-                  })),
+                          })),
         ]));
   }
 }
@@ -186,6 +187,8 @@ class _AppBlacklistState extends State<AppBlacklist> {
   late Configuration configuration;
 
   bool changed = false;
+  bool isLoading = true;
+  List<AppInfo> appInfoList = [];
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -193,6 +196,24 @@ class _AppBlacklistState extends State<AppBlacklist> {
   void initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
+    _loadApps();
+  }
+
+  void _loadApps() async {
+    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+    var futures = <Future<AppInfo>>[];
+    for (var element in configuration.appBlacklist ?? []) {
+      futures.add(InstalledApps.getAppInfo(element).catchError((e) {
+        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element, inValid: true);
+      }));
+    }
+    var list = await Future.wait(futures);
+    if (mounted) {
+      setState(() {
+        appInfoList = list;
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -209,12 +230,6 @@ class _AppBlacklistState extends State<AppBlacklist> {
   @override
   Widget build(BuildContext context) {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-    var appBlacklist = <Future<AppInfo>>[];
-    for (var element in configuration.appBlacklist ?? []) {
-      appBlacklist.add(InstalledApps.getAppInfo(element).catchError((e) {
-        return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: element, inValid: true);
-      }));
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -223,60 +238,54 @@ class _AppBlacklistState extends State<AppBlacklist> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
-              //添加
-              List<AppInfo> list = await Future.wait(appBlacklist);
-              if (context.mounted) {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) => InstalledAppsWidget(addedList: list)))
-                    .then((value) {
-                  if (value != null) {
-                    if (configuration.appBlacklist?.contains(value) == true) {
-                      return;
-                    }
-                    setState(() {
-                      configuration.appBlacklist ??= [];
-                      configuration.appBlacklist?.add(value);
-                      changed = true;
-                    });
-                  }
+              final packageName = await Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => InstalledAppsWidget(addedList: appInfoList),
+              ));
+              if (packageName != null && configuration.appBlacklist?.contains(packageName) != true) {
+                configuration.appBlacklist ??= [];
+                configuration.appBlacklist?.add(packageName);
+                changed = true;
+                bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+                var newApp = await InstalledApps.getAppInfo(packageName).catchError((e) {
+                  return AppInfo(name: isCN ? "未知应用" : "Unknown app", packageName: packageName, inValid: true);
                 });
+                if (mounted) {
+                  setState(() => appInfoList.add(newApp));
+                }
               }
             },
           ),
           IconButton(
             tooltip: isCN ? '清除失效应用' : 'clear invalid apps',
-            onPressed: () async {
+            onPressed: () {
               if (configuration.appBlacklist?.isEmpty == true) return;
-              List<AppInfo> list = await Future.wait(appBlacklist);
-              for (AppInfo appInfo in list) {
-                if (appInfo.inValid == true) {
-                  configuration.appBlacklist?.remove(appInfo.packageName);
-                }
-              }
               setState(() {
+                appInfoList.removeWhere((appInfo) {
+                  if (appInfo.inValid == true) {
+                    configuration.appBlacklist?.remove(appInfo.packageName);
+                    return true;
+                  }
+                  return false;
+                });
                 changed = true;
               });
             },
-            icon: Icon(Icons.cleaning_services_outlined),
+            icon: const Icon(Icons.cleaning_services_outlined),
           ),
         ],
       ),
-      body: FutureBuilder(
-          future: Future.wait(appBlacklist),
-          builder: (BuildContext context, AsyncSnapshot<List<AppInfo>> snapshot) {
-            if (snapshot.hasData) {
-              if (snapshot.data!.isEmpty) {
-                return Center(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : appInfoList.isEmpty
+              ? Center(
                   child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Text(localizations.emptyData, style: const TextStyle(color: Colors.grey))),
-                );
-              }
-
-              return ListView.builder(
-                  itemCount: snapshot.data!.length,
+                )
+              : ListView.builder(
+                  itemCount: appInfoList.length,
                   itemBuilder: (BuildContext context, int index) {
-                    AppInfo appInfo = snapshot.data![index];
+                    AppInfo appInfo = appInfoList[index];
                     return ListTile(
                       leading: appInfo.icon == null ? const Icon(Icons.question_mark) : Image.memory(appInfo.icon!),
                       title: Text(appInfo.name ?? ""),
@@ -284,21 +293,15 @@ class _AppBlacklistState extends State<AppBlacklist> {
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
-                          //删除
                           setState(() {
                             configuration.appBlacklist?.remove(appInfo.packageName);
+                            appInfoList.remove(appInfo);
                             changed = true;
                           });
                         },
                       ),
                     );
-                  });
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-          }),
+                  }),
     );
   }
 }

@@ -129,7 +129,7 @@ class MoreMenu extends StatelessWidget {
               child: ListTile(
                 dense: true,
                 leading: const Icon(Icons.checklist_rtl_outlined),
-                title: Text(localizations.selectAction),
+                title: Text(localizations.select),
                 onTap: () async {
                   await Navigator.maybePop(context);
                   MobileApp.multiSelectController.toggleSelectionMode();

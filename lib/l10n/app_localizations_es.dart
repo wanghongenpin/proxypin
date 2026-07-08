@@ -833,12 +833,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pipIconDescribe => 'Mostrar icono de acceso rápido a la ventana pequeña';
 
   @override
-  String get headerExpanded => 'Headers expandidos';
-
-  @override
-  String get headerExpandedSubtitle => 'Expandir Headers por defecto';
-
-  @override
   String get bottomNavigation => 'Barra inferior';
 
   @override
@@ -1089,6 +1083,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'Omitir';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'Mapeo de solicitudes';
 
   @override
@@ -1154,4 +1160,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get preview => 'Vista previa';
+
+  @override
+  String get environment => 'Entorno';
+
+  @override
+  String get environmentVariables => 'Variables de entorno';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Gestionar entornos…';
+
+  @override
+  String get envNone => 'Sin entorno';
+
+  @override
+  String get envDeleteConfirm => '¿Eliminar este entorno?';
+
+  @override
+  String get envEmptyHint => 'Sin variables. Pulsa + para añadir.';
+
+  @override
+  String get envUsageHint => 'Usa %s en reglas o lee/escribe context.env en scripts.';
 }

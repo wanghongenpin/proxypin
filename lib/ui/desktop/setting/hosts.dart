@@ -15,7 +15,6 @@
  */
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
@@ -23,7 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -342,7 +340,7 @@ class _HostsDialogState extends State<HostsDialog> {
   //导入
   Future<void> import() async {
     final FilePickerResult? result =
-        await FilePicker.platform.pickFiles(allowedExtensions: ['json'], type: FileType.custom, initialDirectory: "/Downloads");
+        await FilePicker.pickFiles(allowedExtensions: ['json'], type: FileType.custom, initialDirectory: "/Downloads");
     var file = result?.files.single;
     if (file == null) {
       return;
@@ -384,18 +382,15 @@ class _HostsDialogState extends State<HostsDialog> {
     if (items.isEmpty) return;
 
     String fileName = 'hosts.json';
-    var path = await FilePicker.platform.saveFile(fileName: fileName);
-    if (path == null) {
-      return;
-    }
-
     var list = [];
     for (var item in items) {
       var json = item.toJson();
       list.add(json);
     }
-
-    await File(path).writeAsBytes(utf8.encode(jsonEncode(list)));
+    var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list)));
+    if (path == null) {
+      return;
+    }
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 }

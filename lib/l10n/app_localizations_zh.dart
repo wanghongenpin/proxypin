@@ -789,10 +789,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disconnect => '断开连接';
 
   @override
-  String get ipLayerProxy => 'IP层代理(Beta)';
+  String get ipLayerProxy => 'IP层代理';
 
   @override
-  String get ipLayerProxyDesc => 'IP层代理可抓取Flutter应用请求，目前不是很稳定,欢迎提交PR';
+  String get ipLayerProxyDesc => 'IP层代理可抓取Flutter应用请求';
 
   @override
   String get inputAddress => '输入地址';
@@ -826,12 +826,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pipIconDescribe => '展示快捷进入小窗口Icon';
-
-  @override
-  String get headerExpanded => 'Headers自动展开';
-
-  @override
-  String get headerExpandedSubtitle => '详情页Headers栏是否自动展开';
 
   @override
   String get bottomNavigation => '底部导航';
@@ -1081,6 +1075,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => '忽略';
 
   @override
+  String get appUpdateInstallNow => '立即安装';
+
+  @override
+  String get appUpdateRetry => '重试';
+
+  @override
+  String get appUpdateBackgroundDownload => '后台下载';
+
+  @override
+  String get appUpdateOpenDownloadPage => '打开下载页面';
+
+  @override
   String get requestMap => '请求映射';
 
   @override
@@ -1146,6 +1152,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get preview => '预览';
+
+  @override
+  String get environment => '环境';
+
+  @override
+  String get environmentVariables => '环境变量';
+
+  @override
+  String get envGlobal => '全局';
+
+  @override
+  String get envManage => '管理环境…';
+
+  @override
+  String get envNone => '无环境';
+
+  @override
+  String get envDeleteConfirm => '确定删除该环境?';
+
+  @override
+  String get envEmptyHint => '暂无变量,点击 + 添加。';
+
+  @override
+  String get envUsageHint => '规则中使用 %s 引用变量,脚本中通过 context.env 读写。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1968,12 +1998,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get pipIconDescribe => '展示快捷進入小視窗Icon';
 
   @override
-  String get headerExpanded => 'Headers自動展開';
-
-  @override
-  String get headerExpandedSubtitle => '詳情頁Headers欄是否自動展開';
-
-  @override
   String get bottomNavigation => '底部導航';
 
   @override
@@ -2238,4 +2262,28 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get preview => '預覽';
+
+  @override
+  String get environment => '環境';
+
+  @override
+  String get environmentVariables => '環境變數';
+
+  @override
+  String get envGlobal => '全域';
+
+  @override
+  String get envManage => '管理環境…';
+
+  @override
+  String get envNone => '無環境';
+
+  @override
+  String get envDeleteConfirm => '確定刪除此環境?';
+
+  @override
+  String get envEmptyHint => '尚無變數,點擊 + 新增。';
+
+  @override
+  String get envUsageHint => '規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。';
 }

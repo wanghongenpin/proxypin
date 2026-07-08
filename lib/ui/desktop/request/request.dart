@@ -17,7 +17,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:date_format/date_format.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
@@ -54,6 +54,7 @@ import '../common.dart';
 /// 请求 URI
 /// @author wanghongen
 /// 2023/10/8
+// ignore: must_be_immutable
 class RequestWidget extends StatefulWidget {
   final int index;
   final HttpRequest request;
@@ -65,30 +66,31 @@ class RequestWidget extends StatefulWidget {
   final Widget? trailing;
   final MultiSelectController multiSelectController;
   final RequestSelectionHandlers selectionHandlers;
+  final Function(VoidCallback refresh)? onMount;
+
+  VoidCallback? _refresh;
 
   RequestWidget(this.request,
-      {Key? key,
+      {super.key,
       required this.proxyServer,
       this.remove,
       this.displayDomain = true,
       this.trailing,
       required this.selectionHandlers,
       required this.index,
-      required this.multiSelectController})
-      : super(key: key ?? GlobalKey<_RequestWidgetState>());
+      required this.multiSelectController,
+      this.onMount});
 
   @override
   State<RequestWidget> createState() => _RequestWidgetState();
 
   void setResponse(HttpResponse response) {
     this.response.set(response);
-    var state = key as GlobalKey<_RequestWidgetState>;
-    state.currentState?.changeState();
+    _refresh?.call();
   }
 
   void changeState() {
-    var state = key as GlobalKey<_RequestWidgetState>;
-    state.currentState?.changeState();
+    _refresh?.call();
   }
 
   static void removeAutoReadByIds(Iterable<String> requestIds) {
@@ -123,6 +125,14 @@ class _RequestWidgetState extends State<RequestWidget> {
   @override
   void initState() {
     super.initState();
+    widget._refresh = () => setState(() {});
+    widget.onMount?.call(widget.changeState);
+  }
+
+  @override
+  void dispose() {
+    widget._refresh = null;
+    super.dispose();
   }
 
   @override
@@ -200,10 +210,6 @@ class _RequestWidgetState extends State<RequestWidget> {
     }
 
     return autoReadRequests.contains(widget.request.requestId) ? Colors.grey : null;
-  }
-
-  void changeState() {
-    setState(() {});
   }
 
   void contextualMenu() {
@@ -366,10 +372,10 @@ class _RequestWidgetState extends State<RequestWidget> {
         exportRequestBody(widget.request);
         break;
       case _RequestExportMenuAction.response:
-        exportResponse(widget.response.get());
+        exportResponse(widget.response.get() ?? widget.request.response);
         break;
       case _RequestExportMenuAction.responseBody:
-        exportResponseBody(widget.response.get());
+        exportResponseBody(widget.response.get() ?? widget.request.response);
         break;
       case _RequestExportMenuAction.har:
         exportHar(widget.request);
@@ -501,7 +507,7 @@ class _RequestWidgetState extends State<RequestWidget> {
 
     window.setTitle(localizations.requestEdit);
     window
-      ..setFrame(const Offset(100, 100) & Size(960 * ratio, size.height * ratio))
+      ..setSize(Size(960 * ratio, size.height * ratio))
       ..center()
       ..show();
   }

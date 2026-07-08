@@ -19,22 +19,35 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
-import 'package:flutter_highlight/themes/atom-one-dark.dart';
-import 'package:flutter_highlight/themes/atom-one-light.dart';
-import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:highlight/highlight_core.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:proxypin/utils/css_formatter.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
-import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
+import 'package:re_highlight/languages/bash.dart';
+import 'package:re_highlight/languages/css.dart';
+import 'package:re_highlight/languages/dart.dart';
+import 'package:re_highlight/languages/go.dart';
+import 'package:re_highlight/languages/http.dart';
+import 'package:re_highlight/languages/java.dart';
+import 'package:re_highlight/languages/javascript.dart';
+import 'package:re_highlight/languages/json.dart';
+import 'package:re_highlight/languages/markdown.dart';
+import 'package:re_highlight/languages/python.dart';
+import 'package:re_highlight/languages/sql.dart';
+import 'package:re_highlight/languages/typescript.dart';
+import 'package:re_highlight/languages/xml.dart';
+import 'package:re_highlight/languages/yaml.dart';
+import 'package:re_highlight/re_highlight.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart';
 
@@ -45,7 +58,7 @@ import 'package:xml/xml.dart';
 ///
 /// @author Hongen Wang
 class TextEditorPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final String? initialText;
 
   const TextEditorPage({super.key, this.windowId, this.initialText});
@@ -81,7 +94,8 @@ final List<_LangOption> _langs = [
 ];
 
 class _TextEditorPageState extends State<TextEditorPage> {
-  late final CodeController _controller;
+  late final CodeForgeController _controller;
+  late final FindController _findController;
 
   bool _wrap = true;
   _LangOption _lang = _langs.first;
@@ -91,7 +105,10 @@ class _TextEditorPageState extends State<TextEditorPage> {
   @override
   void initState() {
     super.initState();
-    _controller = CodeController()..text = widget.initialText ?? '';
+    _controller = CodeForgeController()..text = widget.initialText ?? '';
+    // 自己持有 FindController：CodeForge 默认会在 initState 创一个内部 controller，
+    // 但拿不到引用，没法从工具栏 toggle 搜索面板。显式传一个进去就能控制。
+    _findController = FindController(_controller);
     if (Platforms.isDesktop() && widget.windowId != null) {
       HardwareKeyboard.instance.addHandler(_onKeyEvent);
     }
@@ -99,6 +116,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
 
   @override
   void dispose() {
+    _findController.dispose();
     _controller.dispose();
     if (Platforms.isDesktop() && widget.windowId != null) {
       HardwareKeyboard.instance.removeHandler(_onKeyEvent);
@@ -166,15 +184,10 @@ class _TextEditorPageState extends State<TextEditorPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      if (Platform.isMacOS && widget.windowId != null) {
-        path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
-        WindowController.fromWindowId(widget.windowId!).show();
-      } else {
-        final result = await FilePicker.platform.pickFiles(type: FileType.any);
-        path = result?.files.single.path;
-      }
+      final result = await FilePicker.pickFiles(type: FileType.any);
+      path = result?.files.single.path;
     } catch (_) {
-      final result = await FilePicker.platform.pickFiles();
+      final result = await FilePicker.pickFiles();
       path = result?.files.single.path;
     }
 
@@ -234,24 +247,14 @@ class _TextEditorPageState extends State<TextEditorPage> {
       if (await Platforms.isIpad() && mounted) {
         box = context.findRenderObject() as RenderBox?;
       }
-      await Share.shareXFiles([file], fileNameOverrides: const ['text.txt'], sharePositionOrigin: box?.paintBounds);
+      await SharePlus.instance.share(
+          ShareParams(files: [file], fileNameOverrides: const ['text.txt'], sharePositionOrigin: box?.paintBounds));
       return;
     }
 
-    String? path;
-    if (Platform.isMacOS && widget.windowId != null) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "text.txt"});
-      WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = await FilePicker.platform.saveFile(fileName: 'text.txt');
-    }
+    String? path = await FilePicker.saveFile(fileName: 'text.txt', bytes: utf8.encode(text));
     if (path == null) return;
-    try {
-      await File(path).writeAsString(text);
-      if (mounted) _toast(localizations.saveSuccess);
-    } catch (e) {
-      _toast('${localizations.fail}: $e');
-    }
+    if (mounted) _toast(localizations.saveSuccess);
   }
 
   void _toast(String msg) {
@@ -311,7 +314,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
             _iconBtn(Icons.folder_open, localizations.selectFile, _openFile),
             _iconBtn(Icons.delete_outline, localizations.clear, _clear),
             _iconBtn(Icons.auto_fix_high, localizations.format, _canFormat ? _format : null),
-            // flutter_code_editor 0.3.5 搜索功能通过内置快捷键触发 (Ctrl+F)
+            _iconBtn(Icons.search, localizations.search, _findController.toggleActive),
             _iconBtn(
               Icons.wrap_text,
               localizations.wordWrap,
@@ -336,7 +339,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
   }
 
   Widget _textView() {
-    final isDark = ThemeCompat.brightnessOf(context) == Brightness.dark;
+    final isDark = Theme.brightnessOf(context) == Brightness.dark;
     final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
     final pageBg = Theme.of(context).colorScheme.surface;
     final editorTheme = isDark
@@ -346,29 +349,23 @@ class _TextEditorPageState extends State<TextEditorPage> {
           }
         : baseTheme;
 
-    // Set language on controller
-    _controller.language = _lang.mode;
-
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
         decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-        child: Scrollbar(
-          thumbVisibility: true,
-          trackVisibility: true,
-          thickness: 8,
-          radius: const Radius.circular(4),
-          child: CodeTheme(
-            data: CodeThemeData(styles: editorTheme),
-            child: CodeField(
-              key: ValueKey('text-editor-${_lang.label}-$_wrap'),
-              controller: _controller,
-              wrap: _wrap,
-              expands: true,
-              textStyle: const TextStyle(fontSize: 13),
-              cursorColor: Theme.of(context).colorScheme.primary,
-            ),
-          ),
+        child: CodeForge(
+          // CodeForge 的 language / lineWrap 是 late final，切换得新 key 重建；
+          // controller / findController 在 State 持有，重建不丢文本、搜索状态、撤销栈。
+          key: ValueKey('text-editor-${_lang.label}-$_wrap'),
+          controller: _controller,
+          findController: _findController,
+          lineWrap: _wrap,
+          language: _lang.mode,
+          enableGuideLines: false,
+          editorTheme: editorTheme,
+          textStyle: const TextStyle(fontSize: 13),
+          finderBuilder: (c, controller) => FindPanelView(controller: controller),
+          selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
         ),
       ),
     );

@@ -38,6 +38,7 @@ class RequestSequence extends StatefulWidget {
   final Function(List<HttpRequest>)? onRemove;
   final MultiSelectController selectionController;
   final RequestSelectionHandlers selectionHandlers;
+  final VoidCallback? onInitialized;  // 初始化完成回调，解决 Tab 懒加载搜索不生效问题
 
   const RequestSequence(
       {super.key,
@@ -46,7 +47,8 @@ class RequestSequence extends StatefulWidget {
       this.displayDomain = true,
       this.onRemove,
       required this.selectionController,
-      required this.selectionHandlers});
+      required this.selectionHandlers,
+      this.onInitialized});
 
   @override
   State<StatefulWidget> createState() {
@@ -59,7 +61,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
 
   ///显示的请求列表 最新的在前面
   Queue<HttpRequest> view = Queue();
-  final Map<String, GlobalKey> rowKeys = <String, GlobalKey>{};
+  final Map<String, VoidCallback> rowRefreshers = <String, VoidCallback>{};
   bool changing = false;
 
   bool sortDesc = true;
@@ -96,6 +98,11 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       _refreshChangedRows(items);
     });
     selectionController.selectedIds.addListener(selectionListener);
+
+    // 通知父组件初始化完成，解决 Tab 懒加载时搜索不生效问题
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onInitialized?.call();
+    });
   }
 
   void changeState() {
@@ -130,21 +137,20 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       itemCount: view.length,
       itemBuilder: (context, index) {
         final request = view.elementAt(index);
-        final requestId = request.requestId;
-        final key = rowKeys.putIfAbsent(requestId, () => GlobalKey());
         return RequestWidget(
-          key: key,
           request,
+          key: ValueKey(request.requestId),
           index: sortDesc ? view.length - index : index,
           trailing: appIcon(request),
           proxyServer: widget.proxyServer,
           displayDomain: widget.displayDomain,
           multiSelectController: selectionController,
           selectionHandlers: widget.selectionHandlers,
+          onMount: (ref) => rowRefreshers[request.requestId] = ref,
           remove: (requestWidget) {
             setState(() {
               view.remove(requestWidget.request);
-              rowKeys.remove(requestWidget.request.requestId);
+              rowRefreshers.remove(requestWidget.request.requestId);
               widget.onRemove?.call([requestWidget.request]);
             });
           },
@@ -189,8 +195,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       view.addLast(request);
     }
 
-    rowKeys.putIfAbsent(request.requestId, () => GlobalKey());
-
     changeState();
   }
 
@@ -205,7 +209,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     if (searchModel?.filter(response.request!, response) == true) {
       if (!view.contains(response.request)) {
         view.addFirst(response.request!);
-        rowKeys.putIfAbsent(response.request!.requestId, () => GlobalKey());
         changeState();
       }
     }
@@ -219,7 +222,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     } else {
       view = Queue.of(widget.container.where((it) => searchModel.filter(it, it.response)).toList().reversed);
     }
-    rowKeys.removeWhere((requestId, _) => !view.any((request) => request.requestId == requestId));
+    rowRefreshers.removeWhere((requestId, _) => !view.any((request) => request.requestId == requestId));
     selectionController.prune(view.map((request) => request.requestId));
     setState(() {});
   }
@@ -228,7 +231,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     setState(() {
       view.removeWhere((element) => list.contains(element));
       for (final request in list) {
-        rowKeys.remove(request.requestId);
+        rowRefreshers.remove(request.requestId);
       }
     });
   }
@@ -236,7 +239,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   void clean() {
     setState(() {
       view.clear();
-      rowKeys.clear();
+      rowRefreshers.clear();
       view.addAll(widget.container.source.reversed);
     });
   }
@@ -261,8 +264,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     }
 
     for (final requestId in changedIds) {
-      final key = rowKeys[requestId];
-      key?.currentState?.setState(() {});
+      rowRefreshers[requestId]?.call();
     }
   }
 }

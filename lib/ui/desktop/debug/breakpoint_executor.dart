@@ -1,10 +1,10 @@
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/desktop/request/request_editor.dart';
 
 class BreakpointExecutor extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final HttpRequest request;
   final HttpResponse? response;
   final String requestId;
@@ -46,7 +46,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       request: request,
       source: RequestEditorSource.breakpointRequest,
       onExecuteRequest: (newRequest) async {
-        await DesktopMultiWindow.invokeMethod(0, 'resumeRequest', {
+        await DesktopMultiWindow.invokeMainWindowMethod('resumeRequest', {
           'requestId': widget.requestId,
           'request': newRequest?.toJson(),
         });
@@ -63,7 +63,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       response: response,
       source: RequestEditorSource.breakpointResponse,
       onExecuteResponse: (newResponse) async {
-        await DesktopMultiWindow.invokeMethod(0, 'resumeResponse', {
+        await DesktopMultiWindow.invokeMainWindowMethod('resumeResponse', {
           'requestId': widget.requestId,
           'response': newResponse?.toJson(),
         });
@@ -73,5 +73,4 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
       },
     );
   }
-
 }

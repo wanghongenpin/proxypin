@@ -88,8 +88,6 @@
   "generateCADescribe": "¿Seguro que deseas generar un nuevo certificado raíz?",
   "gray": "Gris",
   "green": "Verde",
-  "headerExpanded": "Headers expandidos",
-  "headerExpandedSubtitle": "Expandir Headers por defecto",
   "history": "Historial",
   "historyEmptyName": "El nombre no puede estar vacío",
   "historyRecord": "Historial",
@@ -243,5 +241,14 @@
   "encode": "Codificar",
   "view": "Ver",
   "cipher": "Cifrado",
-  "other": "Otros"
+  "other": "Otros",
+
+  "environment": "Entorno",
+  "environmentVariables": "Variables de entorno",
+  "envGlobal": "Global",
+  "envManage": "Gestionar entornos…",
+  "envNone": "Sin entorno",
+  "envDeleteConfirm": "¿Eliminar este entorno?",
+  "envEmptyHint": "Sin variables. Pulsa + para añadir.",
+  "envUsageHint": "Usa %s en reglas o lee/escribe context.env en scripts."
 }

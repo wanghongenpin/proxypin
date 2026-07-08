@@ -17,7 +17,6 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_desktop_context_menu/flutter_desktop_context_menu.dart';
@@ -40,6 +39,7 @@ import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/keyword_highlight.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
+import 'package:proxypin/utils/platform.dart';
 
 import '../../component/model/search_model.dart';
 
@@ -183,8 +183,7 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     //获取所有请求Widget
     List<RequestWidget> requests = containerMap.values.map((e) => e.body).expand((element) => element).toList();
     for (RequestWidget request in requests) {
-      GlobalKey key = request.key as GlobalKey<State>;
-      key.currentState?.setState(() {});
+      request.changeState();
     }
   }
 
@@ -315,12 +314,11 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     }
 
     var fileName = _domainHarFileName(domain);
-    var path = await FilePicker.platform.saveFile(fileName: fileName);
-    if (path == null) {
-      return;
-    }
-
     try {
+      var path = await Platforms.saveFileAdaptive(fileName: fileName);
+      if (path == null) {
+        return;
+      }
       var file = await File(path).create(recursive: true);
       await Har.writeFile(requests, file, title: fileName);
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
@@ -421,6 +419,7 @@ class DomainRequests extends StatefulWidget {
     if (requestMap.containsKey(requestId)) return;
 
     var requestWidget = RequestWidget(request,
+        key: ValueKey(request.requestId),
         index: body.length,
         proxyServer: proxyServer,
         displayDomain: false,

@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-import 'dart:io';
+import 'package:re_highlight/languages/json.dart';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:code_forge/code_forge.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/ui/component/state_component.dart';
-import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
+
+import '../../../component/search/finder.dart';
 
 /// 重写替换
 /// @author wanghongen
 /// 2023/10/8
 class DesktopRewriteReplace extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final RuleType ruleType;
   final List<RewriteItem>? items;
 
@@ -43,7 +46,7 @@ class DesktopRewriteReplace extends StatefulWidget {
 
 class RewriteReplaceState extends State<DesktopRewriteReplace> {
   final _headerKey = GlobalKey<HeadersState>();
-  late HighlightTextEditingController bodyTextController;
+  late CodeForgeController bodyTextController;
   VoidCallback? _bodyListener;
   late RuleType ruleType;
   List<RewriteItem> items = [];
@@ -53,7 +56,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
   @override
   initState() {
     super.initState();
-    bodyTextController = HighlightTextEditingController();
+    bodyTextController = CodeForgeController();
     ruleType = widget.ruleType;
     initItems(widget.ruleType, widget.items);
   }
@@ -182,7 +185,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
         SizedBox(
             width: 90,
             child: DropdownButtonFormField<String>(
-                value: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
+                initialValue: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
                 focusColor: Colors.transparent,
                 itemHeight: 48,
                 decoration:
@@ -239,16 +242,15 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
               };
               bodyTextController.addListener(_bodyListener!);
 
-              return TextField(
+              return CodeForge(
                 controller: bodyTextController,
-                cursorColor: Theme.of(context).colorScheme.primary,
-                style: const TextStyle(fontSize: 14),
-                maxLines: null,
-                expands: true,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(10),
-                ),
+                lineWrap: true,
+                language: isJsonText() ? langJson : null,
+                enableGuideLines: false,
+                selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+                editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                textStyle: const TextStyle(fontSize: 14),
+                finderBuilder: (c, controller) => FindPanelView(controller: controller),
               );
             }))
     ]);
@@ -275,14 +277,8 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
       const SizedBox(width: 10),
       FilledButton(
           onPressed: () async {
-            String? path;
-            if (Platform.isMacOS) {
-              path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
-              if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-            } else {
-              FilePickerResult? result = await FilePicker.platform.pickFiles();
-              path = result?.files.single.path;
-            }
+            FilePickerResult? result = await FilePicker.pickFiles();
+            final path = result?.files.single.path;
 
             if (path == null) {
               return;
@@ -338,7 +334,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
           SizedBox(
               width: 120,
               child: DropdownButtonFormField<String>(
-                  value: rewriteItem.method?.name ?? 'GET',
+                  initialValue: rewriteItem.method?.name ?? 'GET',
                   focusColor: Colors.transparent,
                   itemHeight: 48,
                   decoration: const InputDecoration(

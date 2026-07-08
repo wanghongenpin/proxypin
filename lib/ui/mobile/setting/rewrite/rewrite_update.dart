@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
+import 'package:code_forge/code_forge/code_area.dart';
+import 'package:code_forge/code_forge/controller.dart';
+import 'package:code_forge/code_forge/find_controller.dart';
+import 'package:code_forge/code_forge/styling.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:re_highlight/styles/atom-one-dark.dart';
+import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/widgets.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:re_highlight/languages/json.dart';
 
 class MobileRewriteUpdate extends StatefulWidget {
   final RuleType ruleType;
@@ -118,9 +123,11 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   var keyController = TextEditingController();
   var valueController = TextEditingController();
-  final CodeController _codeDataController = CodeController();
+  final CodeForgeController _codeDataController = CodeForgeController();
+  late FindController _findController;
 
   bool jsonFormatted = false;
+  bool useRegex = true;
 
   AppLocalizations get i18n => AppLocalizations.of(context)!;
 
@@ -129,12 +136,24 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     super.initState();
     rewriteType = widget.item?.type ?? RewriteType.updateBody;
     rewriteItem = widget.item ?? RewriteItem(rewriteType, true);
+    useRegex = widget.item?.useRegex ?? true;
 
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
+    _findController = FindController(_codeDataController);
+    _findController.isRegex = useRegex;
+
     initTestData();
     keyController.addListener(onInputChangeMatch);
+
+    var textVersion = _codeDataController.contentVersion;
+    _codeDataController.addListener(() {
+      if (textVersion != _codeDataController.contentVersion) {
+        textVersion = _codeDataController.contentVersion;
+        onInputChangeMatch();
+      }
+    });
   }
 
   @override
@@ -142,6 +161,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     keyController.dispose();
     valueController.dispose();
     _codeDataController.dispose();
+    _findController.dispose();
     super.dispose();
   }
 
@@ -178,6 +198,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                     rewriteItem.key = keyController.text;
                     rewriteItem.value = valueController.text;
                     rewriteItem.type = rewriteType;
+                    rewriteItem.useRegex = useRegex;
                     Navigator.of(context).pop(rewriteItem);
                   },
                   child: Text(i18n.confirm)),
@@ -193,7 +214,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                   SizedBox(
                       width: 140,
                       child: DropdownButtonFormField<RewriteType>(
-                          value: rewriteType,
+                          initialValue: rewriteType,
                           focusColor: Colors.transparent,
                           itemHeight: 48,
                           decoration: const InputDecoration(
@@ -213,7 +234,29 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                 ],
               ),
               const SizedBox(height: 15),
-              textField(isUpdate ? i18n.match : i18n.name, keyTips, controller: keyController, required: !isDelete),
+              textField(isUpdate ? i18n.match : i18n.name, keyTips,
+                  controller: keyController,
+                  required: !isDelete,
+                  suffix: (isUpdate || isDelete)
+                      ? InkWell(
+                          onTap: () {
+                            setState(() => useRegex = !useRegex);
+                            _findController.isRegex = useRegex;
+                            onInputChangeMatch();
+                          },
+                          child: Tooltip(
+                            message: i18n.regExp,
+                            padding: const EdgeInsets.only(right: 2, left: 2),
+                            child: Text(
+                              '.*',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: useRegex ? Theme.of(context).colorScheme.primary : Colors.grey,
+                                fontWeight: useRegex ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ))
+                      : null),
               const SizedBox(height: 15),
               textField(isUpdate ? i18n.replace : i18n.value, valueTips, controller: valueController),
               const SizedBox(height: 10),
@@ -244,9 +287,12 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
               Container(
                   height: MediaQuery.of(context).size.height * 0.45,
                   decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                  child: CodeField(
+                  child: CodeForge(
                     controller: _codeDataController,
-                    cursorColor: Theme.of(context).colorScheme.primary,
+                    language: isJsonText() ? langJson : null,
+                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+                    editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                    enableGuideLines: false,
                     textStyle: const TextStyle(fontSize: 14),
                   )),
             ])));
@@ -261,6 +307,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   void initTestData() {
     // dataController.splitPattern = null;
+    _findController.caseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
     valueController.removeListener(onInputChangeMatch);
@@ -326,24 +373,21 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
         key = '$key${valueController.text}';
       }
 
-      // 使用简单正则匹配检测 key 是否存在于文本中
-      if (key.isEmpty) {
-        isMatch.value = true;
-      } else {
-        final pattern = RegExp(RegExp.escape(key), caseSensitive: false);
-        isMatch.value = pattern.hasMatch(_codeDataController.text);
-      }
+      _findController.find(key);
+      isMatch.value = _findController.matchCount > 0;
     });
   }
 
-  Widget textField(String label, String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+  Widget textField(String label, String hint,
+      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return Row(children: [
       SizedBox(width: 55, child: Text(label)),
-      Expanded(child: formField(hint, required: required, lines: lines, controller: controller))
+      Expanded(child: formField(hint, required: required, lines: lines, controller: controller, suffix: suffix))
     ]);
   }
 
-  Widget formField(String hint, {bool required = false, int? lines, TextEditingController? controller}) {
+  Widget formField(String hint,
+      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 14),
@@ -358,6 +402,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
           errorStyle: const TextStyle(height: 0, fontSize: 0),
           focusedBorder: focusedBorder(),
           isDense: true,
+          suffix: suffix,
           border: const OutlineInputBorder()),
     );
   }

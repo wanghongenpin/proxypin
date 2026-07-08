@@ -16,7 +16,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -33,14 +33,15 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_replace.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
+import 'package:proxypin/utils/platform.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../component/http_method_popup.dart';
 
 /// @author wanghongen
 /// 2023/10/8
 class RequestRewriteWidget extends StatefulWidget {
-  final int windowId;
+  final String windowId;
   final RequestRewriteManager requestRewrites;
 
   const RequestRewriteWidget({super.key, required this.windowId, required this.requestRewrites});
@@ -99,7 +100,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
             toolbarHeight: 34,
             centerTitle: true),
         body: Padding(
-            padding: const EdgeInsets.only(left: 15, right: 10),
+            padding: const EdgeInsets.only(left: 15, right: 10, bottom: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 SizedBox(
@@ -144,7 +145,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
                 const SizedBox(width: 15)
               ]),
               const SizedBox(height: 10),
-              RequestRuleList(widget.requestRewrites, windowId: widget.windowId),
+              Expanded(child: RequestRuleList(widget.requestRewrites, windowId: widget.windowId)),
             ])));
   }
 
@@ -156,17 +157,8 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   Future<void> import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
-        "allowedExtensions": ['config', 'json']
-      });
-      WindowController.fromWindowId(widget.windowId).show();
-    } else {
-      FilePickerResult? result =
-          await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    String? path = result?.files.single.path;
 
     if (path == null) {
       return;
@@ -206,7 +198,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
 ///请求重写规则列表
 class RequestRuleList extends StatefulWidget {
-  final int windowId;
+  final String windowId;
   final RequestRewriteManager requestRewrites;
 
   const RequestRuleList(this.requestRewrites, {super.key, required this.windowId});
@@ -259,7 +251,6 @@ class _RequestRuleListState extends State<RequestRuleList> {
             },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
-                constraints: const BoxConstraints(maxHeight: 600, minHeight: 550),
                 decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
@@ -373,15 +364,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
-
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
-      WindowController.fromWindowId(widget.windowId).show();
-    } else {
-      path = await FilePicker.platform.saveFile(fileName: fileName);
-    }
-
+    String? path = await Platforms.saveFileAdaptive(fileName: fileName);
     if (path == null) {
       return;
     }
@@ -480,7 +463,7 @@ class RewriteRuleEdit extends StatefulWidget {
   final RequestRewriteRule? rule;
   final List<RewriteItem>? items;
   final HttpRequest? request;
-  final int? windowId;
+  final String? windowId;
 
   const RewriteRuleEdit({super.key, this.rule, this.items, this.windowId, this.request});
 
@@ -541,12 +524,9 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
               text: localizations.useGuide,
               style: const TextStyle(color: Colors.blue, fontSize: 14),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => DesktopMultiWindow.invokeMethod(
-                    0,
-                    "launchUrl",
-                    isCN
-                        ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
-                        : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite'))),
+                ..onTap = () => launchUrl(Uri.parse(isCN
+                    ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                    : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite')))),
         ]),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
@@ -605,7 +585,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                             height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              value: ruleType,
+                              initialValue: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),

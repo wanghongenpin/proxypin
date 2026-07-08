@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_local.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_scipt.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
+import 'package:proxypin/utils/platform.dart';
 
 import '../../../../network/util/logger.dart';
 
@@ -26,7 +26,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   if (force) {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
     return;
   }
 
@@ -37,12 +37,12 @@ Future<void> _refreshConfig({bool force = false}) async {
   Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
   });
 }
 
 class RequestMapPage extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const RequestMapPage({super.key, this.windowId});
 
@@ -141,16 +141,8 @@ class _RequestMapPageState extends State<RequestMapPage> {
 
   //导入js
   Future<void> import() async {
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
-        "allowedExtensions": ['json']
-      });
-      WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      path = result?.files.single.path;
-    }
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final path = result?.files.single.path;
 
     if (path == null) {
       return;
@@ -191,7 +183,7 @@ class _RequestMapPageState extends State<RequestMapPage> {
 
 /// 脚本列表
 class RequestMapList extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
   final List<RequestMapRule> list;
 
   const RequestMapList({super.key, required this.list, required this.windowId});
@@ -395,14 +387,7 @@ class _RequestMapListState extends State<RequestMapList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'request_map.json';
-    String? path;
-    if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
-
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
-    } else {
-      path = await FilePicker.platform.saveFile(fileName: fileName);
-    }
+    String? path = await Platforms.saveFileAdaptive(fileName: fileName);
     if (path == null) {
       return;
     }
@@ -452,7 +437,7 @@ class _RequestMapListState extends State<RequestMapList> {
 class RequestMapEdit extends StatefulWidget {
   final RequestMapRule? rule;
   final RequestMapItem? item;
-  final int? windowId;
+  final String? windowId;
   final String? url;
   final String? title;
 
@@ -531,7 +516,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                             height: 33,
                             child: DropdownButtonFormField<RequestMapType>(
                               onSaved: (val) => rule.type = val!,
-                              value: mapType,
+                              initialValue: mapType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),
@@ -580,7 +565,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                   await requestMapManager.addRule(rule, item);
                 }
 
-                DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+                DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
                 if (mounted) {
                   Navigator.of(this.context).pop(rule);
                 }

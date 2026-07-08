@@ -1,5 +1,6 @@
 import Cocoa
 import FlutterMacOS
+import desktop_multi_window
 
 class MainFlutterWindow: NSWindow {
     // Offsets from the top-left corner of the title bar container (in points)
@@ -21,6 +22,10 @@ class MainFlutterWindow: NSWindow {
         AppLifecycleChannel.registerChannel(flutterViewController: flutterViewController)
 
         RegisterGeneratedPlugins(registry: flutterViewController)
+
+        FlutterMultiWindowPlugin.setOnWindowCreatedCallback { controller in
+            RegisterGeneratedPlugins(registry: controller)
+        }
 
         super.awakeFromNib()
 

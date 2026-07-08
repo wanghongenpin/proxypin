@@ -19,11 +19,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:date_format/date_format.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -39,6 +38,7 @@ import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/repeat.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/lang.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -280,7 +280,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     ));
     window.setTitle(localizations.requestEdit);
     window
-      ..setFrame(const Offset(100, 100) & Size(960 * ratio, size.height * ratio))
+      ..setSize(Size(960 * ratio, size.height * ratio))
       ..center()
       ..show();
   }
@@ -349,7 +349,7 @@ class _FavoritesActions extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                   icon: const Icon(Icons.upload_file, size: 18),
                   onPressed: () async {
-                    final path = await FilePicker.platform.saveFile(fileName: 'favorites.json');
+                    final path = await Platforms.saveFileAdaptive(fileName: 'favorites.json');
                     if (path == null) return;
                     await FavoriteStorage.exportToFile(path);
                     if (context.mounted) CustomToast.success(localizations.exportSuccess).show(context);
@@ -363,7 +363,7 @@ class _FavoritesActions extends StatelessWidget {
                   icon: const Icon(Icons.download_for_offline_outlined, size: 18),
                   onPressed: () async {
                     final result =
-                        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
+                        await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
                     final file = result?.files.isNotEmpty == true ? result!.files.first : null;
                     if (file?.path == null) return;
 

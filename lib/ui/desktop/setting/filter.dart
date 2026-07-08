@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -163,7 +161,7 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   Future<void> import() async {
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+    final FilePickerResult? result = await FilePicker.pickFiles(
         allowedExtensions: ['config'], type: FileType.custom, initialDirectory: "/Downloads");
     var file = result?.files.single;
     if (file == null) {
@@ -322,22 +320,19 @@ class _DomainListState extends State<DomainList> {
   }
 
   //导出
-  export(List<int> indexes) async {
+  Future<void> export(List<int> indexes) async {
     if (indexes.isEmpty) return;
 
     String fileName = 'host-filters.config';
-    String? saveLocation = (await FilePicker.platform.saveFile(fileName: fileName));
-    if (saveLocation == null) {
-      return;
-    }
-
     var list = [];
     for (var index in indexes) {
       String rule = widget.hostList.list[index].pattern.replaceAll(".*", "*");
       list.add(rule);
     }
-
-    await File(saveLocation).writeAsBytes(utf8.encode(jsonEncode(list)));
+    String? saveLocation = (await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list))));
+    if (saveLocation == null) {
+      return;
+    }
 
     if (mounted) {
       FlutterToastr.show(localizations.exportSuccess, context);

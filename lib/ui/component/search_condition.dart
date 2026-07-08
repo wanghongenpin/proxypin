@@ -54,6 +54,7 @@ class SearchConditionsState extends State<SearchConditions> {
     'JS': ContentType.js,
     'CSS': ContentType.css,
     'TEXT': ContentType.text,
+    'SSE': ContentType.sse,
   };
 
   late SearchModel searchModel;
@@ -280,6 +281,19 @@ class SearchConditionsState extends State<SearchConditions> {
           visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
           onSelected: (sel) => setState(() {
             sel ? searchModel.protocols.add(Protocol.ws) : searchModel.protocols.remove(Protocol.ws);
+          }),
+        ),
+        FilterChip(
+          label: const Text('SSE'),
+          selected: searchModel.protocols.contains(Protocol.sse),
+          showCheckmark: false,
+          selectedColor: primaryColor.withValues(alpha: 0.12),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+          labelStyle: const TextStyle(fontSize: 12),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -3, vertical: -3),
+          onSelected: (sel) => setState(() {
+            sel ? searchModel.protocols.add(Protocol.sse) : searchModel.protocols.remove(Protocol.sse);
           }),
         ),
         FilterChip(

@@ -270,8 +270,8 @@
   "connected": "Connected",
   "notConnected": "Not connected",
   "disconnect": "Disconnect",
-  "ipLayerProxy": "IP Layer Proxy(Beta)",
-  "ipLayerProxyDesc": "IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR",
+  "ipLayerProxy": "IP Layer Proxy",
+  "ipLayerProxyDesc": "IP layer proxy can capture Flutter app requests",
   "inputAddress": "Input Address",
   "syncConfig": "Sync configuration",
   "pullConfigFail": "Failed to pull configuration, please check the network connection",
@@ -284,8 +284,6 @@
   "windowModeSubTitle": "Enabled Packet Capture, Enter the background, Display a small window",
   "pipIcon": "Window shortcut icon",
   "pipIconDescribe": "Show quick access to small window Icon",
-  "headerExpanded": "Headers Expanded",
-  "headerExpandedSubtitle": "Details page Headers is expanded by default",
   "bottomNavigation": "Bottom Navigation",
   "bottomNavigationSubtitle": "Bottom navigation bar is displayed, effective after restart",
   "memoryCleanup": "Memory Cleanup",
@@ -379,6 +377,10 @@
   "appUpdateUpdateNowBtnTxt": "Update Now",
   "appUpdateLaterBtnTxt": "Later",
   "appUpdateIgnoreBtnTxt": "Ignore",
+  "appUpdateInstallNow": "Install Now",
+  "appUpdateRetry": "Retry",
+  "appUpdateBackgroundDownload": "Download in background",
+  "appUpdateOpenDownloadPage": "Open Download Page",
 
   "requestMap": "Request Map",
   "requestMapDescribe": "Do not request remote services, use local configuration or script for response",
@@ -406,5 +408,14 @@
 
   "local": "Local",
   "remoteUrl": "Remote URL",
-  "preview": "Preview"
+  "preview": "Preview",
+
+  "environment": "Environment",
+  "environmentVariables": "Environment Variables",
+  "envGlobal": "Global",
+  "envManage": "Manage Environments…",
+  "envNone": "No Environment",
+  "envDeleteConfirm": "Delete this environment?",
+  "envEmptyHint": "No variables yet. Click + to add.",
+  "envUsageHint": "Reference variables as %s in rules, or read/write via context.env in scripts."
 }

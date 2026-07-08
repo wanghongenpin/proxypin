@@ -63,9 +63,16 @@ class AppUpdateRepository {
 
   /// Fetches the latest version information from the GitHub releases API.
   static Future<RemoteVersionEntity?> getLatestVersion({bool includePreReleases = false}) async {
-    final response = await http.get(Uri.parse(Constants.githubReleasesApiUrl));
+    late final http.Response response;
+    try {
+      response = await http.get(Uri.parse(Constants.githubReleasesApiUrl));
+    } catch (e) {
+      logger.w("[AppUpdate] failed to fetch latest version info: $e");
+      return null;
+    }
     if (response.statusCode != 200 || response.body.isEmpty) {
-      logger.w("[AppUpdate] failed to fetch latest version info");
+      logger.w(
+          "[AppUpdate] failed to fetch latest version info: status=${response.statusCode} bodyLen=${response.body.length}");
       return null;
     }
 

@@ -833,12 +833,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get pipIconDescribe => 'Tampilkan ikon akses cepat ke jendela kecil';
 
   @override
-  String get headerExpanded => 'Header diperluas';
-
-  @override
-  String get headerExpandedSubtitle => 'Perluas Headers secara default';
-
-  @override
   String get bottomNavigation => 'Navigasi bawah';
 
   @override
@@ -1089,6 +1083,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'Abaikan';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'Peta permintaan';
 
   @override
@@ -1155,4 +1161,28 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get preview => 'Pratinjau';
+
+  @override
+  String get environment => 'Environment';
+
+  @override
+  String get environmentVariables => 'Variabel Environment';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Kelola Environment…';
+
+  @override
+  String get envNone => 'Tanpa Environment';
+
+  @override
+  String get envDeleteConfirm => 'Hapus environment ini?';
+
+  @override
+  String get envEmptyHint => 'Belum ada variabel. Klik + untuk menambahkan.';
+
+  @override
+  String get envUsageHint => 'Gunakan %s di aturan atau baca/tulis context.env di skrip.';
 }

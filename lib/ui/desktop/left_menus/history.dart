@@ -23,7 +23,6 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
@@ -34,6 +33,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/har.dart';
 import 'package:proxypin/utils/listenable_list.dart';
+import 'package:proxypin/utils/platform.dart';
 
 import '../../content/panel.dart';
 import '../request/list.dart';
@@ -80,7 +80,7 @@ class HistoryPageWidget extends StatelessWidget {
             preferredSize: const Size.fromHeight(40),
             child: AppBar(
               leadingWidth: 50,
-              leading: BackButton(style: ButtonStyle(iconSize: MaterialStateProperty.all(15))),
+              leading: BackButton(style: ButtonStyle(iconSize: WidgetStateProperty.all(15))),
               centerTitle: false,
               title: Text(
                   textAlign: TextAlign.start,
@@ -193,7 +193,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
 
   //导入har
   Future<void> import() async {
-    final results = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['har']);
+    final results = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['har']);
     if (results == null || results.files.isEmpty) {
       return;
     }
@@ -331,7 +331,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
     String fileName =
         '${item.name.contains("ProxyPin") ? '' : 'ProxyPin'}${item.name}.har'.replaceAll(" ", "_").replaceAll(":", "_");
 
-    final String? path = await FilePicker.platform.saveFile(fileName: fileName);
+    final String? path = await Platforms.saveFileAdaptive(fileName: fileName);
     if (path == null) {
       return;
     }

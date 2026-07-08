@@ -1639,13 +1639,13 @@ abstract class AppLocalizations {
   /// No description provided for @ipLayerProxy.
   ///
   /// In en, this message translates to:
-  /// **'IP Layer Proxy(Beta)'**
+  /// **'IP Layer Proxy'**
   String get ipLayerProxy;
 
   /// No description provided for @ipLayerProxyDesc.
   ///
   /// In en, this message translates to:
-  /// **'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR'**
+  /// **'IP layer proxy can capture Flutter app requests'**
   String get ipLayerProxyDesc;
 
   /// No description provided for @inputAddress.
@@ -1713,18 +1713,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show quick access to small window Icon'**
   String get pipIconDescribe;
-
-  /// No description provided for @headerExpanded.
-  ///
-  /// In en, this message translates to:
-  /// **'Headers Expanded'**
-  String get headerExpanded;
-
-  /// No description provided for @headerExpandedSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Details page Headers is expanded by default'**
-  String get headerExpandedSubtitle;
 
   /// No description provided for @bottomNavigation.
   ///
@@ -2212,6 +2200,30 @@ abstract class AppLocalizations {
   /// **'Ignore'**
   String get appUpdateIgnoreBtnTxt;
 
+  /// No description provided for @appUpdateInstallNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Now'**
+  String get appUpdateInstallNow;
+
+  /// No description provided for @appUpdateRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get appUpdateRetry;
+
+  /// No description provided for @appUpdateBackgroundDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download in background'**
+  String get appUpdateBackgroundDownload;
+
+  /// No description provided for @appUpdateOpenDownloadPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Download Page'**
+  String get appUpdateOpenDownloadPage;
+
   /// No description provided for @requestMap.
   ///
   /// In en, this message translates to:
@@ -2343,6 +2355,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview'**
   String get preview;
+
+  /// No description provided for @environment.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment'**
+  String get environment;
+
+  /// No description provided for @environmentVariables.
+  ///
+  /// In en, this message translates to:
+  /// **'Environment Variables'**
+  String get environmentVariables;
+
+  /// No description provided for @envGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get envGlobal;
+
+  /// No description provided for @envManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Environments…'**
+  String get envManage;
+
+  /// No description provided for @envNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No Environment'**
+  String get envNone;
+
+  /// No description provided for @envDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this environment?'**
+  String get envDeleteConfirm;
+
+  /// No description provided for @envEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No variables yet. Click + to add.'**
+  String get envEmptyHint;
+
+  /// No description provided for @envUsageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference variables as %s in rules, or read/write via context.env in scripts.'**
+  String get envUsageHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

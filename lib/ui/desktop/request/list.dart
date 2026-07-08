@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
@@ -28,20 +25,20 @@ import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
-import 'package:proxypin/ui/desktop/request/request_sequence.dart';
+import 'package:proxypin/ui/desktop/request/report_servers.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
+import 'package:proxypin/ui/desktop/request/request_sequence.dart';
 import 'package:proxypin/ui/desktop/request/search.dart';
-import 'package:proxypin/ui/component/selection_action_bar.dart';
-import 'package:proxypin/utils/har.dart';
+import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../component/model/search_model.dart';
 import 'domains.dart';
-import 'package:proxypin/ui/desktop/request/report_servers.dart';
 
 /// @author wanghongen
 class DesktopRequestListWidget extends StatefulWidget {
@@ -168,6 +165,11 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                               onExportSelected: exportSelected,
                             ),
                             onRemove: sequenceRemove,
+                            onInitialized: () {
+                              if (searchKey.currentState?.searchModel.isNotEmpty == true) {
+                                requestSequenceKey.currentState?.search(searchKey.currentState!.searchModel);
+                              }
+                            },
                           ),
                         ])),
                       ])));
@@ -192,7 +194,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
             _menuItem(_RequestListMenuAction.repeat,
                 icon: const Icon(Icons.repeat, size: 16), text: localizations.repeatAllRequests),
             _menuItem(_RequestListMenuAction.select,
-                icon: const Icon(Icons.checklist_outlined, size: 16), text: localizations.selectAction),
+                icon: const Icon(Icons.checklist_outlined, size: 16), text: localizations.select),
             _menuItem(_RequestListMenuAction.sort,
                 icon: const Icon(Icons.sort, size: 16),
                 text: sortDesc ? localizations.timeAsc : localizations.timeDesc),
@@ -349,9 +351,10 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
       return;
     }
 
-    final fileName = 'ProxyPin_selected_${DateTime.now().dateFormat()}.har';
-    _doExport(fileName, selectedRequests);
-    selectionController.clear();
+    final folderName = 'proxypin_export_${DateTime.now().dateFormat()}';
+    showExportDialog(context, selectedRequests, folderName, onExportSuccess: () {
+      selectionController.clear();
+    });
   }
 
   ///导出
@@ -359,18 +362,8 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     //获取请求
     List<HttpRequest>? requests = currentView();
     if (requests == null) return;
-    _doExport(fileName, requests);
-  }
-
-  Future<void> _doExport(String fileName, List<HttpRequest> requests) async {
-    var path = await FilePicker.platform.saveFile(fileName: fileName);
-    if (path == null) {
-      return;
-    }
-    var file = await File(path).create();
-    await Har.writeFile(requests, file, title: fileName);
-
-    if (mounted) FlutterToastr.show(AppLocalizations.of(context)!.exportSuccess, context);
+    final folderName = 'proxypin_${DateTime.now().dateFormat()}';
+    showExportDialog(context, requests, folderName);
   }
 
   ///重发所有请求

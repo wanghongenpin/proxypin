@@ -1,21 +1,22 @@
 import 'dart:io';
 
-import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_code_editor/flutter_code_editor.dart';
-import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:re_highlight/styles/monokai-sublime.dart';
 import 'package:flutter_js/flutter_js.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/ui/component/search/finder.dart';
+import 'package:proxypin/utils/platform.dart';
+import 'package:re_highlight/languages/javascript.dart';
 import 'package:proxypin/network/components/js/file.dart';
 import 'package:proxypin/network/components/js/md5.dart';
 import 'package:proxypin/network/components/js/xhr.dart';
-import 'package:proxypin/utils/platform.dart';
 
 class JavaScript extends StatefulWidget {
-  final int? windowId;
+  final String? windowId;
 
   const JavaScript({super.key, this.windowId});
 
@@ -31,7 +32,7 @@ class _JavaScriptState extends State<JavaScript> {
 
   static JavascriptRuntime? flutterJs;
 
-  late CodeController code;
+  late CodeForgeController code;
 
   List<Text> outLines = [];
 
@@ -52,7 +53,7 @@ class _JavaScriptState extends State<JavaScript> {
     FileBridge.registerFile(flutterJs!);
     flutterJs?.enableFetch2(enabledProxy: true);
 
-    code = CodeController()..text = 'console.log("Hello, World!")';
+    code = CodeForgeController()..text = 'console.log("Hello, World!")';
   }
 
   @override
@@ -97,17 +98,9 @@ class _JavaScriptState extends State<JavaScript> {
                   //选择文件
                   ElevatedButton.icon(
                       onPressed: () async {
-                        String? path;
-                        if (Platform.isMacOS) {
-                          path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
-                            "allowedExtensions": ['js']
-                          });
-                          WindowController.fromWindowId(widget.windowId!).show();
-                        } else {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
-                          path = result?.files.single.path;
-                        }
+                        FilePickerResult? result =
+                            await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['js']);
+                        final path = result?.files.single.path;
 
                         if (path != null) {
                           File file = File(path);
@@ -143,12 +136,14 @@ class _JavaScriptState extends State<JavaScript> {
               const SizedBox(height: 8),
               SizedBox(
                   height: MediaQuery.of(context).size.height * 0.43,
-                  child: CodeTheme(
-                    data: CodeThemeData(styles: monokaiSublimeTheme),
-                    child: CodeField(
-                      controller: code,
-                      textStyle: const TextStyle(fontSize: 13),
-                    ),
+                  child: CodeForge(
+                    controller: code,
+                    language: langJavascript,
+                    editorTheme: monokaiSublimeTheme,
+                    autoFocus: true,
+                    enableGuideLines: false,
+                    finderBuilder: (c, controller) => FindPanelView(controller: controller),
+                    textStyle: const TextStyle(fontSize: 13),
                   )),
               Row(children: [
                 const SizedBox(width: 10),

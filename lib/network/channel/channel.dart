@@ -115,6 +115,9 @@ class Channel {
   ///是否是ssl链接
   bool get isSsl => _socket is SecureSocket;
 
+  ///远程服务器证书(仅ssl链接有效)
+  X509Certificate? get peerCertificate => _socket is SecureSocket ? (_socket as SecureSocket).peerCertificate : null;
+
   Future<void> write(ChannelContext channelContext, Object obj) async {
     var data = dispatcher.encoder.encode(channelContext, obj);
     await writeBytes(data);

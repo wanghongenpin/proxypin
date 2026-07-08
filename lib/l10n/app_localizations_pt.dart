@@ -796,11 +796,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get disconnect => 'Disconnect';
 
   @override
-  String get ipLayerProxy => 'IP Layer Proxy(Beta)';
+  String get ipLayerProxy => 'IP Layer Proxy';
 
   @override
-  String get ipLayerProxyDesc =>
-      'IP layer proxy can capture Flutter app requests, currently not very stable, welcome to submit PR';
+  String get ipLayerProxyDesc => 'IP layer proxy can capture Flutter app requests';
 
   @override
   String get inputAddress => 'Input Address';
@@ -835,12 +834,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pipIconDescribe => 'Show quick access to small window Icon';
-
-  @override
-  String get headerExpanded => 'Headers Expanded';
-
-  @override
-  String get headerExpandedSubtitle => 'Details page Headers is expanded by default';
 
   @override
   String get bottomNavigation => 'Bottom Navigation';
@@ -1094,6 +1087,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'Ignore';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'Request Map';
 
   @override
@@ -1160,6 +1165,30 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get preview => 'Preview';
+
+  @override
+  String get environment => 'Environment';
+
+  @override
+  String get environmentVariables => 'Environment Variables';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Manage Environments…';
+
+  @override
+  String get envNone => 'No Environment';
+
+  @override
+  String get envDeleteConfirm => 'Delete this environment?';
+
+  @override
+  String get envEmptyHint => 'No variables yet. Click + to add.';
+
+  @override
+  String get envUsageHint => 'Reference variables as %s in rules, or read/write via context.env in scripts.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1751,12 +1780,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get pipIconDescribe => 'Mostrar ícone de acesso rápido à janela pequena';
 
   @override
-  String get headerExpanded => 'Cabeçalhos expandidos';
-
-  @override
-  String get headerExpandedSubtitle => 'Expandir cabeçalhos por padrão';
-
-  @override
   String get bottomNavigation => 'Navegação inferior';
 
   @override
@@ -1907,4 +1930,28 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get preview => 'Visualizar';
+
+  @override
+  String get environment => 'Ambiente';
+
+  @override
+  String get environmentVariables => 'Variáveis de Ambiente';
+
+  @override
+  String get envGlobal => 'Global';
+
+  @override
+  String get envManage => 'Gerenciar Ambientes…';
+
+  @override
+  String get envNone => 'Sem Ambiente';
+
+  @override
+  String get envDeleteConfirm => 'Excluir este ambiente?';
+
+  @override
+  String get envEmptyHint => 'Nenhuma variável. Clique em + para adicionar.';
+
+  @override
+  String get envUsageHint => 'Use %s em regras ou leia/escreva context.env em scripts.';
 }

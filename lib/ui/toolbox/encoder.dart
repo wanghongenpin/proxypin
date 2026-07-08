@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
-import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/util/logger.dart';
+
+import '../component/buttons.dart';
 
 ///编码类型
 enum EncoderType {
@@ -132,13 +134,13 @@ class _EncoderState extends State<EncoderWidget> with SingleTickerProviderStateM
               decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: outputTextController.text));
-                FlutterToastr.show(localizations.copied, context);
-              },
-              child: Text(localizations.copy),
-            ),
+            FilledButton(
+                style: Buttons.buttonStyle,
+                child: Text(localizations.copy),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: outputTextController.text));
+                  FlutterToastr.show(localizations.copied, context);
+                }),
           ],
         ),
       ),

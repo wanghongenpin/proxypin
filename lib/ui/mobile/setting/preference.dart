@@ -120,17 +120,6 @@ class _PreferenceState extends State<Preference> {
                       })),
               Divider(height: 0, thickness: 0.3, color: dividerColor),
               ListTile(
-                  title: Text(localizations.headerExpanded),
-                  subtitle: Text(localizations.headerExpandedSubtitle, style: const TextStyle(fontSize: 12)),
-                  trailing: SwitchWidget(
-                      value: appConfiguration.headerExpanded,
-                      scale: 0.8,
-                      onChanged: (value) {
-                        appConfiguration.headerExpanded = value;
-                        appConfiguration.flushConfig();
-                      })),
-              Divider(height: 0, thickness: 0.3, color: dividerColor),
-              ListTile(
                   title: Text(localizations.bottomNavigation),
                   subtitle: Text(localizations.bottomNavigationSubtitle, style: const TextStyle(fontSize: 12)),
                   trailing: SwitchWidget(

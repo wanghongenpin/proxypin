@@ -833,12 +833,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pipIconDescribe => 'แสดงไอคอนเปิดหน้าต่างย่อ';
 
   @override
-  String get headerExpanded => 'ขยาย Headers';
-
-  @override
-  String get headerExpandedSubtitle => 'ขยาย Headers เป็นค่าเริ่มต้น';
-
-  @override
   String get bottomNavigation => 'แถบนำทางด้านล่าง';
 
   @override
@@ -1088,6 +1082,18 @@ class AppLocalizationsTh extends AppLocalizations {
   String get appUpdateIgnoreBtnTxt => 'ข้าม';
 
   @override
+  String get appUpdateInstallNow => 'Install Now';
+
+  @override
+  String get appUpdateRetry => 'Retry';
+
+  @override
+  String get appUpdateBackgroundDownload => 'Download in background';
+
+  @override
+  String get appUpdateOpenDownloadPage => 'Open Download Page';
+
+  @override
   String get requestMap => 'แม็ปคำขอ';
 
   @override
@@ -1153,4 +1159,28 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get preview => 'ดูตัวอย่าง';
+
+  @override
+  String get environment => 'สภาพแวดล้อม';
+
+  @override
+  String get environmentVariables => 'ตัวแปรสภาพแวดล้อม';
+
+  @override
+  String get envGlobal => 'ส่วนกลาง';
+
+  @override
+  String get envManage => 'จัดการสภาพแวดล้อม…';
+
+  @override
+  String get envNone => 'ไม่มีสภาพแวดล้อม';
+
+  @override
+  String get envDeleteConfirm => 'ลบสภาพแวดล้อมนี้?';
+
+  @override
+  String get envEmptyHint => 'ยังไม่มีตัวแปร คลิก + เพื่อเพิ่ม';
+
+  @override
+  String get envUsageHint => 'ใช้ %s ในกฎ หรืออ่าน/เขียน context.env ในสคริปต์';
 }

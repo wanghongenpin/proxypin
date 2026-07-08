@@ -88,8 +88,6 @@
   "generateCADescribe": "Yakin ingin membuat sertifikat root baru?",
   "gray": "Abu-abu",
   "green": "Hijau",
-  "headerExpanded": "Header diperluas",
-  "headerExpandedSubtitle": "Perluas Headers secara default",
   "history": "Riwayat",
   "historyEmptyName": "Nama tidak boleh kosong",
   "historyRecord": "Riwayat",
@@ -243,5 +241,14 @@
   "encode": "Encode",
   "view": "Lihat",
   "cipher": "Sandi",
-  "other": "Lainnya"
+  "other": "Lainnya",
+
+  "environment": "Environment",
+  "environmentVariables": "Variabel Environment",
+  "envGlobal": "Global",
+  "envManage": "Kelola Environment…",
+  "envNone": "Tanpa Environment",
+  "envDeleteConfirm": "Hapus environment ini?",
+  "envEmptyHint": "Belum ada variabel. Klik + untuk menambahkan.",
+  "envUsageHint": "Gunakan %s di aturan atau baca/tulis context.env di skrip."
 }
