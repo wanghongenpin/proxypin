@@ -17,7 +17,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -82,7 +81,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(_onKeyEvent);
-      WindowController.fromWindowId(widget.windowId!).close();
+      WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
       return true;
     }
     return false;
@@ -117,8 +116,13 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      final result = await FilePicker.pickFiles(type: FileType.any);
-      path = result?.files.single.path;
+      if (Platform.isMacOS && widget.windowId != null) {
+        path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+        WindowController.fromWindowId(widget.windowId!).show();
+      } else {
+        final result = await FilePicker.platform.pickFiles(type: FileType.any);
+        path = result?.files.single.path;
+      }
     } catch (_) {
       // 某些平台（e.g. Linux）custom + extensions 可能抛错，回退到任意类型
       final result = await FilePicker.platform.pickFiles();
@@ -148,9 +152,20 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'data.xml', bytes: utf8.encode(text));
+    String? path;
+    if (Platform.isMacOS && widget.windowId != null) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "data.xml"});
+      WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      path = await FilePicker.platform.saveFile(fileName: 'data.xml');
+    }
     if (path == null) return;
-    if (mounted) _toast(localizations.saveSuccess);
+    try {
+      await File(path).writeAsString(text);
+      if (mounted) _toast(localizations.saveSuccess);
+    } catch (e) {
+      _toast('${localizations.fail}: $e');
+    }
   }
 
   void _toast(String msg) {
@@ -168,12 +183,12 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
       appBar: isNewWindows
           ? null
           : PreferredSize(
-              preferredSize: Platforms.isDesktop() ? const Size.fromHeight(23) : const Size.fromHeight(36),
-              child: AppBar(
-                title: Text("XML Viewer", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
-                centerTitle: true,
-              ),
-            ),
+        preferredSize: Platforms.isDesktop() ? const Size.fromHeight(23) : const Size.fromHeight(36),
+        child: AppBar(
+          title: Text("XML Viewer", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w300)),
+          centerTitle: true,
+        ),
+      ),
       body: Column(children: [
         Align(alignment: Alignment.centerRight, child: _toolbar()),
         const Divider(height: 1, thickness: 0.3),
@@ -197,7 +212,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
           _iconBtn(
             Icons.wrap_text,
             localizations.wordWrap,
-            () => setState(() => _wrap = !_wrap),
+                () => setState(() => _wrap = !_wrap),
             tint: _wrap ? color : null,
           ),
           _iconBtn(Icons.copy, localizations.copy, _copy),
@@ -222,9 +237,9 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
     final pageBg = Theme.of(context).colorScheme.surface;
     final editorTheme = isDark
         ? {
-            ...baseTheme,
-            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-          }
+      ...baseTheme,
+      'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
+    }
         : baseTheme;
 
     // 设置语言
@@ -233,7 +248,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
-        decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+        decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
         child: Scrollbar(
           thumbVisibility: true,
           trackVisibility: true,

@@ -20,6 +20,7 @@ import 'dart:io';
 
 import 'package:date_format/date_format.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -363,7 +364,7 @@ class _FavoritesActions extends StatelessWidget {
                   icon: const Icon(Icons.download_for_offline_outlined, size: 18),
                   onPressed: () async {
                     final result =
-                        await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
+                        await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
                     final file = result?.files.isNotEmpty == true ? result!.files.first : null;
                     if (file?.path == null) return;
 

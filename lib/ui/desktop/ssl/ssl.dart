@@ -75,7 +75,7 @@ class _SslState extends State<SslWidget> {
   //import method
   Widget importMenu() {
     return item(localizations.importCaP12, onPressed: () async {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
       if (result == null || !mounted) return;
 
       //entry password

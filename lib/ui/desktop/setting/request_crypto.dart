@@ -13,6 +13,7 @@ import 'package:proxypin/network/components/manager/request_crypto_manager.dart'
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 bool _refresh = false;
 
@@ -21,7 +22,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   if (force) {
     _refresh = false;
     await RequestCryptoManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestCrypto");
+    await DesktopMultiWindow.invokeMethod(0, "refreshRequestCrypto");
     return;
   }
 
@@ -32,7 +33,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await RequestCryptoManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestCrypto");
+    await DesktopMultiWindow.invokeMethod(0, "refreshRequestCrypto");
   });
 }
 
@@ -75,7 +76,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
         Navigator.pop(context);
         return true;
       }
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).close();
+      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
       return true;
     }
     return false;
@@ -109,14 +110,14 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
                     const SizedBox(width: 10),
                     Expanded(
                         child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                      TextButton.icon(
-                          icon: const Icon(Icons.add, size: 18), label: Text(localizations.add), onPressed: _addRule),
-                      const SizedBox(width: 5),
-                      TextButton.icon(
-                          icon: const Icon(Icons.input_rounded, size: 18),
-                          onPressed: _import,
-                          label: Text(localizations.import))
-                    ])),
+                          TextButton.icon(
+                              icon: const Icon(Icons.add, size: 18), label: Text(localizations.add), onPressed: _addRule),
+                          const SizedBox(width: 5),
+                          TextButton.icon(
+                              icon: const Icon(Icons.input_rounded, size: 18),
+                              onPressed: _import,
+                              label: Text(localizations.import))
+                        ])),
                     const SizedBox(width: 15)
                   ]),
                   const SizedBox(height: 16),
@@ -126,7 +127,7 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
 
   Future<void> _addRule() async {
     final newRule =
-        await showDialog<CryptoRule>(context: context, barrierDismissible: false, builder: (_) => CryptoRuleDialog());
+    await showDialog<CryptoRule>(context: context, barrierDismissible: false, builder: (_) => CryptoRuleDialog());
     if (newRule == null) return;
     await manager.addRule(newRule);
     setState(() {});
@@ -134,8 +135,16 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
   }
 
   Future<void> _import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-    final path = result?.files.single.path;
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+        "allowedExtensions": ['json']
+      });
+      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      path = result?.files.single.path;
+    }
     if (path == null) return;
     try {
       final content = await File(path).readAsString();
@@ -206,7 +215,7 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
         child: Container(
           padding: const EdgeInsets.only(top: 10),
           constraints: const BoxConstraints(minHeight: 200, maxHeight: 600),
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withAlpha((0.2 * 255).round()))),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.withOpacity(0.2))),
           child: Column(
             children: [
               Padding(
@@ -265,8 +274,8 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
           color: selected.contains(index)
               ? primaryColor.withValues(alpha: 0.6)
               : index.isEven
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : null,
+              ? Colors.grey.withValues(alpha: 0.1)
+              : null,
           height: 32,
           padding: const EdgeInsets.all(5),
           child: Row(children: [
@@ -369,8 +378,15 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
     if (indexes.isEmpty) return;
     indexes.sort();
     final data = indexes.map((i) => manager.rules[i].toJson()).toList();
-    String? path = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: utf8.encode(jsonEncode(data)));
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": 'request_crypto.json'});
+      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      path = await FilePicker.platform.saveFile(fileName: 'request_crypto.json');
+    }
     if (path == null) return;
+    await File(path).writeAsString(jsonEncode(data));
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 
@@ -492,10 +508,10 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                    side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
@@ -528,10 +544,10 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                 ),
                 const SizedBox(height: 12),
                 Card(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow.withAlpha((0.5 * 255).round()),
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    side: BorderSide(color: Theme.of(context).dividerColor.withAlpha((0.2 * 255).round())),
+                    side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
@@ -546,7 +562,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -568,7 +584,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -590,7 +606,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -615,7 +631,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           width: 92,
                           padding: const EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: DropdownButtonHideUnderline(
@@ -652,7 +668,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                             constraints: const BoxConstraints(minWidth: 92),
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Theme.of(context).dividerColor.withAlpha((0.12 * 255).round())),
+                              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.12)),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: DropdownButtonHideUnderline(
@@ -694,7 +710,7 @@ class _CryptoRuleDialogState extends State<CryptoRuleDialog> {
                           if (ivSource == 'prefix')
                             Container(
                               decoration: BoxDecoration(
-                                  border: Border.all(color: theme.dividerColor.withAlpha(0x40)),
+                                  border: Border.all(color: theme.dividerColor.withOpacity(0.25)),
                                   borderRadius: BorderRadius.circular(4)),
                               child: Row(children: [
                                 IconButton(

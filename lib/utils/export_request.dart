@@ -25,14 +25,14 @@ void exportRequest(HttpRequest request) async {
   String fileName = "request_${request.hostAndPort?.host}_${request.requestId}.txt";
   var json = copyRawRequest(request);
 
-  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export request to $path");
 }
 
 void exportRequestBody(HttpRequest request) async {
   String fileName = "request_body_${request.hostAndPort?.host}_${request.requestId}.txt";
 
-  var path = await FilePicker.saveFile(
+  var path = await FilePicker.platform.saveFile(
       fileName: fileName, bytes: request.body == null ? Uint8List(0) : Uint8List.fromList(request.body!));
   logger.d("Export request body to $path");
 }
@@ -45,7 +45,7 @@ void exportResponse(HttpResponse? response) async {
 
   String fileName = "response_${response.request?.hostAndPort?.host}_${response.requestId}.txt";
   var json = await copyRawResponse(response);
-  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export response to $path");
 }
 
@@ -56,7 +56,7 @@ void exportResponseBody(HttpResponse? response) async {
 
   String fileName = "response_body_${response.request?.hostAndPort?.host}_${response.requestId}.txt";
 
-  var path = await FilePicker.saveFile(
+  var path = await FilePicker.platform.saveFile(
       fileName: fileName, bytes: response.body == null ? Uint8List(0) : Uint8List.fromList(response.body!));
   logger.d("Export response body to $path");
 }
@@ -65,7 +65,7 @@ void exportRequestAndResponse(HttpRequest request, HttpResponse? response) async
   String fileName = "request_response_${request.hostAndPort?.host ?? ''}_${request.requestId}.txt";
 
   var json = copyRequest(request, response);
-  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export request and response to $path");
 }
 
@@ -91,7 +91,7 @@ void exportHar(HttpRequest request) async {
   };
   var json = jsonEncode(har);
 
-  var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(json));
+  var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(json));
   logger.d("Export har to $path");
 }
 
@@ -164,11 +164,11 @@ Future<void> exportRequestsAsFiles(
       String? selectedDirectory;
 
       if (isDesktop) {
-        selectedDirectory = await FilePicker.saveFile(
+        selectedDirectory = await FilePicker.platform.saveFile(
                 fileName: folderName, type: FileType.custom, allowedExtensions: [''], bytes: Uint8List(0))
             .then((path) => path != null ? "${Directory(path).parent.path}/$folderName" : null);
       } else {
-        selectedDirectory = await FilePicker.getDirectoryPath();
+        selectedDirectory = await FilePicker.platform.getDirectoryPath();
       }
       if (selectedDirectory == null) return;
 
@@ -228,10 +228,9 @@ Future<void> exportRequestsAsFiles(
       if (await Platforms.isIpad() && context.mounted) {
         box = context.findRenderObject() as RenderBox?;
       }
-      await SharePlus.instance.share(ShareParams(
+      await Share.shareXFiles(files,
           fileNameOverrides: files.map((f) => f.name).toList(),
-          files: files,
-          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size));
+          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
     }
 
     onSuccess?.call(successCount);
@@ -254,7 +253,7 @@ Future<void> exportHarFile(
     var bytes = utf8.encode(json);
 
     if (Platforms.isDesktop() || Platform.isAndroid) {
-      await FilePicker.saveFile(fileName: fileName, bytes: bytes);
+      await FilePicker.platform.saveFile(fileName: fileName, bytes: bytes);
     } else {
       RenderBox? box;
       if (await Platforms.isIpad() && context.mounted) {
@@ -262,10 +261,10 @@ Future<void> exportHarFile(
       }
 
       logger.d("Export HAR file: $fileName, size: ${bytes.length} bytes");
-      await SharePlus.instance.share(ShareParams(
-          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+      await Share.shareXFiles(
+          [XFile.fromData(bytes, name: fileName, mimeType: "application/json")],
           fileNameOverrides: [fileName],
-          files: [XFile.fromData(bytes, name: fileName, mimeType: "application/json")]));
+          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size);
     }
 
     onSuccess?.call();

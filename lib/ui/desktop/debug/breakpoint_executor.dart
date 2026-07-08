@@ -51,7 +51,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
           'request': newRequest?.toJson(),
         });
         if (widget.windowId != null) {
-          WindowController.fromWindowId(widget.windowId!).close();
+          WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
         }
       },
     );
@@ -68,7 +68,7 @@ class _BreakpointExecutorState extends State<BreakpointExecutor> {
           'response': newResponse?.toJson(),
         });
         if (widget.windowId != null) {
-          WindowController.fromWindowId(widget.windowId!).close();
+          WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
         }
       },
     );

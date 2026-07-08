@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-import 'package:code_forge/code_forge/code_area.dart';
-import 'package:code_forge/code_forge/controller.dart';
-import 'package:code_forge/code_forge/find_controller.dart';
-import 'package:code_forge/code_forge/styling.dart';
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/utils/code_editor_compat.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:re_highlight/languages/json.dart';
 
 class MobileRewriteUpdate extends StatefulWidget {
   final RuleType ruleType;
@@ -82,9 +78,9 @@ class RewriteUpdateState extends State<MobileRewriteUpdate> {
                     maxLines: 1, style: const TextStyle(fontSize: 13, color: Colors.grey))),
             Expanded(
                 child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [IconButton(onPressed: add, icon: const Icon(Icons.add)), const SizedBox(width: 10)],
-            ))
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [IconButton(onPressed: add, icon: const Icon(Icons.add)), const SizedBox(width: 10)],
+                ))
           ],
         ),
         UpdateList(items: items, ruleType: ruleType, request: widget.request),
@@ -123,8 +119,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   var keyController = TextEditingController();
   var valueController = TextEditingController();
-  final CodeForgeController _codeDataController = CodeForgeController();
-  late FindController _findController;
+  final CodeController _codeDataController = CodeController();
+  late CodeSearchController _findController;
 
   bool jsonFormatted = false;
   bool useRegex = true;
@@ -141,19 +137,11 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
-    _findController = FindController(_codeDataController);
+    _findController = CodeSearchController(codeController: _codeDataController);
     _findController.isRegex = useRegex;
 
     initTestData();
     keyController.addListener(onInputChangeMatch);
-
-    var textVersion = _codeDataController.contentVersion;
-    _codeDataController.addListener(() {
-      if (textVersion != _codeDataController.contentVersion) {
-        textVersion = _codeDataController.contentVersion;
-        onInputChangeMatch();
-      }
-    });
   }
 
   @override
@@ -169,7 +157,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   Widget build(BuildContext context) {
     bool isDelete = rewriteType == RewriteType.removeQueryParam || rewriteType == RewriteType.removeHeader;
     bool isUpdate =
-        [RewriteType.updateBody, RewriteType.updateHeader, RewriteType.updateQueryParam].contains(rewriteType);
+    [RewriteType.updateBody, RewriteType.updateHeader, RewriteType.updateQueryParam].contains(rewriteType);
 
     String keyTips = "";
     String valueTips = "";
@@ -214,16 +202,16 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                   SizedBox(
                       width: 140,
                       child: DropdownButtonFormField<RewriteType>(
-                          initialValue: rewriteType,
+                          value: rewriteType,
                           focusColor: Colors.transparent,
                           itemHeight: 48,
                           decoration: const InputDecoration(
                               contentPadding: EdgeInsets.all(10), isDense: true, border: InputBorder.none),
                           items: typeList
                               .map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(e.getDescribe(isCN),
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))))
+                              value: e,
+                              child: Text(e.getDescribe(isCN),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))))
                               .toList(),
                           onChanged: (val) {
                             setState(() {
@@ -234,9 +222,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                 ],
               ),
               const SizedBox(height: 15),
-              textField(isUpdate ? i18n.match : i18n.name, keyTips,
-                  controller: keyController,
-                  required: !isDelete,
+              textField(isUpdate ? i18n.match : i18n.name, keyTips, controller: keyController, required: !isDelete,
                   suffix: (isUpdate || isDelete)
                       ? InkWell(
                           onTap: () {
@@ -255,7 +241,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                                 fontWeight: useRegex ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
-                          ))
+                          ),
+                        )
                       : null),
               const SizedBox(height: 15),
               textField(isUpdate ? i18n.replace : i18n.value, valueTips, controller: valueController),
@@ -287,12 +274,9 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
               Container(
                   height: MediaQuery.of(context).size.height * 0.45,
                   decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                  child: CodeForge(
+                  child: CodeField(
                     controller: _codeDataController,
-                    language: isJsonText() ? langJson : null,
-                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                    editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
-                    enableGuideLines: false,
+                    cursorColor: Theme.of(context).colorScheme.primary,
                     textStyle: const TextStyle(fontSize: 14),
                   )),
             ])));
@@ -307,7 +291,6 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   void initTestData() {
     // dataController.splitPattern = null;
-    _findController.caseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
     valueController.removeListener(onInputChangeMatch);
@@ -319,8 +302,8 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
     if (rewriteType == RewriteType.updateBody) {
       _codeDataController.text = (widget.ruleType == RuleType.requestUpdate
-              ? widget.request?.getBodyString()
-              : widget.request?.response?.getBodyString()) ??
+          ? widget.request?.getBodyString()
+          : widget.request?.response?.getBodyString()) ??
           '';
       return;
     }
@@ -373,21 +356,24 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
         key = '$key${valueController.text}';
       }
 
-      _findController.find(key);
-      isMatch.value = _findController.matchCount > 0;
+      // 使用简单正则匹配检测 key 是否存在于文本中
+      if (key.isEmpty) {
+        isMatch.value = true;
+      } else {
+        final pattern = RegExp(RegExp.escape(key), caseSensitive: false);
+        isMatch.value = pattern.hasMatch(_codeDataController.text);
+      }
     });
   }
 
-  Widget textField(String label, String hint,
-      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
+  Widget textField(String label, String hint, {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return Row(children: [
       SizedBox(width: 55, child: Text(label)),
-      Expanded(child: formField(hint, required: required, lines: lines, controller: controller, suffix: suffix))
+      Expanded(child: formField(hint, required: required, lines: lines, controller: controller, suffix: suffix)),
     ]);
   }
 
-  Widget formField(String hint,
-      {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
+  Widget formField(String hint, {bool required = false, int? lines, TextEditingController? controller, Widget? suffix}) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 14),
@@ -462,20 +448,20 @@ class _UpdateListState extends State<UpdateList> {
           splashColor: Colors.transparent,
           hoverColor: primaryColor.withValues(alpha: 0.3),
           onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              RewriteUpdateEdit(item: list[index], ruleType: widget.ruleType, request: widget.request)))
-                  .then((value) {
-                if (value != null) setState(() {});
-              }),
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      RewriteUpdateEdit(item: list[index], ruleType: widget.ruleType, request: widget.request)))
+              .then((value) {
+            if (value != null) setState(() {});
+          }),
           onLongPress: () => showMenus(index),
           child: Container(
               color: selected == index
                   ? primaryColor
                   : index.isEven
-                      ? Colors.grey.withValues(alpha: 0.1)
-                      : null,
+                  ? Colors.grey.withValues(alpha: 0.1)
+                  : null,
               constraints: const BoxConstraints(minHeight: 38, maxHeight: 45),
               padding: const EdgeInsets.all(5),
               child: Row(
@@ -495,7 +481,7 @@ class _UpdateListState extends State<UpdateList> {
                   const SizedBox(width: 20),
                   Expanded(
                       child:
-                          Text(getText(list[index]).fixAutoLines(), maxLines: 2, style: const TextStyle(fontSize: 13))),
+                      Text(getText(list[index]).fixAutoLines(), maxLines: 2, style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
@@ -503,7 +489,7 @@ class _UpdateListState extends State<UpdateList> {
 
   String getText(RewriteItem item) {
     bool isUpdate =
-        [RewriteType.updateBody, RewriteType.updateHeader, RewriteType.updateQueryParam].contains(item.type);
+    [RewriteType.updateBody, RewriteType.updateHeader, RewriteType.updateQueryParam].contains(item.type);
     if (isUpdate) {
       return "${item.key} -> ${item.value}";
     }

@@ -34,7 +34,7 @@ class Platforms {
     List<String>? allowedExtensions,
     String? dialogTitle,
   }) async {
-    return FilePicker.saveFile(
+    return FilePicker.platform.saveFile(
       fileName: fileName,
       bytes: Uint8List(0),
       type: type,

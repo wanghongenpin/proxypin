@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright 2023 Hongen Wang All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-import 'package:re_highlight/languages/json.dart';
+import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/ui/component/multi_window_compat.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/component/text_field.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
-
-import '../../../component/search/finder.dart';
 
 /// 重写替换
 /// @author wanghongen
@@ -46,7 +44,7 @@ class DesktopRewriteReplace extends StatefulWidget {
 
 class RewriteReplaceState extends State<DesktopRewriteReplace> {
   final _headerKey = GlobalKey<HeadersState>();
-  late CodeForgeController bodyTextController;
+  late HighlightTextEditingController bodyTextController;
   VoidCallback? _bodyListener;
   late RuleType ruleType;
   List<RewriteItem> items = [];
@@ -56,7 +54,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
   @override
   initState() {
     super.initState();
-    bodyTextController = CodeForgeController();
+    bodyTextController = HighlightTextEditingController();
     ruleType = widget.ruleType;
     initItems(widget.ruleType, widget.items);
   }
@@ -160,12 +158,12 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
     return TabBar(
         tabs: tabs
             .map((label) => Tab(
-                height: 38,
-                child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  const SizedBox(width: 5),
-                  Dot(color: items[tabs.indexOf(label)].enabled ? const Color(0xFF00FF00) : Colors.grey)
-                ])))
+            height: 38,
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(width: 5),
+              Dot(color: items[tabs.indexOf(label)].enabled ? const Color(0xFF00FF00) : Colors.grey)
+            ])))
             .toList());
   }
 
@@ -176,7 +174,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     var rewriteItem = items.firstWhere(
-        (item) => item.type == RewriteType.replaceRequestBody || item.type == RewriteType.replaceResponseBody);
+            (item) => item.type == RewriteType.replaceRequestBody || item.type == RewriteType.replaceResponseBody);
 
     return Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -185,44 +183,44 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
         SizedBox(
             width: 90,
             child: DropdownButtonFormField<String>(
-                initialValue: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
+                value: rewriteItem.bodyType ?? ReplaceBodyType.text.name,
                 focusColor: Colors.transparent,
                 itemHeight: 48,
                 decoration:
-                    const InputDecoration(contentPadding: EdgeInsets.all(10), isDense: true, border: InputBorder.none),
+                const InputDecoration(contentPadding: EdgeInsets.all(10), isDense: true, border: InputBorder.none),
                 items: ReplaceBodyType.values
                     .map((e) => DropdownMenuItem(
-                        value: e.name,
-                        child: Text(isCN ? e.label : e.name.toUpperCase(),
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))))
+                    value: e.name,
+                    child: Text(isCN ? e.label : e.name.toUpperCase(),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))))
                     .toList(),
                 onChanged: (val) => setState(() {
-                      rewriteItem.bodyType = val!;
-                    }))),
+                  rewriteItem.bodyType = val!;
+                }))),
         Expanded(
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          IconButton(
-            tooltip: 'JSON Format',
-            icon:
+              IconButton(
+                tooltip: 'JSON Format',
+                icon:
                 Icon(Icons.data_object, size: 20, color: jsonFormatted ? Theme.of(context).colorScheme.primary : null),
-            onPressed: () {
-              setState(() {
-                jsonFormatted = !jsonFormatted;
-                bodyTextController.text =
+                onPressed: () {
+                  setState(() {
+                    jsonFormatted = !jsonFormatted;
+                    bodyTextController.text =
                     jsonFormatted ? JSON.pretty(bodyTextController.text) : JSON.compact(bodyTextController.text);
-              });
-            },
-          ),
-          const SizedBox(width: 15),
-          Text(localizations.enable),
-          const SizedBox(width: 10),
-          SwitchWidget(
-              value: rewriteItem.enabled,
-              scale: 0.65,
-              onChanged: (val) => setState(() {
+                  });
+                },
+              ),
+              const SizedBox(width: 15),
+              Text(localizations.enable),
+              const SizedBox(width: 10),
+              SwitchWidget(
+                  value: rewriteItem.enabled,
+                  scale: 0.65,
+                  onChanged: (val) => setState(() {
                     rewriteItem.enabled = val;
                   }))
-        ]))
+            ]))
       ]),
       const SizedBox(height: 10),
       if (rewriteItem.bodyType == ReplaceBodyType.file.name)
@@ -230,7 +228,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
       else
         Container(
             height: 280,
-            decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+            decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
             child: Builder(builder: (context) {
               // ensure we update rewriteItem when editor text changes; remove previous listener to avoid duplicates
               if (_bodyListener != null) {
@@ -242,15 +240,16 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
               };
               bodyTextController.addListener(_bodyListener!);
 
-              return CodeForge(
+              return TextField(
                 controller: bodyTextController,
-                lineWrap: true,
-                language: isJsonText() ? langJson : null,
-                enableGuideLines: false,
-                selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
-                textStyle: const TextStyle(fontSize: 14),
-                finderBuilder: (c, controller) => FindPanelView(controller: controller),
+                cursorColor: Theme.of(context).colorScheme.primary,
+                style: const TextStyle(fontSize: 14),
+                maxLines: null,
+                expands: true,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(10),
+                ),
               );
             }))
     ]);
@@ -270,15 +269,21 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
           child: item.bodyFile == null
               ? Container(height: 50)
               : Container(
-                  padding: const EdgeInsets.all(5),
-                  foregroundDecoration:
-                      BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1)),
-                  child: Text(item.bodyFile ?? ''))),
+              padding: const EdgeInsets.all(5),
+              foregroundDecoration:
+              BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1)),
+              child: Text(item.bodyFile ?? ''))),
       const SizedBox(width: 10),
       FilledButton(
           onPressed: () async {
-            FilePickerResult? result = await FilePicker.pickFiles();
-            final path = result?.files.single.path;
+            String? path;
+            if (Platform.isMacOS) {
+              path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+              if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+            } else {
+              FilePickerResult? result = await FilePicker.platform.pickFiles();
+              path = result?.files.single.path;
+            }
 
             if (path == null) {
               return;
@@ -301,7 +306,7 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
   //headers
   Widget headers() {
     var rewriteItem = items.firstWhere(
-        (item) => item.type == RewriteType.replaceRequestHeader || item.type == RewriteType.replaceResponseHeader);
+            (item) => item.type == RewriteType.replaceRequestHeader || item.type == RewriteType.replaceResponseHeader);
 
     return Column(children: [
       Row(mainAxisAlignment: MainAxisAlignment.start, crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -309,15 +314,15 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
         const SizedBox(width: 10),
         Expanded(
             child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-          Text(localizations.enable),
-          const SizedBox(width: 10),
-          SwitchWidget(
-              value: rewriteItem.enabled,
-              scale: 0.65,
-              onChanged: (val) => setState(() {
+              Text(localizations.enable),
+              const SizedBox(width: 10),
+              SwitchWidget(
+                  value: rewriteItem.enabled,
+                  scale: 0.65,
+                  onChanged: (val) => setState(() {
                     rewriteItem.enabled = val;
                   }))
-        ]))
+            ]))
       ]),
       Expanded(child: Headers(headers: rewriteItem.headers, key: _headerKey))
     ]);
@@ -334,14 +339,14 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
           SizedBox(
               width: 120,
               child: DropdownButtonFormField<String>(
-                  initialValue: rewriteItem.method?.name ?? 'GET',
+                  value: rewriteItem.method?.name ?? 'GET',
                   focusColor: Colors.transparent,
                   itemHeight: 48,
                   decoration: const InputDecoration(
                       contentPadding: EdgeInsets.all(10), isDense: true, border: InputBorder.none),
                   items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
                       .map((e) => DropdownMenuItem(
-                          value: e, child: Text(e, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))))
+                      value: e, child: Text(e, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))))
                       .toList(),
                   onChanged: (val) {
                     setState(() {
@@ -350,17 +355,17 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
                   })),
           Expanded(
               child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            Text(localizations.enable),
-            const SizedBox(width: 10),
-            SwitchWidget(
-                value: rewriteItem.enabled,
-                scale: 0.65,
-                onChanged: (val) {
-                  setState(() {
-                    rewriteItem.enabled = val;
-                  });
-                })
-          ])),
+                Text(localizations.enable),
+                const SizedBox(width: 10),
+                SwitchWidget(
+                    value: rewriteItem.enabled,
+                    scale: 0.65,
+                    onChanged: (val) {
+                      setState(() {
+                        rewriteItem.enabled = val;
+                      });
+                    })
+              ])),
         ]),
         const SizedBox(height: 15),
         textField("Path", rewriteItem.path, "${localizations.example} /api/v1/user",
@@ -393,17 +398,17 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
       SizedBox(width: 80, child: Text(label)),
       Expanded(
           child: TextFormField(
-        initialValue: value,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            contentPadding: const EdgeInsets.all(10),
-            errorStyle: const TextStyle(height: 0, fontSize: 0),
-            focusedBorder: focusedBorder(),
-            isDense: true,
-            border: const OutlineInputBorder()),
-      ))
+            initialValue: value,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                contentPadding: const EdgeInsets.all(10),
+                errorStyle: const TextStyle(height: 0, fontSize: 0),
+                focusedBorder: focusedBorder(),
+                isDense: true,
+                border: const OutlineInputBorder()),
+          ))
     ]);
   }
 
@@ -431,15 +436,15 @@ class RewriteReplaceState extends State<DesktopRewriteReplace> {
                 )),
             Expanded(
                 child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              Text(localizations.enable),
-              const SizedBox(width: 10),
-              SwitchWidget(
-                  value: rewriteItem.enabled,
-                  scale: 0.65,
-                  onChanged: (val) => setState(() {
+                  Text(localizations.enable),
+                  const SizedBox(width: 10),
+                  SwitchWidget(
+                      value: rewriteItem.enabled,
+                      scale: 0.65,
+                      onChanged: (val) => setState(() {
                         rewriteItem.enabled = val;
                       }))
-            ])),
+                ])),
             const SizedBox(width: 10),
           ])
         ]));
@@ -539,7 +544,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
               child: ListView.separated(
                   shrinkWrap: true,
                   separatorBuilder: (context, index) =>
-                      index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
+                  index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
                   itemBuilder: (context, index) => list[index],
                   itemCount: list.length))),
       TextButton(

@@ -17,20 +17,20 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/json/json_viewer.dart' as proxy_json;
 import 'package:proxypin/ui/component/json/theme.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
@@ -48,7 +48,7 @@ class JsonViewerPage extends StatefulWidget {
 }
 
 class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProviderStateMixin {
-  late final CodeForgeController _controller;
+  late final CodeController _controller;
   late final TabController _tabs;
 
   dynamic _parsed;
@@ -66,7 +66,7 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _controller = CodeForgeController()..text = widget.initialText ?? '';
+    _controller = CodeController()..text = widget.initialText ?? '';
     _tabs = TabController(length: 2, vsync: this);
 
     if (Platforms.isDesktop() && widget.windowId != null) {
@@ -94,7 +94,7 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(_onKeyEvent);
-      WindowController.fromWindowId(widget.windowId!).close();
+      WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
       return true;
     }
     return false;
@@ -170,11 +170,16 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
   Future<void> _openFile() async {
     String? path;
     try {
-      final result = await FilePicker.pickFiles(type: FileType.any);
-      path = result?.files.single.path;
+      if (Platform.isMacOS && widget.windowId != null) {
+        path = await DesktopMultiWindow.invokeMethod(0, "pickFiles");
+        WindowController.fromWindowId(widget.windowId!).show();
+      } else {
+        final result = await FilePicker.platform.pickFiles(type: FileType.any);
+        path = result?.files.single.path;
+      }
     } catch (_) {
       // 某些平台 (e.g. Linux) custom + extensions 可能抛错，回退到任意类型
-      final result = await FilePicker.pickFiles();
+      final result = await FilePicker.platform.pickFiles();
       path = result?.files.single.path;
     }
 
@@ -198,14 +203,24 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
       if (await Platforms.isIpad() && mounted) {
         box = context.findRenderObject() as RenderBox?;
       }
-      await SharePlus.instance.share(
-          ShareParams(files: [file], fileNameOverrides: const ['data.json'], sharePositionOrigin: box?.paintBounds));
+      await Share.shareXFiles([file], fileNameOverrides: const ['data.json'], sharePositionOrigin: box?.paintBounds);
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'data.json', bytes: utf8.encode(text));
+    String? path;
+    if (Platform.isMacOS && widget.windowId != null) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": "data.json"});
+      WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      path = await FilePicker.platform.saveFile(fileName: 'data.json');
+    }
     if (path == null) return;
-    if (mounted) _toast(localizations.saveSuccess);
+    try {
+      await File(path).writeAsString(text);
+      if (mounted) _toast(localizations.saveSuccess);
+    } catch (e) {
+      _toast('${localizations.fail}: $e');
+    }
   }
 
   void _toast(String msg) {
@@ -278,7 +293,7 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
           _iconBtn(
             Icons.wrap_text,
             localizations.wordWrap,
-            () => setState(() => _wrap = !_wrap),
+                () => setState(() => _wrap = !_wrap),
             tint: _wrap ? color : null,
           ),
           _iconBtn(Icons.copy, localizations.copy, _copy),
@@ -299,29 +314,38 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
   }
 
   Widget _textView() {
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
+    final isDark = ThemeCompat.brightnessOf(context) == Brightness.dark;
     final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
     final pageBg = Theme.of(context).colorScheme.surface;
     final editorTheme = isDark
         ? {
-            ...baseTheme,
-            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-          }
+      ...baseTheme,
+      'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
+    }
         : baseTheme;
+
+    // 设置语言
+    _controller.language = HighlightLanguages.getLanguage(ContentType.json);
 
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
-        decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-        child: CodeForge(
-          controller: _controller,
-          lineWrap: _wrap,
-          language: HighlightLanguages.getLanguage(ContentType.json),
-          enableGuideLines: false,
-          editorTheme: editorTheme,
-          textStyle: const TextStyle(fontSize: 13),
-          finderBuilder: (c, controller) => FindPanelView(controller: controller),
-          selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
+        decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
+        child: Scrollbar(
+          thumbVisibility: true,
+          trackVisibility: true,
+          thickness: 8,
+          radius: const Radius.circular(4),
+          child: CodeTheme(
+            data: CodeThemeData(styles: editorTheme),
+            child: CodeField(
+              controller: _controller,
+              wrap: _wrap,
+              expands: true,
+              cursorColor: Theme.of(context).colorScheme.primary,
+              textStyle: const TextStyle(fontSize: 13),
+            ),
+          ),
         ),
       ),
     );

@@ -751,7 +751,9 @@ class _ScriptEditState extends State<ScriptEdit> {
                             borderRadius: BorderRadius.circular(6),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade900,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF1E1F22)
+                                    : const Color(0xFFF7F7F7),
                                 border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                               ),
                               child: Stack(

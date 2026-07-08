@@ -22,6 +22,7 @@ import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
@@ -63,14 +64,14 @@ class _FavoritesState extends State<MobileFavorites> {
     final favorites = await FavoriteStorage.favorites;
     final json = FavoriteStorage.toJson(favorites);
     final bytes = utf8.encode(json);
-    final path = await FilePicker.saveFile(fileName: 'favorites.json', bytes: bytes);
+    final path = await FilePicker.platform.saveFile(fileName: 'favorites.json', bytes: bytes);
     if (path == null) return;
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 
   Future<String?> _materializePickedFile(PlatformFile file) async {
     if (file.path != null) return file.path!;
-    final bytes = await file.readAsBytes();
+    final bytes = await file.xFile.readAsBytes();
     final tmp = await File('${Directory.systemTemp.path}/${file.name}').create();
     await tmp.writeAsBytes(bytes, flush: true);
     return tmp.path;
@@ -97,7 +98,7 @@ class _FavoritesState extends State<MobileFavorites> {
                   tooltip: localizations.import,
                   icon: const Icon(Icons.download_for_offline_outlined, size: 20),
                   onPressed: () async {
-                    final result = await FilePicker.pickFiles(
+                    final result = await FilePicker.platform.pickFiles(
                         type: FileType.custom, allowedExtensions: ['json', 'har']);
                     final file = result?.files.isNotEmpty == true ? result!.files.first : null;
                     if (file == null) return;

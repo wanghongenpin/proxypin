@@ -76,7 +76,7 @@ class _EncoderState extends State<EncoderWidget> with SingleTickerProviderStateM
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
       tabController.dispose();
-      widget.windowController?.close();
+      widget.windowController?.invokeMethod('window_close');
       return true;
     }
 

@@ -110,7 +110,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
-      widget.windowController?.close();
+      widget.windowController?.invokeMethod('window_close');
       return true;
     }
 
@@ -401,7 +401,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
             return;
           }
 
-          String? path = await FilePicker.saveFile(fileName: fileName, bytes: bytes, type: FileType.image);
+          String? path = await FilePicker.platform.saveFile(fileName: fileName, bytes: bytes, type: FileType.image);
           if (path != null && mounted) {
             FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
           }
@@ -688,7 +688,7 @@ class _BodyState extends State<_Body> {
             Expanded(child: Text("Data")),
             SizedBox(width: 130, child: Text("Time")),
           ])),
-          Divider(height: 5, thickness: 1, color: Colors.grey[300]),
+          Divider(height: 5, thickness: 1, color: Theme.of(context).dividerColor),
           ...list ?? []
         ],
       );

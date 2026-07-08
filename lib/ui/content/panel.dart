@@ -123,7 +123,7 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
     if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
-      WindowController.fromWindowId(widget.windowId!).close();
+      WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
       return true;
     }
 

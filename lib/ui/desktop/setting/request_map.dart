@@ -15,7 +15,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_local.dart';
 import 'package:proxypin/ui/desktop/setting/request_map/map_scipt.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:proxypin/utils/platform.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../../../network/util/logger.dart';
 
@@ -26,7 +26,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   if (force) {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
+    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
     return;
   }
 
@@ -37,7 +37,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
+    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
   });
 }
 
@@ -75,10 +75,10 @@ class _RequestMapPageState extends State<RequestMapPage> {
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
       if (_refresh) {
-        _refreshConfig(force: true).whenComplete(() => WindowController.fromWindowId(widget.windowId!).close());
+        _refreshConfig(force: true).whenComplete(() => WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close'));
         return true;
       }
-      WindowController.fromWindowId(widget.windowId!).close();
+      WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
       return true;
     }
     return false;
@@ -96,26 +96,26 @@ class _RequestMapPageState extends State<RequestMapPage> {
             child: futureWidget(
                 RequestMapManager.instance,
                 loading: true,
-                (data) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Row(children: [
-                            SizedBox(
-                                width: 350,
-                                child: ListTile(
-                                    title: Text("${localizations.enable} ${localizations.requestMap}"),
-                                    subtitle:
-                                        Text(localizations.requestMapDescribe, style: const TextStyle(fontSize: 12)),
-                                    trailing: SwitchWidget(
-                                        value: data.enabled,
-                                        scale: 0.8,
-                                        onChanged: (value) {
-                                          data.enabled = value;
-                                          _refreshConfig();
-                                        }))),
-                            Expanded(
-                                child: Row(
+                    (data) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        SizedBox(
+                            width: 350,
+                            child: ListTile(
+                                title: Text("${localizations.enable} ${localizations.requestMap}"),
+                                subtitle:
+                                Text(localizations.requestMapDescribe, style: const TextStyle(fontSize: 12)),
+                                trailing: SwitchWidget(
+                                    value: data.enabled,
+                                    scale: 0.8,
+                                    onChanged: (value) {
+                                      data.enabled = value;
+                                      _refreshConfig();
+                                    }))),
+                        Expanded(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 const SizedBox(width: 10),
@@ -132,17 +132,25 @@ class _RequestMapPageState extends State<RequestMapPage> {
                                 const SizedBox(width: 10),
                               ],
                             )),
-                            const SizedBox(width: 15)
-                          ]),
-                          const SizedBox(height: 5),
-                          RequestMapList(list: data.rules, windowId: widget.windowId),
-                        ]))));
+                        const SizedBox(width: 15)
+                      ]),
+                      const SizedBox(height: 5),
+                      RequestMapList(list: data.rules, windowId: widget.windowId),
+                    ]))));
   }
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-    final path = result?.files.single.path;
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+        "allowedExtensions": ['json']
+      });
+      WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      path = result?.files.single.path;
+    }
 
     if (path == null) {
       return;
@@ -233,19 +241,19 @@ class _RequestMapListState extends State<RequestMapList> {
                 decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(width: 130, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
-                      SizedBox(width: 50, child: Text(localizations.enable, textAlign: TextAlign.center)),
-                      const VerticalDivider(),
-                      const Expanded(child: Text("URL")),
-                      SizedBox(width: 100, child: Text(localizations.action, textAlign: TextAlign.center)),
-                    ],
-                  ),
-                  const Divider(thickness: 0.5),
-                  Column(children: rows(widget.list))
-                ])))));
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(width: 130, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
+                          SizedBox(width: 50, child: Text(localizations.enable, textAlign: TextAlign.center)),
+                          const VerticalDivider(),
+                          const Expanded(child: Text("URL")),
+                          SizedBox(width: 100, child: Text(localizations.action, textAlign: TextAlign.center)),
+                        ],
+                      ),
+                      const Divider(thickness: 0.5),
+                      Column(children: rows(widget.list))
+                    ])))));
   }
 
   List<Widget> rows(List<RequestMapRule> list) {
@@ -284,8 +292,8 @@ class _RequestMapListState extends State<RequestMapList> {
               color: selected.contains(index)
                   ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withValues(alpha: 0.1)
-                      : null,
+                  ? Colors.grey.withValues(alpha: 0.1)
+                  : null,
               height: 30,
               padding: const EdgeInsets.all(5),
               child: Row(
@@ -304,7 +312,7 @@ class _RequestMapListState extends State<RequestMapList> {
                   const SizedBox(width: 20),
                   Expanded(
                       child:
-                          Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                      Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
                       child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
@@ -371,10 +379,10 @@ class _RequestMapListState extends State<RequestMapList> {
     }
 
     showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (_) =>
-                RequestMapEdit(windowId: widget.windowId, rule: index == null ? null : widget.list[index], item: item))
+        barrierDismissible: false,
+        context: context,
+        builder: (_) =>
+            RequestMapEdit(windowId: widget.windowId, rule: index == null ? null : widget.list[index], item: item))
         .then((value) {
       if (value != null) {
         setState(() {});
@@ -387,7 +395,14 @@ class _RequestMapListState extends State<RequestMapList> {
     if (indexes.isEmpty) return;
     //文件名称
     String fileName = 'request_map.json';
-    String? path = await Platforms.saveFileAdaptive(fileName: fileName);
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+
+      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+    } else {
+      path = await FilePicker.platform.saveFile(fileName: fileName);
+    }
     if (path == null) {
       return;
     }
@@ -516,7 +531,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                             height: 33,
                             child: DropdownButtonFormField<RequestMapType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: mapType,
+                              value: mapType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),
@@ -524,8 +539,8 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                                   border: const OutlineInputBorder()),
                               items: RequestMapType.values
                                   .map((e) => DropdownMenuItem(
-                                      value: e,
-                                      child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 13))))
+                                  value: e,
+                                  child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 13))))
                                   .toList(),
                               onChanged: onChangeType,
                             )),
@@ -565,7 +580,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                   await requestMapManager.addRule(rule, item);
                 }
 
-                DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
+                DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
                 if (mounted) {
                   Navigator.of(this.context).pop(rule);
                 }
@@ -593,20 +608,20 @@ class _RequestMapEditState extends State<RequestMapEdit> {
       SizedBox(width: 60, child: Text(label)),
       Expanded(
           child: TextFormField(
-        controller: controller,
-        style: const TextStyle(fontSize: 14),
-        validator: (val) => val?.isNotEmpty == true || !required ? null : "",
-        onSaved: onSaved,
-        decoration: InputDecoration(
-            hintText: hint,
-            constraints: const BoxConstraints(minHeight: 38),
-            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            errorStyle: const TextStyle(height: 0, fontSize: 0),
-            focusedBorder: focusedBorder(),
-            isDense: true,
-            border: const OutlineInputBorder()),
-      ))
+            controller: controller,
+            style: const TextStyle(fontSize: 14),
+            validator: (val) => val?.isNotEmpty == true || !required ? null : "",
+            onSaved: onSaved,
+            decoration: InputDecoration(
+                hintText: hint,
+                constraints: const BoxConstraints(minHeight: 38),
+                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                errorStyle: const TextStyle(height: 0, fontSize: 0),
+                focusedBorder: focusedBorder(),
+                isDense: true,
+                border: const OutlineInputBorder()),
+          ))
     ]);
   }
 

@@ -13,6 +13,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/util/random.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 

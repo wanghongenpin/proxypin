@@ -148,24 +148,20 @@ class WindowsZipUpdater {
     }
     await extractDir.create(recursive: true);
 
-    final input = InputFileStream(zipFile.path);
-    try {
-      final archive = ZipDecoder().decodeStream(input);
-      for (final file in archive) {
-        final outputPath = _safeOutputPath(extractDir, file.name);
-        if (outputPath == null) continue;
+    final bytes = await zipFile.readAsBytes();
+    final archive = ZipDecoder().decodeBytes(bytes);
+    for (final file in archive) {
+      final outputPath = _safeOutputPath(extractDir, file.name);
+      if (outputPath == null) continue;
 
-        if (file.isFile) {
-          await File(outputPath).parent.create(recursive: true);
-          final output = OutputFileStream(outputPath);
-          file.writeContent(output);
-          await output.close();
-        } else {
-          await Directory(outputPath).create(recursive: true);
-        }
+      if (file.isFile) {
+        await File(outputPath).parent.create(recursive: true);
+        final output = OutputFileStream(outputPath);
+        file.writeContent(output);
+        await output.close();
+      } else {
+        await Directory(outputPath).create(recursive: true);
       }
-    } finally {
-      await input.close();
     }
   }
 

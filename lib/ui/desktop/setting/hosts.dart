@@ -23,6 +23,7 @@ import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
@@ -340,7 +341,7 @@ class _HostsDialogState extends State<HostsDialog> {
   //导入
   Future<void> import() async {
     final FilePickerResult? result =
-        await FilePicker.pickFiles(allowedExtensions: ['json'], type: FileType.custom, initialDirectory: "/Downloads");
+        await FilePicker.platform.pickFiles(allowedExtensions: ['json'], type: FileType.custom, initialDirectory: "/Downloads");
     var file = result?.files.single;
     if (file == null) {
       return;
@@ -387,7 +388,7 @@ class _HostsDialogState extends State<HostsDialog> {
       var json = item.toJson();
       list.add(json);
     }
-    var path = await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list)));
+    var path = await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list)));
     if (path == null) {
       return;
     }

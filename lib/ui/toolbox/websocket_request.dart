@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../../utils/platform.dart';
@@ -144,12 +145,12 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
     try {
       String? path;
       if (Platforms.isMobile()) {
-        final file = await FilePicker.pickFile();
-        if (file == null) return;
-        path = file.path;
+        final result = await FilePicker.platform.pickFiles();
+        if (result == null || result.files.isEmpty) return;
+        path = result.files.first.path;
       } else {
-        final file = await FilePicker.pickFile();
-        path = file?.path;
+        final result = await FilePicker.platform.pickFiles();
+        path = result?.files.single.path;
       }
       if (path == null) return;
       final file = File(path);
@@ -464,7 +465,7 @@ class _WebSocketRequestPageState extends State<WebSocketRequestPage> {
           onPressed: () {
             showDialog(context: context, builder: (context) => _PreviewDialog(bytes: m.bytes));
           },
-          icon: Icon(Icons.expand_more, color: ColorScheme.of(context).primary),
+          icon: Icon(Icons.expand_more, color: Theme.of(context).colorScheme.primary),
         );
         // attach key to the last message so we can ensureVisible it
         final widgetKey = index == _messages.length - 1 ? _lastMessageKey : null;

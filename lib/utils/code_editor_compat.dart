@@ -33,6 +33,10 @@ extension CodeSearchControllerCompat on CodeSearchController {
   /// Regex toggle
   bool get isRegex => settingsController.value.isRegExp;
 
+  set isRegex(bool value) {
+    settingsController.value = settingsController.value.copyWith(isRegExp: value);
+  }
+
   void toggleRegex() {
     settingsController.value = settingsController.value.copyWith(isRegExp: !isRegex);
   }

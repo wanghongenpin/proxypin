@@ -18,7 +18,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
@@ -39,7 +38,6 @@ import 'l10n/app_localizations.dart';
 ///@author wanghongen
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  await RustLib.init();
 
   final windowController = Platforms.isDesktop() ? await DesktopMultiWindow.ensureInitialized() : null;
 
@@ -111,28 +109,42 @@ class FluentApp extends StatelessWidget {
     bool useMaterial3 = appConfiguration.useMaterial3;
     bool isDark = brightness == Brightness.dark;
 
-    Color? themeColor = isDark ? appConfiguration.themeColor : appConfiguration.themeColor;
-    Color? cardColor = isDark ? Color(0XFF3C3C3C) : Colors.white;
-    Color? surfaceContainer = isDark ? Colors.grey[800] : Colors.white;
+    final Color themeColor = appConfiguration.themeColor;
+    final Color cardColor = isDark ? const Color(0xFF3C3C3C) : Colors.white;
+    final Color scaffoldBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final Color surfaceContainer = isDark ? const Color(0xFF353535) : Colors.white;
+    final Color dividerColor = isDark ? const Color(0xFF3F3F3F) : const Color(0xFFE0E0E0);
 
     Color? secondary = useMaterial3 ? null : themeColor;
     if (themeColor is MaterialColor) {
       secondary = themeColor[500];
     }
 
+    // 依据主色估算 onPrimary，避免用户选浅色主色时字看不清
+    final Color onPrimary =
+        ThemeData.estimateBrightnessForColor(themeColor) == Brightness.dark ? Colors.white : Colors.black;
+
     var colorScheme = ColorScheme.fromSeed(
       brightness: brightness,
       seedColor: themeColor,
       primary: themeColor,
       surface: cardColor,
+      surfaceTint: Colors.transparent,
       secondary: secondary,
-      onPrimary: isDark ? Colors.white : null,
-      surfaceContainer: surfaceContainer,
-      surfaceContainerHigh: surfaceContainer,
+      onPrimary: onPrimary,
+      outlineVariant: dividerColor,
     );
 
-    var themeData =
-        ThemeData(brightness: brightness, useMaterial3: appConfiguration.useMaterial3, colorScheme: colorScheme);
+    var themeData = ThemeData(
+      brightness: brightness,
+      useMaterial3: appConfiguration.useMaterial3,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: scaffoldBg,
+      canvasColor: scaffoldBg,
+      cardColor: cardColor,
+      dividerColor: dividerColor,
+      dividerTheme: DividerThemeData(color: dividerColor, space: 1, thickness: 0.5),
+    );
 
     if (!appConfiguration.useMaterial3) {
       themeData = themeData.copyWith(
@@ -155,7 +167,9 @@ class FluentApp extends StatelessWidget {
     }
 
     return themeData.copyWith(
-        dialogTheme:
-            themeData.dialogTheme.copyWith(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+        dialogTheme: themeData.dialogTheme.copyWith(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor: isDark ? surfaceContainer : null,
+        ));
   }
 }

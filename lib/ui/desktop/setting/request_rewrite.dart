@@ -33,8 +33,7 @@ import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_replace.dart';
 import 'package:proxypin/ui/desktop/setting/rewrite/rewrite_update.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:proxypin/utils/platform.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 
 import '../../component/http_method_popup.dart';
 
@@ -83,7 +82,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
         return true;
       }
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
-      WindowController.fromWindowId(widget.windowId).close();
+      WindowController.fromWindowId(widget.windowId).invokeMethod('window_close');
       return true;
     }
 
@@ -96,11 +95,11 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
         backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
         appBar: AppBar(
             title:
-                Text(localizations.requestRewrite, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            Text(localizations.requestRewrite, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
             toolbarHeight: 34,
             centerTitle: true),
         body: Padding(
-            padding: const EdgeInsets.only(left: 15, right: 10, bottom: 10),
+            padding: const EdgeInsets.only(left: 15, right: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 SizedBox(
@@ -122,30 +121,30 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
                 const SizedBox(width: 10),
                 Expanded(
                     child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                        onPressed: refresh,
-                        icon: const Icon(Icons.refresh, color: Colors.blue),
-                        tooltip: localizations.refresh),
-                    const SizedBox(width: 10),
-                    TextButton.icon(
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(localizations.add),
-                      onPressed: add,
-                    ),
-                    const SizedBox(width: 5),
-                    TextButton.icon(
-                      icon: const Icon(Icons.input_rounded, size: 18),
-                      onPressed: import,
-                      label: Text(localizations.import),
-                    )
-                  ],
-                )),
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                            onPressed: refresh,
+                            icon: const Icon(Icons.refresh, color: Colors.blue),
+                            tooltip: localizations.refresh),
+                        const SizedBox(width: 10),
+                        TextButton.icon(
+                          icon: const Icon(Icons.add, size: 18),
+                          label: Text(localizations.add),
+                          onPressed: add,
+                        ),
+                        const SizedBox(width: 5),
+                        TextButton.icon(
+                          icon: const Icon(Icons.input_rounded, size: 18),
+                          onPressed: import,
+                          label: Text(localizations.import),
+                        )
+                      ],
+                    )),
                 const SizedBox(width: 15)
               ]),
               const SizedBox(height: 10),
-              Expanded(child: RequestRuleList(widget.requestRewrites, windowId: widget.windowId)),
+              RequestRuleList(widget.requestRewrites, windowId: widget.windowId),
             ])));
   }
 
@@ -157,8 +156,17 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
-    String? path = result?.files.single.path;
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "pickFiles", {
+        "allowedExtensions": ['config', 'json']
+      });
+      WindowController.fromWindowId(widget.windowId).show();
+    } else {
+      FilePickerResult? result =
+      await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
+      path = result?.files.single.path;
+    }
 
     if (path == null) {
       return;
@@ -251,22 +259,23 @@ class _RequestRuleListState extends State<RequestRuleList> {
             },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
+                constraints: const BoxConstraints(maxHeight: 600, minHeight: 550),
                 decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(width: 130, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
-                      SizedBox(width: 50, child: Text(localizations.enable, textAlign: TextAlign.center)),
-                      const VerticalDivider(),
-                      const Expanded(child: Text("URL")),
-                      SizedBox(width: 100, child: Text(localizations.action, textAlign: TextAlign.center)),
-                    ],
-                  ),
-                  const Divider(thickness: 0.5),
-                  Column(children: rows(widget.requestRewrites.rules))
-                ])))));
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(width: 130, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
+                          SizedBox(width: 50, child: Text(localizations.enable, textAlign: TextAlign.center)),
+                          const VerticalDivider(),
+                          const Expanded(child: Text("URL")),
+                          SizedBox(width: 100, child: Text(localizations.action, textAlign: TextAlign.center)),
+                        ],
+                      ),
+                      const Divider(thickness: 0.5),
+                      Column(children: rows(widget.requestRewrites.rules))
+                    ])))));
   }
 
   void enableStatus(bool enable) {
@@ -330,8 +339,8 @@ class _RequestRuleListState extends State<RequestRuleList> {
               color: selected[index] == true
                   ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                      ? Colors.grey.withValues(alpha: 0.1)
-                      : null,
+                  ? Colors.grey.withValues(alpha: 0.1)
+                  : null,
               height: 30,
               padding: const EdgeInsets.all(5),
               child: Row(
@@ -349,7 +358,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   const SizedBox(width: 20),
                   Expanded(
                       child:
-                          Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                      Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
                       child: Text(isCN ? list[index].type.label : list[index].type.name.camelCaseToSpaced(),
@@ -364,7 +373,15 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
 
     String fileName = 'proxypin-rewrites.config';
-    String? path = await Platforms.saveFileAdaptive(fileName: fileName);
+
+    String? path;
+    if (Platform.isMacOS) {
+      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+      WindowController.fromWindowId(widget.windowId).show();
+    } else {
+      path = await FilePicker.platform.saveFile(fileName: fileName);
+    }
+
     if (path == null) {
       return;
     }
@@ -387,18 +404,18 @@ class _RequestRuleListState extends State<RequestRuleList> {
     if (indexes.isEmpty) return;
     return showConfirmDialog(context, content: localizations.requestRewriteDeleteConfirm(indexes.length),
         onConfirm: () async {
-      var list = indexes.toList();
-      list.sort((a, b) => b.compareTo(a));
-      for (var value in list) {
-        await widget.requestRewrites.removeIndex([value]);
-        MultiWindow.invokeRefreshRewrite(Operation.delete, index: value);
-      }
+          var list = indexes.toList();
+          list.sort((a, b) => b.compareTo(a));
+          for (var value in list) {
+            await widget.requestRewrites.removeIndex([value]);
+            MultiWindow.invokeRefreshRewrite(Operation.delete, index: value);
+          }
 
-      setState(() {
-        selected.clear();
-      });
-      if (mounted) FlutterToastr.show(localizations.deleteSuccess, context);
-    });
+          setState(() {
+            selected.clear();
+          });
+          if (mounted) FlutterToastr.show(localizations.deleteSuccess, context);
+        });
   }
 
   Future<void> showEdit([int? index]) async {
@@ -524,9 +541,12 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
               text: localizations.useGuide,
               style: const TextStyle(color: Colors.blue, fontSize: 14),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => launchUrl(Uri.parse(isCN
-                    ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
-                    : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite')))),
+                ..onTap = () => DesktopMultiWindow.invokeMethod(
+                    0,
+                    "launchUrl",
+                    isCN
+                        ? 'https://gitee.com/wanghongenpin/proxypin/wikis/%E8%AF%B7%E6%B1%82%E9%87%8D%E5%86%99'
+                        : 'https://github.com/wanghongenpin/proxypin/wiki/Request-Rewrite'))),
         ]),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
@@ -585,7 +605,7 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                             height: 36,
                             child: DropdownButtonFormField<RuleType>(
                               onSaved: (val) => rule.type = val!,
-                              initialValue: ruleType,
+                              value: ruleType,
                               decoration: InputDecoration(
                                   errorStyle: const TextStyle(height: 0, fontSize: 0),
                                   contentPadding: const EdgeInsets.only(left: 7, right: 7),
@@ -593,8 +613,8 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
                                   border: const OutlineInputBorder()),
                               items: RuleType.values
                                   .map((e) => DropdownMenuItem(
-                                      value: e,
-                                      child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 14))))
+                                  value: e,
+                                  child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 14))))
                                   .toList(),
                               onChanged: onChangeType,
                             )),
@@ -684,19 +704,19 @@ class _RewriteRuleEditState extends State<RewriteRuleEdit> {
       SizedBox(width: 60, child: Text(label)),
       Expanded(
           child: TextFormField(
-        controller: controller,
-        style: const TextStyle(fontSize: 14),
-        validator: (val) => val?.isNotEmpty == true || !required ? null : "",
-        onSaved: onSaved,
-        decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            errorStyle: const TextStyle(height: 0, fontSize: 0),
-            focusedBorder: focusedBorder(),
-            isDense: true,
-            border: const OutlineInputBorder()),
-      ))
+            controller: controller,
+            style: const TextStyle(fontSize: 14),
+            validator: (val) => val?.isNotEmpty == true || !required ? null : "",
+            onSaved: onSaved,
+            decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                errorStyle: const TextStyle(height: 0, fontSize: 0),
+                focusedBorder: focusedBorder(),
+                isDense: true,
+                border: const OutlineInputBorder()),
+          ))
     ]);
   }
 

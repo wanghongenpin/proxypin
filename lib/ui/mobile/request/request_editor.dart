@@ -557,7 +557,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
                 ),
               )
             : Container(
-                decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
                 child: CodeTheme(
                   data: CodeThemeData(styles: editorTheme),
                   child: CodeField(

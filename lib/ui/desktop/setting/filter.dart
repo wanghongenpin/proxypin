@@ -23,6 +23,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/domain_add_dialog.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -161,7 +162,7 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   Future<void> import() async {
-    final FilePickerResult? result = await FilePicker.pickFiles(
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowedExtensions: ['config'], type: FileType.custom, initialDirectory: "/Downloads");
     var file = result?.files.single;
     if (file == null) {
@@ -329,7 +330,7 @@ class _DomainListState extends State<DomainList> {
       String rule = widget.hostList.list[index].pattern.replaceAll(".*", "*");
       list.add(rule);
     }
-    String? saveLocation = (await FilePicker.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list))));
+    String? saveLocation = (await FilePicker.platform.saveFile(fileName: fileName, bytes: utf8.encode(jsonEncode(list))));
     if (saveLocation == null) {
       return;
     }

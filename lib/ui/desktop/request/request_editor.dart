@@ -17,27 +17,26 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/logger.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:proxypin/ui/component/split_view.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
-import 'package:proxypin/utils/highlight_languages.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/xml_formatter.dart';
 
@@ -105,8 +104,8 @@ class RequestEditorState extends State<RequestEditor> {
 
   bool onKeyEvent(KeyEvent event) {
     if ((HardwareKeyboard.instance.isMetaPressed ||
-            HardwareKeyboard.instance.isControlPressed ||
-            HardwareKeyboard.instance.isAltPressed) &&
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isAltPressed) &&
         event.logicalKey == LogicalKeyboardKey.enter) {
       sendRequest();
       return true;
@@ -117,7 +116,7 @@ class RequestEditorState extends State<RequestEditor> {
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
       responseChange.dispose();
-      widget.windowController?.close();
+      widget.windowController?.invokeMethod('window_close');
       return true;
     }
 
@@ -134,7 +133,7 @@ class RequestEditorState extends State<RequestEditor> {
   @override
   void dispose() {
     if ((widget.source == RequestEditorSource.breakpointRequest ||
-            widget.source == RequestEditorSource.breakpointResponse) &&
+        widget.source == RequestEditorSource.breakpointResponse) &&
         !executed) {
       if (widget.source == RequestEditorSource.breakpointRequest) {
         widget.onExecuteRequest?.call(null);
@@ -190,7 +189,7 @@ class RequestEditorState extends State<RequestEditor> {
                     } else {
                       widget.onExecuteResponse?.call(null);
                     }
-                    widget.windowController?.close();
+                    widget.windowController?.invokeMethod('window_close');
                   },
                   icon: const Icon(Icons.cancel),
                   label: Text(localizations.cancel)),
@@ -201,50 +200,50 @@ class RequestEditorState extends State<RequestEditor> {
           _RequestLine(key: requestLineKey, request: request, urlQueryNotifier: _queryNotifier),
           Expanded(
               child: VerticalSplitView(
-            ratio: 0.53,
-            left: _HttpWidget(
-              key: requestKey,
-              title: const Text("Request", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              message: request,
-              urlQueryNotifier: _queryNotifier,
-              readOnly: widget.source == RequestEditorSource.breakpointResponse,
-            ),
-            right: ValueListenableBuilder(
-                valueListenable: responseChange,
-                builder: (_, value, __) {
-                  return Stack(
-                    children: [
-                      Offstage(offstage: value != 0, child: const Center(child: CircularProgressIndicator())),
-                      Offstage(
-                          offstage: value == 0,
-                          child: _HttpWidget(
-                              key: responseKey,
-                              title: Row(children: [
-                                const Text("Response", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                                const Spacer(),
-                                Text.rich(TextSpan(children: [
-                                  TextSpan(
-                                      text: response?.protocolVersion,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          decorationColor: Colors.green,
-                                          color: Colors.green)),
-                                  WidgetSpan(child: SizedBox(width: 12)),
-                                  TextSpan(
-                                      text: response?.status.code.toString() ?? '',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                          color: response?.status.isSuccessful() == true ? Colors.green : Colors.red))
-                                ]))
-                              ]),
-                              message: response,
-                              readOnly: widget.source != RequestEditorSource.breakpointResponse))
-                    ],
-                  );
-                }),
-          )),
+                ratio: 0.53,
+                left: _HttpWidget(
+                  key: requestKey,
+                  title: const Text("Request", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  message: request,
+                  urlQueryNotifier: _queryNotifier,
+                  readOnly: widget.source == RequestEditorSource.breakpointResponse,
+                ),
+                right: ValueListenableBuilder(
+                    valueListenable: responseChange,
+                    builder: (_, value, __) {
+                      return Stack(
+                        children: [
+                          Offstage(offstage: value != 0, child: const Center(child: CircularProgressIndicator())),
+                          Offstage(
+                              offstage: value == 0,
+                              child: _HttpWidget(
+                                  key: responseKey,
+                                  title: Row(children: [
+                                    const Text("Response", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                    const Spacer(),
+                                    Text.rich(TextSpan(children: [
+                                      TextSpan(
+                                          text: response?.protocolVersion,
+                                          style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              decorationColor: Colors.green,
+                                              color: Colors.green)),
+                                      WidgetSpan(child: SizedBox(width: 12)),
+                                      TextSpan(
+                                          text: response?.status.code.toString() ?? '',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: response?.status.isSuccessful() == true ? Colors.green : Colors.red))
+                                    ]))
+                                  ]),
+                                  message: response,
+                                  readOnly: widget.source != RequestEditorSource.breakpointResponse))
+                        ],
+                      );
+                    }),
+              )),
         ]));
   }
 
@@ -262,7 +261,7 @@ class RequestEditorState extends State<RequestEditor> {
     responseKey.currentState?.change(null);
     responseChange.value = 0;
 
-    Map? proxyResult = await DesktopMultiWindow.invokeMainWindowMethod('getProxyInfo');
+    Map? proxyResult = await DesktopMultiWindow.invokeMethod(0, 'getProxyInfo');
     ProxyInfo? proxyInfo = proxyResult == null ? null : ProxyInfo.of(proxyResult['host'], proxyResult['port']);
 
     HttpClients.proxyRequest(request, proxyInfo: proxyInfo, timeout: Duration(seconds: 30)).then((response) {
@@ -426,7 +425,7 @@ class _HttpState extends State<_HttpWidget> {
   final headerKey = GlobalKey<KeyValState>();
   Map<String, List<String>> initHeader = {};
   HttpMessage? message;
-  CodeForgeController? body;
+  CodeController? body;
 
   /// 当前编辑器使用的语言；初始化时按 Content-Type 推导
   _BodyLanguage _bodyLanguage = _BodyLanguage.none;
@@ -451,7 +450,7 @@ class _HttpState extends State<_HttpWidget> {
     }
 
     message = widget.message;
-    body = CodeForgeController()..text = widget.message?.bodyAsString ?? '';
+    body = CodeController()..text = widget.message?.bodyAsString ?? '';
     _bodyLanguage = _resolveLanguage(widget.message);
     if (widget.message?.headers == null && !widget.readOnly) {
       initHeader["User-Agent"] = ["ProxyPin/${AppConfiguration.version}"];
@@ -545,16 +544,16 @@ class _HttpState extends State<_HttpWidget> {
 
     final isCN = localizations.localeName == 'zh';
     final isNone = _bodyLanguage == _BodyLanguage.none;
-    final ct = _bodyLanguageToContentType[_bodyLanguage];
-    final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
+    // final ct = _bodyLanguageToContentType[_bodyLanguage];
+    // final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
+    final isDark = ThemeCompat.brightnessOf(context) == Brightness.dark;
     final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
     final pageBg = Theme.of(context).colorScheme.surface;
     final editorTheme = isDark
         ? {
-            ...baseTheme,
-            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-          }
+      ...baseTheme,
+      'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
+    }
         : baseTheme;
     return Padding(
       padding: const EdgeInsets.only(top: 8, right: 10, bottom: 10),
@@ -564,29 +563,24 @@ class _HttpState extends State<_HttpWidget> {
         Expanded(
           child: isNone
               ? Center(
-                  child: Text(
-                    isCN ? '此请求无消息体' : 'This request has no body',
-                    style: TextStyle(color: Theme.of(context).hintColor),
-                  ),
-                )
+            child: Text(
+              isCN ? '此请求无消息体' : 'This request has no body',
+              style: TextStyle(color: Theme.of(context).hintColor),
+            ),
+          )
               : Container(
-                  decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                  child: CodeForge(
-                    // CodeForge 把 language 当作 late final 在 initState 里固定，
-                    // 切换数据类型后必须靠新的 key 重建组件才能让高亮实时生效；
-                    // controller 由本 State 持有，重建不会丢文本。
-                    key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
-                    controller: body!,
-                    autoFocus: true,
-                    lineWrap: _bodyWrap,
-                    language: language,
-                    enableGuideLines: false,
-                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                    editorTheme: editorTheme,
-                    textStyle: const TextStyle(fontSize: 14.2),
-                    finderBuilder: (c, controller) => FindPanelView(controller: controller),
-                  ),
-                ),
+            decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
+            child: CodeTheme(
+              data: CodeThemeData(styles: editorTheme),
+              child: CodeField(
+                key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
+                controller: body!,
+                wrap: _bodyWrap,
+                cursorColor: Theme.of(context).colorScheme.primary,
+                textStyle: const TextStyle(fontSize: 14.2),
+              ),
+            ),
+          ),
         ),
       ]),
     );
@@ -609,9 +603,9 @@ class _HttpState extends State<_HttpWidget> {
               icon: const Icon(Icons.arrow_drop_down, size: 18),
               items: _BodyLanguage.values
                   .map((e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(_bodyLanguageLabels[e] ?? e.name.toUpperCase(),
-                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500))))
+                  value: e,
+                  child: Text(_bodyLanguageLabels[e] ?? e.name.toUpperCase(),
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500))))
                   .toList(),
               onChanged: (val) {
                 if (val == null || val == _bodyLanguage) return;
@@ -645,11 +639,11 @@ class _HttpState extends State<_HttpWidget> {
             onPressed: _bodyLanguage == _BodyLanguage.none
                 ? null
                 : () {
-                    final text = body?.text ?? '';
-                    if (text.isEmpty) return;
-                    Clipboard.setData(ClipboardData(text: text));
-                    FlutterToastr.show(localizations.copied, context);
-                  },
+              final text = body?.text ?? '';
+              if (text.isEmpty) return;
+              Clipboard.setData(ClipboardData(text: text));
+              FlutterToastr.show(localizations.copied, context);
+            },
           ),
         ]));
   }
@@ -972,7 +966,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
             padding: const EdgeInsets.only(top: 10),
             child: ListView.separated(
                 separatorBuilder: (context, index) =>
-                    index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
+                index == list.length ? const SizedBox() : const Divider(thickness: 0.2),
                 itemBuilder: (context, index) => list[index],
                 itemCount: list.length)));
   }
@@ -985,17 +979,17 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
           widget.readOnly
               ? null
               : Padding(
-                  padding: const EdgeInsets.only(right: 15),
-                  child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _params.remove(keyVal);
-                          keyVal.key.dispose();
-                          keyVal.value.dispose();
-                        });
-                        notifierChange();
-                      },
-                      child: const Icon(Icons.remove_circle, size: 16)))));
+              padding: const EdgeInsets.only(right: 15),
+              child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _params.remove(keyVal);
+                      keyVal.key.dispose();
+                      keyVal.value.dispose();
+                    });
+                    notifierChange();
+                  },
+                  child: const Icon(Icons.remove_circle, size: 16)))));
     }
 
     return list;
@@ -1003,9 +997,9 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
 
   Widget _cell(KeyVal keyVal,
       {bool isKey = false,
-      FocusNode? focusNode,
-      List<String>? suggestions,
-      Map<String, List<String>>? valueSuggestions}) {
+        FocusNode? focusNode,
+        List<String>? suggestions,
+        Map<String, List<String>>? valueSuggestions}) {
     TextEditingController textController = isKey ? keyVal.key : keyVal.value;
 
     if (!widget.readOnly && (suggestions != null || valueSuggestions != null)) {
@@ -1108,7 +1102,7 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
                 focusedBorder: widget.readOnly
                     ? null
                     : OutlineInputBorder(
-                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5)),
                 border: InputBorder.none,
                 hintText: isKey ? "Key" : "Value")));
   }
