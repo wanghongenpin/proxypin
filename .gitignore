@@ -10,6 +10,7 @@
 .history
 .svn/
 .swiftpm/
+.mimocode/
 migrate_working_dir/
 Podfile.lock
 # IntelliJ related
