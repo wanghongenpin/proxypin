@@ -108,13 +108,14 @@ class WebSocketDecoder {
 
   WebSocketFrame? decode(Uint8List newData) {
     buffer.putBytes(newData);
-    if (!canParseWebSocketFrame(buffer.bytes)) {
+    int? frameLen = _tryFrameLength(buffer.bytes);
+    if (frameLen == null) {
       return null;
     }
 
     try {
       WebSocketFrame frame = _parseWebSocketFrame(buffer.bytes);
-      buffer.clear();
+      buffer.removeBytes(frameLen);
       return frame;
     } catch (e, stackTrace) {
       logger.e("WebSocket decode error", error: e, stackTrace: stackTrace);
@@ -122,16 +123,18 @@ class WebSocketDecoder {
     }
   }
 
-  bool canParseWebSocketFrame(Uint8List data) {
+  /// Returns the total byte length of the next frame in [data], or null if
+  /// the data is incomplete or contains an invalid opcode.
+  int? _tryFrameLength(Uint8List data) {
     if (data.length < 2) {
-      return false;
+      return null;
     }
 
     var reader = ByteData.sublistView(data);
 
     var opcode = reader.getUint8(0) & 0x0f;
     if (opcode > 0xA) {
-      return false;
+      return null;
     }
 
     var mask = reader.getUint8(1) >> 7;
@@ -139,27 +142,27 @@ class WebSocketDecoder {
     int payloadLength = reader.getUint8(1) & 0x7f;
 
     if (payloadLength == 126) {
-      if (data.length < 4) return false;
+      if (data.length < 4) return null;
       payloadLength = reader.getUint16(2);
       payloadStart += 2;
     } else if (payloadLength == 127) {
-      if (data.length < 10) return false;
+      if (data.length < 10) return null;
       payloadLength = reader.getUint64(2);
       payloadStart += 8;
     }
 
     if (mask == 1) {
       if (data.length < payloadStart + 4) {
-        return false;
+        return null;
       }
       payloadStart += 4;
     }
 
     if (data.length < payloadStart + payloadLength) {
-      return false;
+      return null;
     }
 
-    return true;
+    return payloadStart + payloadLength;
   }
 
   WebSocketFrame _parseWebSocketFrame(Uint8List data) {
@@ -254,5 +257,13 @@ class ByteBuffer {
 
   void clear() {
     _bytes = Uint8List(0);
+  }
+
+  void removeBytes(int count) {
+    if (count >= _bytes.length) {
+      _bytes = Uint8List(0);
+    } else {
+      _bytes = _bytes.sublist(count);
+    }
   }
 }
