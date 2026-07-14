@@ -169,7 +169,9 @@ class HttpClients {
 
     if (!request.uri.startsWith("/")) {
       Uri? uri = request.requestUri;
-      request = request.copy(uri: '${uri!.path}${uri.hasQuery ? '?${uri.query}' : ''}');
+      // 裸域名（如 https://example.com）的 uri.path 为空，需要补一个 "/"，
+      final path = uri!.path.isEmpty ? '/' : uri.path;
+      request = request.copy(uri: '$path${uri.hasQuery ? '?${uri.query}' : ''}');
     }
 
     if (channel.selectedProtocol == 'h2') {
