@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:proxypin/native/process_info.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
@@ -148,6 +150,8 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
           data.hostAndPort?.host = data.headers.host!;
         }
 
+        await _fixAndroidVpnPort(channelContext, channel, data);
+
         data.processInfo ??= await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, data.remoteDomain()!);
       }
 
@@ -186,6 +190,30 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
     } catch (error, trace) {
       onError(channelContext, channel, error, trace: trace);
+    }
+  }
+
+  /// 修正 Android VPN 透明代理明文 HTTP 请求的目标端口。
+  ///
+  /// 客户端把请求当作直连发出时（uri 是路径而非绝对 URI），端口只能从 Host 头解析；
+  /// 若 Host 头未携带端口（例如 `curl -H "Host: x" http://x:10120/`），
+  /// [HostAndPort.of] 会兜底成 80，导致上游连接被拨到错误端口（#530）。
+  /// 此时向 VPN 侧查真实目的端口进行覆盖。
+  ///
+  /// SSL / HTTP2 走 SNI 嗅探或 `:authority`，已经拿到正确端口；
+  /// 其它明文情况（绝对 URI / Host 头自带端口）[getHostAndPort] 也能处理。
+  Future<void> _fixAndroidVpnPort(ChannelContext channelContext, Channel channel, HttpRequest data) async {
+    if (!Platform.isAndroid ||
+        channel.isSsl ||
+        !data.uri.startsWith("/") ||
+        data.headers.host?.contains(":") == true ||
+        data.hostAndPort == null) {
+      return;
+    }
+
+    final vpnRemote = await ProcessInfoPlugin.getRemoteAddressByPort(channel.remoteSocketAddress.port);
+    if (vpnRemote != null && vpnRemote.port != data.hostAndPort!.port) {
+      data.hostAndPort = data.hostAndPort!.copyWith(port: vpnRemote.port);
     }
   }
 
