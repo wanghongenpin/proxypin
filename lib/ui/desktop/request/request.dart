@@ -228,7 +228,7 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   Menu _requestMenu() {
     return Menu(items: [
-      _menuAction(localizations.copyUrl, _RequestMenuAction.copyUrl),
+      _menuAction(localizations.copyCurl, _RequestMenuAction.copyCurl),
       MenuItem(label: localizations.copy, type: 'submenu', submenu: _copySubmenu()),
       MenuItem.separator(),
       _menuAction(localizations.openNewWindow, _RequestMenuAction.openNewWindow),
@@ -254,7 +254,7 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   Menu _copySubmenu() {
     return Menu(items: [
-      _copyMenuAction(localizations.copyCurl, _RequestCopyMenuAction.curl),
+      _copyMenuAction(localizations.copyUrl, _RequestCopyMenuAction.copyUrl),
       _copyMenuAction(localizations.copyRawRequest, _RequestCopyMenuAction.rawRequest),
       _copyMenuAction(localizations.copyRequestResponse, _RequestCopyMenuAction.requestResponse),
       _copyMenuAction(localizations.copyAsPythonRequests, _RequestCopyMenuAction.pythonRequests),
@@ -288,8 +288,8 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   Future<void> _onMenuAction(_RequestMenuAction action) async {
     switch (action) {
-      case _RequestMenuAction.copyUrl:
-        await _copyText(widget.request.requestUrl);
+      case _RequestMenuAction.copyCurl:
+        await _copyText(curlRequest(widget.request));
         break;
       case _RequestMenuAction.openNewWindow:
         openDetailInNewWindow();
@@ -344,8 +344,8 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   Future<void> _onCopyMenuAction(_RequestCopyMenuAction action) async {
     switch (action) {
-      case _RequestCopyMenuAction.curl:
-        await _copyText(curlRequest(widget.request));
+      case _RequestCopyMenuAction.copyUrl:
+        await _copyText(widget.request.requestUrl);
         break;
       case _RequestCopyMenuAction.rawRequest:
         await _copyText(copyRawRequest(widget.request));
@@ -579,7 +579,7 @@ class RequestSelectionHandlers {
 }
 
 enum _RequestMenuAction {
-  copyUrl,
+  copyCurl,
   openNewWindow,
   repeat,
   customRepeat,
@@ -596,6 +596,6 @@ enum _RequestMenuAction {
   batchCancel,
 }
 
-enum _RequestCopyMenuAction { curl, rawRequest, requestResponse, pythonRequests, fetch }
+enum _RequestCopyMenuAction { copyUrl, rawRequest, requestResponse, pythonRequests, fetch }
 
 enum _RequestExportMenuAction { request, requestBody, response, responseBody, har }
