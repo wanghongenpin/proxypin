@@ -370,7 +370,7 @@ extension JavascriptRuntimeXhrExtension on JavascriptRuntime {
         // send back to the javascript environment the
         // response for the http pending callback
         var jsResult = evaluate(
-          "globalThis.xhrRequests[${pendingCall.idRequest}].callback($responseInfo, $safeResponseText, $error);",
+          "if (globalThis.xhrRequests[${pendingCall.idRequest}]) { globalThis.xhrRequests[${pendingCall.idRequest}].callback($responseInfo, $safeResponseText, $error); }",
         );
         if (jsResult.isError) {
           logger.e('jsResult error url:${pendingCall.url}, ${jsResult.stringResult}');

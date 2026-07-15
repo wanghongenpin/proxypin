@@ -16,6 +16,7 @@
 
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:convert' show latin1;
 
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
@@ -35,6 +36,7 @@ import 'hpack/hpack.dart';
 /// http编解码
 abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
   static const maxFrameSize = 16384;
+  static const int largeBodyThreshold = 4 * 1024 * 1024; // 4MB
 
   static final List<int> connectionPrefacePRI = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".codeUnits;
 
@@ -48,6 +50,13 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
   // Per-stream SSE decoder instances keyed by HTTP/2 stream id
   final Map<int, SseDecoder> sseDecoders = {};
+
+  // 大 body stream IDs - 这些 stream 的 DATA 帧直接转发不累积
+  final Set<int> _largeBodyStreamIds = {};
+
+  // HEADERS 帧记录了 END_STREAM=1 但还没 END_HEADERS 的 stream。
+  // CONTINUATION 完成时用来判定"其实没 body"，避免激活 streaming 让远端空等。
+  final Set<int> _headerEndStreamPending = {};
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf byteBuf, {bool resolveBody = true}) {
@@ -121,6 +130,11 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
           channelContext.put(frameHeader.streamIdentifier, headersFrame);
         }
 
+        // 记录 END_STREAM，供后续 CONTINUATION 帧判 streaming 时参考
+        if (frameHeader.hasEndStreamFlag && !frameHeader.hasEndHeadersFlag) {
+          _headerEndStreamPending.add(frameHeader.streamIdentifier);
+        }
+
         //handle special case for SSE
         var possibleMessage = getMessage(channelContext, frameHeader);
         if (possibleMessage is HttpResponse &&
@@ -131,6 +145,16 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
           currentRequest?.response = possibleMessage;
           possibleMessage.request ??= channelContext.currentRequest;
           channelContext.listener?.onResponse(channelContext, possibleMessage);
+          return result;
+        }
+
+        // 大 body 请求：HEADERS 帧一到就 emit request（body=null），让 handler
+        // 立即建立远端连接、发送 headers；后续 DATA 帧由 forward 透传。
+        // 需要 END_HEADERS 完成（避免 CONTINUATION 帧还没来），且 stream 不会
+        // 立即结束（END_STREAM=0，说明还有 body）。
+        if (frameHeader.hasEndHeadersFlag &&
+            !frameHeader.hasEndStreamFlag &&
+            _tryStartStreamingUpload(channelContext, frameHeader, possibleMessage, result)) {
           return result;
         }
 
@@ -152,6 +176,18 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
           result.isDone = true;
         }
 
+        // content-length 有可能落在 CONTINUATION 帧里，等 END_HEADERS 后再判一次。
+        // 注意：CONTINUATION 帧 flags 里的 END_STREAM 不合法，必须查原始 HEADERS 帧的状态。
+        if (frameHeader.hasEndHeadersFlag) {
+          bool originalEndStream = _headerEndStreamPending.remove(frameHeader.streamIdentifier);
+          if (originalEndStream) {
+            // 原始 HEADERS 带 END_STREAM：headers 收全即请求完成，无 body
+            result.isDone = true;
+          } else if (_tryStartStreamingUpload(channelContext, frameHeader, message, result)) {
+            return result;
+          }
+        }
+
         break;
       case FrameType.data:
         //处理DATA帧
@@ -164,11 +200,32 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
           return result;
         }
 
+        // 大 body stream 直接转发 DATA 帧，不累积 body
+        if (_largeBodyStreamIds.contains(frameHeader.streamIdentifier)) {
+          result.forward = List.from(frameHeader.encode())..addAll(framePayload);
+          if (frameHeader.hasEndStreamFlag) {
+            _largeBodyStreamIds.remove(frameHeader.streamIdentifier);
+          }
+          return result;
+        }
+
         _handleDataFrame(channelContext, frameHeader, message, ByteBuf(framePayload));
         result.isDone = frameHeader.hasEndStreamFlag;
+        if (frameHeader.hasEndStreamFlag) {
+          _largeBodyStreamIds.remove(frameHeader.streamIdentifier);
+        }
         break;
       case FrameType.settings:
         SettingHandler.handleSettingsFrame(channelContext, frameHeader, ByteBuf(framePayload));
+        result.forward = List.from(frameHeader.encode())..addAll(framePayload);
+        return result;
+      case FrameType.rstStream:
+        // stream 中断：清理 streaming upload 标记，避免泄漏
+        _headerEndStreamPending.remove(frameHeader.streamIdentifier);
+        if (_largeBodyStreamIds.remove(frameHeader.streamIdentifier)) {
+          logger.w(
+              "[${channelContext.clientChannel?.id}] h2 streaming stream:${frameHeader.streamIdentifier} reset");
+        }
         result.forward = List.from(frameHeader.encode())..addAll(framePayload);
         return result;
       case FrameType.goaway:
@@ -198,11 +255,45 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     return result;
   }
 
+  /// 尝试把当前 stream 标记为大 body streaming 上传。
+  ///
+  /// 前置条件（调用方保证）：headers 已收全（END_HEADERS=1），且客户端还会继续发 body。
+  /// 满足 content-length 阈值时，填充 [result] 让 dispatcher 立即 emit request，
+  /// 让 handler 建立远端连接、发送 headers；后续 DATA 帧由 forward 透传。
+  bool _tryStartStreamingUpload(
+      ChannelContext channelContext, FrameHeader frameHeader, HttpMessage? possibleMessage, DecoderResult<T> result) {
+    if (this is! Http2RequestDecoder ||
+        possibleMessage is! HttpRequest ||
+        possibleMessage.contentLength <= largeBodyThreshold ||
+        _largeBodyStreamIds.contains(frameHeader.streamIdentifier)) {
+      return false;
+    }
+
+    _largeBodyStreamIds.add(frameHeader.streamIdentifier);
+    possibleMessage.streamingBody = true;
+    possibleMessage.streamId = frameHeader.streamIdentifier;
+    logger.w(
+        "[${channelContext.clientChannel?.id}] h2 streaming upload stream:${frameHeader.streamIdentifier} contentLength:${possibleMessage.contentLength}");
+    result.data = possibleMessage as T;
+    result.isDone = true;
+    return true;
+  }
+
   List<Header> encodeHeaders(T message);
 
   @override
   Uint8List encode(ChannelContext channelContext, T data) {
     var bytesBuilder = BytesBuilder();
+
+    // 流式转发：body 由上层 forward 透传，encoder 只写 HEADERS 帧，
+    // 且 endStream=false 保留 stream 让后续 DATA 帧进来。
+    if (data.streamingBody) {
+      var headers = encodeHeaders(data);
+      logger.w("h2 streaming encode streamId:${data.streamId} headerCount:${headers.length}");
+      writeHeadersFrame(bytesBuilder, channelContext, data.streamId!, headers, endStream: false);
+      return bytesBuilder.takeBytes();
+    }
+
     if (data.headers.getInt(HttpHeaders.CONTENT_LENGTH) != null) {
       data.headers.set(HttpHeaders.CONTENT_LENGTH.toLowerCase(), "${data.body?.length ?? 0}");
     }
@@ -353,11 +444,16 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     int dataLength = payload.readableBytes() - padLength;
     var data = payload.readBytes(dataLength);
 
-    // Regular body accumulation
+    // Regular body accumulation.
+    // 用 BytesBuilder 拼接，比 List.from(body!)..addAll(data) 少一次中间拷贝；
+    // 整体累积仍是 O(N²)（每次 toBytes 分配 sum 大 buffer），但常数更小。
     if (message.body == null) {
       message.body = data;
     } else {
-      message.body = List.from(message.body!)..addAll(data);
+      final builder = BytesBuilder(copy: false)
+        ..add(message.body!)
+        ..add(data);
+      message.body = builder.toBytes();
     }
     message.packageSize = (message.packageSize ?? 0) + frameHeader.length;
     return DataFrame(frameHeader, padLength, data);
@@ -492,12 +588,32 @@ class Http2RequestDecoder extends Http2Codec<HttpRequest> {
     headers.add(Header.ascii(":authority", uri.host));
     headers.add(Header.ascii(":path", message.uri));
 
+    // h2 禁止的 hop-by-hop headers (RFC 7540 §8.1.2.2)：
+    // Cloudflare 等严格 upstream 收到会直接返回 400。
+    const forbidden = {'connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'host'};
+
     message.headers.forEach((key, values) {
+      final lower = key.toLowerCase();
+      if (forbidden.contains(lower)) return;
       for (var value in values) {
-        headers.add(Header.ascii(key.toLowerCase(), value));
+        // 用 latin1 编码：h2 header value 是 opaque bytes，Cookie 或
+        // Content-Disposition 里可能出现非 ASCII 字符，用 ascii.encode 会抛异常。
+        // 但要剥离 NUL/CR/LF（h2 禁止），避免 header injection 或 upstream 解析错误。
+        final valueBytes = _sanitizeHeaderValue(latin1.encode(value));
+        headers.add(Header(latin1.encode(lower), valueBytes));
       }
     });
     return headers;
+  }
+
+  static Uint8List _sanitizeHeaderValue(Uint8List bytes) {
+    for (final b in bytes) {
+      if (b == 0x00 || b == 0x0A || b == 0x0D) {
+        // 有非法字节才走 copy 路径
+        return Uint8List.fromList(bytes.where((c) => c != 0x00 && c != 0x0A && c != 0x0D).toList());
+      }
+    }
+    return bytes;
   }
 }
 

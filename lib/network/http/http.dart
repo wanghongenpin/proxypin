@@ -70,6 +70,11 @@ abstract class HttpMessage {
 
   String requestId = (DateTime.now().millisecondsSinceEpoch).toRadixString(36) + RandomUtil.randomString(8); //请求id
   int? streamId; // http2 streamId
+
+  /// 大 body 流式转发模式：为 true 时 encoder 只输出 headers，
+  /// body 字节由上层通过 raw / forward 透传，避免累积到内存。
+  bool streamingBody = false;
+
   HttpMessage(this.protocolVersion);
 
   //json序列化

@@ -169,6 +169,21 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       } else {
         await handler.channelRead(channelContext, channel, data!);
       }
+
+      // h2 streaming 请求：HEADERS 帧 emit 后，buffer 里可能还留着已到达的 DATA
+      // 帧字节（HEADERS 之后同一次 socket 读入的内容）。此时不再触发新的
+      // channelRead（Chrome 已经把整段字节发到 socket），需要主动把剩余字节
+      // 交给 decoder，让 DATA 帧走 forward 透传到远端。
+      // 只做一次：递归调用里 decodeResult.data == null，走完 forward 后 return。
+      if (data is HttpMessage && data.streamingBody && buffer.isReadable()) {
+        Channel? remote = channelContext.getAttribute(channel.id);
+        if (remote == null) {
+          logger.e("[$channel] h2 streaming but remoteChannel is null, drop buffered data");
+          buffer.clear();
+        } else {
+          await channelRead(channelContext, channel, Uint8List(0));
+        }
+      }
     } catch (error, trace) {
       onError(channelContext, channel, error, trace: trace);
     }
