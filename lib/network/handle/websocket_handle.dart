@@ -18,20 +18,33 @@ class WebSocketChannelHandler extends ChannelHandler<Uint8List> {
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
     proxyChannel.writeBytes(msg);
-    WebSocketFrame? frame;
-    try {
-      frame = decoder.decode(msg);
-    } catch (e, stackTrace) {
-      log.e("websocket decode error", error: e, stackTrace: stackTrace);
-    }
-    if (frame == null) {
-      return;
-    }
-    frame.isFromClient = message is HttpRequest;
 
-    message.messages.add(frame);
-    channelContext.listener?.onMessage(channel, message, frame);
-    logger.d(
-        "[${channelContext.clientChannel?.id}] websocket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
+    // A single TCP read may carry multiple WebSocket frames (Nagle, TLS record
+    // batching, OS coalescing). Drain the decoder until no more full frames
+    // remain in its buffer; subsequent iterations pass empty bytes so we only
+    // consume what is already buffered.
+    Uint8List chunk = msg;
+    while (true) {
+      WebSocketFrame? frame;
+      try {
+        frame = decoder.decode(chunk);
+      } catch (e, stackTrace) {
+        log.e("websocket decode error", error: e, stackTrace: stackTrace);
+        break;
+      }
+      if (frame == null) {
+        break;
+      }
+      frame.isFromClient = message is HttpRequest;
+
+      message.messages.add(frame);
+      channelContext.listener?.onMessage(channel, message, frame);
+      logger.d(
+          "[${channelContext.clientChannel?.id}] websocket channelRead ${frame.payloadLength} ${frame.fin} ${frame.payloadDataAsString}");
+
+      chunk = _empty;
+    }
   }
+
+  static final Uint8List _empty = Uint8List(0);
 }
