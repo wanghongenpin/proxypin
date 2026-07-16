@@ -29,6 +29,11 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   //h2 stream dependency Sequential exec
   SequentialTaskQueue taskQueue = SequentialTaskQueue();
 
+  //正在处理中的读事件(HTTP/1.1 不走 taskQueue). 两处 listen(Network.listen / ChannelDispatcher.listen)
+  //都汇聚到本 dispatcher 的 channelRead/channelInactive, 故在此层等待可覆盖所有连接类型.
+  //channelInactive 需等待其完成再关闭对端连接, 避免服务端关闭时提前关闭客户端连接导致 socket hang up.
+  final Set<Completer<void>> _pendingReads = {};
+
   void handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
     this.encoder = encoder;
     this.decoder = decoder;
@@ -88,6 +93,10 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
 
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
+    //同步注册: 在首个 await 之前登记, 保证 onDone(channelInactive) 触发时本次读事件已在集合中
+    final pending = Completer<void>();
+    _pendingReads.add(pending);
+
     //手机扫码连接转发远程
     HostAndPort? remote = channelContext.getAttribute(AttributeKeys.remote);
     buffer.add(msg);
@@ -190,6 +199,9 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
     } catch (error, trace) {
       onError(channelContext, channel, error, trace: trace);
+    } finally {
+      _pendingReads.remove(pending);
+      if (!pending.isCompleted) pending.complete();
     }
   }
 
@@ -303,6 +315,10 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   @override
   channelInactive(ChannelContext channelContext, Channel channel) async {
     await taskQueue.waitForAll();
+    //等待正在处理中的读事件完成(例如 HTTP/1.1 响应写回客户端), 避免服务端关闭时提前关闭对端连接导致 socket hang up
+    while (_pendingReads.isNotEmpty) {
+      await Future.wait(_pendingReads.map((c) => c.future).toList());
+    }
     channel.isOpen = false;
     handler.channelInactive(channelContext, channel);
   }
