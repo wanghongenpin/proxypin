@@ -250,5 +250,18 @@
   "envNone": "Không có môi trường",
   "envDeleteConfirm": "Xóa môi trường này?",
   "envEmptyHint": "Chưa có biến. Nhấn + để thêm.",
-  "envUsageHint": "Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script."
+  "envUsageHint": "Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script.",
+
+  "weakNetwork": "Giới hạn mạng",
+  "weakNetworkPreset": "Cài sẵn",
+  "weakNetworkPresetOffline": "Ngoại tuyến",
+
+  "weakNetworkPresetSlow": "Chậm",
+  "weakNetworkPresetWeak": "Yếu",
+  "weakNetworkLatency": "Độ trễ",
+  "weakNetworkUpload": "Tải lên",
+  "weakNetworkDownload": "Tải xuống",
+  "weakNetworkBandwidth": "Băng thông",
+  "weakNetworkLossRate": "Tỷ lệ mất gói",
+  "weakNetworkRules": "Quy tắc URL"
 }

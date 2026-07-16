@@ -1189,4 +1189,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get envUsageHint => 'Reference variables as %s in rules, or read/write via context.env in scripts.';
+
+  @override
+  String get weakNetwork => 'Network Throttling';
+
+  @override
+  String get weakNetworkPreset => 'Preset';
+
+  @override
+  String get weakNetworkPresetOffline => 'Offline';
+
+  @override
+  String get weakNetworkPresetSlow => 'Slow';
+
+  @override
+  String get weakNetworkPresetWeak => 'Weak';
+
+  @override
+  String get weakNetworkLatency => 'Latency';
+
+  @override
+  String get weakNetworkUpload => 'Upload';
+
+  @override
+  String get weakNetworkDownload => 'Download';
+
+  @override
+  String get weakNetworkBandwidth => 'Bandwidth';
+
+  @override
+  String get weakNetworkLossRate => 'Packet Loss';
+
+  @override
+  String get weakNetworkRules => 'URL Rules';
 }

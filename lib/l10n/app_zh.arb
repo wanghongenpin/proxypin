@@ -411,5 +411,18 @@
   "envNone": "无环境",
   "envDeleteConfirm": "确定删除该环境?",
   "envEmptyHint": "暂无变量,点击 + 添加。",
-  "envUsageHint": "规则中使用 %s 引用变量,脚本中通过 context.env 读写。"
+  "envUsageHint": "规则中使用 %s 引用变量,脚本中通过 context.env 读写。",
+
+  "weakNetwork": "网络限制",
+  "weakNetworkPreset": "预设",
+  "weakNetworkPresetOffline": "离线",
+
+  "weakNetworkPresetSlow": "较慢",
+  "weakNetworkPresetWeak": "弱网",
+  "weakNetworkLatency": "延迟",
+  "weakNetworkUpload": "上行",
+  "weakNetworkDownload": "下行",
+  "weakNetworkBandwidth": "带宽",
+  "weakNetworkLossRate": "丢包率",
+  "weakNetworkRules": "URL 规则"
 }

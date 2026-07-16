@@ -250,5 +250,18 @@
   "envNone": "ไม่มีสภาพแวดล้อม",
   "envDeleteConfirm": "ลบสภาพแวดล้อมนี้?",
   "envEmptyHint": "ยังไม่มีตัวแปร คลิก + เพื่อเพิ่ม",
-  "envUsageHint": "ใช้ %s ในกฎ หรืออ่าน/เขียน context.env ในสคริปต์"
+  "envUsageHint": "ใช้ %s ในกฎ หรืออ่าน/เขียน context.env ในสคริปต์",
+
+  "weakNetwork": "จำกัดเครือข่าย",
+  "weakNetworkPreset": "พรีเซ็ต",
+  "weakNetworkPresetOffline": "ออฟไลน์",
+
+  "weakNetworkPresetSlow": "ช้า",
+  "weakNetworkPresetWeak": "อ่อน",
+  "weakNetworkLatency": "หน่วงเวลา",
+  "weakNetworkUpload": "อัปโหลด",
+  "weakNetworkDownload": "ดาวน์โหลด",
+  "weakNetworkBandwidth": "แบนด์วิดท์",
+  "weakNetworkLossRate": "อัตราแพ็กเก็ตหาย",
+  "weakNetworkRules": "กฎ URL"
 }

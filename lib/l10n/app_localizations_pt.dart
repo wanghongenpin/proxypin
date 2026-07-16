@@ -1189,6 +1189,39 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get envUsageHint => 'Reference variables as %s in rules, or read/write via context.env in scripts.';
+
+  @override
+  String get weakNetwork => 'Network Throttling';
+
+  @override
+  String get weakNetworkPreset => 'Preset';
+
+  @override
+  String get weakNetworkPresetOffline => 'Offline';
+
+  @override
+  String get weakNetworkPresetSlow => 'Slow';
+
+  @override
+  String get weakNetworkPresetWeak => 'Weak';
+
+  @override
+  String get weakNetworkLatency => 'Latency';
+
+  @override
+  String get weakNetworkUpload => 'Upload';
+
+  @override
+  String get weakNetworkDownload => 'Download';
+
+  @override
+  String get weakNetworkBandwidth => 'Bandwidth';
+
+  @override
+  String get weakNetworkLossRate => 'Packet Loss';
+
+  @override
+  String get weakNetworkRules => 'URL Rules';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -1954,4 +1987,37 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get envUsageHint => 'Use %s em regras ou leia/escreva context.env em scripts.';
+
+  @override
+  String get weakNetwork => 'Limitação de Rede';
+
+  @override
+  String get weakNetworkPreset => 'Predefinição';
+
+  @override
+  String get weakNetworkPresetOffline => 'Offline';
+
+  @override
+  String get weakNetworkPresetSlow => 'Lento';
+
+  @override
+  String get weakNetworkPresetWeak => 'Fraco';
+
+  @override
+  String get weakNetworkLatency => 'Latência';
+
+  @override
+  String get weakNetworkUpload => 'Envio';
+
+  @override
+  String get weakNetworkDownload => 'Download';
+
+  @override
+  String get weakNetworkBandwidth => 'Largura de banda';
+
+  @override
+  String get weakNetworkLossRate => 'Perda de pacotes';
+
+  @override
+  String get weakNetworkRules => 'Regras de URL';
 }

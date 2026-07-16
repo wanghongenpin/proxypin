@@ -1185,4 +1185,37 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get envUsageHint => 'Gunakan %s di aturan atau baca/tulis context.env di skrip.';
+
+  @override
+  String get weakNetwork => 'Pembatasan Jaringan';
+
+  @override
+  String get weakNetworkPreset => 'Preset';
+
+  @override
+  String get weakNetworkPresetOffline => 'Offline';
+
+  @override
+  String get weakNetworkPresetSlow => 'Lambat';
+
+  @override
+  String get weakNetworkPresetWeak => 'Lemah';
+
+  @override
+  String get weakNetworkLatency => 'Latensi';
+
+  @override
+  String get weakNetworkUpload => 'Unggah';
+
+  @override
+  String get weakNetworkDownload => 'Unduh';
+
+  @override
+  String get weakNetworkBandwidth => 'Bandwidth';
+
+  @override
+  String get weakNetworkLossRate => 'Kehilangan Paket';
+
+  @override
+  String get weakNetworkRules => 'Aturan URL';
 }

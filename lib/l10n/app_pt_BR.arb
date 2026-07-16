@@ -250,5 +250,18 @@
   "envNone": "Sem Ambiente",
   "envDeleteConfirm": "Excluir este ambiente?",
   "envEmptyHint": "Nenhuma variável. Clique em + para adicionar.",
-  "envUsageHint": "Use %s em regras ou leia/escreva context.env em scripts."
+  "envUsageHint": "Use %s em regras ou leia/escreva context.env em scripts.",
+
+  "weakNetwork": "Limitação de Rede",
+  "weakNetworkPreset": "Predefinição",
+  "weakNetworkPresetOffline": "Offline",
+
+  "weakNetworkPresetSlow": "Lento",
+  "weakNetworkPresetWeak": "Fraco",
+  "weakNetworkLatency": "Latência",
+  "weakNetworkUpload": "Envio",
+  "weakNetworkDownload": "Download",
+  "weakNetworkBandwidth": "Largura de banda",
+  "weakNetworkLossRate": "Perda de pacotes",
+  "weakNetworkRules": "Regras de URL"
 }

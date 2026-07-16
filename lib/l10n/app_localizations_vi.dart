@@ -1183,4 +1183,37 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get envUsageHint => 'Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script.';
+
+  @override
+  String get weakNetwork => 'Giới hạn mạng';
+
+  @override
+  String get weakNetworkPreset => 'Cài sẵn';
+
+  @override
+  String get weakNetworkPresetOffline => 'Ngoại tuyến';
+
+  @override
+  String get weakNetworkPresetSlow => 'Chậm';
+
+  @override
+  String get weakNetworkPresetWeak => 'Yếu';
+
+  @override
+  String get weakNetworkLatency => 'Độ trễ';
+
+  @override
+  String get weakNetworkUpload => 'Tải lên';
+
+  @override
+  String get weakNetworkDownload => 'Tải xuống';
+
+  @override
+  String get weakNetworkBandwidth => 'Băng thông';
+
+  @override
+  String get weakNetworkLossRate => 'Tỷ lệ mất gói';
+
+  @override
+  String get weakNetworkRules => 'Quy tắc URL';
 }

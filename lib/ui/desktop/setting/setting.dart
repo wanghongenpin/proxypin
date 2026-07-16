@@ -18,6 +18,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
+import 'package:proxypin/network/components/manager/network_condition_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -27,6 +28,7 @@ import 'package:proxypin/ui/desktop/setting/about.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/hosts.dart';
 import 'package:proxypin/ui/desktop/setting/request_block.dart';
+import 'package:proxypin/ui/desktop/setting/weak_network.dart';
 
 import 'filter.dart';
 
@@ -79,6 +81,7 @@ class _SettingState extends State<Setting> {
         item(localizations.script,
             onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
         item(localizations.breakpoint, onPressed: requestBreakpoint),
+        item(localizations.weakNetwork, onPressed: showWeakNetwork),
         item(localizations.externalProxy, onPressed: setExternalProxy),
         item(localizations.about, onPressed: showAbout),
       ],
@@ -148,6 +151,15 @@ class _SettingState extends State<Setting> {
 
   void showRequestCrypto() {
     MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
+  }
+
+  void showWeakNetwork() async {
+    var manager = await NetworkConditionManager.instance;
+    if (!mounted) return;
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => WeakNetworkDialog(manager: manager));
   }
 }
 

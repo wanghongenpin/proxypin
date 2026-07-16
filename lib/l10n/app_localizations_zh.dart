@@ -1176,6 +1176,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get envUsageHint => '规则中使用 %s 引用变量,脚本中通过 context.env 读写。';
+
+  @override
+  String get weakNetwork => '网络限制';
+
+  @override
+  String get weakNetworkPreset => '预设';
+
+  @override
+  String get weakNetworkPresetOffline => '离线';
+
+  @override
+  String get weakNetworkPresetSlow => '较慢';
+
+  @override
+  String get weakNetworkPresetWeak => '弱网';
+
+  @override
+  String get weakNetworkLatency => '延迟';
+
+  @override
+  String get weakNetworkUpload => '上行';
+
+  @override
+  String get weakNetworkDownload => '下行';
+
+  @override
+  String get weakNetworkBandwidth => '带宽';
+
+  @override
+  String get weakNetworkLossRate => '丢包率';
+
+  @override
+  String get weakNetworkRules => 'URL 规则';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2286,4 +2319,37 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get envUsageHint => '規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。';
+
+  @override
+  String get weakNetwork => '網路限制';
+
+  @override
+  String get weakNetworkPreset => '預設';
+
+  @override
+  String get weakNetworkPresetOffline => '離線';
+
+  @override
+  String get weakNetworkPresetSlow => '較慢';
+
+  @override
+  String get weakNetworkPresetWeak => '弱網';
+
+  @override
+  String get weakNetworkLatency => '延遲';
+
+  @override
+  String get weakNetworkUpload => '上行';
+
+  @override
+  String get weakNetworkDownload => '下行';
+
+  @override
+  String get weakNetworkBandwidth => '頻寬';
+
+  @override
+  String get weakNetworkLossRate => '遺失率';
+
+  @override
+  String get weakNetworkRules => 'URL 規則';
 }

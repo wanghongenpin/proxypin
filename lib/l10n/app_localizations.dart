@@ -2403,6 +2403,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reference variables as %s in rules, or read/write via context.env in scripts.'**
   String get envUsageHint;
+
+  /// No description provided for @weakNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network Throttling'**
+  String get weakNetwork;
+
+  /// No description provided for @weakNetworkPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset'**
+  String get weakNetworkPreset;
+
+  /// No description provided for @weakNetworkPresetOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get weakNetworkPresetOffline;
+
+  /// No description provided for @weakNetworkPresetSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow'**
+  String get weakNetworkPresetSlow;
+
+  /// No description provided for @weakNetworkPresetWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get weakNetworkPresetWeak;
+
+  /// No description provided for @weakNetworkLatency.
+  ///
+  /// In en, this message translates to:
+  /// **'Latency'**
+  String get weakNetworkLatency;
+
+  /// No description provided for @weakNetworkUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get weakNetworkUpload;
+
+  /// No description provided for @weakNetworkDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get weakNetworkDownload;
+
+  /// No description provided for @weakNetworkBandwidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Bandwidth'**
+  String get weakNetworkBandwidth;
+
+  /// No description provided for @weakNetworkLossRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Packet Loss'**
+  String get weakNetworkLossRate;
+
+  /// No description provided for @weakNetworkRules.
+  ///
+  /// In en, this message translates to:
+  /// **'URL Rules'**
+  String get weakNetworkRules;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

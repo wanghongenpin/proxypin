@@ -1183,4 +1183,37 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get envUsageHint => 'ใช้ %s ในกฎ หรืออ่าน/เขียน context.env ในสคริปต์';
+
+  @override
+  String get weakNetwork => 'จำกัดเครือข่าย';
+
+  @override
+  String get weakNetworkPreset => 'พรีเซ็ต';
+
+  @override
+  String get weakNetworkPresetOffline => 'ออฟไลน์';
+
+  @override
+  String get weakNetworkPresetSlow => 'ช้า';
+
+  @override
+  String get weakNetworkPresetWeak => 'อ่อน';
+
+  @override
+  String get weakNetworkLatency => 'หน่วงเวลา';
+
+  @override
+  String get weakNetworkUpload => 'อัปโหลด';
+
+  @override
+  String get weakNetworkDownload => 'ดาวน์โหลด';
+
+  @override
+  String get weakNetworkBandwidth => 'แบนด์วิดท์';
+
+  @override
+  String get weakNetworkLossRate => 'อัตราแพ็กเก็ตหาย';
+
+  @override
+  String get weakNetworkRules => 'กฎ URL';
 }

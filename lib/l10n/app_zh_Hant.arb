@@ -368,5 +368,18 @@
   "envNone": "無環境",
   "envDeleteConfirm": "確定刪除此環境?",
   "envEmptyHint": "尚無變數,點擊 + 新增。",
-  "envUsageHint": "規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。"
+  "envUsageHint": "規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。",
+
+  "weakNetwork": "網路限制",
+  "weakNetworkPreset": "預設",
+  "weakNetworkPresetOffline": "離線",
+
+  "weakNetworkPresetSlow": "較慢",
+  "weakNetworkPresetWeak": "弱網",
+  "weakNetworkLatency": "延遲",
+  "weakNetworkUpload": "上行",
+  "weakNetworkDownload": "下行",
+  "weakNetworkBandwidth": "頻寬",
+  "weakNetworkLossRate": "遺失率",
+  "weakNetworkRules": "URL 規則"
 }

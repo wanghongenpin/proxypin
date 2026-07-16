@@ -417,5 +417,18 @@
   "envNone": "No Environment",
   "envDeleteConfirm": "Delete this environment?",
   "envEmptyHint": "No variables yet. Click + to add.",
-  "envUsageHint": "Reference variables as %s in rules, or read/write via context.env in scripts."
+  "envUsageHint": "Reference variables as %s in rules, or read/write via context.env in scripts.",
+
+  "weakNetwork": "Network Throttling",
+  "weakNetworkPreset": "Preset",
+  "weakNetworkPresetOffline": "Offline",
+
+  "weakNetworkPresetSlow": "Slow",
+  "weakNetworkPresetWeak": "Weak",
+  "weakNetworkLatency": "Latency",
+  "weakNetworkUpload": "Upload",
+  "weakNetworkDownload": "Download",
+  "weakNetworkBandwidth": "Bandwidth",
+  "weakNetworkLossRate": "Packet Loss",
+  "weakNetworkRules": "URL Rules"
 }

@@ -250,5 +250,18 @@
   "envNone": "Tanpa Environment",
   "envDeleteConfirm": "Hapus environment ini?",
   "envEmptyHint": "Belum ada variabel. Klik + untuk menambahkan.",
-  "envUsageHint": "Gunakan %s di aturan atau baca/tulis context.env di skrip."
+  "envUsageHint": "Gunakan %s di aturan atau baca/tulis context.env di skrip.",
+
+  "weakNetwork": "Pembatasan Jaringan",
+  "weakNetworkPreset": "Preset",
+  "weakNetworkPresetOffline": "Offline",
+
+  "weakNetworkPresetSlow": "Lambat",
+  "weakNetworkPresetWeak": "Lemah",
+  "weakNetworkLatency": "Latensi",
+  "weakNetworkUpload": "Unggah",
+  "weakNetworkDownload": "Unduh",
+  "weakNetworkBandwidth": "Bandwidth",
+  "weakNetworkLossRate": "Kehilangan Paket",
+  "weakNetworkRules": "Aturan URL"
 }
