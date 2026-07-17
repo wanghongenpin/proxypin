@@ -12,6 +12,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/util/url_pattern.dart';
 
@@ -23,7 +24,7 @@ import 'package:proxypin/network/util/url_pattern.dart';
 /// - 规则为空时视为不启用弱网（enabled=false 时也不启用）。
 ///
 /// @author wanghongen
-class NetworkConditionManager {
+class NetworkConditionManager extends ChangeNotifier {
   static NetworkConditionManager? _instance;
 
   /// 全局启用开关
@@ -182,6 +183,7 @@ class NetworkConditionManager {
 
   Future<void> flushConfig() async {
     await _storageFile.writeAsString(jsonEncode(toJson()));
+    notifyListeners();
   }
 
   Map<String, dynamic> toJson() => {

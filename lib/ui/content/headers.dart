@@ -87,7 +87,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
               if (!context.mounted) return;
               FlutterToastr.show(localizations.copied, context);
             },
-      icon: const Icon(Icons.copy),
+      icon: Icon(Icons.copy, color: Theme.of(context).iconTheme.color),
     );
   }
 
@@ -106,7 +106,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
       iconSize: 16,
       tooltip: isText ? 'Headers: Text' : 'Headers: Table',
       onPressed: () => setMode(!isText),
-      icon: Icon(isText ? Icons.text_snippet : Icons.table_rows),
+      icon: Icon(isText ? Icons.text_snippet : Icons.table_rows, color: Theme.of(context).iconTheme.color),
     );
   }
 

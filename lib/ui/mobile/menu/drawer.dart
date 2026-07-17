@@ -26,6 +26,7 @@ import 'package:proxypin/network/components/manager/request_rewrite_manager.dart
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/storage/histories.dart';
+import 'package:proxypin/ui/mobile/menu/weak_network_tile.dart';
 import 'package:proxypin/ui/mobile/setting/hosts.dart';
 import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 import 'package:proxypin/ui/mobile/setting/request_map.dart';
@@ -174,6 +175,7 @@ class DrawerWidget extends StatelessWidget {
                     navigator(context, MobileRequestBreakpointPage(manager: manager));
                   }
                 }),
+            const WeakNetworkMenuTile(),
             ListTile(
                 title: Text(localizations.environmentVariables),
                 leading: const Icon(Icons.public),

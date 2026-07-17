@@ -21,6 +21,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/toolbar/phone_connect.dart';
 import 'package:proxypin/ui/desktop/toolbar/environment_switcher.dart';
+import 'package:proxypin/ui/desktop/toolbar/weak_network_indicator.dart';
 import 'package:proxypin/ui/desktop/setting/setting.dart';
 import 'package:proxypin/ui/desktop/ssl/ssl.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -108,6 +109,7 @@ class _ToolbarState extends State<Toolbar> {
       SslWidget(proxyServer: widget.proxyServer), // SSL配置
       const Padding(padding: EdgeInsets.only(left: 18)),
       Setting(proxyServer: widget.proxyServer), // 设置
+      const WeakNetworkIndicator(), // 网络限制启用时显示，未启用时隐藏
       const Padding(padding: EdgeInsets.only(left: 18)),
       IconButton(
           tooltip: localizations.mobileConnect,

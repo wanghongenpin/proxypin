@@ -138,21 +138,21 @@ class _WeakNetworkDialogState extends State<WeakNetworkDialog> {
       Text(l10n.weakNetworkRules, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
       const SizedBox(width: 6),
       Text('${m.rules.length}',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: theme.colorScheme.primary)),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: theme.colorScheme.primary)),
       const Spacer(),
       TextButton.icon(
         style: TextButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
         icon: const Icon(Icons.settings_outlined, size: 15),
         onPressed: _manageProfiles,
         label: Text('${l10n.edit} ${l10n.weakNetworkPreset}',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
       ),
       const SizedBox(width: 4),
       TextButton.icon(
         style: TextButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
         icon: const Icon(Icons.add, size: 16),
         onPressed: _addRule,
-        label: Text(l10n.add, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        label: Text(l10n.add, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       ),
     ]);
   }
@@ -206,7 +206,7 @@ class _WeakNetworkDialogState extends State<WeakNetworkDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(children: [
           Container(
-            width: 4,
+            width: 2,
             height: 28,
             decoration: BoxDecoration(
               color: isActive ? theme.colorScheme.primary : theme.hintColor.withValues(alpha: 0.25),
@@ -256,10 +256,7 @@ class _WeakNetworkDialogState extends State<WeakNetworkDialog> {
               icon: Icon(Icons.delete_outline, size: 18, color: theme.colorScheme.error.withValues(alpha: 0.8)),
               hoverColor: theme.colorScheme.error.withValues(alpha: 0.08),
               splashRadius: 16,
-              onPressed: () {
-                setState(() => m.rules.removeAt(index));
-                m.flushConfig();
-              }),
+              onPressed: () => _confirmDeleteRule(index)),
         ]),
       ),
     );
@@ -334,10 +331,7 @@ class _WeakNetworkDialogState extends State<WeakNetworkDialog> {
       PopupMenuItem(
           height: 35,
           child: Text(l10n.delete),
-          onTap: () {
-            setState(() => m.rules.removeAt(index));
-            m.flushConfig();
-          }),
+          onTap: () => _confirmDeleteRule(index)),
     ]);
   }
 
@@ -368,6 +362,14 @@ class _WeakNetworkDialogState extends State<WeakNetworkDialog> {
       setState(() => m.rules[index] = saved);
       m.flushConfig();
     }
+  }
+
+  void _confirmDeleteRule(int index) {
+    if (index < 0 || index >= m.rules.length) return;
+    showConfirmDialog(context, content: l10n.confirmContent, onConfirm: () {
+      setState(() => m.rules.removeAt(index));
+      m.flushConfig();
+    });
   }
 
   Future<NetworkConditionProfile?> _createProfile() async {
@@ -625,7 +627,6 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
   late TextEditingController _dnBwCtrl;
   late TextEditingController _dnLatCtrl;
   late TextEditingController _lossCtrl;
-  late bool _offline;
 
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
@@ -639,7 +640,6 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
     _dnBwCtrl = TextEditingController(text: p.downloadKbps?.toString() ?? '');
     _dnLatCtrl = TextEditingController(text: p.responseLatencyMs == 0 ? '' : p.responseLatencyMs.toString());
     _lossCtrl = TextEditingController(text: p.lossRate == 0 ? '' : (p.lossRate * 100).toStringAsFixed(1));
-    _offline = p.offline;
   }
 
   @override
@@ -687,52 +687,27 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
               ),
               validator: (v) => v == null || v.trim().isEmpty ? l10n.cannotBeEmpty : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: _sectionCard(theme, isUpload: false)),
+              const SizedBox(width: 12),
+              Expanded(child: _sectionCard(theme, isUpload: true)),
+            ]),
+            const SizedBox(height: 14),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.25),
+                color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5), width: 0.8),
               ),
               child: Row(children: [
-                Checkbox(
-                    value: _offline,
-                    activeColor: theme.colorScheme.primary,
-                    onChanged: (v) => setState(() => _offline = v ?? false)),
-                Text(l10n.weakNetworkPresetOffline, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                Icon(Icons.broken_image_outlined, size: 16, color: theme.colorScheme.error),
+                const SizedBox(width: 8),
+                Text(l10n.weakNetworkLossRate, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                const Spacer(),
+                SizedBox(width: 140, child: _num('', _lossCtrl, '%', integer: false)),
               ]),
-            ),
-            const SizedBox(height: 14),
-            AnimatedOpacity(
-              opacity: _offline ? 0.35 : 1.0,
-              duration: const Duration(milliseconds: 150),
-              child: IgnorePointer(
-                ignoring: _offline,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(child: _sectionCard(theme, isUpload: false)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _sectionCard(theme, isUpload: true)),
-                  ]),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5), width: 0.8),
-                    ),
-                    child: Row(children: [
-                      Icon(Icons.broken_image_outlined, size: 16, color: theme.colorScheme.error),
-                      const SizedBox(width: 8),
-                      Text(l10n.weakNetworkLossRate, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                      const Spacer(),
-                      SizedBox(width: 140, child: _num('', _lossCtrl, '%', integer: false)),
-                    ]),
-                  ),
-                ]),
-              ),
             ),
           ]),
         ),
@@ -751,7 +726,7 @@ class _ProfileEditDialogState extends State<_ProfileEditDialog> {
               if (!formKey.currentState!.validate()) return;
               final p = widget.profile;
               p.name = _nameCtrl.text.trim();
-              p.offline = _offline;
+              p.offline = false;
               p.uploadKbps = _parseInt(_upBwCtrl.text);
               p.requestLatencyMs = _parseInt(_upLatCtrl.text) ?? 0;
               p.downloadKbps = _parseInt(_dnBwCtrl.text);
@@ -943,10 +918,12 @@ class _ManageProfilesDialogState extends State<_ManageProfilesDialog> {
           icon: Icon(Icons.delete_outline, size: 16, color: theme.colorScheme.error.withValues(alpha: 0.8)),
           hoverColor: theme.colorScheme.error.withValues(alpha: 0.08),
           splashRadius: 16,
-          onPressed: () async {
-            // manager 内部已负责把引用该 profile 的规则回退到默认预设并 flush
-            await m.deleteCustomProfile(p.id);
-            if (mounted) setState(() {});
+          onPressed: () {
+            showConfirmDialog(context, content: l10n.confirmContent, onConfirm: () async {
+              // manager 内部已负责把引用该 profile 的规则回退到默认预设并 flush
+              await m.deleteCustomProfile(p.id);
+              if (mounted) setState(() {});
+            });
           },
         ),
       ]),
