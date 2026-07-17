@@ -27,6 +27,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
+import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/http/http_client.dart';
@@ -253,11 +254,12 @@ class RequestEditorState extends State<RequestEditor> {
     var currentState = requestLineKey.currentState!;
     var headers = requestKey.currentState?.getHeaders();
     var requestBody = requestKey.currentState?.getBody();
-    String url = currentState.requestUrl.text;
+    String url = _renderEnv(currentState.requestUrl.text);
+    _renderHeadersInPlace(headers);
     HttpRequest request = HttpRequest(currentState.requestMethod, Uri.parse(url).toString(),
         protocolVersion: this.request?.protocolVersion ?? "HTTP/1.1");
     request.headers.addAll(headers);
-    request.body = requestBody == null ? null : utf8.encode(requestBody);
+    request.body = requestBody == null ? null : utf8.encode(_renderEnv(requestBody));
 
     responseKey.currentState?.change(null);
     responseChange.value = 0;
@@ -283,26 +285,40 @@ class RequestEditorState extends State<RequestEditor> {
       var currentState = requestLineKey.currentState!;
       var headers = requestKey.currentState?.getHeaders();
       var requestBody = requestKey.currentState?.getBody();
-      String url = currentState.requestUrl.text;
+      String url = _renderEnv(currentState.requestUrl.text);
+      _renderHeadersInPlace(headers);
 
       if (request == null) return;
       HttpRequest newRequest = request!.copy(uri: url);
       newRequest.method = currentState.requestMethod;
       newRequest.headers.clear();
       newRequest.headers.addAll(headers);
-      newRequest.body = requestBody == null ? null : utf8.encode(requestBody);
+      newRequest.body = requestBody == null ? null : utf8.encode(_renderEnv(requestBody));
       widget.onExecuteRequest?.call(newRequest);
     } else if (widget.source == RequestEditorSource.breakpointResponse) {
       var headers = responseKey.currentState?.getHeaders();
       var responseBody = responseKey.currentState?.getBody();
+      _renderHeadersInPlace(headers);
 
       if (response == null) return;
       HttpResponse newResponse = response!.copy();
       newResponse.headers.clear();
       newResponse.headers.addAll(headers);
-      newResponse.body = responseBody == null ? null : utf8.encode(responseBody);
+      newResponse.body = responseBody == null ? null : utf8.encode(_renderEnv(responseBody));
       widget.onExecuteResponse?.call(newResponse);
     }
+  }
+
+  /// 用当前激活的环境变量渲染 `{{name}}`。EnvironmentManager 未加载或未启用时返回原值。
+  static String _renderEnv(String input) => EnvironmentManager.tryRender(input) ?? input;
+
+  /// 就地渲染 headers 每一项的 value。key 保持原样(用作变量占位符的场景极少)。
+  static void _renderHeadersInPlace(HttpHeaders? headers) {
+    headers?.forEach((_, values) {
+      for (int i = 0; i < values.length; i++) {
+        values[i] = _renderEnv(values[i]);
+      }
+    });
   }
 
   Future<void> curlParse() async {
