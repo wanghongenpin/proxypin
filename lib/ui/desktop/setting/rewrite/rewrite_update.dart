@@ -441,7 +441,7 @@ class _UpdateListState extends State<UpdateList> {
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.only(top: 10),
-        constraints: const BoxConstraints(minHeight: 330),
+        height: 330,
         decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
         child: SingleChildScrollView(
             child: Column(children: [
