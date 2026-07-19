@@ -214,11 +214,27 @@ class SearchModel {
       return true;
     }
 
-    if (option == Option.requestBody && matches(request.bodyAsString)) {
-      return true;
+    if (option == Option.requestBody) {
+      if (matches(request.bodyAsString)) {
+        return true;
+      }
+      // 仅在用户明确勾选了 WS 协议筛选时才扫描 WebSocket/SSE 等流式消息帧，避免大连接搜索卡顿
+      if (protocols.contains(Protocol.ws) &&
+          request.messages.isNotEmpty &&
+          request.messages.any((m) => matches(m.payloadDataAsString))) {
+        return true;
+      }
     }
-    if (option == Option.responseBody && response != null && matches(response.bodyAsString)) {
-      return true;
+    if (option == Option.responseBody && response != null) {
+      if (matches(response.bodyAsString)) {
+        return true;
+      }
+      // 仅在用户明确勾选了 WS 协议筛选时才扫描 WebSocket/SSE 等流式消息帧，避免大连接搜索卡顿
+      if (protocols.contains(Protocol.ws) &&
+          response.messages.isNotEmpty &&
+          response.messages.any((m) => matches(m.payloadDataAsString))) {
+        return true;
+      }
     }
 
     if (option == Option.requestHeader || option == Option.responseHeader) {
