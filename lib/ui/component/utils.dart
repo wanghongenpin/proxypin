@@ -25,6 +25,7 @@ import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 
+import '../../utils/lang.dart';
 import '../../utils/platform.dart';
 
 const contentMap = {
@@ -39,6 +40,38 @@ const contentMap = {
   ContentType.font: Icons.font_download,
   ContentType.sse: Icons.stream,
 };
+
+/// GraphQL 操作类型对应的高亮颜色
+/// mutation/subscription 会修改或订阅数据，用更醒目的橙红；query 用柔和的紫红
+Color graphqlOperationColor(String? operationType) {
+  switch (operationType) {
+    case 'mutation':
+      return const Color(0xFFD9822B); // 橙色：提交/修改数据
+    case 'subscription':
+      return const Color(0xFF2E9E83); // 青绿：订阅
+    case 'query':
+    default:
+      return const Color(0xFFB0578D); // 柔和紫红：读取数据
+  }
+}
+
+/// 生成 GraphQL operationName 的高亮 TextSpan，形如 `  (GetCountries)`
+/// 与前面的路径之间预留两个空格拉开间距，[fixAutoLines] 控制是否插入 0 宽字符防换行
+TextSpan? graphqlOperationSpan(HttpRequest request, {double? fontSize, bool fixAutoLines = false}) {
+  var operationName = request.graphqlOperationName;
+  if (operationName == null) {
+    return null;
+  }
+  var text = '  ($operationName)';
+  return TextSpan(
+    text: fixAutoLines ? text.fixAutoLines() : text,
+    style: TextStyle(
+      fontSize: fontSize,
+      color: graphqlOperationColor(request.graphqlOperationType),
+      fontWeight: FontWeight.w500,
+    ),
+  );
+}
 
 Widget getIcon(HttpResponse? response, {Color? color}) {
   if (response == null) {

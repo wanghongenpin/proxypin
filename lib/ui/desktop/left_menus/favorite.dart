@@ -133,6 +133,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     var request = widget.favorite.request;
 
     var response = widget.favorite.response;
+    var operationName = request.graphqlOperationName;
     var title = '${request.method.name} ${request.requestUrl}'.fixAutoLines();
     var time = formatDate(request.requestTime, [mm, '-', d, ' ', HH, ':', nn, ':', ss]);
 
@@ -141,7 +142,15 @@ class _FavoriteItemState extends State<_FavoriteItem> {
         child: ListTile(
             minLeadingWidth: 25,
             leading: getIcon(response),
-            title: Text(widget.favorite.name ?? title, overflow: TextOverflow.ellipsis, maxLines: 2),
+            title: widget.favorite.name != null
+                ? Text(widget.favorite.name!, overflow: TextOverflow.ellipsis, maxLines: 2)
+                : Text.rich(
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    TextSpan(children: [
+                      TextSpan(text: title),
+                      if (operationName != null) graphqlOperationSpan(request, fixAutoLines: true)!,
+                    ])),
             trailing: request.isWebSocket
                 ? Text(
                     'WS',

@@ -251,6 +251,64 @@ class HttpRequest extends HttpMessage {
 
   Map<String, String> get queries => requestUri?.queryParameters ?? {};
 
+  /// GraphQL operationName，懒解析并缓存
+  String? get graphqlOperationName {
+    _parseGraphql();
+    return attributes['_graphqlOperationName'] as String?;
+  }
+
+  /// GraphQL 操作类型：query / mutation / subscription，懒解析并缓存
+  String? get graphqlOperationType {
+    _parseGraphql();
+    return attributes['_graphqlOperationType'] as String?;
+  }
+
+  /// 解析 GraphQL 请求体，提取 operationName 与操作类型，结果缓存到 attributes
+  void _parseGraphql() {
+    if (attributes.containsKey('_graphqlOperationName')) {
+      return;
+    }
+
+    String? name;
+    String? type;
+    try {
+      if (body != null && body!.isNotEmpty) {
+        // 兼容 application/json、application/graphql、application/graphql+json 等
+        var isGraphqlContentType = contentType == ContentType.json || headers.contentType.contains('graphql');
+        if (isGraphqlContentType) {
+          var bodyStr = bodyAsString;
+          if (bodyStr.startsWith('{')) {
+            var json = jsonDecode(bodyStr);
+            if (json is Map) {
+              if (json['operationName'] is String && (json['operationName'] as String).isNotEmpty) {
+                name = json['operationName'] as String;
+              }
+              if (json['query'] is String) {
+                type = _parseGraphqlOperationType(json['query'] as String);
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    attributes['_graphqlOperationName'] = name;
+    attributes['_graphqlOperationType'] = type;
+  }
+
+  /// 从 GraphQL query 文本判断操作类型；匿名简写 `{ ... }` 视为 query
+  static String? _parseGraphqlOperationType(String query) {
+    var trimmed = query.trimLeft();
+    var match = RegExp(r'^(query|mutation|subscription)\b').firstMatch(trimmed);
+    if (match != null) {
+      return match.group(1);
+    }
+    if (trimmed.startsWith('{')) {
+      return 'query';
+    }
+    return null;
+  }
+
   ///获取消息体编码
   @override
   String? get charset {

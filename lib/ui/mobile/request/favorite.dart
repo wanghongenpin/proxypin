@@ -194,7 +194,8 @@ class _FavoriteItemState extends State<_FavoriteItem> {
               if (request.requestUri?.query.isNotEmpty == true)
                 TextSpan(
                     text: '?${request.requestUri?.query}',
-                    style: TextStyle(fontSize: 14, color: Colors.pinkAccent.shade200))
+                    style: TextStyle(fontSize: 14, color: Colors.pinkAccent.shade200)),
+              if (request.graphqlOperationName != null) graphqlOperationSpan(request, fontSize: 14)!,
             ]));
 
     var time = formatDate(request.requestTime, [mm, '-', d, ' ', HH, ':', nn, ':', ss]);

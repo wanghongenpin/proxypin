@@ -138,6 +138,7 @@ class _RequestWidgetState extends State<RequestWidget> {
   Widget build(BuildContext context) {
     var request = widget.request;
     var response = widget.response.get() ?? request.response;
+    var operationName = request.graphqlOperationName;
     String path = widget.displayDomain ? request.domainPath : request.path;
     String title = '${request.method.name} $path';
 
@@ -161,7 +162,13 @@ class _RequestWidgetState extends State<RequestWidget> {
             selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             leading: _leading(requestColor),
             trailing: widget.trailing,
-            title: Text(title.fixAutoLines(), overflow: TextOverflow.ellipsis, maxLines: 2),
+            title: Text.rich(
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                TextSpan(children: [
+                  TextSpan(text: title.fixAutoLines()),
+                  if (operationName != null) graphqlOperationSpan(request, fixAutoLines: true)!,
+                ])),
             subtitle: Container(
                 padding: const EdgeInsets.only(top: 3),
                 child: Text.rich(

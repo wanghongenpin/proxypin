@@ -127,7 +127,7 @@ class RequestRowState extends State<RequestRow> {
   @override
   Widget build(BuildContext context) {
     String url = widget.displayDomain ? request.requestUrl : request.path;
-
+    var operationName = request.graphqlOperationName;
     var title = Strings.autoLineString('${request.method.name} $url');
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
@@ -148,8 +148,13 @@ class RequestRowState extends State<RequestRow> {
           textColor: highlightColor,
           selectedColor: highlightColor,
           leading: rowLeading(),
-          title: Text(title.fixAutoLines(),
-              overflow: TextOverflow.ellipsis, maxLines: 2, style: const TextStyle(fontSize: 14)),
+          title: Text.rich(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              TextSpan(style: const TextStyle(fontSize: 14), children: [
+                TextSpan(text: title.fixAutoLines()),
+                if (operationName != null) graphqlOperationSpan(request, fontSize: 14, fixAutoLines: true)!,
+              ])),
           subtitle: Text.rich(
               maxLines: 1,
               TextSpan(children: [
