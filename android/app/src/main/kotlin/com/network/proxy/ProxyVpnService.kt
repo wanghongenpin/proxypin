@@ -7,7 +7,11 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.net.IpPrefix
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.ProxyInfo
 import android.net.VpnService
 import android.os.Build
@@ -16,10 +20,14 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.network.proxy.plugin.VpnServicePlugin.Companion.REQUEST_CODE
+import com.network.proxy.vpn.ConnectionManager
 import com.network.proxy.vpn.ProxyVpnThread
 import com.network.proxy.vpn.socket.ProtectSocket
 import com.network.proxy.vpn.socket.ProtectSocketHolder
+import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.NetworkInterface
 
 /**
  * VPN服务
@@ -28,6 +36,19 @@ import java.net.InetAddress
 class ProxyVpnService : VpnService(), ProtectSocket {
     private var vpnInterface: ParcelFileDescriptor? = null
     private var vpnThread: ProxyVpnThread? = null
+
+    private var connectivityManager: ConnectivityManager? = null
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
+
+    @Volatile
+    private var activeNetwork: Network? = null
+
+    /**
+     * 代理是否在本机。启动时根据 proxyHost 是否为本机网卡地址判定。
+     * 仅本机代理在切网时需要把转发地址刷新为新网络的本地 IP；远程代理地址不变。见 issue #864。
+     */
+    @Volatile
+    private var localProxy: Boolean = false
 
     companion object {
         const val MAX_PACKET_LEN = 1500
@@ -152,6 +173,7 @@ class ProxyVpnService : VpnService(), ProtectSocket {
     }
 
     private fun disconnect() {
+        unregisterNetworkCallback()
         vpnThread?.run { stopThread() }
         vpnInterface?.close()
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -167,9 +189,10 @@ class ProxyVpnService : VpnService(), ProtectSocket {
         setSystemProxy: Boolean = true,
         proxyPassDomains: ArrayList<String>? = null
     ) {
+        localProxy = isLocalProxyHost(proxyHost)
         Log.i(
             "ProxyVpnService",
-            "startVpn $proxyHost:$proxyPort systemProxy: $setSystemProxy allowPackages: $allowPackages proxyPassDomains: $proxyPassDomains"
+            "startVpn $proxyHost:$proxyPort systemProxy: $setSystemProxy localProxy: $localProxy allowPackages: $allowPackages proxyPassDomains: $proxyPassDomains"
         )
 
         host = proxyHost
@@ -202,7 +225,120 @@ class ProxyVpnService : VpnService(), ProtectSocket {
             proxyPassDomains
         )
         vpnThread!!.start()
+        registerNetworkCallback()
         isRunning = true
+    }
+
+    /**
+     * 监听默认网络变化（WiFi <-> 移动数据）。见 issue #864。
+     *
+     * 网络切换后：
+     *  1. 调用 [setUnderlyingNetworks] 把 VPN 底层网络更新为当前网络（VPN 标准做法，避免 Android
+     *     把底层网络钉死在建立时的网络上；直连的 UDP / proxyPassDomains 绕过套接字仍走物理网络，需要它）。
+     *  2. 本机代理模式下，把转发地址刷新为新网络的本地 IP（旧网络的本地 IP 已随网络失效）。
+     *  3. 关闭旧连接，让切网瞬间残留的在途请求立即在新网络上重建。
+     */
+    private fun registerNetworkCallback() {
+        if (networkCallback != null) return // 幂等：避免重复注册导致回调泄漏
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+        connectivityManager = cm
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                onDefaultNetworkChanged(network)
+            }
+            // 不覆写 onLost：清空 activeNetwork 会在 break-before-make（先 onLost 再 onAvailable）
+            // 的回调顺序下把 previous 置 null，导致该次切网被误判为首次注册而跳过重置。
+        }
+        networkCallback = callback
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                cm.registerDefaultNetworkCallback(callback)
+            } else {
+                val request = NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build()
+                cm.registerNetworkCallback(request, callback)
+            }
+        } catch (e: Exception) {
+            Log.w("ProxyVpnService", "registerNetworkCallback failed", e)
+            networkCallback = null
+        }
+    }
+
+    private fun onDefaultNetworkChanged(network: Network) {
+        val previous = activeNetwork
+        activeNetwork = network
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            try {
+                setUnderlyingNetworks(arrayOf(network))
+            } catch (e: Exception) {
+                Log.w("ProxyVpnService", "setUnderlyingNetworks failed", e)
+            }
+        }
+
+        // 首次注册回调 previous 为 null；同一网络重复回调也跳过。仅真正切换网络时重置连接。
+        if (previous == null || previous == network) return
+
+        Log.i("ProxyVpnService", "default network changed, reset connections (issue #864)")
+
+        // 本机代理：转发地址绑定的是旧网络的本地 IP，切网后失效，需刷新为新网络的本地 IP。
+        // 远程代理：地址在其它设备，不随本机网络变化，跳过。
+        if (localProxy) {
+            val newIp = getNetworkIpv4(network)
+            if (newIp != null) {
+                ConnectionManager.instance.proxyAddress = InetSocketAddress(newIp, port)
+                Log.i("ProxyVpnService", "proxyAddress updated to $newIp:$port")
+            } else {
+                Log.w("ProxyVpnService", "no IPv4 on new network, keep old proxyAddress")
+            }
+        }
+
+        // 关闭旧连接，使其在新网络/新转发地址上重建。
+        ConnectionManager.instance.closeAll()
+    }
+
+    /**
+     * 获取指定网络的本机 IPv4 地址（排除回环/通配地址）。
+     */
+    private fun getNetworkIpv4(network: Network): String? {
+        return try {
+            val lp = connectivityManager?.getLinkProperties(network) ?: return null
+            lp.linkAddresses
+                .map { it.address }
+                .firstOrNull { it is Inet4Address && !it.isLoopbackAddress && !it.isAnyLocalAddress }
+                ?.hostAddress
+        } catch (e: Exception) {
+            Log.w("ProxyVpnService", "getNetworkIpv4 failed", e)
+            null
+        }
+    }
+
+    /**
+     * 判断 proxyHost 是否指向本机（本机网卡地址或回环）。启动时调用，用于区分本机/远程代理。
+     */
+    private fun isLocalProxyHost(proxyHost: String): Boolean {
+        return try {
+            val target = InetAddress.getByName(proxyHost)
+            if (target.isLoopbackAddress || target.isAnyLocalAddress) return true
+            NetworkInterface.getNetworkInterfaces()?.toList().orEmpty().any { nif ->
+                nif.inetAddresses.toList().any { it == target }
+            }
+        } catch (e: Exception) {
+            Log.w("ProxyVpnService", "isLocalProxyHost failed for $proxyHost", e)
+            false
+        }
+    }
+
+    private fun unregisterNetworkCallback() {
+        val callback = networkCallback ?: return
+        try {
+            connectivityManager?.unregisterNetworkCallback(callback)
+        } catch (e: Exception) {
+            Log.w("ProxyVpnService", "unregisterNetworkCallback failed", e)
+        }
+        networkCallback = null
+        activeNetwork = null
     }
 
     private fun showServiceNotification() {
