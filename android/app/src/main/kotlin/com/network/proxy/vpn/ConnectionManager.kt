@@ -27,6 +27,9 @@ class ConnectionManager private constructor() : CloseableConnection {
     }
 
     private val table: ConcurrentMap<String, Connection> = ConcurrentHashMap()
+
+    // 网络切换时由回调线程更新、NIO/handler 线程读取，需保证跨线程可见性。见 issue #864。
+    @Volatile
     var proxyAddress: InetSocketAddress? = null
     var proxyPassDomains: ArrayList<String>? = null
 
@@ -153,6 +156,27 @@ class ConnectionManager private constructor() : CloseableConnection {
      */
     fun addClientData(buffer: ByteBuffer, session: Connection): Int {
         return if (buffer.limit() <= buffer.position()) 0 else session.setSendingData(buffer)
+    }
+
+    /**
+     * 关闭所有连接。用于网络切换（WiFi <-> 移动数据）时：
+     * 旧的 socket 在创建时已通过 protect() 绑定到当时的网络，切网后这些套接字失效，
+     * 需要全部关闭，客户端重连时会在新的网络上重新创建并 protect()。
+     * 见 issue #864。
+     */
+    fun closeAll() {
+        val keys = ArrayList(table.keys)
+        Log.d(TAG, "close all connections on network change, count=${keys.size}")
+        for (key in keys) {
+            val connection = table.remove(key) ?: continue
+            connection.isAbortingConnection = true
+            connection.cancelKey()
+            try {
+                connection.channel?.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
     }
 
     /**
