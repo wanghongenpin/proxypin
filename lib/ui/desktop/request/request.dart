@@ -154,7 +154,7 @@ class _RequestWidgetState extends State<RequestWidget> {
             widget.multiSelectController.enterSelectionMode(widget.request.requestId);
           }
         },
-        onSecondaryTap: contextualMenu,
+        onSecondaryTapDown: (details) => contextualMenu(details),
         child: ListTile(
             minLeadingWidth: 5,
             textColor: requestColor,
@@ -218,8 +218,42 @@ class _RequestWidgetState extends State<RequestWidget> {
     return autoReadRequests.contains(widget.request.requestId) ? Colors.grey : null;
   }
 
-  void contextualMenu() {
-    popUpContextMenu(selectionMode && selectionCount > 1 ? _batchMenu() : _requestMenu());
+  void contextualMenu(TapDownDetails details) {
+    var menu = selectionMode && selectionCount > 1 ? _batchMenu() : _requestMenu();
+    if (Platform.isWindows) {
+      showCustomMenu(context, details.globalPosition, menu);
+    } else {
+      popUpContextMenu(menu);
+    }
+  }
+
+  Future<void> showCustomMenu(BuildContext context, Offset position, Menu menu) async {
+    final items = <PopupMenuEntry<MenuItem>>[];
+    for (var item in menu.items ?? []) {
+      if (item.type == 'separator' || (item.label == null && item.type == null)) {
+        items.add(const PopupMenuDivider());
+      } else {
+        items.add(PopupMenuItem<MenuItem>(
+          value: item,
+          height: 32,
+          child: Text(item.label ?? '', style: const TextStyle(fontSize: 13)),
+        ));
+      }
+    }
+    final selected = await showMenu<MenuItem>(
+      context: context,
+      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx + 1, position.dy + 1),
+      items: items,
+    );
+    if (selected != null) {
+      if (selected.type == 'submenu' && selected.submenu != null) {
+        if (context.mounted) {
+          showCustomMenu(context, position + const Offset(10, 10), selected.submenu!);
+        }
+      } else if (selected.onClick != null) {
+        selected.onClick!(selected);
+      }
+    }
   }
 
   Menu _batchMenu() {

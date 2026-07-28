@@ -542,7 +542,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   //domain title
   Widget _hostWidget(String title) {
     var host = GestureDetector(
-        onSecondaryTap: menu,
+        onSecondaryTapDown: (details) => menu(details),
         child: ListTile(
             minLeadingWidth: 25,
             leading: Icon(selected ? Icons.arrow_drop_down : Icons.arrow_right, size: 18),
@@ -571,7 +571,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   }
 
   //域名右键菜单
-  void menu() {
+  void menu(TapDownDetails details) {
     Menu menu = Menu(items: [
       MenuItem(
           label: localizations.copyHost,
@@ -593,7 +593,40 @@ class _DomainRequestsState extends State<DomainRequests> {
       MenuItem(label: localizations.delete, onClick: (_) => _delete()),
     ]);
 
-    popUpContextMenu(menu);
+    if (Platform.isWindows) {
+      showCustomMenu(context, details.globalPosition, menu);
+    } else {
+      popUpContextMenu(menu);
+    }
+  }
+
+  Future<void> showCustomMenu(BuildContext context, Offset position, Menu menu) async {
+    final items = <PopupMenuEntry<MenuItem>>[];
+    for (var item in menu.items ?? []) {
+      if (item.type == 'separator' || (item.label == null && item.type == null)) {
+        items.add(const PopupMenuDivider());
+      } else {
+        items.add(PopupMenuItem<MenuItem>(
+          value: item,
+          height: 32,
+          child: Text(item.label ?? '', style: const TextStyle(fontSize: 13)),
+        ));
+      }
+    }
+    final selected = await showMenu<MenuItem>(
+      context: context,
+      position: RelativeRect.fromLTRB(position.dx, position.dy, position.dx + 1, position.dy + 1),
+      items: items,
+    );
+    if (selected != null) {
+      if (selected.type == 'submenu' && selected.submenu != null) {
+        if (context.mounted) {
+          showCustomMenu(context, position + const Offset(10, 10), selected.submenu!);
+        }
+      } else if (selected.onClick != null) {
+        selected.onClick!(selected);
+      }
+    }
   }
 
   //重复域名下请求
