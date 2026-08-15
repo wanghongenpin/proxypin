@@ -450,6 +450,30 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get requestViewMode => 'Mode tampilan';
+
+  @override
+  String get requestViewModeSubtitle =>
+      'Tampilkan permintaan yang ditangkap sebagai daftar datar, atau dikelompokkan menjadi pohon path';
+
+  @override
+  String get requestViewList => 'Daftar';
+
+  @override
+  String get requestViewTree => 'Pohon';
+
+  @override
+  String get expandAll => 'Buka semua';
+
+  @override
+  String get collapseAll => 'Tutup semua';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    return '$count permintaan';
+  }
+
+  @override
   String get selectAction => 'Pilih aksi';
 
   @override

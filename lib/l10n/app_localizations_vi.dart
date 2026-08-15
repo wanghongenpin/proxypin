@@ -450,6 +450,30 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get requestViewMode => 'Kiểu hiển thị';
+
+  @override
+  String get requestViewModeSubtitle =>
+      'Hiển thị request bắt được dạng danh sách phẳng, hoặc nhóm theo path thành dạng cây';
+
+  @override
+  String get requestViewList => 'Danh sách';
+
+  @override
+  String get requestViewTree => 'Dạng cây';
+
+  @override
+  String get expandAll => 'Mở tất cả';
+
+  @override
+  String get collapseAll => 'Thu gọn tất cả';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    return '$count request';
+  }
+
+  @override
   String get selectAction => 'Chọn thao tác';
 
   @override

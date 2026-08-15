@@ -31,8 +31,11 @@ import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
+import 'package:proxypin/ui/component/request_tree_view.dart';
 import 'package:proxypin/ui/component/transition.dart';
 import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
 import 'package:proxypin/utils/har.dart';
@@ -88,6 +91,26 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 
   bool sortDesc = true;
 
+  ///列表/树形展示模式。直接用配置里的那份，设置页改了这里立刻生效。
+  ///多窗口下 AppConfiguration.current 可能为空，那时才退化成本地的一份
+  ValueNotifier<RequestViewMode>? _localViewMode;
+
+  ValueNotifier<RequestViewMode> get viewMode =>
+      AppConfiguration.current?.requestViewMode ?? (_localViewMode ??= ValueNotifier(RequestViewMode.list));
+
+  ///树形展开状态在域名之间共享
+  final RequestTreeExpansion treeExpansion = RequestTreeExpansion();
+
+  ///搜索结果单独一份展开状态，默认全开但仍然可以手动收起
+  RequestTreeExpansion searchExpansion = RequestTreeExpansion(expandedByDefault: true);
+
+  ///键盘所在的行，键是 RequestTreeRow.key，域名行的键就是域名本身
+  final ValueNotifier<String?> cursor = ValueNotifier(null);
+  final GlobalKey _cursorAnchor = GlobalKey();
+  final FocusNode _keyboardFocus = FocusNode(debugLabel: 'domain tree');
+
+  bool get isTreeMode => viewMode.value == RequestViewMode.tree;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   MultiSelectController get selectionController => widget.selectionController;
@@ -132,7 +155,175 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   void dispose() {
     selectionController.selectedIds.removeListener(selectionListener);
     KeywordHighlights.removeListener(highlightListener);
+    treeExpansion.dispose();
+    searchExpansion.dispose();
+    //只销毁自己建的那份，配置里的那份归 AppConfiguration
+    _localViewMode?.dispose();
+    cursor.dispose();
+    _keyboardFocus.dispose();
     super.dispose();
+  }
+
+  ///当前生效的展开状态：搜索中用搜索那份
+  RequestTreeExpansion get activeExpansion => searchModel?.isNotEmpty == true ? searchExpansion : treeExpansion;
+
+  ///屏幕上从上到下的所有行，域名行在前，展开的域名后面跟着它的路径树
+  List<RequestTreeRow> _visibleRows() {
+    var domains = searchModel?.isNotEmpty == true ? searchView.values : containerMap.values;
+    var expansion = activeExpansion;
+    var rows = <RequestTreeRow>[];
+
+    for (var domain in domains) {
+      var root = RequestTree.build(domain.domain, domain.body.map((it) => it.request));
+      rows.add(RequestTreeRow(key: domain.domain, parentKey: null, depth: 0, label: domain.domain, node: root));
+      if (domain.currentSelected) {
+        rows.addAll(RequestTree.visibleRows(root, expansion));
+      }
+    }
+    return rows;
+  }
+
+  DomainRequests? _domainOf(String domain) {
+    var domains = searchModel?.isNotEmpty == true ? searchView : containerMap;
+    return domains[domain];
+  }
+
+  ///点开某一行时把键盘光标挪过去，并让列表拿到焦点，之后方向键就能用了
+  void _onFolderTap(String rowKey) {
+    cursor.value = rowKey;
+    _keyboardFocus.requestFocus();
+  }
+
+  ///键盘导航：上下移动，右键展开或进入，左键收起或回到父节点
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent || !isTreeMode) {
+      return KeyEventResult.ignored;
+    }
+
+    var key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowDown) {
+      return moveCursor(1);
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      return moveCursor(-1);
+    }
+    if (key == LogicalKeyboardKey.arrowRight) {
+      return expandOrEnter();
+    }
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      return collapseOrLeave();
+    }
+    return KeyEventResult.ignored;
+  }
+
+  KeyEventResult moveCursor(int delta) {
+    var rows = _visibleRows();
+    if (rows.isEmpty) {
+      return KeyEventResult.ignored;
+    }
+
+    var index = rows.indexWhere((row) => row.key == cursor.value);
+    var next = index < 0 ? (delta > 0 ? 0 : rows.length - 1) : index + delta;
+    if (next < 0 || next >= rows.length) {
+      return KeyEventResult.handled;
+    }
+
+    _setCursor(rows[next]);
+    return KeyEventResult.handled;
+  }
+
+  KeyEventResult expandOrEnter() {
+    var rows = _visibleRows();
+    var index = rows.indexWhere((row) => row.key == cursor.value);
+    if (index < 0) {
+      return moveCursor(1);
+    }
+
+    var row = rows[index];
+    if (!row.isFolder) {
+      return KeyEventResult.handled;
+    }
+
+    var expanded = row.depth == 0 ? _domainOf(row.key)?.currentSelected == true : activeExpansion.isExpanded(row.key);
+    if (!expanded) {
+      _setExpanded(row, true);
+      return KeyEventResult.handled;
+    }
+
+    //已经展开就进入第一个子节点
+    return moveCursor(1);
+  }
+
+  KeyEventResult collapseOrLeave() {
+    var rows = _visibleRows();
+    var index = rows.indexWhere((row) => row.key == cursor.value);
+    if (index < 0) {
+      return KeyEventResult.ignored;
+    }
+
+    var row = rows[index];
+    var expanded = row.isFolder &&
+        (row.depth == 0 ? _domainOf(row.key)?.currentSelected == true : activeExpansion.isExpanded(row.key));
+    if (expanded) {
+      _setExpanded(row, false);
+      return KeyEventResult.handled;
+    }
+
+    //已经收起或是请求行，就回到父节点
+    if (row.parentKey == null) {
+      return KeyEventResult.handled;
+    }
+    var parent = rows.firstWhereOrNull((it) => it.key == row.parentKey);
+    if (parent != null) {
+      _setCursor(parent);
+    }
+    return KeyEventResult.handled;
+  }
+
+  void _setExpanded(RequestTreeRow row, bool expanded) {
+    if (row.depth == 0) {
+      _domainOf(row.key)?.setExpanded(expanded);
+      setState(() {});
+      return;
+    }
+    activeExpansion.setExpanded(row.key, expanded);
+  }
+
+  void _setCursor(RequestTreeRow row) {
+    cursor.value = row.key;
+
+    //光标停在请求行时，右侧面板跟着打开这条请求
+    if (!row.isFolder) {
+      var requestId = row.request!.requestId;
+      for (var domain in containerMap.values) {
+        domain.requestMap[requestId]?.select();
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      var context = _cursorAnchor.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(context, alignment: 0.2, duration: const Duration(milliseconds: 120));
+      }
+    });
+  }
+
+  ///展开全部节点，包含域名本身
+  void expandAll() {
+    activeExpansion.expandAll();
+    for (var domainRequests in containerMap.values) {
+      domainRequests.setExpanded(true);
+    }
+    setState(() {});
+  }
+
+  ///收起全部节点
+  void collapseAll() {
+    activeExpansion.collapseAll();
+    for (var domainRequests in containerMap.values) {
+      domainRequests.setExpanded(false);
+    }
+    setState(() {});
   }
 
   @override
@@ -152,9 +343,12 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
       searchView.clear();
     }
 
-    return widget.shrinkWrap
+    var body = widget.shrinkWrap
         ? SingleChildScrollView(child: Column(children: list.toList()))
         : ListView.builder(itemCount: list.length, itemBuilder: (_, index) => list.elementAt(index));
+
+    //树形模式下接管方向键；点进列表才拿焦点，不抢输入框
+    return Focus(focusNode: _keyboardFocus, onKeyEvent: _onKey, child: body);
   }
 
   ///搜索
@@ -171,7 +365,10 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     containerMap.forEach((key, domainRequests) {
       var body = domainRequests.search(searchModel);
       if (body.isNotEmpty) {
-        result[key] = domainRequests.copy(body: body, selected: searchView[key]?.currentSelected);
+        //搜索结果强制展开，否则匹配到的请求会被折叠的目录挡住
+        //搜索结果用另一份展开状态，默认全开但用户仍然可以手动收起
+        result[key] =
+            domainRequests.copy(body: body, selected: searchView[key]?.currentSelected, expansion: searchExpansion);
       }
     });
 
@@ -227,6 +424,11 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
         },
         selectionController: selectionController,
         selectionHandlers: widget.selectionHandlers,
+        viewMode: viewMode,
+        treeExpansion: treeExpansion,
+        cursor: cursor,
+        cursorAnchor: _cursorAnchor,
+        onFolderTap: _onFolderTap,
       );
       containerMap[host] = domainRequests;
     }
@@ -303,6 +505,14 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     if (searchModel?.isNotEmpty == true) {
       container = searchView.values;
     }
+
+    if (isTreeMode) {
+      //树形模式下显示顺序由路径决定，范围选择需要按显示顺序来
+      return container
+          .expand((domain) => RequestTree.build(domain.domain, domain.body.map((it) => it.request)).orderedRequests())
+          .toList();
+    }
+
     return container.expand((list) => list.body.map((it) => it.request)).toList();
   }
 
@@ -403,6 +613,21 @@ class DomainRequests extends StatefulWidget {
   final RequestSelectionHandlers selectionHandlers;
   final MultiSelectController selectionController;
 
+  ///列表/树形展示模式，由域名列表统一持有
+  final ValueNotifier<RequestViewMode> viewMode;
+
+  ///树形目录的展开状态，所有域名共享
+  final RequestTreeExpansion treeExpansion;
+
+  ///键盘所在的行
+  final ValueNotifier<String?>? cursor;
+
+  ///键盘所在行上方的锚点，用于滚动到可视区域
+  final GlobalKey? cursorAnchor;
+
+  ///点开目录时通知外层，把键盘光标挪过去
+  final ValueChanged<String>? onFolderTap;
+
   DomainRequests(this.domain,
       {this.selected = false,
       this.onDelete,
@@ -411,8 +636,19 @@ class DomainRequests extends StatefulWidget {
       this.onRequestRemove,
       required this.selectionHandlers,
       this.trailing,
-      required this.selectionController})
+      required this.selectionController,
+      required this.viewMode,
+      required this.treeExpansion,
+      this.cursor,
+      this.cursorAnchor,
+      this.onFolderTap})
       : super(key: GlobalKey<_DomainRequestsState>());
+
+  ///展开或收起该域名
+  void setExpanded(bool expanded) {
+    var state = key as GlobalKey<_DomainRequestsState>;
+    state.currentState?.setExpanded(expanded);
+  }
 
   ///添加请求
   void addRequest(String? requestId, HttpRequest request, bool sortDesc) {
@@ -466,7 +702,7 @@ class DomainRequests extends StatefulWidget {
   }
 
   ///复制
-  DomainRequests copy({Iterable<RequestWidget>? body, bool? selected}) {
+  DomainRequests copy({Iterable<RequestWidget>? body, bool? selected, RequestTreeExpansion? expansion}) {
     var state = key as GlobalKey<_DomainRequestsState>;
     var headerBody = DomainRequests(domain,
         trailing: trailing,
@@ -476,6 +712,11 @@ class DomainRequests extends StatefulWidget {
         onRequestRemove: onRequestRemove,
         selectionController: selectionController,
         selectionHandlers: selectionHandlers,
+        viewMode: viewMode,
+        treeExpansion: expansion ?? treeExpansion,
+        cursor: cursor,
+        cursorAnchor: cursorAnchor,
+        onFolderTap: onFolderTap,
         proxyServer: proxyServer);
     if (body != null) {
       headerBody.body.addAll(body);
@@ -508,12 +749,42 @@ class _DomainRequestsState extends State<DomainRequests> {
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
+  bool get isTreeMode => widget.viewMode.value == RequestViewMode.tree;
+
   @override
   void initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
     selected = widget.selected;
     trailing = widget.trailing;
+    widget.viewMode.addListener(_onViewModeChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.viewMode.removeListener(_onViewModeChanged);
+    super.dispose();
+  }
+
+  void _onViewModeChanged() {
+    if (widget.viewMode.value == RequestViewMode.list) {
+      //回到列表模式，恢复请求行原本的完整路径和缩进
+      for (var requestWidget in widget.body) {
+        requestWidget.applyTreeStyle(null);
+      }
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void setExpanded(bool expanded) {
+    if (selected == expanded || !mounted) {
+      return;
+    }
+    setState(() {
+      selected = expanded;
+    });
   }
 
   void changeState() {
@@ -533,15 +804,41 @@ class _DomainRequestsState extends State<DomainRequests> {
 
   @override
   Widget build(BuildContext context) {
+    if (isTreeMode) {
+      //树形模式只在展开时构建，避免为折叠的域名白算一棵树
+      return Column(children: [_hostWidget(widget.domain), if (selected) _treeBody()]);
+    }
+
     return Column(children: [
       _hostWidget(widget.domain),
       Offstage(offstage: !selected, child: Column(children: widget.body.toList()))
     ]);
   }
 
+  ///按路径分段构建域名下的请求树
+  Widget _treeBody() {
+    var requestWidgets = <String, RequestWidget>{};
+    for (var requestWidget in widget.body) {
+      requestWidgets[requestWidget.request.requestId] = requestWidget;
+    }
+
+    var root = RequestTree.build(widget.domain, widget.body.map((it) => it.request));
+    return RequestTreeView(
+        root: root,
+        expansion: widget.treeExpansion,
+        cursor: widget.cursor,
+        cursorAnchor: widget.cursorAnchor,
+        onFolderTap: widget.onFolderTap,
+        leafBuilder: (request, style) {
+          var requestWidget = requestWidgets[request.requestId]!;
+          requestWidget.applyTreeStyle(style);
+          return requestWidget;
+        });
+  }
+
   //domain title
   Widget _hostWidget(String title) {
-    var host = GestureDetector(
+    Widget host = GestureDetector(
         onSecondaryTapDown: (details) => menu(details),
         child: ListTile(
             minLeadingWidth: 25,
@@ -551,6 +848,9 @@ class _DomainRequestsState extends State<DomainRequests> {
             horizontalTitleGap: 0,
             contentPadding: const EdgeInsets.only(left: 3, right: 8),
             visualDensity: const VisualDensity(vertical: -3.6),
+            //树形模式下域名行和它下面的目录行排一样紧，平铺模式保持原样
+            minTileHeight: isTreeMode ? RequestTreeStyle.rowHeight : null,
+            minVerticalPadding: isTreeMode ? 0 : 4,
             title: Text(title,
                 textAlign: TextAlign.left,
                 style: const TextStyle(fontSize: 14),
@@ -560,7 +860,21 @@ class _DomainRequestsState extends State<DomainRequests> {
               setState(() {
                 selected = !selected;
               });
+              widget.onFolderTap?.call(widget.domain);
             }));
+
+    //域名行也可以是键盘光标所在的行
+    var cursor = widget.cursor;
+    if (cursor != null) {
+      host = ValueListenableBuilder<String?>(
+          valueListenable: cursor,
+          builder: (context, current, child) => Container(
+              color: current == widget.domain && isTreeMode
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)
+                  : null,
+              child: child),
+          child: host);
+    }
 
     return ColorTransition(
         key: transitionState,

@@ -976,6 +976,48 @@ abstract class AppLocalizations {
   /// **'Last Request Time: {time},  Count: {count}'**
   String domainListSubtitle(Object count, Object time);
 
+  /// No description provided for @requestViewMode.
+  ///
+  /// In en, this message translates to:
+  /// **'View Mode'**
+  String get requestViewMode;
+
+  /// No description provided for @requestViewModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show captured requests as a flat list, or grouped into a path tree'**
+  String get requestViewModeSubtitle;
+
+  /// No description provided for @requestViewList.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get requestViewList;
+
+  /// No description provided for @requestViewTree.
+  ///
+  /// In en, this message translates to:
+  /// **'Tree'**
+  String get requestViewTree;
+
+  /// No description provided for @expandAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand All'**
+  String get expandAll;
+
+  /// No description provided for @collapseAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse All'**
+  String get collapseAll;
+
+  /// No description provided for @treeNodeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} request} other{{count} requests}}'**
+  String treeNodeSubtitle(int count);
+
   /// No description provided for @selectAction.
   ///
   /// In en, this message translates to:

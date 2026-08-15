@@ -29,7 +29,12 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/model/search_model.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
+import 'package:proxypin/ui/component/request_tree_view.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
+import 'package:proxypin/ui/desktop/request/request.dart' show RequestSelectionHandlers;
+import 'package:proxypin/ui/mobile/request/request.dart';
 import 'package:proxypin/ui/mobile/request/request_sequence.dart';
 import 'package:proxypin/utils/export_request.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -42,8 +47,15 @@ class DomainList extends StatefulWidget {
   final ProxyServer proxyServer;
   final Function(List<HttpRequest>)? onRemove;
   final VoidCallback? onInitialized; // 初始化完成回调
+  final MultiSelectController selectionController;
 
-  const DomainList({super.key, required this.list, required this.proxyServer, this.onRemove, this.onInitialized});
+  const DomainList(
+      {super.key,
+      required this.list,
+      required this.proxyServer,
+      required this.selectionController,
+      this.onRemove,
+      this.onInitialized});
 
   @override
   State<StatefulWidget> createState() {
@@ -75,12 +87,26 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
 
   bool sortDesc = true;
 
+  ///列表/树形展示模式
+  ///展示模式直接读配置里的那份，设置页改了这里立刻生效
+  RequestViewMode get viewMode => AppConfiguration.current?.requestViewMode.value ?? RequestViewMode.list;
+
+  ///树形节点展开状态，域名本身也用同一份状态，键是域名
+  final RequestTreeExpansion treeExpansion = RequestTreeExpansion();
+
+  ///树形模式下请求id对应的响应刷新回调
+  final Map<String, VoidCallback> responseCallbacks = {};
+
+  bool get isTreeMode => viewMode == RequestViewMode.tree;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
   initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
+    //设置页里改了展示模式，这里跟着刷新
+    AppConfiguration.current?.requestViewMode.addListener(_onViewModeChanged);
     initFromContainer();
 
     // 通知父组件初始化完成
@@ -125,9 +151,22 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
       add(response.request!);
     }
 
+    //树形模式下请求行直接挂在本页面上，需要自己驱动刷新
+    responseCallbacks.remove(response.request?.requestId)?.call();
+
     if (showHostAndPort == hostAndPort) {
       requestSequenceKey.currentState?.addResponse(response);
     }
+  }
+
+  ///展开全部节点，包含域名本身
+  void expandAll() {
+    treeExpansion.expandAll();
+  }
+
+  ///收起全部节点
+  void collapseAll() {
+    treeExpansion.collapseAll();
   }
 
   void clean() {
@@ -135,6 +174,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
       view.clear();
       domainList.clear();
       containerMap.clear();
+      responseCallbacks.clear();
 
       initFromContainer();
     });
@@ -143,6 +183,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   void remove(List<HttpRequest> list) {
     for (var request in list) {
       containerMap[request.hostAndPort]?.remove(request);
+      responseCallbacks.remove(request.requestId);
       if (containerMap[request.hostAndPort]?.isEmpty ?? false) {
         domainList.remove(request.hostAndPort);
         view.remove(request.hostAndPort);
@@ -196,9 +237,17 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
   @override
   bool get wantKeepAlive => true;
 
+  void _onViewModeChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void dispose() {
+    AppConfiguration.current?.requestViewMode.removeListener(_onViewModeChanged);
     _scrollController.dispose();
+    treeExpansion.dispose();
     super.dispose();
   }
 
@@ -214,7 +263,7 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
             separatorBuilder: (context, index) =>
                 Divider(thickness: 0.2, height: 0.5, color: Theme.of(context).dividerColor),
             itemCount: view.length,
-            itemBuilder: (ctx, index) => title(index)));
+            itemBuilder: (ctx, index) => isTreeMode ? treeTitle(index) : title(index)));
   }
 
   Widget title(int index) {
@@ -230,27 +279,91 @@ class DomainListState extends State<DomainList> with AutomaticKeepAliveClientMix
         onLongPress: () => menu(index),
         // show menus
         contentPadding: const EdgeInsets.only(left: 10),
-        onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) {
-            showHostAndPort = view.elementAt(index);
-            var list = containerMap[view.elementAt(index)];
+        onTap: () => openDomain(index));
+  }
 
-            return Scaffold(
-                appBar: AppBar(title: Text(view.elementAt(index).domain, style: const TextStyle(fontSize: 16))),
-                body: RequestSequence(
-                  key: requestSequenceKey,
-                  displayDomain: false,
-                  container: ListenableList(sortDesc ? list : list?.reversed.toList()),
-                  sortDesc: sortDesc,
-                  onRemove: (requests) {
-                    widget.onRemove?.call(requests);
-                    remove(requests);
-                  },
-                  proxyServer: widget.proxyServer,
-                  selectionController: MultiSelectController(),
-                ));
-          }));
+  ///树形模式下的域名行，点击展开路径树，右侧箭头仍然打开原来的请求列表页
+  Widget treeTitle(int index) {
+    var hostAndPort = view.elementAt(index);
+    var requests = containerMap[hostAndPort] ?? const <HttpRequest>[];
+    var time = requests.isEmpty ? '' : formatDate(requests.last.requestTime, [m, '/', d, ' ', HH, ':', nn, ':', ss]);
+
+    return ListenableBuilder(
+        listenable: treeExpansion,
+        builder: (context, _) {
+          var expanded = treeExpansion.isExpanded(hostAndPort.domain);
+
+          return Column(mainAxisSize: MainAxisSize.min, children: [
+            ListTile(
+                visualDensity: const VisualDensity(vertical: -4),
+                minLeadingWidth: 25,
+                horizontalTitleGap: 0,
+                leading: Icon(expanded ? Icons.arrow_drop_down : Icons.arrow_right, size: 22),
+                title: Text(hostAndPort.domain, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(localizations.domainListSubtitle(requests.length, time),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                trailing: IconButton(
+                    icon: const Icon(Icons.chevron_right),
+                    tooltip: localizations.requestViewList,
+                    onPressed: () => openDomain(index)),
+                onLongPress: () => menu(index),
+                contentPadding: const EdgeInsets.only(left: 6, right: 4),
+                onTap: () => treeExpansion.toggle(hostAndPort.domain)),
+            if (expanded) treeBody(hostAndPort, requests),
+          ]);
         });
+  }
+
+  ///域名下按路径分段的请求树
+  Widget treeBody(HostAndPort hostAndPort, List<HttpRequest> requests) {
+    var ordered = sortDesc ? requests.reversed.toList() : requests;
+
+    //请求行上显示的序号，始终按抓包先后计算
+    var displayIndex = <String, int>{};
+    for (var i = 0; i < requests.length; i++) {
+      displayIndex[requests[i].requestId] = i + 1;
+    }
+
+    return RequestTreeView(
+        root: RequestTree.build(hostAndPort.domain, ordered),
+        expansion: treeExpansion,
+        leafBuilder: (request, style) => RequestRow(
+            key: ValueKey(request.requestId),
+            index: displayIndex[request.requestId] ?? 0,
+            request: request,
+            proxyServer: widget.proxyServer,
+            displayDomain: false,
+            treeStyle: style,
+            selectionController: widget.selectionController,
+            selectionHandlers: const RequestSelectionHandlers(),
+            onMount: (callback) => responseCallbacks[request.requestId] = callback,
+            onRemove: (item) {
+              widget.onRemove?.call([item]);
+              remove([item]);
+            }));
+  }
+
+  ///打开域名下的请求列表页
+  void openDomain(int index) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      showHostAndPort = view.elementAt(index);
+      var list = containerMap[view.elementAt(index)];
+
+      return Scaffold(
+          appBar: AppBar(title: Text(view.elementAt(index).domain, style: const TextStyle(fontSize: 16))),
+          body: RequestSequence(
+            key: requestSequenceKey,
+            displayDomain: false,
+            container: ListenableList(sortDesc ? list : list?.reversed.toList()),
+            sortDesc: sortDesc,
+            onRemove: (requests) {
+              widget.onRemove?.call(requests);
+              remove(requests);
+            },
+            proxyServer: widget.proxyServer,
+            selectionController: MultiSelectController(),
+          ));
+    }));
   }
 
   void scrollToTop() {

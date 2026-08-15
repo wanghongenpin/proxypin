@@ -30,6 +30,7 @@ import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -56,6 +57,9 @@ class RequestRow extends StatefulWidget {
   final RequestSelectionHandlers selectionHandlers;
   final Function(VoidCallback refresh)? onMount; // 注册刷新回调
 
+  /// 树形展示时的位置信息；为 null 表示按原来的平铺方式显示
+  final RequestTreeStyle? treeStyle;
+
   const RequestRow({
     super.key,
     required this.request,
@@ -66,6 +70,7 @@ class RequestRow extends StatefulWidget {
     required this.index,
     required this.selectionHandlers,
     this.onMount,
+    this.treeStyle,
   });
 
   @override
@@ -124,11 +129,18 @@ class RequestRowState extends State<RequestRow> {
 
   BuildContext get availableContext => getContext();
 
+  ///树形模式下按层级缩进
+  double get _treeIndent => (widget.treeStyle?.depth ?? 0) * RequestTreeStyle.indentStep;
+
   @override
   Widget build(BuildContext context) {
     String url = widget.displayDomain ? request.requestUrl : request.path;
     var operationName = request.graphqlOperationName;
-    var title = Strings.autoLineString('${request.method.name} $url');
+    //树形模式只显示最后一段路径，高亮匹配仍然使用完整地址
+    var treeStyle = widget.treeStyle;
+    var rowText = '${request.method.name} ${treeStyle?.label ?? url}';
+    //树形模式一行显示，不需要插入换行点
+    var title = treeStyle == null ? Strings.autoLineString(rowText) : rowText;
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
     var contentType = response?.contentType.name.toUpperCase() ?? '';
@@ -142,6 +154,9 @@ class RequestRowState extends State<RequestRow> {
         onLongPressStart: menu,
         child: ListTile(
           visualDensity: const VisualDensity(vertical: -4),
+          //树形模式一行一个请求，和目录行排一样紧
+          minTileHeight: treeStyle == null ? null : RequestTreeStyle.rowHeight,
+          minVerticalPadding: treeStyle == null ? 4 : 0,
           minLeadingWidth: 5,
           selected: selected ||
               (widget.selectionController.isSelectionMode && widget.selectionController.contains(request.requestId)),
@@ -149,21 +164,26 @@ class RequestRowState extends State<RequestRow> {
           selectedColor: highlightColor,
           leading: rowLeading(),
           title: Text.rich(
-              maxLines: 2,
+              maxLines: treeStyle == null ? 2 : 1,
               overflow: TextOverflow.ellipsis,
               TextSpan(style: const TextStyle(fontSize: 14), children: [
-                TextSpan(text: title.fixAutoLines()),
-                if (operationName != null) graphqlOperationSpan(request, fontSize: 14, fixAutoLines: true)!,
+                TextSpan(text: treeStyle == null ? title.fixAutoLines() : title),
+                if (operationName != null)
+                  graphqlOperationSpan(request, fontSize: 14, fixAutoLines: treeStyle == null)!,
               ])),
-          subtitle: Text.rich(
-              maxLines: 1,
-              TextSpan(children: [
-                TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
-                TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              ])),
+          //树形模式一行一个请求，详情点进去看，避免列表太乱
+          subtitle: treeStyle != null
+              ? null
+              : Text.rich(
+                  maxLines: 1,
+                  TextSpan(children: [
+                    TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
+                    TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  ])),
           trailing: getIcon(response, color: highlightColor),
-          contentPadding:
-              Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
+          contentPadding: Platform.isIOS
+              ? EdgeInsets.only(left: 8 + _treeIndent, right: 8)
+              : EdgeInsets.only(left: 3 + _treeIndent, right: 5),
           onTap: () {
             if (widget.selectionController.isSelectionMode) {
               widget.selectionController.toggle(request.requestId);

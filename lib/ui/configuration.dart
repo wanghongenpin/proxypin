@@ -19,6 +19,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -81,6 +82,11 @@ class AppConfiguration {
 
   /// Headers展示模式: table(逐行) / text(原始文本)
   String headerViewMode = "table";
+
+  /// 抓包域名列表展示模式: list(平铺) / tree(路径树)
+  ///
+  /// 默认平铺，和以前一样；树形是可选项，用户在设置里选了才会切过去。
+  final ValueNotifier<RequestViewMode> requestViewMode = ValueNotifier(RequestViewMode.list);
 
   /// 底部导航栏
   bool bottomNavigation = true;
@@ -209,6 +215,7 @@ class AppConfiguration {
       pipEnabled.value = config['pipEnabled'] ?? true;
       pipIcon.value = config['pipIcon'] ?? false;
       headerViewMode = config['headerViewMode'] ?? "table";
+      requestViewMode.value = RequestViewMode.of(config['requestViewMode']);
       bottomNavigation = config['bottomNavigation'] ?? true;
       memoryCleanupThreshold = config['memoryCleanupThreshold'];
       autoReadEnabled = config['autoReadEnabled'] ?? true;
@@ -256,6 +263,7 @@ class AppConfiguration {
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerViewMode": headerViewMode,
+      "requestViewMode": requestViewMode.value.name,
       "autoReadEnabled": autoReadEnabled,
       "clearConfirm": clearConfirm,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,

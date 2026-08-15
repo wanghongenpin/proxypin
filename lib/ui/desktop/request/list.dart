@@ -25,9 +25,11 @@ import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
 import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/request/report_servers.dart';
 import 'package:proxypin/ui/desktop/request/request.dart';
@@ -124,9 +126,12 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                     toolbarHeight: 40,
                     title: SizedBox(height: 40, child: TabBar(tabs: tabs, dividerColor: Colors.transparent)),
                     automaticallyImplyLeading: false,
-                    actions: [popupMenus()],
+                    actions: [viewModeButton(), popupMenus()],
                   ),
-                  bottomNavigationBar: Search(key: searchKey, onSearch: search),
+                  //搜索框贴着窗口底边，留出和列表一样的边距
+                  bottomNavigationBar: Padding(
+                      padding: const EdgeInsets.only(right: 5, bottom: 8),
+                      child: Search(key: searchKey, onSearch: search)),
                   body: Padding(
                       padding: const EdgeInsets.only(right: 5),
                       child: Column(children: [
@@ -180,6 +185,45 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     return FocusManager.instance.primaryFocus?.context?.widget is EditableText;
   }
 
+  ///域名列表当前是否树形展示
+  bool get isTreeMode => AppConfiguration.current?.requestViewMode.value == RequestViewMode.tree;
+
+  ///列表/树形切换，放在工具栏上一眼可见，菜单和设置页里也各有一份
+  Widget viewModeButton() {
+    var notifier = AppConfiguration.current?.requestViewMode;
+    if (notifier == null) {
+      return _viewModeIcon();
+    }
+    //设置页改了也要跟着换图标
+    return ValueListenableBuilder<RequestViewMode>(
+        valueListenable: notifier, builder: (context, _, __) => _viewModeIcon());
+  }
+
+  Widget _viewModeIcon() {
+    return IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        icon: Icon(isTreeMode ? Icons.account_tree_outlined : Icons.list, size: 18),
+        tooltip: '${localizations.requestViewMode}: '
+            '${isTreeMode ? localizations.requestViewTree : localizations.requestViewList}',
+        onPressed: toggleViewMode);
+  }
+
+  void toggleViewMode() {
+    setViewMode(isTreeMode ? RequestViewMode.list : RequestViewMode.tree);
+  }
+
+  ///切换域名列表的展示方式。改的是配置里那份，域名列表监听配置刷新
+  void setViewMode(RequestViewMode mode) {
+    var configuration = AppConfiguration.current;
+    if (configuration == null || configuration.requestViewMode.value == mode) {
+      return;
+    }
+
+    configuration.requestViewMode.value = mode;
+    configuration.flushConfig();
+  }
+
   Widget popupMenus() {
     return PopupMenuButton<_RequestListMenuAction>(
         offset: const Offset(0, 32),
@@ -187,6 +231,16 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
         onSelected: _onMenuSelected,
         itemBuilder: (BuildContext context) {
           return <PopupMenuEntry<_RequestListMenuAction>>[
+            _menuItem(_RequestListMenuAction.viewMode,
+                icon: Icon(isTreeMode ? Icons.account_tree_outlined : Icons.list, size: 16),
+                text: '${localizations.requestViewMode}: '
+                    '${isTreeMode ? localizations.requestViewTree : localizations.requestViewList}'),
+            if (isTreeMode)
+              _menuItem(_RequestListMenuAction.expandAll,
+                  icon: const Icon(Icons.unfold_more, size: 16), text: localizations.expandAll),
+            if (isTreeMode)
+              _menuItem(_RequestListMenuAction.collapseAll,
+                  icon: const Icon(Icons.unfold_less, size: 16), text: localizations.collapseAll),
             _menuItem(_RequestListMenuAction.search,
                 icon: const Icon(Icons.search, size: 17), text: localizations.search),
             _menuItem(_RequestListMenuAction.export,
@@ -212,6 +266,15 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
 
   void _onMenuSelected(_RequestListMenuAction action) {
     switch (action) {
+      case _RequestListMenuAction.viewMode:
+        toggleViewMode();
+        break;
+      case _RequestListMenuAction.expandAll:
+        domainListKey.currentState?.expandAll();
+        break;
+      case _RequestListMenuAction.collapseAll:
+        domainListKey.currentState?.collapseAll();
+        break;
       case _RequestListMenuAction.search:
         searchKey.currentState?.searchDialog();
         break;
@@ -399,4 +462,4 @@ class _ClearSelectionIntent extends Intent {
   const _ClearSelectionIntent();
 }
 
-enum _RequestListMenuAction { search, export, repeat, select, sort, report }
+enum _RequestListMenuAction { viewMode, expandAll, collapseAll, search, export, repeat, select, sort, report }

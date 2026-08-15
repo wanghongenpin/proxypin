@@ -19,6 +19,7 @@ import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/ui/mobile/setting/app_filter.dart';
 import 'package:proxypin/ui/mobile/setting/report_servers.dart';
@@ -34,6 +35,9 @@ class MoreMenu extends StatelessWidget {
   final ValueNotifier<RemoteModel> remoteDevice;
 
   const MoreMenu({super.key, required this.proxyServer, required this.remoteDevice});
+
+  ///域名列表当前是否树形展示
+  bool get isTreeMode => MobileApp.requestStateKey.currentState?.isTreeMode ?? false;
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +152,43 @@ class MoreMenu extends StatelessWidget {
                   MobileApp.requestStateKey.currentState?.sort(sortDesc);
                 },
               )),
+          PopupMenuItem(
+              height: 32,
+              child: ListTile(
+                dense: true,
+                leading: Icon(isTreeMode ? Icons.account_tree_outlined : Icons.list, size: 16),
+                title: Text('${localizations.requestViewMode}: '
+                    '${isTreeMode ? localizations.requestViewTree : localizations.requestViewList}'),
+                onTap: () async {
+                  await Navigator.maybePop(context);
+                  MobileApp.requestStateKey.currentState
+                      ?.setViewMode(isTreeMode ? RequestViewMode.list : RequestViewMode.tree);
+                },
+              )),
+          if (isTreeMode)
+            PopupMenuItem(
+                height: 32,
+                child: ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.unfold_more, size: 16),
+                  title: Text(localizations.expandAll),
+                  onTap: () async {
+                    await Navigator.maybePop(context);
+                    MobileApp.requestStateKey.currentState?.expandAll();
+                  },
+                )),
+          if (isTreeMode)
+            PopupMenuItem(
+                height: 32,
+                child: ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.unfold_less, size: 16),
+                  title: Text(localizations.collapseAll),
+                  onTap: () async {
+                    await Navigator.maybePop(context);
+                    MobileApp.requestStateKey.currentState?.collapseAll();
+                  },
+                )),
         ];
       },
     );

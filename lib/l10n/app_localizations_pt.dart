@@ -450,6 +450,35 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get requestViewMode => 'View Mode';
+
+  @override
+  String get requestViewModeSubtitle => 'Show captured requests as a flat list, or grouped into a path tree';
+
+  @override
+  String get requestViewList => 'List';
+
+  @override
+  String get requestViewTree => 'Tree';
+
+  @override
+  String get expandAll => 'Expand All';
+
+  @override
+  String get collapseAll => 'Collapse All';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count requests',
+      one: '$count request',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get selectAction => 'Select action';
 
   @override
@@ -1566,6 +1595,36 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String domainListSubtitle(Object count, Object time) {
     return 'Última requisição: $time, quantidade: $count';
+  }
+
+  @override
+  String get requestViewMode => 'Modo de exibição';
+
+  @override
+  String get requestViewModeSubtitle =>
+      'Mostrar as requisições capturadas como lista simples ou agrupadas em uma árvore de caminhos';
+
+  @override
+  String get requestViewList => 'Lista';
+
+  @override
+  String get requestViewTree => 'Árvore';
+
+  @override
+  String get expandAll => 'Expandir tudo';
+
+  @override
+  String get collapseAll => 'Recolher tudo';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count requisições',
+      one: '$count requisição',
+    );
+    return '$_temp0';
   }
 
   @override

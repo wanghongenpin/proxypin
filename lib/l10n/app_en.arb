@@ -150,6 +150,18 @@
   "addWhitelist": "Add Proxy Whitelist",
   "deleteWhitelist": "Delete Proxy Whitelist",
   "domainListSubtitle": "Last Request Time: {time},  Count: {count}",
+  "requestViewMode": "View Mode",
+  "requestViewModeSubtitle": "Show captured requests as a flat list, or grouped into a path tree",
+  "requestViewList": "List",
+  "requestViewTree": "Tree",
+  "expandAll": "Expand All",
+  "collapseAll": "Collapse All",
+  "treeNodeSubtitle": "{count, plural, =1{{count} request} other{{count} requests}}",
+  "@treeNodeSubtitle": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "selectAction": "Select action",
   "select": "Select",

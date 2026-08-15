@@ -448,6 +448,29 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get requestViewMode => '展示方式';
+
+  @override
+  String get requestViewModeSubtitle => '抓包列表按平铺展示，或按路径分组展示为树形';
+
+  @override
+  String get requestViewList => '列表';
+
+  @override
+  String get requestViewTree => '树形';
+
+  @override
+  String get expandAll => '全部展开';
+
+  @override
+  String get collapseAll => '全部折叠';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    return '$count 个请求';
+  }
+
+  @override
   String get selectAction => '选择操作';
 
   @override
@@ -1649,6 +1672,29 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String domainListSubtitle(Object count, Object time) {
     return '最後請求時間: $time,  次數: $count';
+  }
+
+  @override
+  String get requestViewMode => '顯示方式';
+
+  @override
+  String get requestViewModeSubtitle => '抓包列表按平鋪展示，或按路徑分組展示為樹狀';
+
+  @override
+  String get requestViewList => '列表';
+
+  @override
+  String get requestViewTree => '樹狀';
+
+  @override
+  String get expandAll => '全部展開';
+
+  @override
+  String get collapseAll => '全部摺疊';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    return '$count 個請求';
   }
 
   @override

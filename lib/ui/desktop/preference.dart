@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/request_tree_view.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 
@@ -158,6 +159,12 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.clearConfirm = value;
                         appConfiguration.flushConfig();
                       })),
+              ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(localizations.requestViewMode, style: titleStyle),
+                  subtitle: Text(localizations.requestViewModeSubtitle, style: subtitleStyle),
+                  trailing: RequestViewModeDropdown(
+                      viewMode: appConfiguration.requestViewMode, onChanged: appConfiguration.flushConfig)),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(localizations.memoryCleanup, style: titleStyle),

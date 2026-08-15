@@ -32,6 +32,7 @@ import 'package:proxypin/network/util/cache.dart';
 import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/request_tree.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -67,7 +68,12 @@ class RequestWidget extends StatefulWidget {
   final RequestSelectionHandlers selectionHandlers;
   final Function(VoidCallback refresh)? onMount;
 
+  /// Tree presentation of this row, applied by the domain list while it renders
+  /// as a tree. Null means the row keeps the flat layout.
+  RequestTreeStyle? treeStyle;
+
   VoidCallback? _refresh;
+  VoidCallback? _select;
 
   RequestWidget(this.request,
       {super.key,
@@ -90,6 +96,23 @@ class RequestWidget extends StatefulWidget {
 
   void changeState() {
     _refresh?.call();
+  }
+
+  /// Opens this request in the detail panel, exactly as a click would. Used by
+  /// the keyboard navigation of the tree.
+  void select() {
+    _select?.call();
+  }
+
+  /// Moves the row to [style] inside the tree, refreshing it on the next frame
+  /// when the position actually changed. Called from the parent build, so the
+  /// refresh cannot happen inline.
+  void applyTreeStyle(RequestTreeStyle? style) {
+    if (style == null ? treeStyle == null : style.sameAs(treeStyle)) {
+      return;
+    }
+    treeStyle = style;
+    WidgetsBinding.instance.addPostFrameCallback((_) => changeState());
   }
 
   static void removeAutoReadByIds(Iterable<String> requestIds) {
@@ -125,12 +148,14 @@ class _RequestWidgetState extends State<RequestWidget> {
   void initState() {
     super.initState();
     widget._refresh = () => setState(() {});
+    widget._select = selectRow;
     widget.onMount?.call(widget.changeState);
   }
 
   @override
   void dispose() {
     widget._refresh = null;
+    widget._select = null;
     super.dispose();
   }
 
@@ -140,7 +165,9 @@ class _RequestWidgetState extends State<RequestWidget> {
     var response = widget.response.get() ?? request.response;
     var operationName = request.graphqlOperationName;
     String path = widget.displayDomain ? request.domainPath : request.path;
-    String title = '${request.method.name} $path';
+    //树形模式只显示最后一段路径，颜色匹配仍然使用完整路径
+    var treeStyle = widget.treeStyle;
+    String title = '${request.method.name} ${treeStyle?.label ?? path}';
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
     String contentType = response?.contentType.name.toUpperCase() ?? '';
@@ -163,29 +190,37 @@ class _RequestWidgetState extends State<RequestWidget> {
             leading: _leading(requestColor),
             trailing: widget.trailing,
             title: Text.rich(
-                maxLines: 2,
+                //树形模式一行一个请求，详情点开右侧面板看，避免列表太乱
+                maxLines: treeStyle == null ? 2 : 1,
                 overflow: TextOverflow.ellipsis,
                 TextSpan(children: [
-                  TextSpan(text: title.fixAutoLines()),
-                  if (operationName != null) graphqlOperationSpan(request, fixAutoLines: true)!,
+                  TextSpan(text: treeStyle == null ? title.fixAutoLines() : title),
+                  if (operationName != null) graphqlOperationSpan(request, fixAutoLines: treeStyle == null)!,
                 ])),
-            subtitle: Container(
-                padding: const EdgeInsets.only(top: 3),
-                child: Text.rich(
-                    maxLines: 1,
-                    TextSpan(
-                      children: [
-                        TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
+            subtitle: treeStyle != null
+                ? null
+                : Container(
+                    padding: const EdgeInsets.only(top: 3),
+                    child: Text.rich(
+                        maxLines: 1,
                         TextSpan(
-                            text:
-                                '$time - [${response?.status.code ?? ''}]  $contentType $packagesSize ${response?.costTime() ?? ''}',
-                            style: const TextStyle(fontSize: 11, color: Colors.grey))
-                      ],
-                    ))),
+                          children: [
+                            TextSpan(
+                                text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
+                            TextSpan(
+                                text:
+                                    '$time - [${response?.status.code ?? ''}]  $contentType $packagesSize ${response?.costTime() ?? ''}',
+                                style: const TextStyle(fontSize: 11, color: Colors.grey))
+                          ],
+                        ))),
             selected: selected || selectedInSelectionMode,
             dense: true,
             visualDensity: const VisualDensity(vertical: -4),
-            contentPadding: EdgeInsets.only(left: selectedInSelectionMode ? 6 : 28),
+            //树形模式一行一个请求，和目录行排一样紧
+            minTileHeight: treeStyle == null ? null : RequestTreeStyle.rowHeight,
+            minVerticalPadding: treeStyle == null ? 4 : 0,
+            contentPadding: EdgeInsets.only(
+                left: (selectedInSelectionMode ? 6 : 28) + (treeStyle?.depth ?? 0) * RequestTreeStyle.indentStep),
             onTap: onClick));
   }
 
@@ -548,6 +583,11 @@ class _RequestWidgetState extends State<RequestWidget> {
       return;
     }
 
+    selectRow();
+  }
+
+  ///选中当前行并在右侧面板打开，键盘上下移动时也走这里
+  void selectRow() {
     if (!selected) {
       setState(() {
         selected = true;

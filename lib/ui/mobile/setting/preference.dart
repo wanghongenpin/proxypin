@@ -6,6 +6,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/request_tree_view.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/setting/theme.dart';
@@ -143,6 +144,12 @@ class _PreferenceState extends State<Preference> {
             ]),
             const SizedBox(height: 12),
             section([
+              ListTile(
+                  title: Text(localizations.requestViewMode),
+                  subtitle: Text(localizations.requestViewModeSubtitle, style: const TextStyle(fontSize: 12)),
+                  trailing: RequestViewModeDropdown(
+                      viewMode: appConfiguration.requestViewMode, onChanged: appConfiguration.flushConfig)),
+              Divider(height: 0, thickness: 0.3, color: Theme.of(context).focusColor),
               ListTile(
                   title: Text(localizations.memoryCleanup),
                   subtitle: Text(localizations.memoryCleanupSubtitle, style: const TextStyle(fontSize: 12)),

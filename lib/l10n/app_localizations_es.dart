@@ -450,6 +450,36 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get requestViewMode => 'Modo de vista';
+
+  @override
+  String get requestViewModeSubtitle =>
+      'Mostrar las solicitudes capturadas como lista plana o agrupadas en un árbol de rutas';
+
+  @override
+  String get requestViewList => 'Lista';
+
+  @override
+  String get requestViewTree => 'Árbol';
+
+  @override
+  String get expandAll => 'Expandir todo';
+
+  @override
+  String get collapseAll => 'Contraer todo';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count solicitudes',
+      one: '$count solicitud',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get selectAction => 'Selecciona una acción';
 
   @override

@@ -151,6 +151,13 @@
   "addWhitelist": "添加代理白名单",
   "deleteWhitelist": "删除代理白名单",
   "domainListSubtitle": "最后请求时间: {time},  次数: {count}",
+  "requestViewMode": "展示方式",
+  "requestViewModeSubtitle": "抓包列表按平铺展示，或按路径分组展示为树形",
+  "requestViewList": "列表",
+  "requestViewTree": "树形",
+  "expandAll": "全部展开",
+  "collapseAll": "全部折叠",
+  "treeNodeSubtitle": "{count} 个请求",
 
   "selectAction": "选择操作",
   "select": "选择",

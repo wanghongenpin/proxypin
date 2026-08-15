@@ -450,6 +450,29 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
+  String get requestViewMode => 'โหมดแสดงผล';
+
+  @override
+  String get requestViewModeSubtitle => 'แสดงคำขอที่ดักจับได้แบบรายการปกติ หรือจัดกลุ่มตาม path เป็นโครงสร้างต้นไม้';
+
+  @override
+  String get requestViewList => 'รายการ';
+
+  @override
+  String get requestViewTree => 'โครงสร้างต้นไม้';
+
+  @override
+  String get expandAll => 'ขยายทั้งหมด';
+
+  @override
+  String get collapseAll => 'ยุบทั้งหมด';
+
+  @override
+  String treeNodeSubtitle(int count) {
+    return '$count คำขอ';
+  }
+
+  @override
   String get selectAction => 'เลือกการทำงาน';
 
   @override
