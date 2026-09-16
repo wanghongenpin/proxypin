@@ -98,8 +98,8 @@ class RequestWidget extends StatefulWidget {
 }
 
 class _RequestWidgetState extends State<RequestWidget> {
-  //选择的节点
-  static _RequestWidgetState? selectedState;
+  //当前选中的请求ID。使用ID而非State保存，避免列表项在新增请求或回收重建后选中状态丢失
+  static final ValueNotifier<String?> selectedRequestId = ValueNotifier<String?>(null);
 
   static LruCacheSet<String> autoReadRequests = LruCacheSet<String>(5000);
 
@@ -111,8 +111,6 @@ class _RequestWidgetState extends State<RequestWidget> {
     autoReadRequests.removeAll(requestIds);
   }
 
-  bool selected = false;
-
   Color? highlightColor; //高亮颜色
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -121,17 +119,37 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   int get selectionCount => widget.multiSelectController.selectedCount;
 
+  bool _selected = false;
+
   @override
   void initState() {
     super.initState();
+    //列表项可能在新增请求或回收后重建，选中状态需从共享ID恢复
+    _selected = selectedRequestId.value == widget.request.requestId;
+    selectedRequestId.addListener(_onSelectionChanged);
     widget._refresh = () => setState(() {});
     widget.onMount?.call(widget.changeState);
   }
 
   @override
   void dispose() {
+    selectedRequestId.removeListener(_onSelectionChanged);
     widget._refresh = null;
     super.dispose();
+  }
+
+  ///仅在自身选中状态变化时刷新，避免选中切换时全量重建列表
+  void _onSelectionChanged() {
+    if (!mounted) {
+      return;
+    }
+    final isSelected = selectedRequestId.value == widget.request.requestId;
+    if (isSelected == _selected) {
+      return;
+    }
+    setState(() {
+      _selected = isSelected;
+    });
   }
 
   @override
@@ -182,7 +200,7 @@ class _RequestWidgetState extends State<RequestWidget> {
                             style: const TextStyle(fontSize: 11, color: Colors.grey))
                       ],
                     ))),
-            selected: selected || selectedInSelectionMode,
+            selected: _selected || selectedInSelectionMode,
             dense: true,
             visualDensity: const VisualDensity(vertical: -4),
             contentPadding: EdgeInsets.only(left: selectedInSelectionMode ? 6 : 28),
@@ -548,24 +566,13 @@ class _RequestWidgetState extends State<RequestWidget> {
       return;
     }
 
-    if (!selected) {
-      setState(() {
-        selected = true;
-      });
-    }
+    //切换选中的节点（按请求ID记录，列表项重建后仍能保持选中）
+    selectedRequestId.value = widget.request.requestId;
 
     if (AppConfiguration.current?.autoReadEnabled == true) {
       markAutoRead(widget.request.requestId);
     }
 
-    //切换选中的节点
-    if (selectedState?.mounted == true && selectedState != this) {
-      selectedState?.setState(() {
-        selectedState?.selected = false;
-      });
-    }
-
-    selectedState = this;
     NetworkTabController.current?.change(widget.request, widget.response.get() ?? widget.request.response);
   }
 }
