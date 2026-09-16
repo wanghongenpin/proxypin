@@ -246,11 +246,13 @@ class HttpHeaders {
     return json;
   }
 
-  ///转换json
-  Map<String, String> toMap() {
-    Map<String, String> json = {};
+  ///转换map。
+  /// 单值 header 保留字符串;多值 header(如 Set-Cookie)以数组形式暴露,
+  /// 避免用 `;` 合并导致 Set-Cookie 被浏览器误解析成单个 Cookie。
+  Map<String, dynamic> toMap() {
+    Map<String, dynamic> json = {};
     forEach((name, values) {
-      json[name] = values.join(";");
+      json[name] = values.length == 1 ? values.first : List<String>.from(values);
     });
     return json;
   }

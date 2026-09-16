@@ -193,9 +193,9 @@ class RewriteItem {
   set statusCode(int? statusCode) => values['statusCode'] = statusCode;
 
   //headers
-  Map<String, String>? get headers => values['headers'] == null ? null : Map.from(values['headers']);
+  Map<String, dynamic>? get headers => values['headers'] == null ? null : Map.from(values['headers']);
 
-  set headers(Map<String, String>? headers) => values['headers'] = headers;
+  set headers(Map<String, dynamic>? headers) => values['headers'] = headers;
 
   //body
   String? get body => values['body'];

@@ -20,6 +20,7 @@ import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
@@ -40,7 +41,9 @@ import 'l10n/app_localizations.dart';
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await RustLib.init();
+    await RustLib.init(
+      externalLibrary: ExternalLibrary.open('code-forge.framework/code-forge'),
+    );
   } catch (e) {
     // code_forge Rust FFI initialization may fail on iOS 14.x due to
     // deployment-target / cargokit-build incompatibilities. Degrade
