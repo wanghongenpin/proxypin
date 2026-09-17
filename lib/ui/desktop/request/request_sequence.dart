@@ -147,6 +147,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
           multiSelectController: selectionController,
           selectionHandlers: widget.selectionHandlers,
           onMount: (ref) => rowRefreshers[request.requestId] = ref,
+          onUnmount: () => rowRefreshers.remove(request.requestId),
           remove: (requestWidget) {
             setState(() {
               view.remove(requestWidget.request);

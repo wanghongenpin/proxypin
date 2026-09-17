@@ -256,6 +256,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                               onExportSelected: exportSelected,
                               onRepeatSelected: repeatSelected),
                           onMount: (callback) => responseCallbacks[requestId] = callback,
+                          onUnmount: () => responseCallbacks.remove(requestId),
                           onRemove: (item) {
                             setState(() {
                               view.remove(item);

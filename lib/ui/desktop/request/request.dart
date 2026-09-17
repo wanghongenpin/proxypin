@@ -66,6 +66,7 @@ class RequestWidget extends StatefulWidget {
   final MultiSelectController multiSelectController;
   final RequestSelectionHandlers selectionHandlers;
   final Function(VoidCallback refresh)? onMount;
+  final VoidCallback? onUnmount;
 
   VoidCallback? _refresh;
 
@@ -78,7 +79,8 @@ class RequestWidget extends StatefulWidget {
       required this.selectionHandlers,
       required this.index,
       required this.multiSelectController,
-      this.onMount});
+      this.onMount,
+      this.onUnmount});
 
   @override
   State<RequestWidget> createState() => _RequestWidgetState();
@@ -133,6 +135,7 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   @override
   void dispose() {
+    widget.onUnmount?.call();
     selectedRequestId.removeListener(_onSelectionChanged);
     widget._refresh = null;
     super.dispose();
