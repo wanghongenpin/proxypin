@@ -31,8 +31,17 @@ class ProcessInfoManager private constructor() {
 
     class NetworkInfo(val uid: Int, val remoteHost: String, val remotePort: Int)
 
+    class RemoteAddress(val host: String, val port: Int)
+
     private val localPortCache =
         SimpleCache<Int, NetworkInfo>(10_000, 60, TimeUnit.SECONDS)
+
+    // 连接的真实目的地址，key 为 VPN→本地代理 socket 的 local port，
+    // 与代理侧 accepted socket 的 remoteSocketAddress.port 一致。
+    // 必须在数据转发给本地代理前同步写入：明文 HTTP 的 Host 头可能不含端口，
+    // 端口纠正不能依赖异步的 uid 查询先完成，否则会偶发拨到默认 80 端口(#530)。
+    private val remoteAddressCache =
+        SimpleCache<Int, RemoteAddress>(10_000, 60, TimeUnit.SECONDS)
 
 
     private val appInfoCache = SimpleCache<Int, ProcessInfo>(10_000, 300, TimeUnit.SECONDS)
@@ -42,7 +51,11 @@ class ProcessInfoManager private constructor() {
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun setConnectionOwnerUid(connection: Connection) {
+        val localPort = recordRemoteAddress(connection)
+
         CoroutineScope(Dispatchers.IO).launch {
+            // connect 尚未完成时同步阶段可能取不到 local port，这里连接已就绪，补记一次。
+            val port = localPort ?: recordRemoteAddress(connection)
 
             val sourceAddress =
                 InetSocketAddress(PacketUtil.intToIPAddress(connection.sourceIp), connection.sourcePort)
@@ -51,17 +64,31 @@ class ProcessInfoManager private constructor() {
             )
 
             val uid = getProcessInfoUid(sourceAddress, destinationAddress)
-            val channel = connection.channel
-            if (uid != null && uid != Process.INVALID_UID && channel is SocketChannel && channel.isOpen) {
-                try {
-                    val localAddress = channel.localAddress as InetSocketAddress
-                    val networkInfo =
-                        NetworkInfo(uid, destinationAddress.hostString, destinationAddress.port)
-                    localPortCache.put(localAddress.port, networkInfo)
-                } catch (e: java.nio.channels.ClosedChannelException) {
-                    Log.w("ProcessInfoManager", "setConnectionOwnerUid", e)
-                }
+            if (uid != null && uid != Process.INVALID_UID && port != null) {
+                val networkInfo =
+                    NetworkInfo(uid, destinationAddress.hostString, destinationAddress.port)
+                localPortCache.put(port, networkInfo)
             }
+        }
+    }
+
+    /**
+     * 同步记录连接的真实目的地址，返回 VPN→本地代理 socket 的 local port；
+     * 拿不到本地端口时返回 null(不影响后续异步 uid 查询)。
+     */
+    private fun recordRemoteAddress(connection: Connection): Int? {
+        val channel = connection.channel
+        if (channel !is SocketChannel || !channel.isOpen) {
+            return null
+        }
+        return try {
+            val localPort = (channel.localAddress as InetSocketAddress).port
+            val destinationHost = PacketUtil.intToIPAddress(connection.destinationIp)
+            remoteAddressCache.put(localPort, RemoteAddress(destinationHost, connection.destinationPort))
+            localPort
+        } catch (e: Exception) {
+            Log.w("ProcessInfoManager", "recordRemoteAddress", e)
+            null
         }
     }
 
@@ -75,6 +102,7 @@ class ProcessInfoManager private constructor() {
             try {
                 val localAddress = channel.localAddress as InetSocketAddress
                 localPortCache.remove(localAddress.port)
+                remoteAddressCache.remove(localAddress.port)
             } catch (e: java.nio.channels.ClosedChannelException) {
                 Log.w("ProcessInfoManager", "removeConnection", e)
             }
@@ -178,6 +206,15 @@ class ProcessInfoManager private constructor() {
     }
 
     fun getRemoteAddressByPort(localPort: Int): Map<String, Any>? {
+        // 优先返回同步记录的真实目的地址；localPortCache 里的地址可能来自
+        // getProcessInfoByPort 的回退写入(其 remoteAddress 是本地代理自身)。
+        remoteAddressCache.get(localPort)?.let { address ->
+            return mapOf(
+                "remoteHost" to address.host,
+                "remotePort" to address.port
+            )
+        }
+
         val networkInfo = localPortCache.get(localPort)
         if (networkInfo != null) {
             return mapOf(
