@@ -319,8 +319,10 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
     }
 
-    // Fallback: generic relay for unsupported body types
-    buffer.add(decodeResult.forward ?? []);
+    // Fallback: generic relay for unsupported body types.
+    // `forward` is a view into the same buffer (decoder only advanced the
+    // reader index), and `relay` flushes the raw buffer via `.bytes`, so it
+    // must NOT be appended here or the body would be sent twice.
     relay(channelContext, channel, remoteChannel!);
 
     if (decodeResult.data is HttpResponse) {

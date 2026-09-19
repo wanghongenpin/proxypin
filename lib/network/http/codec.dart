@@ -128,7 +128,11 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
       //请求体
       if (_state == State.body) {
-        bool resolveBody = channelContext.currentRequest?.method != HttpMethod.head;
+        // HEAD / CONNECT 响应没有 body。CONNECT 响应(如上游代理返回的
+        // 200 Connection established)必须走原有解析路径转发给客户端,
+        // 不能按无定界响应进 raw relay,否则后续 TLS MITM 隧道会被接管。
+        bool resolveBody = channelContext.currentRequest?.method != HttpMethod.head &&
+            channelContext.currentRequest?.method != HttpMethod.connect;
         var bodyResult = resolveBody ? bodyReader!.readBody(data.readAvailableBytes()) : null;
         if (!resolveBody || bodyResult?.isDone == true) {
           _state = State.done;
