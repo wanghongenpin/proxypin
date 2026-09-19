@@ -25,15 +25,11 @@ class McpTool {
   /// 处理一次 tools/call，入参为 arguments（可能为空），返回结构化结果（会以 JSON 文本返回）。
   final Future<dynamic> Function(Map<String, dynamic> args) handler;
 
-  /// 所属作用域：minimal 表示默认精简集即包含
-  final String scope;
-
   McpTool({
     required this.name,
     required this.description,
     required this.inputSchema,
     required this.handler,
-    this.scope = 'minimal',
   });
 
   Map<String, dynamic> toJson() => {

@@ -80,7 +80,6 @@ class McpService {
     );
     _mcp = McpServer(
       store: _store!,
-      scope: () => 'all',
       redactEnabled: () => cfg.mcpRedactEnabled,
       extraTools: actions.tools(),
     );

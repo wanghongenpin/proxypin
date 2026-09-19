@@ -113,7 +113,7 @@ void main() {
   test('mcp json-rpc initialize / tools / call', () async {
     var flow = buildFlow(responseSize: 100);
     var store = FlowStore()..backfill([flow]);
-    var mcp = McpServer(store: store, scope: () => 'minimal', redactEnabled: () => true);
+    var mcp = McpServer(store: store, redactEnabled: () => true);
 
     var init = await mcp.handle({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}});
     check(init!['result']['protocolVersion'] == '2024-11-05', 'initialize protocol version');
@@ -127,7 +127,7 @@ void main() {
     check(names.contains('export_flow_curl'), 'tools/list has export_flow_curl');
     check(names.contains('search_flows'), 'tools/list has search_flows');
     check(names.contains('get_ssl_proxying_list'), 'tools/list has get_ssl_proxying_list');
-    check(tools.length == 8, 'minimal scope exposes 8 read-only tools, got ${tools.length}');
+    check(tools.length == 8, 'builtin read-only tools expose 8 tools, got ${tools.length}');
 
     var call = await mcp.handle({
       'jsonrpc': '2.0',
@@ -188,7 +188,7 @@ void main() {
     check(none.isEmpty, 'no match');
 
     // JSON-RPC 工具面
-    var mcp = McpServer(store: store, scope: () => 'minimal', redactEnabled: () => true);
+    var mcp = McpServer(store: store, redactEnabled: () => true);
     var call = await mcp.handle({
       'jsonrpc': '2.0',
       'id': 9,
@@ -212,43 +212,35 @@ void main() {
     check(emptyPayload['count'] == 0, 'empty keyword returns 0');
   });
 
-  test('mcp scope gates write tools', () async {
+  test('mcp registers builtin read tools together with action write tools', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
-    var writeToolNames = actions.tools().map((t) => t.name).toSet();
-    check(writeToolNames.contains('create_breakpoint'), 'actions include create_breakpoint');
-    check(writeToolNames.contains('clear_session'), 'actions include clear_session');
-    check(writeToolNames.contains('toggle_recording'), 'actions include toggle_recording');
-    check(writeToolNames.contains('get_script_detail'), 'actions include get_script_detail');
+    var actionNames = actions.tools().map((t) => t.name).toSet();
+    check(actionNames.contains('create_breakpoint'), 'actions include create_breakpoint');
+    check(actionNames.contains('clear_session'), 'actions include clear_session');
+    check(actionNames.contains('toggle_recording'), 'actions include toggle_recording');
+    check(actionNames.contains('get_script_detail'), 'actions include get_script_detail');
     for (var type in ['breakpoint', 'block', 'map_local', 'redirect', 'script']) {
-      check(writeToolNames.contains('update_$type'), 'actions include update_$type');
+      check(actionNames.contains('update_$type'), 'actions include update_$type');
     }
 
-    var scope = 'minimal';
-    var mcp = McpServer(store: store, scope: () => scope, redactEnabled: () => true, extraTools: actions.tools());
+    var mcp = McpServer(store: store, redactEnabled: () => true, extraTools: actions.tools());
 
-    Future<Set<String>> toolNames() async {
-      var res = await mcp.handle({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'});
-      return (res!['result']['tools'] as List).map((t) => (t as Map)['name'].toString()).toSet();
-    }
+    var res = await mcp.handle({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'});
+    var names = (res!['result']['tools'] as List).map((t) => (t as Map)['name'].toString()).toSet();
 
-    var minimal = await toolNames();
-    check(minimal.length == 8, 'minimal exposes only 8 read tools, got ${minimal.length}');
-    check(!minimal.contains('create_breakpoint'), 'minimal hides write tools');
-    check(!minimal.contains('toggle_recording'), 'minimal hides toggle_recording');
-    check(!minimal.contains('update_script'), 'minimal hides update tools');
-
-    scope = 'all';
-    var all = await toolNames();
-    check(all.contains('create_breakpoint'), 'all exposes create_breakpoint');
-    check(all.contains('replay_flow') && all.contains('generate_code'), 'all exposes replay/generate');
-    check(all.length == 8 + writeToolNames.length, 'all exposes minimal + action tools');
+    // 只读流量工具与写工具同时暴露，无门控
+    check(names.contains('list_flows'), 'exposes read tool list_flows');
+    check(names.contains('create_breakpoint'), 'exposes create_breakpoint');
+    check(names.contains('toggle_recording'), 'exposes toggle_recording');
+    check(names.contains('replay_flow') && names.contains('generate_code'), 'exposes replay/generate');
+    check(names.length == 8 + actionNames.length, 'exposes builtin + action tools, got ${names.length}');
   });
 
   test('mcp http transport: loopback initialize', () async {
     var flow = buildFlow(responseSize: 10);
     var mcp = McpServer(
-        store: FlowStore()..backfill([flow]), scope: () => 'minimal', redactEnabled: () => true);
+        store: FlowStore()..backfill([flow]), redactEnabled: () => true);
     var http = McpHttpServer(mcp: mcp);
     await http.start(0); // ephemeral port
     var port = http.port!;
@@ -268,11 +260,11 @@ void main() {
     await http.stop();
   });
 
-  test('mcp all-scope write tools: rewrite rules', () async {
+  test('mcp write tools: rewrite rules', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
     var mcp = McpServer(
-        store: store, scope: () => 'all', redactEnabled: () => true, extraTools: actions.tools());
+        store: store, redactEnabled: () => true, extraTools: actions.tools());
 
     Future<Map?> call(String name, Map args) async {
       var res = await mcp.handle({
@@ -361,11 +353,11 @@ void main() {
     }
   });
 
-  test('mcp all-scope write tools: host filter', () async {
+  test('mcp write tools: host filter', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
     var mcp = McpServer(
-        store: store, scope: () => 'all', redactEnabled: () => true, extraTools: actions.tools());
+        store: store, redactEnabled: () => true, extraTools: actions.tools());
 
     Future<Map?> call(String name, Map args) async {
       var res = await mcp.handle({
@@ -440,7 +432,7 @@ void main() {
     var store = FlowStore();
     var actions = McpActions(store: store);
     var mcp = McpServer(
-        store: store, scope: () => 'all', redactEnabled: () => true, extraTools: actions.tools());
+        store: store, redactEnabled: () => true, extraTools: actions.tools());
     var res = await mcp.handle({
       'jsonrpc': '2.0',
       'id': 1,

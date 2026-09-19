@@ -1271,18 +1271,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpSkillsRules => '规则、重放与环境工具';
 
   @override
-  String get mcpScope => '工具权限';
-
-  @override
-  String get mcpScopeMinimal => '只读（分析流量）';
-
-  @override
-  String get mcpScopeAll => '完全控制（规则、重放、代理、清理）';
-
-  @override
-  String get mcpScopeWarn => '完全控制允许 AI 修改断点、屏蔽、映射、脚本、系统代理并清空会话。';
-
-  @override
   String get mcpStatusRunning => '运行中 127.0.0.1';
 
   @override

@@ -28,7 +28,7 @@ import 'mcp_tool.dart';
 
 /// MCP 协议处理器（与传输无关）：JSON-RPC 2.0 + MCP 2024-11-05。
 ///
-/// 一期为精简只读工具集（[scope] = minimal）。写工具将在后续版本受 all 作用域门控。
+/// 工具集 = 内置只读流量工具 + [extraTools]（规则写操作等，由 McpActions 注入）。
 ///
 /// @author wanghongen
 class McpServer {
@@ -38,27 +38,20 @@ class McpServer {
 
   final FlowStore store;
 
-  /// 当前作用域（minimal / all），实时读取以便设置变更后即时生效
-  final String Function() scope;
-
   /// 是否默认脱敏敏感头
   final bool Function() redactEnabled;
 
-  /// scope=all 时额外注册的工具（规则写操作、重放、清理等）
+  /// 额外注册的工具（规则写操作、重放、清理等）
   final List<McpTool> extraTools;
 
-  McpServer({required this.store, required this.scope, required this.redactEnabled, this.extraTools = const []});
+  McpServer({required this.store, required this.redactEnabled, this.extraTools = const []});
 
   late final List<McpTool> _tools = [...builtinTools(store, redactEnabled: redactEnabled), ...extraTools];
 
   /// 内置只读工具集（不依赖具体 [McpServer] 实例），供设置页展示工具目录。
   /// 返回的 handler 依赖真实抓包存储，仅用于元数据展示时不会被调用。
-  static List<McpTool> builtinTools(FlowStore store,
-          {required bool Function() redactEnabled, String Function()? scope}) =>
-      _buildTools(store, redactEnabled, scope ?? () => 'all');
-
-  List<McpTool> get _activeTools =>
-      scope() == 'all' ? _tools : _tools.where((t) => t.scope == 'minimal').toList();
+  static List<McpTool> builtinTools(FlowStore store, {required bool Function() redactEnabled}) =>
+      _buildTools(store, redactEnabled);
 
   /// 处理一条已解析的 JSON-RPC 请求；通知（无 id）返回 null。
   Future<Map<String, dynamic>?> handle(Map<String, dynamic> message) async {
@@ -73,7 +66,7 @@ class McpServer {
         return JsonRpcResponse.result(id, {});
       case 'tools/list':
         return JsonRpcResponse.result(id, {
-          'tools': _activeTools.map((t) => t.toJson()).toList(),
+          'tools': _tools.map((t) => t.toJson()).toList(),
         });
       case 'tools/call':
         return await _callTool(id, params);
@@ -99,7 +92,7 @@ class McpServer {
 
   Future<Map<String, dynamic>> _callTool(Object? id, Map<String, dynamic> params) async {
     var name = params['name']?.toString();
-    var tool = _activeTools.firstWhere((t) => t.name == name, orElse: () => McpTool(
+    var tool = _tools.firstWhere((t) => t.name == name, orElse: () => McpTool(
           name: '_missing',
           description: '',
           inputSchema: const {},
@@ -139,7 +132,7 @@ class McpServer {
 
   // ---------------------------------------------------------------- tools
 
-  static List<McpTool> _buildTools(FlowStore store, bool Function() redactEnabled, String Function() scope) => [
+  static List<McpTool> _buildTools(FlowStore store, bool Function() redactEnabled) => [
         McpTool(
           name: 'get_proxy_status',
           description:
@@ -154,7 +147,6 @@ class McpServer {
               'mcpVersion': serverVersion,
               'protocolVersion': protocolVersion,
               'bufferedFlows': store.count,
-              'scope': scope(),
             };
           },
         ),

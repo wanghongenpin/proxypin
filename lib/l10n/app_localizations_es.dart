@@ -1280,19 +1280,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mcpSkillsRules => 'Rules, replay & environment tools';
 
   @override
-  String get mcpScope => 'Tool access';
-
-  @override
-  String get mcpScopeMinimal => 'Read-only (analyze traffic)';
-
-  @override
-  String get mcpScopeAll => 'Full control (rules, replay, proxy, clear)';
-
-  @override
-  String get mcpScopeWarn =>
-      'Full control lets AI change breakpoints, blocks, mappings, scripts, system proxy and clear the session.';
-
-  @override
   String get mcpStatusRunning => 'Running on 127.0.0.1';
 
   @override

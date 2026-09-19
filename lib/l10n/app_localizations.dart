@@ -2584,30 +2584,6 @@ abstract class AppLocalizations {
   /// **'Rules, replay & environment tools'**
   String get mcpSkillsRules;
 
-  /// No description provided for @mcpScope.
-  ///
-  /// In en, this message translates to:
-  /// **'Tool access'**
-  String get mcpScope;
-
-  /// No description provided for @mcpScopeMinimal.
-  ///
-  /// In en, this message translates to:
-  /// **'Read-only (analyze traffic)'**
-  String get mcpScopeMinimal;
-
-  /// No description provided for @mcpScopeAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Full control (rules, replay, proxy, clear)'**
-  String get mcpScopeAll;
-
-  /// No description provided for @mcpScopeWarn.
-  ///
-  /// In en, this message translates to:
-  /// **'Full control lets AI change breakpoints, blocks, mappings, scripts, system proxy and clear the session.'**
-  String get mcpScopeWarn;
-
   /// No description provided for @mcpStatusRunning.
   ///
   /// In en, this message translates to:
