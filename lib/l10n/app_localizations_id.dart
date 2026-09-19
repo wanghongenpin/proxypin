@@ -1227,4 +1227,150 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get weakNetworkRules => 'Aturan URL';
+
+  @override
+  String get mcpService => 'MCP Server';
+
+  @override
+  String get mcpServiceDescribe =>
+      'Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.';
+
+  @override
+  String get mcpEnable => 'Enable MCP Server';
+
+  @override
+  String get mcpPort => 'Port';
+
+  @override
+  String get mcpAdvanced => 'Advanced settings';
+
+  @override
+  String get mcpConfig => 'MCP Configuration';
+
+  @override
+  String get mcpRedact => 'Redact sensitive data before sending to AI';
+
+  @override
+  String get mcpRedactDescribe => 'Automatically redact sensitive information before it is sent to AI tools.';
+
+  @override
+  String mcpHintRun(String client) {
+    return 'Run this command in Terminal to add ProxyPin MCP to $client.';
+  }
+
+  @override
+  String get mcpAboutTitle => 'About MCP Integration';
+
+  @override
+  String get mcpAboutText =>
+      'MCP (Model Context Protocol) lets AI assistants like Claude interact with ProxyPin. AI can read captured HTTP traffic, create debugging rules (Map Local, Map Remote, Breakpoints), and help analyze network issues.';
+
+  @override
+  String get mcpLearnMore => 'Learn more about MCP';
+
+  @override
+  String get mcpSkills => 'Skills';
+
+  @override
+  String get mcpSkillsTitle => 'MCP Skills';
+
+  @override
+  String get mcpSkillsReadonly => 'Read-only traffic tools';
+
+  @override
+  String get mcpSkillsRules => 'Rules, replay & environment tools';
+
+  @override
+  String get mcpScope => 'Tool access';
+
+  @override
+  String get mcpScopeMinimal => 'Read-only (analyze traffic)';
+
+  @override
+  String get mcpScopeAll => 'Full control (rules, replay, proxy, clear)';
+
+  @override
+  String get mcpScopeWarn =>
+      'Full control lets AI change breakpoints, blocks, mappings, scripts, system proxy and clear the session.';
+
+  @override
+  String get mcpStatusRunning => 'Running on 127.0.0.1';
+
+  @override
+  String get mcpStatusStopped => 'Stopped';
+
+  @override
+  String get mcpClientLabel => 'AI client';
+
+  @override
+  String get mcpTransportLabel => 'Transport';
+
+  @override
+  String get mcpCommandLabel => 'Connect command';
+
+  @override
+  String get mcpClientsIntl => 'International';
+
+  @override
+  String get mcpClientsDomestic => 'Chinese';
+
+  @override
+  String get mcpTransportStdio => 'stdio';
+
+  @override
+  String get mcpTransportHttp => 'HTTP';
+
+  @override
+  String get mcpHintTerminal => 'Copy and run in your terminal.';
+
+  @override
+  String get mcpHintJson => 'Paste into your client\'s MCP settings.';
+
+  @override
+  String get mcpHintCopilot => 'Paste into VS Code settings.json → mcp.servers.';
+
+  @override
+  String get mcpHintLingma => 'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (STDIO type).';
+
+  @override
+  String get mcpHintCherry => 'Cherry Studio → Settings → MCP Servers → Add.';
+
+  @override
+  String get mcpHintDoubao => 'MarsCode IDE → Settings → MCP → Add (STDIO type).';
+
+  @override
+  String get mcpSetup => 'Auto setup';
+
+  @override
+  String get mcpStartChat => 'Start chat';
+
+  @override
+  String get mcpOpenTerminal => 'Run in terminal';
+
+  @override
+  String get mcpSetupDone => 'Configured. Restart your AI client to apply.';
+
+  @override
+  String get mcpSetupFail => 'Setup failed: ';
+
+  @override
+  String mcpCliMissing(Object cli) {
+    return 'CLI $cli not found on PATH. Use \"Run in terminal\" instead.';
+  }
+
+  @override
+  String get mcpUnsupported => 'This client does not support auto setup, configure it manually.';
+
+  @override
+  String get mcpCopy => 'Copy';
+
+  @override
+  String get mcpCopied => 'Copied';
+
+  @override
+  String get mcpStartFailed => 'MCP service failed to start';
+
+  @override
+  String get mcpPrivacyHint =>
+      'Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool.';
 }

@@ -106,6 +106,12 @@ class AppConfiguration {
   /// 关闭窗口时最小化到系统托盘
   bool? minimizeToTray;
 
+  /// 是否启用 MCP 服务
+  bool mcpEnabled = false;
+
+  /// 导出给 AI 时是否脱敏 Authorization/Cookie
+  bool mcpRedactEnabled = true;
+
   AppConfiguration._();
 
   /// 单例
@@ -223,6 +229,9 @@ class AppConfiguration {
         panelRatio = config['panelRatio'];
       }
       minimizeToTray = config['minimizeToTray'];
+
+      mcpEnabled = config['mcpEnabled'] ?? false;
+      mcpRedactEnabled = config['mcpRedactEnabled'] ?? true;
     } catch (e) {
       logger.e(e);
     }
@@ -268,6 +277,9 @@ class AppConfiguration {
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
       if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
+      // MCP 配置所有平台都写入
+      'mcpEnabled': mcpEnabled,
+      'mcpRedactEnabled': mcpRedactEnabled,
     };
   }
 }

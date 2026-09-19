@@ -19,7 +19,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/configuration.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/channel.dart';
@@ -54,6 +56,9 @@ class DesktopHomePage extends StatefulWidget {
   @override
   State<DesktopHomePage> createState() => _DesktopHomePagePageState();
 }
+
+/// 供 MCP 等独立组件一次性回填当前抓包列表（同文件可访问私有 State 的静态容器）。
+ListenableList<HttpRequest> get desktopCaptureContainer => _DesktopHomePagePageState.container;
 
 class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventListener {
   static final container = ListenableList<HttpRequest>();
@@ -100,6 +105,16 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   void initState() {
     super.initState();
     proxyServer.addListener(this);
+    McpService.instance.clearUiSession = () async {
+      container.clear();
+      requestListStateKey.currentState?.clean();
+    };
+    if (widget.appConfiguration.mcpEnabled) {
+      McpService.instance.attach(proxyServer, existing: container);
+      unawaited(McpService.instance.start(widget.appConfiguration).catchError((e) {
+        logger.e('MCP auto-start failed: $e');
+      }));
+    }
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((_) {
       if (mounted) {
