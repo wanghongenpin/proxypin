@@ -20,7 +20,6 @@ import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/mcp/transport/mcp_stdio_bridge.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
@@ -48,9 +47,7 @@ void main(List<String> args) async {
 
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await RustLib.init(
-      externalLibrary: ExternalLibrary.open('code-forge.framework/code-forge'),
-    );
+    await RustLib.init();
   } catch (e) {
     // code_forge Rust FFI initialization may fail on iOS 14.x due to
     // deployment-target / cargokit-build incompatibilities. Degrade

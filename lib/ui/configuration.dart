@@ -112,6 +112,9 @@ class AppConfiguration {
   /// 导出给 AI 时是否脱敏 Authorization/Cookie
   bool mcpRedactEnabled = true;
 
+  /// 移动端 LAN 模式的访问 token（桌面 loopback 不用，留空即可）
+  String? mcpToken;
+
   AppConfiguration._();
 
   /// 单例
@@ -232,6 +235,7 @@ class AppConfiguration {
 
       mcpEnabled = config['mcpEnabled'] ?? false;
       mcpRedactEnabled = config['mcpRedactEnabled'] ?? true;
+      mcpToken = config['mcpToken'] as String?;
     } catch (e) {
       logger.e(e);
     }
@@ -280,6 +284,7 @@ class AppConfiguration {
       // MCP 配置所有平台都写入
       'mcpEnabled': mcpEnabled,
       'mcpRedactEnabled': mcpRedactEnabled,
+      if (mcpToken != null) 'mcpToken': mcpToken,
     };
   }
 }

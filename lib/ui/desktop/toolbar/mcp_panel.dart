@@ -23,14 +23,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/mcp/capture/curl_builder.dart';
+import 'package:proxypin/mcp/mcp_names.dart';
 import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/mcp_docs.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// MCP 服务设置面板（桌面）。样式对齐 Proxyman 的 Settings → MCP：
 /// MCP Server（启用开关 + 锁、描述、运行状态、MCP 配置、Claude Code/Codex/Manual
@@ -100,19 +101,23 @@ String _hintLingma(AppLocalizations l) => l.mcpHintLingma;
 String _hintCherry(AppLocalizations l) => l.mcpHintCherry;
 String _hintDoubao(AppLocalizations l) => l.mcpHintDoubao;
 
+/// 桌面端注册名（手机端 LAN 配置使用 McpClientNames.mobile，两者并存互不覆盖）。
+const String _serverName = McpClientNames.desktop;
+
 String _mcpServersJson(String app) {
   return jsonEncode({
     'mcpServers': {
-      'proxypin': {'command': app, 'args': ['--mcp-stdio']}
+      _serverName: {'command': app, 'args': ['--mcp-stdio']}
     }
   });
 }
 
-String _buildClaude(String app) => 'claude mcp add proxypin --transport stdio -- "$app" --mcp-stdio';
+String _buildClaude(String app) =>
+    'claude mcp add $_serverName -s user --transport stdio -- "$app" --mcp-stdio';
 
-String _buildCodex(String app) => 'codex mcp add proxypin -- "$app" --mcp-stdio';
+String _buildCodex(String app) => 'codex mcp add $_serverName -- "$app" --mcp-stdio';
 
-String _buildKimi(String app) => 'kimi mcp add --transport stdio proxypin -- "$app" --mcp-stdio';
+String _buildKimi(String app) => 'kimi mcp add --transport stdio $_serverName -- "$app" --mcp-stdio';
 
 String _buildCursor(String app) => _mcpServersJson(app);
 String _buildGemini(String app) => _mcpServersJson(app);
@@ -122,7 +127,7 @@ String _buildCopilot(String app) {
   return jsonEncode({
     'mcp': {
       'servers': {
-        'proxypin': {'command': app, 'args': ['--mcp-stdio']}
+        _serverName: {'command': app, 'args': ['--mcp-stdio']}
       }
     }
   });
@@ -132,12 +137,16 @@ String _buildLingma(String app) => '"$app" --mcp-stdio';
 
 // ------------------------------------------------------------- 一键配置
 
+/// CLI 是否在 PATH 中。
+Future<bool> _cliExists(String cli) async {
+  var which = Platform.isWindows ? 'where' : 'which';
+  return (await Process.run(which, [cli])).exitCode == 0;
+}
+
 /// 运行 CLI 的 `mcp add` 命令。先探测 CLI 是否在 PATH 中。
 /// "already exists"（已配置过）视为成功，避免幂等重跑被当作错误提示。
 Future<String> _runCli(String cli, List<String> args, AppLocalizations l) async {
-  var which = Platform.isWindows ? 'where' : 'which';
-  var found = await Process.run(which, [cli]);
-  if (found.exitCode != 0) {
+  if (!await _cliExists(cli)) {
     throw _SetupException(l.mcpCliMissing(cli));
   }
   var result = await Process.run(cli, args).timeout(const Duration(seconds: 30));
@@ -148,17 +157,48 @@ Future<String> _runCli(String cli, List<String> args, AppLocalizations l) async 
 }
 
 /// 一键配置统一走 stdio（HTTP 会触发 OAuth 交互，不适合无人值守）。
-Future<String> _setupClaude(String app, AppLocalizations l) =>
-    _runCli('claude', ['mcp', 'add', 'proxypin', '--transport', 'stdio', '--', app, '--mcp-stdio'], l);
+/// 添加前先清理旧版注册名与当前名的残留，保证重复执行幂等。
+Future<String> _setupClaude(String app, AppLocalizations l) async {
+  await _removeAll('claude', [
+    ['mcp', 'remove', _serverName, '-s', 'user'],
+    ['mcp', 'remove', McpClientNames.legacy, '-s', 'user'],
+    ['mcp', 'remove', McpClientNames.legacy, '-s', 'local'],
+  ]);
+  return _runCli('claude',
+      ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'stdio', '--', app, '--mcp-stdio'], l);
+}
 
-Future<String> _setupCodex(String app, AppLocalizations l) =>
-    _runCli('codex', ['mcp', 'add', 'proxypin', '--', app, '--mcp-stdio'], l);
+Future<String> _setupCodex(String app, AppLocalizations l) async {
+  await _removeAll('codex', [
+    ['mcp', 'remove', _serverName],
+    ['mcp', 'remove', McpClientNames.legacy],
+  ]);
+  return _runCli('codex', ['mcp', 'add', _serverName, '--', app, '--mcp-stdio'], l);
+}
 
-Future<String> _setupKimi(String app, AppLocalizations l) =>
-    _runCli('kimi', ['mcp', 'add', '--transport', 'stdio', 'proxypin', '--', app, '--mcp-stdio'], l);
+Future<String> _setupKimi(String app, AppLocalizations l) async {
+  await _removeAll('kimi', [
+    ['mcp', 'remove', _serverName],
+    ['mcp', 'remove', McpClientNames.legacy],
+  ]);
+  return _runCli(
+      'kimi', ['mcp', 'add', '--transport', 'stdio', _serverName, '--', app, '--mcp-stdio'], l);
+}
 
-/// 写入配置文件（Cursor / Gemini），先备份再合并 proxypin 条目。
-Future<String> _writeConfigFile(File file, String wrapperKey, Map<String, dynamic> entry, AppLocalizations l) async {
+/// 同一个 CLI 的多个删除命令：只探测一次 PATH，逐条执行（条目不存在不算错）。
+Future<void> _removeAll(String cli, List<List<String>> removals) async {
+  if (!await _cliExists(cli)) return;
+  for (var args in removals) {
+    try {
+      await Process.run(cli, args).timeout(const Duration(seconds: 15));
+    } catch (_) {}
+  }
+}
+
+/// 写入配置文件（Cursor / Gemini），先备份再合并指定名称的条目；
+/// 同时清理旧版注册名 proxypin，避免桌面端新旧两条 stdio 共存。
+Future<String> _writeConfigFile(
+    File file, String wrapperKey, String name, Map<String, dynamic> entry, AppLocalizations l) async {
   try {
     await file.parent.create(recursive: true);
     Map<String, dynamic> root = {};
@@ -168,9 +208,12 @@ Future<String> _writeConfigFile(File file, String wrapperKey, Map<String, dynami
         root = jsonDecode(content) as Map<String, dynamic>;
       }
     }
-    await file.copy('${file.path}.bak');
+    if (await file.exists()) {
+      await file.copy('${file.path}.bak');
+    }
     var section = (root[wrapperKey] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
-    section['proxypin'] = entry;
+    section.remove(McpClientNames.legacy);
+    section[name] = entry;
     root[wrapperKey] = section;
     await file.writeAsString(const JsonEncoder.withIndent('  ').convert(root));
     return l.mcpSetupDone;
@@ -186,6 +229,7 @@ Future<String> _setupCursor(String app, AppLocalizations l) {
   return _writeConfigFile(
     File('$home${Platform.pathSeparator}.cursor${Platform.pathSeparator}mcp.json'),
     'mcpServers',
+    _serverName,
     {
       'command': app,
       'args': ['--mcp-stdio']
@@ -199,6 +243,7 @@ Future<String> _setupGemini(String app, AppLocalizations l) {
   return _writeConfigFile(
     File('$home${Platform.pathSeparator}.gemini${Platform.pathSeparator}settings.json'),
     'mcpServers',
+    _serverName,
     {
       'command': app,
       'args': ['--mcp-stdio']
@@ -430,7 +475,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
               Text(l.mcpAboutText,
                   style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
               const SizedBox(height: 12),
-              _linkAction(Icons.open_in_new_rounded, l.mcpLearnMore, _openDoc, cs),
+              _linkAction(Icons.open_in_new_rounded, l.mcpLearnMore, () => openMcpDoc(context), cs),
             ]),
           ),
           ),
@@ -747,15 +792,6 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
     );
   }
 
-  // ------------------------------------------------------------- doc link
-/// 打开项目 Wiki 的 MCP 集成文档，按当前界面语言区分中/英文页面
-  Future<void> _openDoc() async {
-    var zh = Localizations.localeOf(context).languageCode == 'zh';
-    var url = zh
-        ? 'https://github.com/wanghongenpin/proxypin/wiki/MCP%E6%9C%8D%E5%8A%A1'
-        : 'https://github.com/wanghongenpin/proxypin/wiki/MCP';
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  }
 
   // ------------------------------------------------------------- banners
   Widget _errorBanner(ColorScheme cs, String message) {

@@ -2584,10 +2584,64 @@ abstract class AppLocalizations {
   /// **'Rules, replay & environment tools'**
   String get mcpSkillsRules;
 
+  /// No description provided for @mcpEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Endpoint'**
+  String get mcpEndpoint;
+
+  /// No description provided for @mcpAccessToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Token'**
+  String get mcpAccessToken;
+
+  /// No description provided for @mcpLanGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer\'s terminal, or paste the configuration into your AI client\'s MCP settings.'**
+  String get mcpLanGuide;
+
+  /// No description provided for @mcpLanTokenNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The token authorizes full access to the MCP tools. Tap the refresh button next to the token to revoke it and issue a new one.'**
+  String get mcpLanTokenNote;
+
+  /// No description provided for @mcpOtherClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Other AI clients'**
+  String get mcpOtherClients;
+
+  /// No description provided for @mcpOtherClientsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Universal Streamable HTTP config for Cursor, Cline, Gemini CLI, Cherry Studio, VS Code Copilot and other MCP clients. Paste the URL and Bearer token, or the full JSON, into the client\'s MCP settings.'**
+  String get mcpOtherClientsHint;
+
+  /// No description provided for @mcpOneClick.
+  ///
+  /// In en, this message translates to:
+  /// **'One-click setup on your computer'**
+  String get mcpOneClick;
+
+  /// No description provided for @mcpOneClickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the matching command and run it on the computer: Terminal for macOS/Linux, PowerShell for Windows. It auto-detects installed AI clients (Claude Code, Codex, Cursor, Gemini CLI) and configures them over Wi-Fi.'**
+  String get mcpOneClickHint;
+
+  /// No description provided for @mcpRegenerateToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset token'**
+  String get mcpRegenerateToken;
+
   /// No description provided for @mcpStatusRunning.
   ///
   /// In en, this message translates to:
-  /// **'Running on 127.0.0.1'**
+  /// **'Running'**
   String get mcpStatusRunning;
 
   /// No description provided for @mcpStatusStopped.

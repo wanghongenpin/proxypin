@@ -1285,7 +1285,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpSkillsRules => 'Rules, replay & environment tools';
 
   @override
-  String get mcpStatusRunning => 'Running on 127.0.0.1';
+  String get mcpEndpoint => 'MCP Endpoint';
+
+  @override
+  String get mcpAccessToken => 'Access Token';
+
+  @override
+  String get mcpLanGuide =>
+      'Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer\'s terminal, or paste the configuration into your AI client\'s MCP settings.';
+
+  @override
+  String get mcpLanTokenNote =>
+      'The token authorizes full access to the MCP tools. Tap the refresh button next to the token to revoke it and issue a new one.';
+
+  @override
+  String get mcpOtherClients => 'Other AI clients';
+
+  @override
+  String get mcpOtherClientsHint =>
+      'Universal Streamable HTTP config for Cursor, Cline, Gemini CLI, Cherry Studio, VS Code Copilot and other MCP clients. Paste the URL and Bearer token, or the full JSON, into the client\'s MCP settings.';
+
+  @override
+  String get mcpOneClick => 'One-click setup on your computer';
+
+  @override
+  String get mcpOneClickHint =>
+      'Copy the matching command and run it on the computer: Terminal for macOS/Linux, PowerShell for Windows. It auto-detects installed AI clients (Claude Code, Codex, Cursor, Gemini CLI) and configures them over Wi-Fi.';
+
+  @override
+  String get mcpRegenerateToken => 'Reset token';
+
+  @override
+  String get mcpStatusRunning => 'Running';
 
   @override
   String get mcpStatusStopped => 'Stopped';

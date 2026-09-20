@@ -33,6 +33,7 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
@@ -129,6 +130,19 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer.addListener(this);
     proxyServer.start();
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
+
+    // MCP 局域网服务：启用时随抓包一起启动，clear_session 同步清空界面列表
+    McpService.instance.clearUiSession = () async {
+      MobileApp.requestStateKey.currentState?.clean();
+    };
+    if (widget.appConfiguration.mcpEnabled) {
+      McpService.instance.attach(proxyServer, existing: MobileApp.container.source);
+      unawaited(McpService.instance.start(widget.appConfiguration).catchError((e) {
+        // 启动失败（如端口/绑定被拒）时持久化关闭，避免每次启动都重复失败
+        widget.appConfiguration.mcpEnabled = false;
+        widget.appConfiguration.flushConfig();
+      }));
+    }
 
     if (widget.appConfiguration.upgradeNoticeV30) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

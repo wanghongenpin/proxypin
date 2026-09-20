@@ -16,6 +16,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:proxypin/mcp/capture/cert_status.dart';
 import 'package:proxypin/mcp/capture/flow_store.dart';
@@ -44,12 +45,35 @@ class McpService {
   McpHttpServer? _http;
   ProxyServer? _attachedServer;
 
+  /// 串行化 start/stop，避免自动启动与手动开关并发时重复 bind 端口
+  Future<void>? _transitionLock;
+
+  Future<void> _synchronized(Future<void> Function() action) {
+    var previous = _transitionLock ?? Future<void>.value();
+    var next = previous.then((_) => action());
+    // 单次失败不能让后续操作永远拿不到锁
+    _transitionLock = next.catchError((_) {});
+    return next;
+  }
+
   /// 由 UI 层注册：清空界面抓包列表（MCP clear_session 时一并触发）
   Future<void> Function()? clearUiSession;
 
   bool get isRunning => _http?.isRunning ?? false;
 
   int? get port => _http?.port;
+
+  /// 移动端 LAN 模式的访问 token；桌面 loopback 模式为 null
+  String? get token => _http?.token;
+
+  /// 当前绑定地址：移动端 0.0.0.0（LAN），桌面 127.0.0.1
+  bool get lanMode => Platform.isAndroid || Platform.isIOS;
+
+  /// 生成 48 位十六进制随机 token
+  static String generateToken() {
+    var random = Random.secure();
+    return List.generate(24, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  }
 
   /// 注册抓包索引到代理服务（幂等）。[existing] 用于启用时一次性回填已抓到的请求。
   void attach(ProxyServer server, {Iterable<HttpRequest>? existing}) {
@@ -63,8 +87,10 @@ class McpService {
     }
   }
 
-  /// 按当前配置启动（必要时先挂到已存在的代理服务）。
-  Future<void> start(AppConfiguration cfg) async {
+  /// 按当前配置启动（必要时先挂到已存在的代理服务）。串行执行，避免并发重复绑定。
+  Future<void> start(AppConfiguration cfg) => _synchronized(() => _startLocked(cfg));
+
+  Future<void> _startLocked(AppConfiguration cfg) async {
     if (isRunning) return;
 
     var proxyServer = _attachedServer ?? ProxyServer.current;
@@ -77,13 +103,22 @@ class McpService {
       store: _store!,
       onClearSession: () async => clearUiSession?.call(),
       certStatusProvider: Platform.isMacOS || Platform.isWindows || Platform.isLinux ? CertStatus.query : null,
+      redactEnabled: () => cfg.mcpRedactEnabled,
     );
     _mcp = McpServer(
       store: _store!,
       redactEnabled: () => cfg.mcpRedactEnabled,
       extraTools: actions.tools(),
     );
-    _http = McpHttpServer(mcp: _mcp!);
+    // 移动端绑 0.0.0.0 供局域网 AI 客户端连接，并要求 Bearer token；桌面仅 loopback。
+    String? token;
+    InternetAddress bindAddress = InternetAddress.loopbackIPv4;
+    if (lanMode) {
+      bindAddress = InternetAddress.anyIPv4;
+      token = (cfg.mcpToken?.isNotEmpty ?? false) ? cfg.mcpToken : generateToken();
+      cfg.mcpToken = token;
+    }
+    _http = McpHttpServer(mcp: _mcp!, address: bindAddress, token: token);
 
     try {
       // 自动分配空闲端口，避免与其它服务冲突；实际端口写入握手文件供 stdio 桥发现。
@@ -97,23 +132,31 @@ class McpService {
     }
   }
 
-  Future<void> stop() async {
+  Future<void> stop() => _synchronized(_stopLocked);
+
+  Future<void> _stopLocked() async {
     await _removeHandshake();
     await _http?.stop();
     _http = null;
     _mcp = null;
+    // 解绑抓包监听并清空索引：关闭后不再缓冲流量，避免停用期间抓到的敏感请求
+    // 在下次开启时被局域网客户端读到；同时避免 start/stop 反复切换造成监听器堆积。
+    if (_store != null) {
+      _attachedServer?.removeListener(_store!);
+      _store!.clear();
+    }
   }
 
   /// 握手文件：stdio 桥进程不共享内存，通过该文件发现当前端口。
   Future<void> _writeHandshake() async {
-    var file = McpStdioBridge.handshakeFile();
+    var file = await McpStdioBridge.handshakeFile();
     await file.parent.create(recursive: true);
     await file.writeAsString(jsonEncode({'port': _http!.port}));
   }
 
   Future<void> _removeHandshake() async {
     try {
-      var file = McpStdioBridge.handshakeFile();
+      var file = await McpStdioBridge.handshakeFile();
       if (await file.exists()) await file.delete();
     } catch (e) {
       logger.e('MCP handshake cleanup failed: $e');

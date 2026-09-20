@@ -18,6 +18,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
+import 'package:proxypin/utils/platform.dart';
+
 import '../protocol/json_rpc.dart';
 
 /// `--mcp-stdio` 瘦转发进程：stdin/stdout 换行分隔 JSON-RPC，透传到 App 内 HTTP bridge。
@@ -38,9 +41,16 @@ class McpStdioBridge {
   McpStdioBridge({required this.port});
 
   /// 握手文件：App 启动 MCP 服务后写入实际端口，桥进程启动时读取。
-  static File handshakeFile() {
-    var home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
-    return File('$home${Platform.pathSeparator}.proxypin${Platform.pathSeparator}mcp_handshake.json');
+  ///
+  /// 桌面端放在 `$HOME/.proxypin` 供独立的 stdio 桥进程读取；移动端没有 HOME 环境变量，
+  /// 写入 App 沙盒的 Application Support 目录（stdio 桥仅桌面运行，移动端该文件仅供 App 自身使用）。
+  static Future<File> handshakeFile() async {
+    if (Platforms.isDesktop()) {
+      var home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
+      return File('$home${Platform.pathSeparator}.proxypin${Platform.pathSeparator}mcp_handshake.json');
+    }
+    var directory = await getApplicationSupportDirectory();
+    return File('${directory.path}${Platform.pathSeparator}mcp_handshake.json');
   }
 
   /// 从命令行参数、握手文件与 ui_config.json 解析端口并运行（握手文件优先）。
@@ -56,7 +66,7 @@ class McpStdioBridge {
 
   static Future<int?> _readHandshakePort() async {
     try {
-      var file = handshakeFile();
+      var file = await handshakeFile();
       if (!await file.exists()) return null;
       var decoded = jsonDecode(await file.readAsString());
       return decoded is Map<String, dynamic> ? decoded['port'] as int? : null;

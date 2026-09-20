@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'package:proxypin/mcp/capture/curl_builder.dart';
 import 'package:proxypin/mcp/capture/flow_store.dart';
 import 'package:proxypin/mcp/capture/flow_view.dart';
+import 'package:proxypin/mcp/capture/sensitive_data.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/host_port.dart';
@@ -53,7 +54,13 @@ class McpActions {
   /// 桌面端 CA 证书安装/信任状态（平台注入）
   final Future<Map<String, dynamic>> Function()? certStatusProvider;
 
-  McpActions({required this.store, this.onClearSession, this.certStatusProvider});
+  /// 敏感头脱敏开关（用户设置，硬门槛）；为空时按开启处理
+  final bool Function()? redactEnabled;
+
+  McpActions({required this.store, this.onClearSession, this.certStatusProvider, this.redactEnabled});
+
+  /// 生效脱敏状态：用户设置是硬门槛，开启时工具参数无法关闭，与 McpServer 保持一致。
+  bool _effectiveRedact(dynamic arg) => (redactEnabled ?? () => true)() || arg == true;
 
   List<McpTool> tools() => [
         _listRules(),
@@ -1081,13 +1088,11 @@ class McpActions {
     };
   }
 
-  /// 与 FlowView 保持一致，敏感头一律打码后再交给 AI
-  static const _sensitiveHeaders = {'authorization', 'proxy-authorization', 'cookie', 'set-cookie'};
-
+  /// 与 FlowView / CurlBuilder 共用同一份敏感头清单，打码后再交给 AI
   static Map<String, dynamic> _redactHeaders(Map<String, dynamic> headers) {
     var out = <String, dynamic>{};
     headers.forEach((k, v) {
-      out[k] = _sensitiveHeaders.contains(k.toLowerCase()) ? '***redacted***' : v;
+      out[k] = SensitiveData.isRedactedHeader(k) ? SensitiveData.placeholder : v;
     });
     return out;
   }
@@ -1185,7 +1190,7 @@ class McpActions {
         handler: (a) async {
           var request = _requireFlow(a['id']?.toString());
           var lang = a['language']?.toString() ?? 'curl';
-          var redact = a['redact'] is bool ? a['redact'] as bool : true;
+          var redact = _effectiveRedact(a['redact']);
           return {'language': lang, 'code': CurlBuilder.code(request, lang, redact: redact)};
         },
       );

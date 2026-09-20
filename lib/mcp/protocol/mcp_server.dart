@@ -225,14 +225,18 @@ class McpServer {
             'type': 'object',
             'properties': {
               'id': {'type': 'string', 'description': 'Flow id from list_flows'},
-              'redact': {'type': 'boolean', 'description': 'Redact Authorization/Cookie, default follows setting'},
+              'redact': {
+                'type': 'boolean',
+                'description':
+                    'Redact Authorization/Cookie. Forced true unless the user has disabled redaction in app settings.'
+              },
               'preview_bytes': {'type': 'integer', 'description': 'Body preview bytes, default 8192'},
             },
             'required': ['id'],
           },
           handler: (args) async {
             var request = _requireFlow(store, args['id']?.toString());
-            var redact = args['redact'] is bool ? args['redact'] as bool : redactEnabled();
+            var redact = _effectiveRedact(args['redact'], redactEnabled());
             var preview = _intArgOr(args['preview_bytes'], FlowView.defaultPreviewBytes);
             preview = preview.clamp(1, FlowView.maxBodySliceBytes);
             return await FlowView.detail(request, redact: redact, previewBytes: preview);
@@ -317,13 +321,17 @@ class McpServer {
             'type': 'object',
             'properties': {
               'id': {'type': 'string'},
-              'redact': {'type': 'boolean'},
+              'redact': {
+                'type': 'boolean',
+                'description':
+                    'Forced true unless the user has disabled redaction in app settings.'
+              },
             },
             'required': ['id'],
           },
           handler: (args) async {
             var request = _requireFlow(store, args['id']?.toString());
-            var redact = args['redact'] is bool ? args['redact'] as bool : redactEnabled();
+            var redact = _effectiveRedact(args['redact'], redactEnabled());
             return {'curl': CurlBuilder.build(request, redact: redact)};
           },
         ),
@@ -339,6 +347,11 @@ class McpServer {
     }
     return request;
   }
+
+  /// 生效脱敏状态：用户设置是硬门槛。
+  /// 脱敏开启（默认）时，工具参数无法关闭；用户在设置中主动关闭后，未传参数遵循设置，
+  /// 显式传 redact:true 仍可脱敏。
+  static bool _effectiveRedact(dynamic arg, bool settingEnabled) => settingEnabled || arg == true;
 
   static int? _intArg(dynamic value) {
     if (value is int) return value;

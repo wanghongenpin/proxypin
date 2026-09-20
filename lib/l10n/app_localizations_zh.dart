@@ -1271,7 +1271,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpSkillsRules => '规则、重放与环境工具';
 
   @override
-  String get mcpStatusRunning => '运行中 127.0.0.1';
+  String get mcpEndpoint => 'MCP 服务地址';
+
+  @override
+  String get mcpAccessToken => '访问令牌';
+
+  @override
+  String get mcpLanGuide => '保持手机与电脑连接同一 Wi-Fi，在电脑终端运行下面任一命令，或将配置粘贴到 AI 客户端的 MCP 设置中。';
+
+  @override
+  String get mcpLanTokenNote => '该令牌拥有 MCP 工具的完整访问权限。点击令牌旁的刷新按钮可吊销并重新生成。';
+
+  @override
+  String get mcpOtherClients => '其他 AI 客户端';
+
+  @override
+  String get mcpOtherClientsHint =>
+      '适用于 Cursor、Cline、Gemini CLI、Cherry Studio、VS Code Copilot 等支持 Streamable HTTP 的 MCP 客户端：将服务地址和 Bearer 令牌（或整段 JSON）填入客户端的 MCP 设置即可。';
+
+  @override
+  String get mcpOneClick => '电脑端一键配置';
+
+  @override
+  String get mcpOneClickHint =>
+      '复制对应命令到电脑上执行：macOS/Linux 用终端，Windows 用 PowerShell。脚本会自动探测已安装的 AI 客户端（Claude Code、Codex、Cursor、Gemini CLI）并通过 Wi-Fi 完成配置。';
+
+  @override
+  String get mcpRegenerateToken => '重置令牌';
+
+  @override
+  String get mcpStatusRunning => '运行中';
 
   @override
   String get mcpStatusStopped => '已停止';

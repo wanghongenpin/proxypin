@@ -16,6 +16,7 @@
 
 import 'dart:io';
 
+import 'package:proxypin/mcp/capture/sensitive_data.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/utils/curl.dart';
 import 'package:proxypin/utils/python.dart';
@@ -27,15 +28,12 @@ import 'package:proxypin/utils/python.dart';
 class CurlBuilder {
   static const supportedLanguages = ['curl', 'fetch', 'python'];
 
-  static const _redactedHeaders = ['authorization', 'proxy-authorization', 'cookie', 'set-cookie'];
-  static const _placeholder = '***redacted***';
-
   /// 在副本上替换敏感头，避免污染内存中的原始请求。
   static HttpRequest redactedCopy(HttpRequest request) {
     var copy = request.copy();
-    for (var name in _redactedHeaders) {
+    for (var name in SensitiveData.redactedHeaders) {
       if (copy.headers.get(name) != null) {
-        copy.headers.set(name, _placeholder);
+        copy.headers.set(name, SensitiveData.placeholder);
       }
     }
     return copy;

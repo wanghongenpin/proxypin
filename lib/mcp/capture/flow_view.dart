@@ -17,6 +17,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:proxypin/mcp/capture/sensitive_data.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/network/util/crypto.dart';
@@ -43,8 +44,6 @@ class FlowView {
   /// WebSocket 帧文本总量上限
   static const int maxWsPayloadBytes = 1024 * 1024;
 
-  static const _redactedHeaders = {'authorization', 'proxy-authorization', 'cookie', 'set-cookie'};
-  static const _redactedPlaceholder = '***redacted***';
 
   /// 列表项元数据（不含 headers/body）
   static Map<String, dynamic> summary(HttpRequest request) {
@@ -186,9 +185,9 @@ class FlowView {
   static List<Map<String, String>> _headers(HttpMessage? message, bool redact) {
     var result = <Map<String, String>>[];
     message?.headers.forEach((name, values) {
-      var sensitive = redact && _redactedHeaders.contains(name.toLowerCase());
+      var sensitive = redact && SensitiveData.isRedactedHeader(name);
       for (var value in values) {
-        result.add({'name': name, 'value': sensitive ? _redactedPlaceholder : value});
+        result.add({'name': name, 'value': sensitive ? SensitiveData.placeholder : value});
       }
     });
     return result;

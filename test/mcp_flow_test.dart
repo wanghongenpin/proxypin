@@ -237,6 +237,40 @@ void main() {
     check(names.length == 8 + actionNames.length, 'exposes builtin + action tools, got ${names.length}');
   });
 
+  test('generate_code honors redaction hard gate like other tools', () async {
+    var flow = buildFlow(responseSize: 10);
+    var store = FlowStore()..backfill([flow]);
+
+    Future<String> generatedCode({required bool setting, required dynamic arg}) async {
+      var actions = McpActions(store: store, redactEnabled: () => setting);
+      var mcp = McpServer(store: store, redactEnabled: () => setting, extraTools: actions.tools());
+      var res = await mcp.handle({
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'tools/call',
+        'params': {
+          'name': 'generate_code',
+          'arguments': {'id': flow.requestId, if (arg != null) 'redact': arg},
+        },
+      });
+      var payload = jsonDecode(res!['result']['content'][0]['text'] as String) as Map;
+      return payload['code'] as String;
+    }
+
+    // 设置开启（默认）：即使工具传 redact:false 也拿不到明文
+    var forced = await generatedCode(setting: true, arg: false);
+    check(forced.contains('***redacted***'), 'gate forces redaction');
+    check(!forced.contains('secret-token'), 'gate hides token');
+
+    // 设置关闭、未传参数：遵循用户设置，返回明文
+    var raw = await generatedCode(setting: false, arg: null);
+    check(raw.contains('secret-token'), 'user-disabled redaction exposes token');
+
+    // 设置关闭但显式 redact:true：仍脱敏
+    var explicit = await generatedCode(setting: false, arg: true);
+    check(!explicit.contains('secret-token'), 'explicit redact:true honored');
+  });
+
   test('mcp http transport: loopback initialize', () async {
     var flow = buildFlow(responseSize: 10);
     var mcp = McpServer(
@@ -257,6 +291,42 @@ void main() {
     check(json['result']['serverInfo']['name'] == 'proxypin', 'http initialize ok');
     client.close(force: true);
 
+    await http.stop();
+  });
+
+  test('mcp http transport: LAN token auth', () async {
+    var flow = buildFlow(responseSize: 10);
+    var mcp = McpServer(store: FlowStore()..backfill([flow]), redactEnabled: () => true);
+    var http = McpHttpServer(mcp: mcp, address: InternetAddress.loopbackIPv4, token: 'secret-token');
+    await http.start(0);
+    var port = http.port!;
+    final client = HttpClient();
+
+    Future<HttpClientResponse> post({String? auth}) async {
+      final req = await client.postUrl(Uri.parse('http://127.0.0.1:$port/mcp'));
+      req.headers.contentType = ContentType.json;
+      if (auth != null) req.headers.set(HttpHeaders.authorizationHeader, auth);
+      req.write(jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}}));
+      return req.close();
+    }
+
+    // 无 token -> 401
+    final denied = await post();
+    check(denied.statusCode == 401, 'missing token rejected');
+    await denied.drain<void>();
+
+    // 错误 token -> 401
+    final wrong = await post(auth: 'Bearer nope');
+    check(wrong.statusCode == 401, 'wrong token rejected');
+    await wrong.drain<void>();
+
+    // 正确 token -> 200
+    final ok = await post(auth: 'Bearer secret-token');
+    final text = await ok.transform(utf8.decoder).join();
+    check(ok.statusCode == 200, 'valid token accepted');
+    check(jsonDecode(text)['result']['serverInfo']['name'] == 'proxypin', 'authenticated initialize ok');
+
+    client.close(force: true);
     await http.stop();
   });
 
