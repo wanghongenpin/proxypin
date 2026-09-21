@@ -104,6 +104,7 @@ class HttpClients {
       proxyRequest.headers.set(HttpHeaders.PROXY_AUTHORIZATION, 'Basic $auth');
     }
 
+    // 编码 CONNECT 时 HttpClientCodec 会自行标记下一个响应无 body，无需在此设置上下文
     await channel.write(channelContext, proxyRequest);
     var response = await httpResponseHandler.getResponse(const Duration(seconds: 5));
 

@@ -63,7 +63,7 @@ class ThemeModel {
 }
 
 class AppConfiguration {
-  static const String version = "1.3.1";
+  static const String version = "1.3.2";
 
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
@@ -71,7 +71,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV30 = true;
+  bool upgradeNoticeV32 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -211,7 +211,7 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV30 = config['upgradeNoticeV30'] ?? true;
+      upgradeNoticeV32 = config['upgradeNoticeV32'] ?? true;
       _language = config['language'] == null
           ? null
           : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
@@ -265,7 +265,7 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV30': upgradeNoticeV30,
+      'upgradeNoticeV32': upgradeNoticeV32,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerViewMode": headerViewMode,

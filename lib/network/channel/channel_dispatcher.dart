@@ -319,11 +319,19 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
     }
 
+    // 没有可转发的对端通道（例如游离的 "200 Connection established" 代理应答），
+    // 无法透传，直接丢弃并关闭连接，避免对 null 强制解包导致崩溃。
+    if (remoteChannel == null) {
+      logger.w("[$channel] not supported parse and remoteChannel is null, close channel");
+      channel.close();
+      return;
+    }
+
     // Fallback: generic relay for unsupported body types.
     // `forward` is a view into the same buffer (decoder only advanced the
     // reader index), and `relay` flushes the raw buffer via `.bytes`, so it
     // must NOT be appended here or the body would be sent twice.
-    relay(channelContext, channel, remoteChannel!);
+    relay(channelContext, channel, remoteChannel);
 
     if (decodeResult.data is HttpResponse) {
       var response = decodeResult.data as HttpResponse;
