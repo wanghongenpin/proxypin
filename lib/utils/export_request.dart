@@ -166,7 +166,7 @@ Future<void> exportRequestsAsFiles(
       if (isDesktop) {
         selectedDirectory = await FilePicker.saveFile(
                 fileName: folderName, type: FileType.custom, allowedExtensions: [''], bytes: Uint8List(0))
-            .then((path) => path != null ? "${Directory(path).parent.path}/$folderName" : null);
+            .then((path) => path != null ? "${Directory(path.scheme == 'file' ? path.toFilePath() : path.path).parent.path}/$folderName" : null);
       } else {
         selectedDirectory = await FilePicker.getDirectoryPath();
       }

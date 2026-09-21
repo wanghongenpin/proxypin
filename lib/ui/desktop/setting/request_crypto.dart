@@ -134,8 +134,8 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
   }
 
   Future<void> _import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-    final path = result?.files.single.path;
+    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['json']);
+    final path = file?.path;
     if (path == null) return;
     try {
       final content = await File(path).readAsString();
@@ -369,8 +369,8 @@ class _CryptoRuleListState extends State<CryptoRuleList> {
     if (indexes.isEmpty) return;
     indexes.sort();
     final data = indexes.map((i) => manager.rules[i].toJson()).toList();
-    String? path = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: utf8.encode(jsonEncode(data)));
-    if (path == null) return;
+    final saved = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: utf8.encode(jsonEncode(data)));
+    if (saved == null) return;
     if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
   }
 

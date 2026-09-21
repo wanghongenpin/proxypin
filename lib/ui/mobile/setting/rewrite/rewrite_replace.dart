@@ -262,11 +262,11 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         FilledButton(
             onPressed: () async {
-              FilePickerResult? result = await FilePicker.pickFiles();
-              if (result == null) {
+              final file = await FilePicker.pickFile();
+              if (file == null) {
                 return;
               }
-              item.bodyFile = result.files.single.path;
+              item.bodyFile = file.path;
               setState(() {});
             },
             child: Text(localizations.selectFile, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))),

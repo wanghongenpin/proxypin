@@ -13,6 +13,19 @@ class MainFlutterWindow: NSWindow {
     private let shouldAutoApplyTrafficLightPositions = true
     private var trafficLightObserversRegistered = false
 
+    /// 窗口启动时系统会先按 xib 默认形态(800x600、原生标题栏)order 到屏幕,
+    /// 之后 Dart 侧 windowManager 才应用尺寸/标题栏配置并 show(), 造成启动闪一下。
+    /// 仅在第一次 order 时立即隐藏, 后续 show()/makeKeyAndOrderFront 正常显示。
+    private var didHideAtLaunch = false
+
+    override func order(_ place: NSWindow.OrderingMode, relativeTo otherWin: Int) {
+        super.order(place, relativeTo: otherWin)
+        if !didHideAtLaunch {
+            didHideAtLaunch = true
+            setIsVisible(false)
+        }
+    }
+
     override func awakeFromNib() {
         let flutterViewController = FlutterViewController()
         let windowFrame = self.frame

@@ -157,8 +157,8 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']);
-    String? path = result?.files.single.path;
+    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    String? path = file?.path;
 
     if (path == null) {
       return;

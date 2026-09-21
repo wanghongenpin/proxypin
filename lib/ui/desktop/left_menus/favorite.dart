@@ -371,9 +371,8 @@ class _FavoritesActions extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                   icon: const Icon(Icons.download_for_offline_outlined, size: 18),
                   onPressed: () async {
-                    final result =
-                        await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json', 'har']);
-                    final file = result?.files.isNotEmpty == true ? result!.files.first : null;
+                    final file = await FilePicker.pickFile(
+                        type: FileType.custom, allowedExtensions: ['json', 'har']);
                     if (file?.path == null) return;
 
                     try {

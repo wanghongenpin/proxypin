@@ -1,6 +1,5 @@
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -203,10 +202,9 @@ class _RequestBreakpointPageState extends State<MobileRequestBreakpointPage> {
 
   Future<void> _import() async {
     try {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      if (result == null || result.files.isEmpty) return;
-      File file = File(result.files.single.path!);
-      String content = await file.readAsString();
+      final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['json']);
+      if (file == null) return;
+      String content = await file.xFile.readAsString();
       List<dynamic> list = jsonDecode(content);
       var newRules = list.map((e) => RequestBreakpointRule.fromJson(e)).toList();
       for (var rule in newRules) {

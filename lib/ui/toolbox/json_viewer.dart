@@ -170,12 +170,12 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
   Future<void> _openFile() async {
     String? path;
     try {
-      final result = await FilePicker.pickFiles(type: FileType.any);
-      path = result?.files.single.path;
+      final picked = await FilePicker.pickFile(type: FileType.any);
+      path = picked?.path;
     } catch (_) {
       // 某些平台 (e.g. Linux) custom + extensions 可能抛错，回退到任意类型
-      final result = await FilePicker.pickFiles();
-      path = result?.files.single.path;
+      final picked = await FilePicker.pickFile();
+      path = picked?.path;
     }
 
     if (path == null) return;
@@ -203,8 +203,8 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'data.json', bytes: utf8.encode(text));
-    if (path == null) return;
+    final saved = await FilePicker.saveFile(fileName: 'data.json', bytes: utf8.encode(text));
+    if (saved == null) return;
     if (mounted) _toast(localizations.saveSuccess);
   }
 

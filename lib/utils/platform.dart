@@ -34,12 +34,14 @@ class Platforms {
     List<String>? allowedExtensions,
     String? dialogTitle,
   }) async {
-    return FilePicker.saveFile(
+    final uri = await FilePicker.saveFile(
       fileName: fileName,
       bytes: Uint8List(0),
       type: type,
       allowedExtensions: allowedExtensions,
       dialogTitle: dialogTitle,
     );
+    if (uri == null) return null;
+    return uri.scheme == 'file' ? uri.toFilePath() : null;
   }
 }

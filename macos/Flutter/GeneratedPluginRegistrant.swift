@@ -7,7 +7,7 @@ import Foundation
 
 import desktop_multi_window
 import device_info_plus
-import file_picker
+import file_picker_darwin
 import flutter_js
 import proxy_manager
 import screen_retriever_macos

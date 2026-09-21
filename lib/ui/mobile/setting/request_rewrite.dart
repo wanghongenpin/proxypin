@@ -91,14 +91,13 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
   //导入
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
-    if (result == null || result.files.isEmpty) {
+    final file = await FilePicker.pickFile(type: FileType.any);
+    if (file == null) {
       return;
     }
-    var file = result.files.single.xFile;
 
     try {
-      List json = jsonDecode(utf8.decode(await file.readAsBytes()));
+      List json = jsonDecode(utf8.decode(await file.xFile.readAsBytes()));
 
       for (var item in json) {
         var rule = RequestRewriteRule.formJson(item);

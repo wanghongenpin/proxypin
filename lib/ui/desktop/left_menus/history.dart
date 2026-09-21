@@ -193,12 +193,11 @@ class _HistoryListState extends State<_HistoryListWidget> {
 
   //导入har
   Future<void> import() async {
-    final results = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['har']);
-    if (results == null || results.files.isEmpty) {
+    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['har']);
+    if (file == null) {
       return;
     }
 
-    var file = results.files.first;
     try {
       var historyItem = await storage.addHarFile(file.xFile);
       setState(() {

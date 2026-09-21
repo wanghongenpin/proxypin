@@ -169,8 +169,8 @@ class MapLocaleState extends State<DesktopMapLocal> {
           const SizedBox(width: 10),
           FilledButton(
               onPressed: () async {
-                FilePickerResult? result = await FilePicker.pickFiles();
-                final path = result?.files.single.path;
+                final picked = await FilePicker.pickFile();
+                final path = picked?.path;
 
                 if (path == null) {
                   return;

@@ -184,11 +184,11 @@ class _TextEditorPageState extends State<TextEditorPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      final result = await FilePicker.pickFiles(type: FileType.any);
-      path = result?.files.single.path;
+      final picked = await FilePicker.pickFile(type: FileType.any);
+      path = picked?.path;
     } catch (_) {
-      final result = await FilePicker.pickFiles();
-      path = result?.files.single.path;
+      final picked = await FilePicker.pickFile();
+      path = picked?.path;
     }
 
     if (path == null) return;
@@ -252,8 +252,8 @@ class _TextEditorPageState extends State<TextEditorPage> {
       return;
     }
 
-    String? path = await FilePicker.saveFile(fileName: 'text.txt', bytes: utf8.encode(text));
-    if (path == null) return;
+    final saved = await FilePicker.saveFile(fileName: 'text.txt', bytes: utf8.encode(text));
+    if (saved == null) return;
     if (mounted) _toast(localizations.saveSuccess);
   }
 

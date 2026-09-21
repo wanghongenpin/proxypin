@@ -337,8 +337,8 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
 
   Future<void> _import(RequestCryptoManager manager) async {
     try {
-      FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
-      final path = result?.files.single.path;
+      final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['json']);
+      final path = file?.path;
       if (path == null) return;
       final content = await File(path).readAsString();
       final List list = jsonDecode(content);
@@ -364,8 +364,8 @@ class _MobileRequestCryptoPageState extends State<MobileRequestCryptoPage> {
           : (indexes.toList()..sort());
       final data = keys.map((i) => manager.rules[i].toJson()).toList();
       var bytes = utf8.encode(jsonEncode(data));
-      final path = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: bytes);
-      if (path == null) return;
+      final saved = await FilePicker.saveFile(fileName: 'request_crypto.json', bytes: bytes);
+      if (saved == null) return;
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     } catch (e) {
       logger.e('导出失败', error: e);

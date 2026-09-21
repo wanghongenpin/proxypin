@@ -121,14 +121,13 @@ class _MobileScriptState extends State<MobileScript> {
 
   //导入js
   Future<void> import() async {
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
-    if (result == null || result.files.isEmpty) {
+    final file = await FilePicker.pickFile(type: FileType.any);
+    if (file == null) {
       return;
     }
-    var file = result.files.single.xFile;
     try {
       var scriptManager = (await ScriptManager.instance);
-      var json = jsonDecode(utf8.decode(await file.readAsBytes()));
+      var json = jsonDecode(utf8.decode(await file.xFile.readAsBytes()));
 
       if (json is List<dynamic>) {
         for (var item in json) {

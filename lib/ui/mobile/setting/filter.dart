@@ -15,7 +15,6 @@
  */
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -138,13 +137,12 @@ class _DomainFilterState extends State<DomainFilter> {
 
   //导入
   Future<void> import() async {
-    final FilePickerResult? result = await FilePicker.pickFiles(type: FileType.any);
-    if (result == null || result.files.isEmpty) {
+    final file = await FilePicker.pickFile(type: FileType.any);
+    if (file == null) {
       return;
     }
-    var file = File(result.files.single.path!);
     try {
-      List json = jsonDecode(await file.readAsString());
+      List json = jsonDecode(await file.xFile.readAsString());
       for (var item in json) {
         widget.hostList.add(item);
       }
