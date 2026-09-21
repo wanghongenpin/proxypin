@@ -159,21 +159,21 @@ Future<void> exportRequestsAsFiles(
   try {
     int successCount = 0;
 
-    final isDesktop = Platforms.isDesktop();
-    if (isDesktop || Platform.isAndroid) {
-      String? selectedDirectory;
-
-      if (isDesktop) {
-        selectedDirectory = await FilePicker.saveFile(
-                fileName: folderName, type: FileType.custom, allowedExtensions: [''], bytes: Uint8List(0))
-            .then((path) => path != null ? "${Directory(path).parent.path}/$folderName" : null);
-      } else {
-        selectedDirectory = await FilePicker.getDirectoryPath();
-      }
-      if (selectedDirectory == null) return;
+    if (Platforms.isDesktop() || Platform.isAndroid) {
+      // 选择导出的父目录（saveFile 会在磁盘上创建空文件，导致无法再以同名创建文件夹）
+      final baseDirectory = await FilePicker.getDirectoryPath();
+      if (baseDirectory == null) return;
+      final selectedDirectory = '$baseDirectory/$folderName';
 
       // 创建主文件夹
       final folder = Directory(selectedDirectory);
+      if (await File(selectedDirectory).exists()) {
+        // 同名路径已是文件（通常是旧版本误导出的空文件），无法创建文件夹
+        if (!context.mounted) return;
+        final message = '${AppLocalizations.of(context)?.exportFailed}: "$selectedDirectory" is a file, please remove it first';
+        FlutterToastr.show(message, context);
+        return;
+      }
       if (!await folder.exists()) {
         await folder.create(recursive: true);
       }
@@ -215,12 +215,14 @@ Future<void> exportRequestsAsFiles(
     } else {
       // 创建所有文件
       List<XFile> files = [];
+      List<String> fileNames = [];
       for (var i = 0; i < requests.length; i++) {
         var request = requests[i];
         var data = await generateExportFileData(request, type, i);
         if (data == null) continue;
 
-        files.add(XFile.fromData(data['bytes'] as Uint8List, name: data['fileName'], mimeType: 'text/plain'));
+        files.add(XFile.fromData(data['bytes'] as Uint8List, mimeType: 'text/plain'));
+        fileNames.add(data['fileName'] as String);
         successCount++;
       }
 
@@ -229,7 +231,10 @@ Future<void> exportRequestsAsFiles(
         box = context.findRenderObject() as RenderBox?;
       }
       await SharePlus.instance.share(ShareParams(
-          fileNameOverrides: files.map((f) => f.name).toList(),
+          // XFile.fromData 在 dart:io 下会忽略 name 参数（XFile.name 取自 path，恒为空），
+          // 必须通过 fileNameOverrides 显式提供文件名，否则 share_plus 会得到空字符串
+          // 而把目标路径拼成目录，writeAsBytes 报 "Is a directory"。
+          fileNameOverrides: fileNames,
           files: files,
           sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size));
     }

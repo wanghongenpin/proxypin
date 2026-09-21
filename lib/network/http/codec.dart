@@ -85,6 +85,11 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
   BodyReader? bodyReader;
 
+  /// 由客户端编解码器在编码 CONNECT 时置位：下一个响应是该 CONNECT 的
+  /// "200 Connection established" 应答，没有 body。解码器在响应完成时自行
+  /// 消费清除，不依赖调用方设置 currentRequest，也无需调用方还原。
+  bool pendingConnectResponse = false;
+
   T createMessage(List<String> reqLine);
 
   Http2Codec<T> getH2Codec() {
@@ -128,11 +133,14 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
 
       //请求体
       if (_state == State.body) {
-        // HEAD / CONNECT 响应没有 body。CONNECT 响应(如上游代理返回的
-        // 200 Connection established)必须走原有解析路径转发给客户端,
-        // 不能按无定界响应进 raw relay,否则后续 TLS MITM 隧道会被接管。
-        bool resolveBody = channelContext.currentRequest?.method != HttpMethod.head &&
-            channelContext.currentRequest?.method != HttpMethod.connect;
+        // HEAD 响应无 body；CONNECT 的 "200 Connection established" 应答也无
+        // body。两种来源都要识别：
+        //  - [pendingConnectResponse]：本端刚编码发出 CONNECT（如 App 内部重放走本地代理）；
+        //  - currentRequest == CONNECT：ProxyPin 串联上游代理时解码上游的 200。
+        // 这些响应必须走原有解析路径，不能按无 Content-Length 响应进 raw relay，否则 TLS 隧道被接管。
+        bool isConnectResponse =
+            pendingConnectResponse || channelContext.currentRequest?.method == HttpMethod.connect;
+        bool resolveBody = channelContext.currentRequest?.method != HttpMethod.head && !isConnectResponse;
         var bodyResult = resolveBody ? bodyReader!.readBody(data.readAvailableBytes()) : null;
         if (!resolveBody || bodyResult?.isDone == true) {
           _state = State.done;
@@ -150,6 +158,7 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
       if (_state == State.done) {
         result.data!.body = _convertBody(result.data!.body);
         _state = State.readInitial;
+        pendingConnectResponse = false; // CONNECT 应答已读完，自动消费
         result.isDone = true;
         return result;
       }
@@ -315,6 +324,11 @@ class HttpClientCodec extends Codec<HttpResponse, HttpRequest> {
 
   @override
   List<int> encode(ChannelContext channelContext, HttpRequest data) {
+    // 编码 CONNECT 后，下一个响应是无 body 的 "200 Connection established"，
+    // 通知响应解码器内部标记，无需调用方设置/还原 currentRequest。
+    if (data.method == HttpMethod.connect) {
+      responseCodec.pendingConnectResponse = true;
+    }
     return requestCodec.encode(channelContext, data);
   }
 }

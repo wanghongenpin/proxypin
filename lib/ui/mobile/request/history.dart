@@ -471,7 +471,7 @@ class _HistoryRecordState extends State<HistoryRecord> {
                               multiSelectController.toggleSelectionMode();
                             },
                             child: IconText(
-                                icon: const Icon(Icons.checklist_rtl_outlined), text: localizations.selectAction)),
+                                icon: const Icon(Icons.checklist_rtl_outlined), text: localizations.select)),
                         PopupMenuItem(
                             onTap: () async {
                               var requests = requestStateKey.currentState?.currentView();
