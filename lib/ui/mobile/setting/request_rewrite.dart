@@ -91,7 +91,7 @@ class _MobileRequestRewriteState extends State<MobileRequestRewrite> {
 
   //导入
   Future<void> import() async {
-    final file = await FilePicker.pickFile(type: FileType.any);
+    final file = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
     if (file == null) {
       return;
     }
@@ -184,7 +184,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   child: ReorderableListView.builder(
                       buildDefaultDragHandles: false,
                       itemCount: widget.requestRewrites.rules.length,
-                      onReorderItem: _onReorder,
+                      onReorder: _onReorder,
                       itemBuilder: (context, index) => _buildRow(widget.requestRewrites.rules, index)))
             ])));
   }

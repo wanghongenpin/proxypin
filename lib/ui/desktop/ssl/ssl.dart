@@ -75,7 +75,7 @@ class _SslState extends State<SslWidget> {
   //import method
   Widget importMenu() {
     return item(localizations.importCaP12, onPressed: () async {
-      final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
+      final file = (await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']))?.files.singleOrNull;
       if (file == null || !mounted) return;
 
       //entry password
@@ -100,7 +100,7 @@ class _SslState extends State<SslWidget> {
                     TextButton(onPressed: () => Navigator.pop(context), child: Text(localizations.cancel)),
                     TextButton(
                       onPressed: () async {
-                        var bytes = await file.readAsBytes();
+                        var bytes = await file.xFile.readAsBytes();
                         try {
                           await CertificateManager.importPkcs12(bytes, password);
                           if (context.mounted) {

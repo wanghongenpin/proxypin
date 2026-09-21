@@ -339,8 +339,8 @@ class _HostsDialogState extends State<HostsDialog> {
 
   //导入
   Future<void> import() async {
-    final file = await FilePicker.pickFile(
-        allowedExtensions: ['json'], type: FileType.custom, initialDirectory: "/Downloads");
+    final file = (await FilePicker.pickFiles(
+        allowedExtensions: ['json'], type: FileType.custom, initialDirectory: "/Downloads"))?.files.singleOrNull;
     if (file == null) {
       return;
     }

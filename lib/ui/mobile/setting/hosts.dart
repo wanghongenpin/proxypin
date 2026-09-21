@@ -300,7 +300,7 @@ class _HostsPageState extends State<HostsPage> {
 
   //导入
   Future<void> import() async {
-    final file = await FilePicker.pickFile(type: FileType.any);
+    final file = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
     if (file == null) {
       return;
     }

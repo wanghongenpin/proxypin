@@ -116,11 +116,11 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      final picked = await FilePicker.pickFile(type: FileType.any);
+      final picked = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
       path = picked?.path;
     } catch (_) {
       // 某些平台（e.g. Linux）custom + extensions 可能抛错，回退到任意类型
-      final picked = await FilePicker.pickFile();
+      final picked = (await FilePicker.pickFiles())?.files.singleOrNull;
       path = picked?.path;
     }
 

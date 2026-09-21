@@ -157,7 +157,7 @@ class RequestRewriteState extends State<RequestRewriteWidget> {
 
   //导入js
   Future<void> import() async {
-    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['config', 'json']);
+    final file = (await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['config', 'json']))?.files.singleOrNull;
     String? path = file?.path;
 
     if (path == null) {
@@ -260,7 +260,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
                   child: ReorderableListView.builder(
                       buildDefaultDragHandles: false,
                       itemCount: widget.requestRewrites.rules.length,
-                      onReorderItem: _onReorder,
+                      onReorder: _onReorder,
                       itemBuilder: (context, index) => _buildRow(widget.requestRewrites.rules, index)))
             ])));
   }

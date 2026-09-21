@@ -217,14 +217,14 @@ class _QrDecodeState extends State<_QrDecode> with AutomaticKeepAliveClientMixin
   //选择照片
   Future<String?> selectImage() async {
     if (Platforms.isMobile()) {
-      final file = await FilePicker.pickFile(type: FileType.image);
+      final file = (await FilePicker.pickFiles(type: FileType.image))?.files.singleOrNull;
       if (file == null) return null;
       return file.path;
     }
 
     if (Platforms.isDesktop()) {
       //<String>['jpg', 'png', 'jpeg']
-      final file = await FilePicker.pickFile(type: FileType.image);
+      final file = (await FilePicker.pickFiles(type: FileType.image))?.files.singleOrNull;
       return file?.path;
     }
 

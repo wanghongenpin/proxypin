@@ -141,7 +141,7 @@ class _RequestMapPageState extends State<RequestMapPage> {
 
   //导入js
   Future<void> import() async {
-    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['json']);
+    final file = (await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']))?.files.singleOrNull;
     final path = file?.path;
 
     if (path == null) {

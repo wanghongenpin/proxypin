@@ -42,6 +42,6 @@ class Platforms {
       dialogTitle: dialogTitle,
     );
     if (uri == null) return null;
-    return uri.scheme == 'file' ? uri.toFilePath() : null;
+    return uri;
   }
 }

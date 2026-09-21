@@ -98,7 +98,7 @@ class _JavaScriptState extends State<JavaScript> {
                   //选择文件
                   ElevatedButton.icon(
                       onPressed: () async {
-                        final picked = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['js']);
+                        final picked = (await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['js']))?.files.singleOrNull;
                         final path = picked?.path;
 
                         if (path != null) {

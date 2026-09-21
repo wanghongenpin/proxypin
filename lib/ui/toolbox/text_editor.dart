@@ -184,10 +184,10 @@ class _TextEditorPageState extends State<TextEditorPage> {
   Future<void> _openFile() async {
     String? path;
     try {
-      final picked = await FilePicker.pickFile(type: FileType.any);
+      final picked = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
       path = picked?.path;
     } catch (_) {
-      final picked = await FilePicker.pickFile();
+      final picked = (await FilePicker.pickFiles())?.files.singleOrNull;
       path = picked?.path;
     }
 

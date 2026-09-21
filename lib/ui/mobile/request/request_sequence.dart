@@ -232,7 +232,6 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
                 controller: PrimaryScrollController.maybeOf(context),
                 child: ListView.separated(
                     controller: PrimaryScrollController.maybeOf(context),
-                    scrollCacheExtent: ScrollCacheExtent.viewport(2.0),
                     separatorBuilder: (context, index) =>
                         Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
                     itemCount: view.length,

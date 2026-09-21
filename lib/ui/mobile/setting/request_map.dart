@@ -95,7 +95,7 @@ class _RequestMapPageState extends State<MobileRequestMapPage> {
 
   //导入js
   Future<void> import() async {
-    final file = await FilePicker.pickFile(type: FileType.any);
+    final file = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
     if (file == null) {
       return;
     }

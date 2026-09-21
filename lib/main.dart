@@ -46,14 +46,6 @@ void main(List<String> args) async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await RustLib.init();
-  } catch (e) {
-    // code_forge Rust FFI initialization may fail on iOS 14.x due to
-    // deployment-target / cargokit-build incompatibilities. Degrade
-    // gracefully instead of crashing the whole app at startup.
-    print('RustLib.init failed: $e');
-  }
 
   final windowController = Platforms.isDesktop() ? await DesktopMultiWindow.ensureInitialized() : null;
 

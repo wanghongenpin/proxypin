@@ -21,14 +21,14 @@ dependencies:
   screen_retriever: ^0.2.2
   desktop_multi_window: ^0.3.1
   path_provider: ^2.1.5
-  file_picker: ^13.1.0
+  file_picker: ^11.0.3
   proxy_manager: ^0.0.3
   permission_handler: ^12.0.1
   flutter_toastr: ^1.0.3
-  share_plus: ^13.3.0
+  share_plus: ^12.0.2
   flutter_js: ^0.8.7
 #  flutter_highlight: ^0.7.0
-  device_info_plus: ^13.2.0
+  device_info_plus: ^12.4.0
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   toastification: ^3.0.2
@@ -43,7 +43,7 @@ dependencies:
   win32audio: ^1.5.0
   scrollable_positioned_list_nic: ^0.0.2
   tray_manager: ^0.5.3
-  code_forge: ^10.11.0
+  code_forge: ^9.10.0
   archive: ^4.2.0
 
 dev_dependencies:

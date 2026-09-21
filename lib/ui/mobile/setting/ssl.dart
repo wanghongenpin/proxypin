@@ -185,7 +185,7 @@ class _MobileSslState extends State<MobileSslWidget> {
   }
 
   void importPk12() async {
-    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['p12', 'pfx']);
+    final file = (await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['p12', 'pfx']))?.files.singleOrNull;
     if (file == null || !mounted) return;
     //entry password
     showDialog(

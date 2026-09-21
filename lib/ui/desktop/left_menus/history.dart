@@ -193,7 +193,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
 
   //导入har
   Future<void> import() async {
-    final file = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['har']);
+    final file = (await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['har']))?.files.singleOrNull;
     if (file == null) {
       return;
     }

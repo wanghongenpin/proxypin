@@ -305,10 +305,10 @@ class _TextDiffPageState extends State<TextDiffPage> {
   Future<void> _openFileInto(CodeForgeController target) async {
     String? path;
     try {
-      final picked = await FilePicker.pickFile(type: FileType.any);
+      final picked = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
       path = picked?.path;
     } catch (_) {
-      final picked = await FilePicker.pickFile();
+      final picked = (await FilePicker.pickFiles())?.files.singleOrNull;
       path = picked?.path;
     }
 

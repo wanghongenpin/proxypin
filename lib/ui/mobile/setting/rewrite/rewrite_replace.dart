@@ -262,7 +262,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
         FilledButton(
             onPressed: () async {
-              final file = await FilePicker.pickFile();
+              final file = (await FilePicker.pickFiles())?.files.singleOrNull;
               if (file == null) {
                 return;
               }

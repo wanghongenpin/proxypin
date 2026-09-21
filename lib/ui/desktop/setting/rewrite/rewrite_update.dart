@@ -142,10 +142,11 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
     initTestData();
     keyController.addListener(onInputChangeMatch);
 
-    var textVersion = _codeDataController.contentVersion;
+    var textVersion = _codeDataController.text;
     _codeDataController.addListener(() {
-      if (textVersion != _codeDataController.contentVersion) {
-        textVersion = _codeDataController.contentVersion;
+      final current = _codeDataController.text;
+      if (textVersion != current) {
+        textVersion = current;
         onInputChangeMatch();
       }
     });

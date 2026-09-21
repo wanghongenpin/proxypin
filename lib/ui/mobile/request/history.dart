@@ -210,7 +210,7 @@ class _MobileHistoryState extends State<MobileHistory> {
 
   //导入har
   Future<void> import(HistoryStorage storage) async {
-    final file = await FilePicker.pickFile(type: FileType.any);
+    final file = (await FilePicker.pickFiles(type: FileType.any))?.files.singleOrNull;
     if (file == null) {
       return;
     }
