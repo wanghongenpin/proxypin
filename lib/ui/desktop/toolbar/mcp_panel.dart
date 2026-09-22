@@ -143,13 +143,28 @@ Future<bool> _cliExists(String cli) async {
   return (await Process.run(which, [cli])).exitCode == 0;
 }
 
+/// Windows 下 npm 安装的 CLI 实际是 claude.cmd / codex.cmd 批处理 shim：
+/// `where` 按 PATHEXT 能找到，但 CreateProcess 只补 .exe，直接启动 .cmd 会报
+/// “系统找不到指定的文件”（ProcessException, process_win.cc），统一经 cmd /c 启动。
+({String executable, List<String> args}) _resolveCommand(String cli, List<String> args) {
+  if (Platform.isWindows) return (executable: 'cmd', args: ['/c', cli, ...args]);
+  return (executable: cli, args: args);
+}
+
 /// 运行 CLI 的 `mcp add` 命令。先探测 CLI 是否在 PATH 中。
 /// "already exists"（已配置过）视为成功，避免幂等重跑被当作错误提示。
 Future<String> _runCli(String cli, List<String> args, AppLocalizations l) async {
   if (!await _cliExists(cli)) {
     throw _SetupException(l.mcpCliMissing(cli));
   }
-  var result = await Process.run(cli, args).timeout(const Duration(seconds: 30));
+  var command = _resolveCommand(cli, args);
+  ProcessResult result;
+  try {
+    result = await Process.run(command.executable, command.args)
+        .timeout(const Duration(seconds: 30));
+  } on ProcessException catch (e) {
+    throw _SetupException('${l.mcpSetupFail}${e.message}');
+  }
   if (result.exitCode == 0) return l.mcpSetupDone;
   var output = '${result.stderr}\n${result.stdout}';
   if (output.toLowerCase().contains('already exists')) return l.mcpSetupDone;
@@ -190,8 +205,10 @@ Future<String> _setupKimi(String url, AppLocalizations l) async {
 Future<void> _removeAll(String cli, List<List<String>> removals) async {
   if (!await _cliExists(cli)) return;
   for (var args in removals) {
+    var command = _resolveCommand(cli, args);
     try {
-      await Process.run(cli, args).timeout(const Duration(seconds: 15));
+      await Process.run(command.executable, command.args)
+          .timeout(const Duration(seconds: 15));
     } catch (_) {}
   }
 }
@@ -346,6 +363,8 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       _toast(l.mcpUnsupported);
       return;
     }
+    // 立刻给一次可见反馈，避免终端拉起期间（数百毫秒）看起来像没反应。
+    _toast(l.mcpStartChat);
     await _openTerminalWith(chat);
   }
 
@@ -363,7 +382,21 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
         await Process.run('chmod', ['+x', file.path]);
         await Process.start('open', ['-a', 'Terminal', file.path]);
       } else if (Platform.isWindows) {
-        await Process.start('cmd', ['/c', 'start', 'cmd', '/k', 'cd /d "$cwd" && $command']);
+        // 写成临时 bat 再由独立 cmd /k 执行：内联 "cd /d ... && xxx" 作为单个参数时，
+        // 外层 cmd 会提前解析 &&、start 会把首个引号串误判为窗口标题，路径含空格时直接失效。
+        var file = File(
+            '${Directory.systemTemp.path}${Platform.pathSeparator}proxypin_mcp_${DateTime.now().millisecondsSinceEpoch}.bat');
+        await file.writeAsString('@echo off\r\ncd /d "$cwd" || exit /b 1\r\n$command\r\n');
+        // 本应用是无控制台的 GUI 进程，Dart 的 Process.start 用管道接管子进程标准句柄：
+        // 直接 `cmd /c start` 在该环境下连子进程都拉不起来（实测），表现为点击没反应。
+        // 经 PowerShell 的 Start-Process（ShellExecute 语义，不继承管道句柄）才能真正
+        // 弹出独立控制台窗口；中间 PowerShell 自身用 -WindowStyle Hidden 隐藏。
+        // 单引号转义：路径中若含单引号，PowerShell 单引号字符串用 '' 表示。
+        var batPath = file.path.replaceAll("'", "''");
+        await Process.start('powershell', [
+          '-NoProfile', '-WindowStyle', 'Hidden', '-Command',
+          "Start-Process -FilePath cmd.exe -ArgumentList '/k','\"$batPath\"'",
+        ]);
       } else {
         for (var t in [
           ['gnome-terminal', '--', 'bash', '-c', 'cd "$cwd"; $command; exec bash'],
