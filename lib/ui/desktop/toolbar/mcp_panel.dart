@@ -22,7 +22,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:proxypin/mcp/capture/curl_builder.dart';
 import 'package:proxypin/mcp/mcp_names.dart';
 import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -36,7 +35,8 @@ import 'package:proxypin/ui/desktop/desktop.dart';
 /// MCP 服务设置面板（桌面）。样式对齐 Proxyman 的 Settings → MCP：
 /// MCP Server（启用开关 + 锁、描述、运行状态、MCP 配置、Claude Code/Codex/Manual
 /// 分段、复制、命令框）→ Privacy 脱敏勾选 → 关于 MCP 集成（文档 / 技能目录）。
-/// 传输统一走 stdio，端口自动分配，无需用户配置。
+/// 桌面端固定监听 127.0.0.1:9127（占用时回退随机端口），AI 客户端直接以 HTTP 连接，
+/// 无额外桥进程、不唤起本应用。
 ///
 /// @author wanghongen
 class McpServiceDialog extends StatefulWidget {
@@ -72,8 +72,8 @@ class _McpClient {
   /// Manual 模式下该接入方式的说明文字
   final String Function(AppLocalizations l) hint;
 
-  /// 生成该客户端的接入命令（统一 stdio 传输）：[app] 可执行文件路径
-  final String Function(String app) build;
+  /// 生成该客户端的接入命令（统一 HTTP 传输）：[url] 为 MCP endpoint
+  final String Function(String url) build;
 
   /// 一键配置：为空表示不支持自动配置（GUI 类客户端）
   final _Setup? setup;
@@ -104,36 +104,36 @@ String _hintDoubao(AppLocalizations l) => l.mcpHintDoubao;
 /// 桌面端注册名（手机端 LAN 配置使用 McpClientNames.mobile，两者并存互不覆盖）。
 const String _serverName = McpClientNames.desktop;
 
-String _mcpServersJson(String app) {
+String _mcpServersJson(String url) {
   return jsonEncode({
     'mcpServers': {
-      _serverName: {'command': app, 'args': ['--mcp-stdio']}
+      _serverName: {'type': 'http', 'url': url}
     }
   });
 }
 
-String _buildClaude(String app) =>
-    'claude mcp add $_serverName -s user --transport stdio -- "$app" --mcp-stdio';
+String _buildClaude(String url) =>
+    'claude mcp add $_serverName -s user --transport http "$url"';
 
-String _buildCodex(String app) => 'codex mcp add $_serverName -- "$app" --mcp-stdio';
+String _buildCodex(String url) => 'codex mcp add $_serverName --transport http "$url"';
 
-String _buildKimi(String app) => 'kimi mcp add --transport stdio $_serverName -- "$app" --mcp-stdio';
+String _buildKimi(String url) => 'kimi mcp add --transport http $_serverName "$url"';
 
-String _buildCursor(String app) => _mcpServersJson(app);
-String _buildGemini(String app) => _mcpServersJson(app);
-String _buildCherry(String app) => _mcpServersJson(app);
+String _buildCursor(String url) => _mcpServersJson(url);
+String _buildGemini(String url) => _mcpServersJson(url);
+String _buildCherry(String url) => _mcpServersJson(url);
 
-String _buildCopilot(String app) {
+String _buildCopilot(String url) {
   return jsonEncode({
     'mcp': {
       'servers': {
-        _serverName: {'command': app, 'args': ['--mcp-stdio']}
+        _serverName: {'type': 'http', 'url': url}
       }
     }
   });
 }
 
-String _buildLingma(String app) => '"$app" --mcp-stdio';
+String _buildLingma(String url) => url;
 
 // ------------------------------------------------------------- 一键配置
 
@@ -156,33 +156,34 @@ Future<String> _runCli(String cli, List<String> args, AppLocalizations l) async 
   throw _SetupException('${l.mcpSetupFail}${result.stderr}');
 }
 
-/// 一键配置统一走 stdio（HTTP 会触发 OAuth 交互，不适合无人值守）。
-/// 添加前先清理旧版注册名与当前名的残留，保证重复执行幂等。
-Future<String> _setupClaude(String app, AppLocalizations l) async {
+/// 一键配置统一走 HTTP（loopback 无鉴权，直接写 endpoint，无 OAuth 交互）。
+/// 添加前先清理旧版注册名与当前名的残留（包括旧的 stdio 条目），保证重复执行幂等。
+Future<String> _setupClaude(String url, AppLocalizations l) async {
   await _removeAll('claude', [
     ['mcp', 'remove', _serverName, '-s', 'user'],
+    ['mcp', 'remove', _serverName, '-s', 'local'],
     ['mcp', 'remove', McpClientNames.legacy, '-s', 'user'],
     ['mcp', 'remove', McpClientNames.legacy, '-s', 'local'],
   ]);
   return _runCli('claude',
-      ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'stdio', '--', app, '--mcp-stdio'], l);
+      ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'http', url], l);
 }
 
-Future<String> _setupCodex(String app, AppLocalizations l) async {
+Future<String> _setupCodex(String url, AppLocalizations l) async {
   await _removeAll('codex', [
     ['mcp', 'remove', _serverName],
     ['mcp', 'remove', McpClientNames.legacy],
   ]);
-  return _runCli('codex', ['mcp', 'add', _serverName, '--', app, '--mcp-stdio'], l);
+  return _runCli('codex', ['mcp', 'add', _serverName, '--transport', 'http', url], l);
 }
 
-Future<String> _setupKimi(String app, AppLocalizations l) async {
+Future<String> _setupKimi(String url, AppLocalizations l) async {
   await _removeAll('kimi', [
     ['mcp', 'remove', _serverName],
     ['mcp', 'remove', McpClientNames.legacy],
   ]);
   return _runCli(
-      'kimi', ['mcp', 'add', '--transport', 'stdio', _serverName, '--', app, '--mcp-stdio'], l);
+      'kimi', ['mcp', 'add', '--transport', 'http', _serverName, url], l);
 }
 
 /// 同一个 CLI 的多个删除命令：只探测一次 PATH，逐条执行（条目不存在不算错）。
@@ -196,7 +197,7 @@ Future<void> _removeAll(String cli, List<List<String>> removals) async {
 }
 
 /// 写入配置文件（Cursor / Gemini），先备份再合并指定名称的条目；
-/// 同时清理旧版注册名 proxypin，避免桌面端新旧两条 stdio 共存。
+/// 同时清理旧版注册名 proxypin，避免桌面端新旧条目共存。
 Future<String> _writeConfigFile(
     File file, String wrapperKey, String name, Map<String, dynamic> entry, AppLocalizations l) async {
   try {
@@ -224,30 +225,24 @@ Future<String> _writeConfigFile(
   }
 }
 
-Future<String> _setupCursor(String app, AppLocalizations l) {
+Future<String> _setupCursor(String url, AppLocalizations l) {
   var home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
   return _writeConfigFile(
     File('$home${Platform.pathSeparator}.cursor${Platform.pathSeparator}mcp.json'),
     'mcpServers',
     _serverName,
-    {
-      'command': app,
-      'args': ['--mcp-stdio']
-    },
+    {'type': 'http', 'url': url},
     l,
   );
 }
 
-Future<String> _setupGemini(String app, AppLocalizations l) {
+Future<String> _setupGemini(String url, AppLocalizations l) {
   var home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
   return _writeConfigFile(
     File('$home${Platform.pathSeparator}.gemini${Platform.pathSeparator}settings.json'),
     'mcpServers',
     _serverName,
-    {
-      'command': app,
-      'args': ['--mcp-stdio']
-    },
+    {'type': 'http', 'url': url},
     l,
   );
 }
@@ -304,7 +299,12 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
     if (mounted) setState(() => _busy = false);
   }
 
-  String get _currentCommand => _client.build(CurlBuilder.executable);
+  /// MCP endpoint：优先取实际绑定端口；服务未启动时按默认端口展示，
+  /// 用户先运行命令再去开服务也能得到正确配置。
+  String get _endpoint =>
+      'http://127.0.0.1:${McpService.instance.port ?? McpService.defaultPort}/mcp';
+
+  String get _currentCommand => _client.build(_endpoint);
 
   Future<void> _oneClickSetup() async {
     var setup = _client.setup;
@@ -317,7 +317,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       _error = null;
     });
     try {
-      await setup(CurlBuilder.executable, l);
+      await setup(_endpoint, l);
       if (mounted) _toast(l.mcpSetupDone);
     } catch (e) {
       if (mounted) setState(() => _error = '$e');

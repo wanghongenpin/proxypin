@@ -21,7 +21,6 @@ import 'dart:io';
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
-import 'package:proxypin/mcp/transport/mcp_stdio_bridge.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
@@ -39,12 +38,6 @@ import 'l10n/app_localizations.dart';
 ///主入口
 ///@author wanghongen
 void main(List<String> args) async {
-  // MCP stdio 转发进程：不初始化任何 GUI/Rust，直接转发到 App 内 HTTP bridge
-  if (args.contains('--mcp-stdio')) {
-    await McpStdioBridge.run(args);
-    return;
-  }
-
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await RustLib.init();

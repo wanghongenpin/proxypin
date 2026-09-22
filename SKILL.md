@@ -4,7 +4,7 @@ ProxyPin's MCP service exposes captured traffic to AI assistants (Claude Code, C
 
 ## Connection
 
-- **stdio** (the only user-facing transport): `claude mcp add proxypin --transport stdio -- "<app-path>" --mcp-stdio`, where `<app-path>` is the ProxyPin executable path. The loopback port is auto-assigned on start; the bundled stdio bridge discovers it through a local handshake file, so nothing else needs to be configured. Use the command the settings panel shows for your agent instead of hand-copying.
+- **HTTP** (the user-facing transport): the desktop app listens on `http://127.0.0.1:9127/mcp` (loopback, no auth). Register it with e.g. `claude mcp add proxypin_desktop -s user --transport http "http://127.0.0.1:9127/mcp"`. If port 9127 is already in use the app picks a random free port — use the URL shown in the settings panel rather than hand-copying. No extra bridge process is started, so launching the AI client does not launch ProxyPin.
 
 Prerequisites: desktop ProxyPin is running, the proxy is capturing, and the MCP service is enabled. Tools can only read **already-captured** traffic — ask the user to trigger the request first, then call a tool.
 

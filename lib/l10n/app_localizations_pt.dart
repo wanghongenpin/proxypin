@@ -1352,13 +1352,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get mcpHintCopilot => 'Paste into VS Code settings.json → mcp.servers.';
 
   @override
-  String get mcpHintLingma => 'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (STDIO type).';
+  String get mcpHintLingma => 'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (HTTP/URL type).';
 
   @override
   String get mcpHintCherry => 'Cherry Studio → Settings → MCP Servers → Add.';
 
   @override
-  String get mcpHintDoubao => 'MarsCode IDE → Settings → MCP → Add (STDIO type).';
+  String get mcpHintDoubao => 'MarsCode IDE → Settings → MCP → Add (HTTP/URL type).';
 
   @override
   String get mcpSetup => 'Auto setup';

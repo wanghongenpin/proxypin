@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -23,7 +22,6 @@ import 'package:proxypin/mcp/capture/flow_store.dart';
 import 'package:proxypin/mcp/protocol/mcp_actions.dart';
 import 'package:proxypin/mcp/protocol/mcp_server.dart';
 import 'package:proxypin/mcp/transport/mcp_http_server.dart';
-import 'package:proxypin/mcp/transport/mcp_stdio_bridge.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -32,13 +30,18 @@ import 'package:proxypin/ui/configuration.dart';
 /// MCP 服务编排：挂载抓包索引、启停本地 HTTP 传输。
 ///
 /// 作为 [EventListener] 挂到 [ProxyServer.listeners]，与 UI 同源接收流量，
-/// 因而平台无关且不依赖具体列表容器。仅绑定 127.0.0.1，本机即信任边界，不做鉴权。
+/// 因而平台无关且不依赖具体列表容器。桌面端仅绑定 127.0.0.1、固定 [defaultPort]
+/// （被占用时回退到系统随机端口），本机即信任边界，不做鉴权；AI 客户端直接以 HTTP 连接，
+/// 无需额外桥进程。
 ///
 /// @author wanghongen
 class McpService {
   static final McpService instance = McpService._();
 
   McpService._();
+
+  /// 桌面端默认监听端口；被占用时回退到系统分配的空闲端口。
+  static const int defaultPort = 9127;
 
   FlowStore? _store;
   McpServer? _mcp;
@@ -121,9 +124,18 @@ class McpService {
     _http = McpHttpServer(mcp: _mcp!, address: bindAddress, token: token);
 
     try {
-      // 自动分配空闲端口，避免与其它服务冲突；实际端口写入握手文件供 stdio 桥发现。
-      await _http!.start(0);
-      await _writeHandshake();
+      if (lanMode) {
+        // 移动端仍由系统分配端口（配合 token 供局域网连接）。
+        await _http!.start(0);
+      } else {
+        // 桌面优先固定端口，便于 AI 客户端直接配置 URL；被占用时回退随机端口。
+        try {
+          await _http!.start(defaultPort);
+        } on SocketException catch (e) {
+          logger.w('MCP port $defaultPort unavailable, falling back to a random port: $e');
+          await _http!.start(0);
+        }
+      }
       logger.i('MCP service started on 127.0.0.1:${_http!.port}');
     } catch (e) {
       logger.e('MCP service start failed: $e');
@@ -135,7 +147,6 @@ class McpService {
   Future<void> stop() => _synchronized(_stopLocked);
 
   Future<void> _stopLocked() async {
-    await _removeHandshake();
     await _http?.stop();
     _http = null;
     _mcp = null;
@@ -144,22 +155,6 @@ class McpService {
     if (_store != null) {
       _attachedServer?.removeListener(_store!);
       _store!.clear();
-    }
-  }
-
-  /// 握手文件：stdio 桥进程不共享内存，通过该文件发现当前端口。
-  Future<void> _writeHandshake() async {
-    var file = await McpStdioBridge.handshakeFile();
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode({'port': _http!.port}));
-  }
-
-  Future<void> _removeHandshake() async {
-    try {
-      var file = await McpStdioBridge.handshakeFile();
-      if (await file.exists()) await file.delete();
-    } catch (e) {
-      logger.e('MCP handshake cleanup failed: $e');
     }
   }
 }
