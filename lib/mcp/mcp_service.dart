@@ -30,9 +30,10 @@ import 'package:proxypin/ui/configuration.dart';
 /// MCP 服务编排：挂载抓包索引、启停本地 HTTP 传输。
 ///
 /// 作为 [EventListener] 挂到 [ProxyServer.listeners]，与 UI 同源接收流量，
-/// 因而平台无关且不依赖具体列表容器。桌面端仅绑定 127.0.0.1、固定 [defaultPort]
-/// （被占用时回退到系统随机端口），本机即信任边界，不做鉴权；AI 客户端直接以 HTTP 连接，
-/// 无需额外桥进程。
+/// 因而平台无关且不依赖具体列表容器。桌面端仅绑定 127.0.0.1、不做鉴权；
+/// 移动端绑定 0.0.0.0 并要求 Bearer token。所有平台都优先固定 [defaultPort]
+/// （移动端可经 cfg.mcpPort 自定义），被占用时才回退到系统随机端口，
+/// 保证 AI 客户端一次配置、重启 App 后无需改动。AI 客户端直接以 HTTP 连接，无需额外桥进程。
 ///
 /// @author wanghongen
 class McpService {
@@ -40,7 +41,7 @@ class McpService {
 
   McpService._();
 
-  /// 桌面端默认监听端口；被占用时回退到系统分配的空闲端口。
+  /// 默认监听端口；移动端可经 cfg.mcpPort 自定义，被占用时回退随机端口。
   static const int defaultPort = 9127;
 
   FlowStore? _store;
@@ -123,20 +124,17 @@ class McpService {
     }
     _http = McpHttpServer(mcp: _mcp!, address: bindAddress, token: token);
 
+    // 所有平台都优先固定端口，便于 AI 客户端一次配置、重启后无需改动；
+    // 端口被占用时回退到系统分配的空闲端口。桌面与移动端均可经 cfg.mcpPort 自定义。
+    var preferredPort = cfg.mcpPort ?? defaultPort;
     try {
-      if (lanMode) {
-        // 移动端仍由系统分配端口（配合 token 供局域网连接）。
+      try {
+        await _http!.start(preferredPort);
+      } on SocketException catch (e) {
+        logger.w('MCP port $preferredPort unavailable, falling back to a random port: $e');
         await _http!.start(0);
-      } else {
-        // 桌面优先固定端口，便于 AI 客户端直接配置 URL；被占用时回退随机端口。
-        try {
-          await _http!.start(defaultPort);
-        } on SocketException catch (e) {
-          logger.w('MCP port $defaultPort unavailable, falling back to a random port: $e');
-          await _http!.start(0);
-        }
       }
-      logger.i('MCP service started on 127.0.0.1:${_http!.port}');
+      logger.i('MCP service started on ${bindAddress.address}:${_http!.port}');
     } catch (e) {
       logger.e('MCP service start failed: $e');
       _http = null;

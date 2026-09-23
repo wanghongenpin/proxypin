@@ -1282,6 +1282,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get mcpEndpoint => 'MCP Endpoint';
 
   @override
+  String get mcpPortInvalid => 'Please enter a valid port between 1024 and 65535';
+
+  @override
   String get mcpAccessToken => 'Access Token';
 
   @override

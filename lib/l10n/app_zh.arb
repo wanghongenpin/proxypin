@@ -419,6 +419,7 @@
   "mcpSkillsReadonly": "只读流量工具",
   "mcpSkillsRules": "规则、重放与环境工具",
   "mcpEndpoint": "MCP 服务地址",
+  "mcpPortInvalid": "请输入 1024-65535 之间的有效端口",
   "mcpAccessToken": "访问令牌",
   "mcpLanGuide": "保持手机与电脑连接同一 Wi-Fi，在电脑终端运行下面任一命令，或将配置粘贴到 AI 客户端的 MCP 设置中。",
   "mcpLanTokenNote": "该令牌拥有 MCP 工具的完整访问权限。点击令牌旁的刷新按钮可吊销并重新生成。",
