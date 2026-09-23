@@ -22,7 +22,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:proxypin/mcp/capture/curl_builder.dart';
 import 'package:proxypin/mcp/mcp_names.dart';
 import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -36,7 +35,8 @@ import 'package:proxypin/ui/desktop/desktop.dart';
 /// MCP 服务设置面板（桌面）。样式对齐 Proxyman 的 Settings → MCP：
 /// MCP Server（启用开关 + 锁、描述、运行状态、MCP 配置、Claude Code/Codex/Manual
 /// 分段、复制、命令框）→ Privacy 脱敏勾选 → 关于 MCP 集成（文档 / 技能目录）。
-/// 传输统一走 stdio，端口自动分配，无需用户配置。
+/// 桌面端固定监听 127.0.0.1:9127（占用时回退随机端口），AI 客户端直接以 HTTP 连接，
+/// 无额外桥进程、不唤起本应用。
 ///
 /// @author wanghongen
 class McpServiceDialog extends StatefulWidget {
@@ -72,8 +72,8 @@ class _McpClient {
   /// Manual 模式下该接入方式的说明文字
   final String Function(AppLocalizations l) hint;
 
-  /// 生成该客户端的接入命令（统一 stdio 传输）：[app] 可执行文件路径
-  final String Function(String app) build;
+  /// 生成该客户端的接入命令（统一 HTTP 传输）：[url] 为 MCP endpoint
+  final String Function(String url) build;
 
   /// 一键配置：为空表示不支持自动配置（GUI 类客户端）
   final _Setup? setup;
@@ -104,36 +104,36 @@ String _hintDoubao(AppLocalizations l) => l.mcpHintDoubao;
 /// 桌面端注册名（手机端 LAN 配置使用 McpClientNames.mobile，两者并存互不覆盖）。
 const String _serverName = McpClientNames.desktop;
 
-String _mcpServersJson(String app) {
+String _mcpServersJson(String url) {
   return jsonEncode({
     'mcpServers': {
-      _serverName: {'command': app, 'args': ['--mcp-stdio']}
+      _serverName: {'type': 'http', 'url': url}
     }
   });
 }
 
-String _buildClaude(String app) =>
-    'claude mcp add $_serverName -s user --transport stdio -- "$app" --mcp-stdio';
+String _buildClaude(String url) =>
+    'claude mcp add $_serverName -s user --transport http "$url"';
 
-String _buildCodex(String app) => 'codex mcp add $_serverName -- "$app" --mcp-stdio';
+String _buildCodex(String url) => 'codex mcp add $_serverName --transport http "$url"';
 
-String _buildKimi(String app) => 'kimi mcp add --transport stdio $_serverName -- "$app" --mcp-stdio';
+String _buildKimi(String url) => 'kimi mcp add --transport http $_serverName "$url"';
 
-String _buildCursor(String app) => _mcpServersJson(app);
-String _buildGemini(String app) => _mcpServersJson(app);
-String _buildCherry(String app) => _mcpServersJson(app);
+String _buildCursor(String url) => _mcpServersJson(url);
+String _buildGemini(String url) => _mcpServersJson(url);
+String _buildCherry(String url) => _mcpServersJson(url);
 
-String _buildCopilot(String app) {
+String _buildCopilot(String url) {
   return jsonEncode({
     'mcp': {
       'servers': {
-        _serverName: {'command': app, 'args': ['--mcp-stdio']}
+        _serverName: {'type': 'http', 'url': url}
       }
     }
   });
 }
 
-String _buildLingma(String app) => '"$app" --mcp-stdio';
+String _buildLingma(String url) => url;
 
 // ------------------------------------------------------------- 一键配置
 
@@ -143,60 +143,78 @@ Future<bool> _cliExists(String cli) async {
   return (await Process.run(which, [cli])).exitCode == 0;
 }
 
+/// Windows 下 npm 安装的 CLI 实际是 claude.cmd / codex.cmd 批处理 shim：
+/// `where` 按 PATHEXT 能找到，但 CreateProcess 只补 .exe，直接启动 .cmd 会报
+/// “系统找不到指定的文件”（ProcessException, process_win.cc），统一经 cmd /c 启动。
+({String executable, List<String> args}) _resolveCommand(String cli, List<String> args) {
+  if (Platform.isWindows) return (executable: 'cmd', args: ['/c', cli, ...args]);
+  return (executable: cli, args: args);
+}
+
 /// 运行 CLI 的 `mcp add` 命令。先探测 CLI 是否在 PATH 中。
 /// "already exists"（已配置过）视为成功，避免幂等重跑被当作错误提示。
 Future<String> _runCli(String cli, List<String> args, AppLocalizations l) async {
   if (!await _cliExists(cli)) {
     throw _SetupException(l.mcpCliMissing(cli));
   }
-  var result = await Process.run(cli, args).timeout(const Duration(seconds: 30));
+  var command = _resolveCommand(cli, args);
+  ProcessResult result;
+  try {
+    result = await Process.run(command.executable, command.args)
+        .timeout(const Duration(seconds: 30));
+  } on ProcessException catch (e) {
+    throw _SetupException('${l.mcpSetupFail}${e.message}');
+  }
   if (result.exitCode == 0) return l.mcpSetupDone;
   var output = '${result.stderr}\n${result.stdout}';
   if (output.toLowerCase().contains('already exists')) return l.mcpSetupDone;
   throw _SetupException('${l.mcpSetupFail}${result.stderr}');
 }
 
-/// 一键配置统一走 stdio（HTTP 会触发 OAuth 交互，不适合无人值守）。
-/// 添加前先清理旧版注册名与当前名的残留，保证重复执行幂等。
-Future<String> _setupClaude(String app, AppLocalizations l) async {
+/// 一键配置统一走 HTTP（loopback 无鉴权，直接写 endpoint，无 OAuth 交互）。
+/// 添加前先清理旧版注册名与当前名的残留（包括旧的 stdio 条目），保证重复执行幂等。
+Future<String> _setupClaude(String url, AppLocalizations l) async {
   await _removeAll('claude', [
     ['mcp', 'remove', _serverName, '-s', 'user'],
+    ['mcp', 'remove', _serverName, '-s', 'local'],
     ['mcp', 'remove', McpClientNames.legacy, '-s', 'user'],
     ['mcp', 'remove', McpClientNames.legacy, '-s', 'local'],
   ]);
   return _runCli('claude',
-      ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'stdio', '--', app, '--mcp-stdio'], l);
+      ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'http', url], l);
 }
 
-Future<String> _setupCodex(String app, AppLocalizations l) async {
+Future<String> _setupCodex(String url, AppLocalizations l) async {
   await _removeAll('codex', [
     ['mcp', 'remove', _serverName],
     ['mcp', 'remove', McpClientNames.legacy],
   ]);
-  return _runCli('codex', ['mcp', 'add', _serverName, '--', app, '--mcp-stdio'], l);
+  return _runCli('codex', ['mcp', 'add', _serverName, '--transport', 'http', url], l);
 }
 
-Future<String> _setupKimi(String app, AppLocalizations l) async {
+Future<String> _setupKimi(String url, AppLocalizations l) async {
   await _removeAll('kimi', [
     ['mcp', 'remove', _serverName],
     ['mcp', 'remove', McpClientNames.legacy],
   ]);
   return _runCli(
-      'kimi', ['mcp', 'add', '--transport', 'stdio', _serverName, '--', app, '--mcp-stdio'], l);
+      'kimi', ['mcp', 'add', '--transport', 'http', _serverName, url], l);
 }
 
 /// 同一个 CLI 的多个删除命令：只探测一次 PATH，逐条执行（条目不存在不算错）。
 Future<void> _removeAll(String cli, List<List<String>> removals) async {
   if (!await _cliExists(cli)) return;
   for (var args in removals) {
+    var command = _resolveCommand(cli, args);
     try {
-      await Process.run(cli, args).timeout(const Duration(seconds: 15));
+      await Process.run(command.executable, command.args)
+          .timeout(const Duration(seconds: 15));
     } catch (_) {}
   }
 }
 
 /// 写入配置文件（Cursor / Gemini），先备份再合并指定名称的条目；
-/// 同时清理旧版注册名 proxypin，避免桌面端新旧两条 stdio 共存。
+/// 同时清理旧版注册名 proxypin，避免桌面端新旧条目共存。
 Future<String> _writeConfigFile(
     File file, String wrapperKey, String name, Map<String, dynamic> entry, AppLocalizations l) async {
   try {
@@ -224,30 +242,24 @@ Future<String> _writeConfigFile(
   }
 }
 
-Future<String> _setupCursor(String app, AppLocalizations l) {
+Future<String> _setupCursor(String url, AppLocalizations l) {
   var home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
   return _writeConfigFile(
     File('$home${Platform.pathSeparator}.cursor${Platform.pathSeparator}mcp.json'),
     'mcpServers',
     _serverName,
-    {
-      'command': app,
-      'args': ['--mcp-stdio']
-    },
+    {'type': 'http', 'url': url},
     l,
   );
 }
 
-Future<String> _setupGemini(String app, AppLocalizations l) {
+Future<String> _setupGemini(String url, AppLocalizations l) {
   var home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
   return _writeConfigFile(
     File('$home${Platform.pathSeparator}.gemini${Platform.pathSeparator}settings.json'),
     'mcpServers',
     _serverName,
-    {
-      'command': app,
-      'args': ['--mcp-stdio']
-    },
+    {'type': 'http', 'url': url},
     l,
   );
 }
@@ -304,7 +316,12 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
     if (mounted) setState(() => _busy = false);
   }
 
-  String get _currentCommand => _client.build(CurlBuilder.executable);
+  /// MCP endpoint：优先取实际绑定端口；服务未启动时按默认端口展示，
+  /// 用户先运行命令再去开服务也能得到正确配置。
+  String get _endpoint =>
+      'http://127.0.0.1:${McpService.instance.port ?? McpService.defaultPort}/mcp';
+
+  String get _currentCommand => _client.build(_endpoint);
 
   Future<void> _oneClickSetup() async {
     var setup = _client.setup;
@@ -317,7 +334,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       _error = null;
     });
     try {
-      await setup(CurlBuilder.executable, l);
+      await setup(_endpoint, l);
       if (mounted) _toast(l.mcpSetupDone);
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
@@ -346,6 +363,8 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       _toast(l.mcpUnsupported);
       return;
     }
+    // 立刻给一次可见反馈，避免终端拉起期间（数百毫秒）看起来像没反应。
+    _toast(l.mcpStartChat);
     await _openTerminalWith(chat);
   }
 
@@ -363,7 +382,21 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
         await Process.run('chmod', ['+x', file.path]);
         await Process.start('open', ['-a', 'Terminal', file.path]);
       } else if (Platform.isWindows) {
-        await Process.start('cmd', ['/c', 'start', 'cmd', '/k', 'cd /d "$cwd" && $command']);
+        // 写成临时 bat 再由独立 cmd /k 执行：内联 "cd /d ... && xxx" 作为单个参数时，
+        // 外层 cmd 会提前解析 &&、start 会把首个引号串误判为窗口标题，路径含空格时直接失效。
+        var file = File(
+            '${Directory.systemTemp.path}${Platform.pathSeparator}proxypin_mcp_${DateTime.now().millisecondsSinceEpoch}.bat');
+        await file.writeAsString('@echo off\r\ncd /d "$cwd" || exit /b 1\r\n$command\r\n');
+        // 本应用是无控制台的 GUI 进程，Dart 的 Process.start 用管道接管子进程标准句柄：
+        // 直接 `cmd /c start` 在该环境下连子进程都拉不起来（实测），表现为点击没反应。
+        // 经 PowerShell 的 Start-Process（ShellExecute 语义，不继承管道句柄）才能真正
+        // 弹出独立控制台窗口；中间 PowerShell 自身用 -WindowStyle Hidden 隐藏。
+        // 单引号转义：路径中若含单引号，PowerShell 单引号字符串用 '' 表示。
+        var batPath = file.path.replaceAll("'", "''");
+        await Process.start('powershell', [
+          '-NoProfile', '-WindowStyle', 'Hidden', '-Command',
+          "Start-Process -FilePath cmd.exe -ArgumentList '/k','\"$batPath\"'",
+        ]);
       } else {
         for (var t in [
           ['gnome-terminal', '--', 'bash', '-c', 'cd "$cwd"; $command; exec bash'],

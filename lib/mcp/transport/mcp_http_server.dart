@@ -26,8 +26,8 @@ import 'setup_script.dart';
 
 /// MCP Streamable HTTP 传输（无状态，单 JSON 响应）。
 ///
-/// 桌面仅绑定 loopback 且不鉴权（本机 stdio 桥访问）；移动端绑定所有网卡并要求
-/// Bearer token，供同一局域网内电脑上的 AI 客户端远程连接。
+/// 桌面仅绑定 loopback 且不鉴权，AI 客户端直接以 HTTP 连接（无额外桥进程）；
+/// 移动端绑定所有网卡并要求 Bearer token，供同一局域网内电脑上的 AI 客户端远程连接。
 ///
 /// @author wanghongen
 class McpHttpServer {

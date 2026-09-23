@@ -2713,7 +2713,7 @@ abstract class AppLocalizations {
   /// No description provided for @mcpHintLingma.
   ///
   /// In en, this message translates to:
-  /// **'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (STDIO type).'**
+  /// **'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (HTTP/URL type).'**
   String get mcpHintLingma;
 
   /// No description provided for @mcpHintCherry.
@@ -2725,7 +2725,7 @@ abstract class AppLocalizations {
   /// No description provided for @mcpHintDoubao.
   ///
   /// In en, this message translates to:
-  /// **'MarsCode IDE → Settings → MCP → Add (STDIO type).'**
+  /// **'MarsCode IDE → Settings → MCP → Add (HTTP/URL type).'**
   String get mcpHintDoubao;
 
   /// No description provided for @mcpSetup.

@@ -1336,13 +1336,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpHintCopilot => '粘贴到 VS Code 的 settings.json → mcp.servers。';
 
   @override
-  String get mcpHintLingma => '打开 通义灵码 IDE → 头像 → 个人设置 → MCP 服务 → 手工添加（STDIO 类型）。';
+  String get mcpHintLingma => '打开 通义灵码 IDE → 头像 → 个人设置 → MCP 服务 → 手工添加（HTTP/URL 类型）。';
 
   @override
   String get mcpHintCherry => 'Cherry Studio → 设置 → MCP 服务器 → 添加。';
 
   @override
-  String get mcpHintDoubao => 'MarsCode IDE → 设置 → MCP → 添加（STDIO 类型）。';
+  String get mcpHintDoubao => 'MarsCode IDE → 设置 → MCP → 添加（HTTP/URL 类型）。';
 
   @override
   String get mcpSetup => '一键配置';
