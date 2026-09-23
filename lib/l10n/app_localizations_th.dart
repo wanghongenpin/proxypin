@@ -313,6 +313,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get moveDown => 'เลื่อนลง';
 
   @override
+  String get dragSort => 'Drag to Sort';
+
+  @override
   String get disabled => 'ปิดใช้งาน';
 
   @override

@@ -144,6 +144,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   bool multiple = false;
 
+  //长按菜单进入"拖动排序"后,当前可拖动的行下标;null 表示未进入,此时不劫持列表滑动
+  int? dragIndex;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -234,25 +237,28 @@ class _RequestRuleListState extends State<RequestRuleList> {
   Widget _buildRow(List<RequestRewriteRule> list, int index) {
     var primaryColor = Theme.of(context).colorScheme.primary;
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-    return ReorderableDragStartListener(
-        index: index,
-        key: ValueKey<RequestRewriteRule>(list[index]),
-        child: InkWell(
-            highlightColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            hoverColor: primaryColor.withValues(alpha: 0.3),
-            onLongPress: () => showMenus(index),
-            onTap: () async {
-              if (multiple) {
-                setState(() {
-                  if (!selected.add(index)) {
-                    selected.remove(index);
-                  }
-                });
-                return;
+    bool draggable = dragIndex == index;
+    Widget row = InkWell(
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        hoverColor: primaryColor.withValues(alpha: 0.3),
+        onLongPress: draggable ? null : () => showMenus(index),
+        onTap: () async {
+          //拖动模式下点击任意处即退出拖动
+          if (dragIndex != null) {
+            setState(() => dragIndex = null);
+            return;
+          }
+          if (multiple) {
+            setState(() {
+              if (!selected.add(index)) {
+                selected.remove(index);
               }
-              showEdit(index);
-            },
+            });
+            return;
+          }
+          showEdit(index);
+        },
             child: Container(
                 color: selected.contains(index)
                     ? primaryColor.withValues(alpha: 0.8)
@@ -284,7 +290,13 @@ class _RequestRuleListState extends State<RequestRuleList> {
                         child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
                             textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
                   ],
-                ))));
+                )));
+
+    //仅在"拖动排序"模式下监听拖拽;平时整行不劫持,列表可正常上下滑动
+    if (draggable) {
+      row = ReorderableDragStartListener(index: index, child: row);
+    }
+    return KeyedSubtree(key: ValueKey<RequestRewriteRule>(list[index]), child: row);
   }
 
   ///拖拽排序：本地重排并持久化
@@ -294,6 +306,7 @@ class _RequestRuleListState extends State<RequestRuleList> {
       final rule = requestRewrites.rules.removeAt(oldIndex);
       requestRewrites.rules.insert(newIndex, rule);
       selected.clear();
+      dragIndex = null; //拖完退出拖动模式
     });
     changed = true;
   }
@@ -359,6 +372,12 @@ class _RequestRuleListState extends State<RequestRuleList> {
             BottomSheetItem(text: localizations.moveUp, onPressed: () => _moveRule(index, -1)),
             const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(text: localizations.moveDown, onPressed: () => _moveRule(index, 1)),
+            const Divider(thickness: 0.5, height: 5),
+            BottomSheetItem(
+                text: localizations.dragSort,
+                onPressed: () {
+                  setState(() => dragIndex = index);
+                }),
             const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(
                 text: localizations.delete,

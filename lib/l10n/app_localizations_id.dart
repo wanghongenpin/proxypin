@@ -313,6 +313,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get moveDown => 'Turunkan';
 
   @override
+  String get dragSort => 'Drag to Sort';
+
+  @override
   String get disabled => 'Dinonaktifkan';
 
   @override
