@@ -313,6 +313,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get moveDown => 'Di chuyển xuống';
 
   @override
+  String get dragSort => 'Drag to Sort';
+
+  @override
   String get disabled => 'Đã tắt';
 
   @override

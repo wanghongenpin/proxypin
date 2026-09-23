@@ -313,6 +313,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get moveDown => 'Move Down';
 
   @override
+  String get dragSort => 'Drag to Sort';
+
+  @override
   String get disabled => 'Disabled';
 
   @override

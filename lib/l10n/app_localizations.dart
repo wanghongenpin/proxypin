@@ -712,6 +712,12 @@ abstract class AppLocalizations {
   /// **'Move Down'**
   String get moveDown;
 
+  /// No description provided for @dragSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to Sort'**
+  String get dragSort;
+
   /// No description provided for @disabled.
   ///
   /// In en, this message translates to:

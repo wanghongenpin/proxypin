@@ -312,6 +312,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moveDown => '下移';
 
   @override
+  String get dragSort => '拖动排序';
+
+  @override
   String get disabled => '禁用';
 
   @override

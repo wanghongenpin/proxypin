@@ -100,6 +100,7 @@
   "edit": "编辑",
   "moveUp": "上移",
   "moveDown": "下移",
+  "dragSort": "拖动排序",
   "disabled": "禁用",
   "requestRewriteDeleteConfirm": "是否删除{size}条规则?",
   "useGuide": "使用文档",
