@@ -280,6 +280,19 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
         ]),
         const SizedBox(height: 12),
         _card([
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+            child: Text(l.mcpAboutTitle,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
+            child: Text(l.mcpAboutText,
+                style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        _card([
           InkWell(
             onTap: () => openMcpDoc(context),
             borderRadius: BorderRadius.circular(10),
