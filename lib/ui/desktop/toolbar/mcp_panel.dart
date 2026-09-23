@@ -28,6 +28,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/mcp_docs.dart';
+import 'package:proxypin/ui/component/port_edit_dialog.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
@@ -57,7 +58,9 @@ class McpServiceDialog extends StatefulWidget {
 
 class _SetupException implements Exception {
   final String message;
+
   _SetupException(this.message);
+
   @override
   String toString() => message;
 }
@@ -95,10 +98,15 @@ const List<_McpClient> _clients = [
 ];
 
 String _hintTerminal(AppLocalizations l) => l.mcpHintTerminal;
+
 String _hintJson(AppLocalizations l) => l.mcpHintJson;
+
 String _hintCopilot(AppLocalizations l) => l.mcpHintCopilot;
+
 String _hintLingma(AppLocalizations l) => l.mcpHintLingma;
+
 String _hintCherry(AppLocalizations l) => l.mcpHintCherry;
+
 String _hintDoubao(AppLocalizations l) => l.mcpHintDoubao;
 
 /// 桌面端注册名（手机端 LAN 配置使用 McpClientNames.mobile，两者并存互不覆盖）。
@@ -112,15 +120,16 @@ String _mcpServersJson(String url) {
   });
 }
 
-String _buildClaude(String url) =>
-    'claude mcp add $_serverName -s user --transport http "$url"';
+String _buildClaude(String url) => 'claude mcp add $_serverName -s user --transport http "$url"';
 
 String _buildCodex(String url) => 'codex mcp add $_serverName --transport http "$url"';
 
 String _buildKimi(String url) => 'kimi mcp add --transport http $_serverName "$url"';
 
 String _buildCursor(String url) => _mcpServersJson(url);
+
 String _buildGemini(String url) => _mcpServersJson(url);
+
 String _buildCherry(String url) => _mcpServersJson(url);
 
 String _buildCopilot(String url) {
@@ -160,8 +169,7 @@ Future<String> _runCli(String cli, List<String> args, AppLocalizations l) async 
   var command = _resolveCommand(cli, args);
   ProcessResult result;
   try {
-    result = await Process.run(command.executable, command.args)
-        .timeout(const Duration(seconds: 30));
+    result = await Process.run(command.executable, command.args).timeout(const Duration(seconds: 30));
   } on ProcessException catch (e) {
     throw _SetupException('${l.mcpSetupFail}${e.message}');
   }
@@ -180,8 +188,7 @@ Future<String> _setupClaude(String url, AppLocalizations l) async {
     ['mcp', 'remove', McpClientNames.legacy, '-s', 'user'],
     ['mcp', 'remove', McpClientNames.legacy, '-s', 'local'],
   ]);
-  return _runCli('claude',
-      ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'http', url], l);
+  return _runCli('claude', ['mcp', 'add', _serverName, '-s', 'user', '--transport', 'http', url], l);
 }
 
 Future<String> _setupCodex(String url, AppLocalizations l) async {
@@ -197,8 +204,7 @@ Future<String> _setupKimi(String url, AppLocalizations l) async {
     ['mcp', 'remove', _serverName],
     ['mcp', 'remove', McpClientNames.legacy],
   ]);
-  return _runCli(
-      'kimi', ['mcp', 'add', '--transport', 'http', _serverName, url], l);
+  return _runCli('kimi', ['mcp', 'add', '--transport', 'http', _serverName, url], l);
 }
 
 /// 同一个 CLI 的多个删除命令：只探测一次 PATH，逐条执行（条目不存在不算错）。
@@ -207,8 +213,7 @@ Future<void> _removeAll(String cli, List<List<String>> removals) async {
   for (var args in removals) {
     var command = _resolveCommand(cli, args);
     try {
-      await Process.run(command.executable, command.args)
-          .timeout(const Duration(seconds: 15));
+      await Process.run(command.executable, command.args).timeout(const Duration(seconds: 15));
     } catch (_) {}
   }
 }
@@ -318,8 +323,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
 
   /// MCP endpoint：优先取实际绑定端口；服务未启动时按默认端口展示，
   /// 用户先运行命令再去开服务也能得到正确配置。
-  String get _endpoint =>
-      'http://127.0.0.1:${McpService.instance.port ?? McpService.defaultPort}/mcp';
+  String get _endpoint => 'http://127.0.0.1:${McpService.instance.port ?? McpService.defaultPort}/mcp';
 
   String get _currentCommand => _client.build(_endpoint);
 
@@ -394,7 +398,10 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
         // 单引号转义：路径中若含单引号，PowerShell 单引号字符串用 '' 表示。
         var batPath = file.path.replaceAll("'", "''");
         await Process.start('powershell', [
-          '-NoProfile', '-WindowStyle', 'Hidden', '-Command',
+          '-NoProfile',
+          '-WindowStyle',
+          'Hidden',
+          '-Command',
           "Start-Process -FilePath cmd.exe -ArgumentList '/k','\"$batPath\"'",
         ]);
       } else {
@@ -445,72 +452,72 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
             constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height - 96),
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // ===== MCP Server =====
-              Row(children: [
-                Expanded(
-                  child: Text(l.mcpService, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // ===== MCP Server =====
+                Row(children: [
+                  Expanded(
+                    child: Text(l.mcpService, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  ),
+                  IconButton(
+                    tooltip: l.close,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(Icons.close_rounded, size: 18, color: cs.onSurfaceVariant),
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                _enableRow(cs),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 38),
+                  child: Text(l.mcpServiceDescribe,
+                      style: TextStyle(fontSize: 11.5, height: 1.45, color: cs.onSurfaceVariant)),
                 ),
-                IconButton(
-                  tooltip: l.close,
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(Icons.close_rounded, size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(height: 9),
+                Padding(
+                  padding: const EdgeInsets.only(left: 38),
+                  child: Row(children: [
+                    _statusBadge(cs),
+                    const SizedBox(width: 18),
+                    _portRow(cs),
+                  ]),
                 ),
-              ]),
-              const SizedBox(height: 12),
-              _enableRow(cs),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 38),
-                child: Text(l.mcpServiceDescribe,
-                    style: TextStyle(fontSize: 11.5, height: 1.45, color: cs.onSurfaceVariant)),
-              ),
-              const SizedBox(height: 9),
-              Padding(
-                padding: const EdgeInsets.only(left: 38),
-                child: _statusBadge(cs),
-              ),
-              if (_error != null) ...[
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  _errorBanner(cs, _error!),
+                ],
+                const SizedBox(height: 14),
+                _configBlock(cs),
+                const SizedBox(height: 18),
+                _divider(cs),
+                const SizedBox(height: 16),
+
+                // ===== Privacy =====
+                Text('Privacy', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 10),
-                _errorBanner(cs, _error!),
-              ],
-              const SizedBox(height: 14),
-              _configBlock(cs),
-              const SizedBox(height: 18),
-              _divider(cs),
-              const SizedBox(height: 16),
+                _checkRow(
+                  cs,
+                  value: cfg.mcpRedactEnabled,
+                  title: l.mcpRedact,
+                  subtitle: l.mcpRedactDescribe,
+                  onChanged: (v) {
+                    setState(() => cfg.mcpRedactEnabled = v);
+                    cfg.flushConfig();
+                  },
+                ),
+                const SizedBox(height: 16),
+                _divider(cs),
+                const SizedBox(height: 16),
 
-              // ===== Privacy =====
-              Text('Privacy', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 10),
-              _checkRow(
-                cs,
-                value: cfg.mcpRedactEnabled,
-                title: l.mcpRedact,
-                subtitle: l.mcpRedactDescribe,
-                onChanged: (v) {
-                  setState(() => cfg.mcpRedactEnabled = v);
-                  cfg.flushConfig();
-                },
-              ),
-              const SizedBox(height: 16),
-              _divider(cs),
-              const SizedBox(height: 16),
-
-              // ===== 关于 MCP 集成 =====
-              Text(l.mcpAboutTitle,
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurfaceVariant)),
-              const SizedBox(height: 8),
-              Text(l.mcpAboutText,
-                  style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
-              const SizedBox(height: 12),
-              _linkAction(Icons.open_in_new_rounded, l.mcpLearnMore, () => openMcpDoc(context), cs),
-            ]),
-          ),
+                // ===== 关于 MCP 集成 =====
+                Text(l.mcpAboutTitle,
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: cs.onSurfaceVariant)),
+                const SizedBox(height: 8),
+                Text(l.mcpAboutText, style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
+                const SizedBox(height: 12),
+                _linkAction(Icons.open_in_new_rounded, l.mcpLearnMore, () => openMcpDoc(context), cs),
+              ]),
+            ),
           ),
           Positioned(
             left: 0,
@@ -547,8 +554,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
     );
   }
 
-  Widget _divider(ColorScheme cs) =>
-      Divider(height: 1, thickness: 1, color: cs.outlineVariant.withValues(alpha: 0.5));
+  Widget _divider(ColorScheme cs) => Divider(height: 1, thickness: 1, color: cs.outlineVariant.withValues(alpha: 0.5));
 
   // ------------------------------------------------------------- enable / status
   Widget _enableRow(ColorScheme cs) {
@@ -557,10 +563,8 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       SwitchWidget(value: _running || (cfg.mcpEnabled && _busy), scale: 0.7, onChanged: _busy ? (_) {} : _toggle),
       const SizedBox(width: 6),
       Text(l.mcpEnable,
-          style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: on ? cs.onSurface : cs.onSurfaceVariant)),
+          style:
+              TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: on ? cs.onSurface : cs.onSurfaceVariant)),
       const Spacer(),
       // 未启用时显示挂锁，与 Proxyman 一致
       if (!on) Icon(Icons.lock_rounded, size: 15, color: Colors.orange.shade400),
@@ -585,9 +589,55 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
         child: Icon(Icons.close_rounded, size: 10, color: cs.surface),
       ),
       const SizedBox(width: 6),
-      Text(l.mcpStatusStopped,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurfaceVariant)),
+      Text(l.mcpStatusStopped, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurfaceVariant)),
     ]);
+  }
+
+  /// 监听端口行：显示实际端口，可点击修改（被占用时回退随机端口）
+  Widget _portRow(ColorScheme cs) {
+    var current = McpService.instance.port ?? cfg.mcpPort ?? McpService.defaultPort;
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Text('${l.mcpPort}: ',
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+      Text('$current',
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+      IconButton(
+        tooltip: l.edit,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.only(left: 4),
+        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+        icon: Icon(Icons.edit_rounded, size: 13, color: cs.onSurfaceVariant),
+        onPressed: _busy ? null : _editPort,
+      ),
+    ]);
+  }
+
+  /// 修改监听端口：校验通过后写入配置，运行中则重启服务并回填抓包列表
+  Future<void> _editPort() async {
+    var newPort = await PortEditDialog.show(
+      context,
+      initialPort: cfg.mcpPort ?? McpService.defaultPort,
+      defaultPort: McpService.defaultPort,
+    );
+    if (newPort == null || newPort == (cfg.mcpPort ?? McpService.defaultPort)) return;
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    cfg.mcpPort = newPort;
+    cfg.flushConfig();
+    try {
+      if (_running) {
+        await McpService.instance.stop();
+        // stop() 已清空索引，重启前回填，避免改端口后历史请求对 AI 不可见
+        McpService.instance.attach(widget.proxyServer, existing: desktopCaptureContainer);
+        await McpService.instance.start(cfg);
+      }
+    } catch (e) {
+      _error = '${l.mcpStartFailed}: $e';
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
   // ------------------------------------------------------------- config block
@@ -598,8 +648,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       curve: Curves.easeOut,
       alignment: Alignment.topCenter,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(l.mcpConfig,
-            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: cs.onSurfaceVariant)),
+        Text(l.mcpConfig, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: cs.onSurfaceVariant)),
         const SizedBox(height: 8),
         _modeSegmented(cs),
         if (_mode == 'manual') ...[
@@ -720,7 +769,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
         Padding(
           padding: const EdgeInsets.only(right: 34),
           child: SelectableText(_currentCommand,
-              style: mono.copyWith(color: cs.onSurface.withValues(alpha: 0.9))),
+              minLines: 2, style: mono.copyWith(color: cs.onSurface.withValues(alpha: 0.9))),
         ),
         Positioned(
           top: 2,
@@ -785,10 +834,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
 
   // ------------------------------------------------------------- privacy
   Widget _checkRow(ColorScheme cs,
-      {required bool value,
-      required String title,
-      required String subtitle,
-      required ValueChanged<bool> onChanged}) {
+      {required bool value, required String title, required String subtitle, required ValueChanged<bool> onChanged}) {
     return InkWell(
       onTap: () => onChanged(!value),
       borderRadius: BorderRadius.circular(8),
@@ -814,8 +860,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
             children: [
               Padding(
                   padding: const EdgeInsets.only(top: 1),
-                  child: Text(title,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface))),
+                  child: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: cs.onSurface))),
               const SizedBox(height: 2),
               Text(subtitle, style: TextStyle(fontSize: 11.5, height: 1.4, color: cs.onSurfaceVariant)),
             ],
@@ -824,7 +869,6 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       ]),
     );
   }
-
 
   // ------------------------------------------------------------- banners
   Widget _errorBanner(ColorScheme cs, String message) {

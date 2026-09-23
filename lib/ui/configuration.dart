@@ -115,6 +115,10 @@ class AppConfiguration {
   /// 移动端 LAN 模式的访问 token（桌面 loopback 不用，留空即可）
   String? mcpToken;
 
+  /// MCP 服务监听端口。为 null/非法时使用默认端口 9127，
+  /// 被占用时由服务回退到系统随机端口。
+  int? mcpPort;
+
   AppConfiguration._();
 
   /// 单例
@@ -236,6 +240,8 @@ class AppConfiguration {
       mcpEnabled = config['mcpEnabled'] ?? false;
       mcpRedactEnabled = config['mcpRedactEnabled'] ?? true;
       mcpToken = config['mcpToken'] as String?;
+      var port = config['mcpPort'];
+      mcpPort = port is int && port > 0 && port <= 65535 ? port : null;
     } catch (e) {
       logger.e(e);
     }
@@ -285,6 +291,7 @@ class AppConfiguration {
       'mcpEnabled': mcpEnabled,
       'mcpRedactEnabled': mcpRedactEnabled,
       if (mcpToken != null) 'mcpToken': mcpToken,
+      if (mcpPort != null) 'mcpPort': mcpPort,
     };
   }
 }

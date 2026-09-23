@@ -2590,6 +2590,12 @@ abstract class AppLocalizations {
   /// **'MCP Endpoint'**
   String get mcpEndpoint;
 
+  /// No description provided for @mcpPortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid port between 1024 and 65535'**
+  String get mcpPortInvalid;
+
   /// No description provided for @mcpAccessToken.
   ///
   /// In en, this message translates to:

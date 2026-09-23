@@ -1274,6 +1274,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpEndpoint => 'MCP 服务地址';
 
   @override
+  String get mcpPortInvalid => '请输入 1024-65535 之间的有效端口';
+
+  @override
   String get mcpAccessToken => '访问令牌';
 
   @override

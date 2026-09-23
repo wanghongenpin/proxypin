@@ -24,6 +24,7 @@ import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/component/mcp_docs.dart';
+import 'package:proxypin/ui/component/port_edit_dialog.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/utils/ip.dart';
 
@@ -109,12 +110,45 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     try {
       if (_running) {
         await McpService.instance.stop();
+        // 同 _editPort：stop() 已清空索引，重启前回填，避免重置令牌后历史请求对 AI 不可见
+        McpService.instance.attach(widget.proxyServer, existing: MobileApp.container.source);
         await McpService.instance.start(cfg);
       }
     } catch (e) {
       _error = '${l.mcpStartFailed}: $e';
     }
     if (mounted) setState(() => _busy = false);
+  }
+
+  /// 修改固定监听端口：校验通过后写入配置，运行中则重启服务使新端口生效
+  Future<void> _editPort() async {
+    var newPort = await PortEditDialog.show(
+      context,
+      initialPort: cfg.mcpPort ?? McpService.defaultPort,
+      defaultPort: McpService.defaultPort,
+    );
+    if (newPort == null || newPort == (cfg.mcpPort ?? McpService.defaultPort)) return;
+
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    cfg.mcpPort = newPort;
+    cfg.flushConfig();
+    try {
+      if (_running) {
+        await McpService.instance.stop();
+        // stop() 会清空抓包索引，重启前回填当前列表，否则改端口后历史请求对 AI 不可见
+        McpService.instance.attach(widget.proxyServer, existing: MobileApp.container.source);
+        await McpService.instance.start(cfg);
+      }
+    } catch (e) {
+      _error = '${l.mcpStartFailed}: $e';
+    }
+    if (mounted) {
+      setState(() => _busy = false);
+      _refreshIp();
+    }
   }
 
   void _copy(String text) {
@@ -164,10 +198,17 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
                 _endpoint ?? '…',
                 style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.copy_all_rounded, size: 19),
-                onPressed: _endpoint == null ? null : () => _copy(_endpoint!),
-              ),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(
+                  tooltip: l.edit,
+                  icon: const Icon(Icons.edit_rounded, size: 19),
+                  onPressed: _busy ? null : _editPort,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy_all_rounded, size: 19),
+                  onPressed: _endpoint == null ? null : () => _copy(_endpoint!),
+                ),
+              ]),
             ),
             Divider(height: 0, thickness: 0.3, color: theme.dividerColor.withValues(alpha: 0.22)),
             ListTile(
