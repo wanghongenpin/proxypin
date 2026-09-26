@@ -137,16 +137,23 @@ class HistoryStorage {
 
   //获取请求列表
   Future<List<HttpRequest>> getRequests(HistoryItem history) async {
-    if (history.requests == null) {
-      final homePath = await _homePath();
-      String path = '$homePath${Platform.pathSeparator}${Files.getName(history.path)}';
-      var file = File(path);
-      history.requests = await Har.readFile(file);
-      history.requestLength = history.requests!.length;
-      file.length().then((size) => history.fileSize = size);
-    }
+    history.requests ??= await readRequests(history);
 
     return history.requests!;
+  }
+
+  /// 从历史文件读取请求列表，不写入 [HistoryItem.requests] 永久缓存。
+  ///
+  /// 供 MCP 等按需分析的调用方使用：返回的列表只由调用方做有界缓存，
+  /// 淘汰后即可被回收，避免大历史会话长期常驻内存。同时刷新数量/大小元数据。
+  Future<List<HttpRequest>> readRequests(HistoryItem history) async {
+    final homePath = await _homePath();
+    String path = '$homePath${Platform.pathSeparator}${Files.getName(history.path)}';
+    var file = File(path);
+    var requests = await Har.readFile(file);
+    history.requestLength = requests.length;
+    file.length().then((size) => history.fileSize = size);
+    return requests;
   }
 
   ///刷新requests
@@ -351,6 +358,18 @@ class HistoryItem {
 
   HistoryItem(this.name, this.path, this.requestLength, this.fileSize, {DateTime? createTime})
       : createTime = createTime ?? DateTime.now();
+
+  /// 稳定会话 id：历史文件名里的时间戳（{epochMs}.txt）。
+  ///
+  /// 不随列表增删改变，可作为 MCP history_id；删除中间某条历史后旧 id 也不会
+  /// 错位指向别的会话。极旧/异常命名解析不出时退化为路径 hash（同进程内稳定）。
+  int get stableId {
+    var fileName = Files.getName(path);
+    if (fileName.endsWith('.txt')) {
+      fileName = fileName.substring(0, fileName.length - '.txt'.length);
+    }
+    return int.tryParse(fileName) ?? path.hashCode;
+  }
 
   //json反序列化
   factory HistoryItem.formJson(Map<String, dynamic> map) {

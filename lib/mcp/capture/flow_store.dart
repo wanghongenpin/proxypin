@@ -23,6 +23,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 
 import 'flow_view.dart';
+import 'history_provider.dart';
 
 /// MCP 抓包数据索引。
 ///
@@ -41,13 +42,30 @@ class FlowStore extends EventListener {
   final int maxEntries;
   final int maxFramesPerFlow;
 
+  /// 历史抓包数据源；为空时历史相关工具返回空 / 不可用
+  final HistoryProvider? historyProvider;
+
   final LinkedHashMap<String, HttpRequest> _byId = LinkedHashMap();
 
   /// 每流的有界帧索引：不裁剪共享的 message.messages（App UI 也在用），
   /// 而是单独维护，避免影响界面展示。
   final Map<String, List<WebSocketFrame>> _wsFrames = {};
 
-  FlowStore({this.maxEntries = defaultMaxEntries, this.maxFramesPerFlow = defaultMaxFramesPerFlow});
+  /// 最多在内存中同时保留的历史会话数，超出淘汰最久未访问的，
+  /// 与实时缓冲一样防止长时间运行 / 连续翻阅多个大会话导致内存膨胀。
+  static const int defaultMaxHistorySessions = 3;
+
+  /// 已加载的历史会话 LRU：稳定 history_id -> 该会话请求列表（由 [historyProvider] 懒加载）。
+  /// 用 LinkedHashMap 记录访问顺序，访问时移到末尾、从头部淘汰。
+  final LinkedHashMap<int, List<HttpRequest>> _historyCache = LinkedHashMap();
+
+  final int maxHistorySessions;
+
+  FlowStore(
+      {this.maxEntries = defaultMaxEntries,
+      this.maxFramesPerFlow = defaultMaxFramesPerFlow,
+      this.historyProvider,
+      this.maxHistorySessions = defaultMaxHistorySessions});
 
   @override
   void onRequest(Channel channel, HttpRequest request) {
@@ -101,16 +119,109 @@ class FlowStore extends EventListener {
   void clear() {
     _byId.clear();
     _wsFrames.clear();
+    _historyCache.clear();
   }
 
   int get count => _byId.length;
 
   HttpRequest? getById(String id) => _byId[id];
 
+  // ------------------------------------------------------------- history
+
+  /// 全部历史会话元数据；未配置历史数据源时返回空。
+  Future<List<HistoryMeta>> listHistories() async => await historyProvider?.list() ?? const [];
+
+  Future<List<HttpRequest>> _historyRequests(int historyId) async {
+    var cached = _historyCache.remove(historyId);
+    if (cached != null) {
+      // 命中则标记为最近使用（移到末尾）
+      _historyCache[historyId] = cached;
+      return cached;
+    }
+    var provider = historyProvider;
+    if (provider == null) throw ArgumentError('history not found: $historyId');
+    var metas = await provider.list();
+    if (!metas.any((m) => m.id == historyId)) {
+      throw ArgumentError('history not found: $historyId');
+    }
+    var requests = await provider.requests(historyId);
+    _historyCache[historyId] = requests;
+    _evictHistoryIfNeeded();
+    return requests;
+  }
+
+  /// 历史会话缓存超限时淘汰最久未访问的（LinkedHashMap 头部）。
+  void _evictHistoryIfNeeded() {
+    while (_historyCache.length > maxHistorySessions) {
+      _historyCache.remove(_historyCache.keys.first);
+    }
+  }
+
+  Future<HttpRequest?> historyGetById(int historyId, String id) async {
+    var requests = await _historyRequests(historyId);
+    for (var request in requests) {
+      if (request.requestId == id) return request;
+    }
+    return null;
+  }
+
+  Future<List<HttpRequest>> historyQuery(
+    int historyId, {
+    int limit = 20,
+    int offset = 0,
+    String? host,
+    String? method,
+    int? statusFrom,
+    int? statusTo,
+    String? keyword,
+    int? sinceMs,
+  }) async {
+    var requests = await _historyRequests(historyId);
+    return _filter(requests,
+        limit: limit,
+        offset: offset,
+        host: host,
+        method: method,
+        statusFrom: statusFrom,
+        statusTo: statusTo,
+        keyword: keyword,
+        sinceMs: sinceMs);
+  }
+
+  Future<List<HttpRequest>> historySearch(int historyId, String keyword,
+      {String side = 'both', int limit = 20, int maxSearchBytes = 2 * 1024 * 1024}) async {
+    var requests = await _historyRequests(historyId);
+    return await _searchIn(requests, keyword, side: side, limit: limit, maxSearchBytes: maxSearchBytes);
+  }
+
   /// 按条件查询抓包，按时间倒序（最新在前）返回，应用 limit/offset。
   List<HttpRequest> query({
     int limit = 20,
     int offset = 0,
+    String? host,
+    String? method,
+    int? statusFrom,
+    int? statusTo,
+    String? keyword,
+    int? sinceMs,
+  }) {
+    return _filter(_byId.values.toList(growable: false),
+        limit: limit,
+        offset: offset,
+        host: host,
+        method: method,
+        statusFrom: statusFrom,
+        statusTo: statusTo,
+        keyword: keyword,
+        sinceMs: sinceMs);
+  }
+
+  /// 在给定请求集合上按条件过滤，按时间倒序（最新在前）返回，应用 limit/offset。
+  /// 实时缓冲与历史会话共用，保证两处过滤口径一致。
+  List<HttpRequest> _filter(
+    List<HttpRequest> source, {
+    required int limit,
+    required int offset,
     String? host,
     String? method,
     int? statusFrom,
@@ -127,9 +238,8 @@ class FlowStore extends EventListener {
     var matched = <HttpRequest>[];
 
     // 倒序遍历
-    var entries = _byId.values.toList(growable: false);
-    for (var i = entries.length - 1; i >= 0; i--) {
-      var request = entries[i];
+    for (var i = source.length - 1; i >= 0; i--) {
+      var request = source[i];
       if (!_matches(request, hostLower, methodUpper, statusFrom, statusTo, keywordLower, sinceMs)) {
         continue;
       }
@@ -149,15 +259,21 @@ class FlowStore extends EventListener {
   /// 会跳过，避免解码与扫描大对象拖慢搜索。返回最新在前的匹配，最多 [limit] 条。
   Future<List<HttpRequest>> search(String keyword,
       {String side = 'both', int limit = 20, int maxSearchBytes = 2 * 1024 * 1024}) async {
+    return await _searchIn(_byId.values.toList(growable: false), keyword,
+        side: side, limit: limit, maxSearchBytes: maxSearchBytes);
+  }
+
+  /// 在给定请求集合上做 body 子串搜索，实时缓冲与历史会话共用同一口径。
+  Future<List<HttpRequest>> _searchIn(List<HttpRequest> source, String keyword,
+      {required String side, required int limit, required int maxSearchBytes}) async {
     keyword = keyword.toLowerCase();
     if (keyword.isEmpty) return const [];
     limit = limit.clamp(1, 100);
     var matched = <HttpRequest>[];
-    var entries = _byId.values.toList(growable: false);
 
-    for (var i = entries.length - 1; i >= 0; i--) {
+    for (var i = source.length - 1; i >= 0; i--) {
       if (matched.length >= limit) break;
-      var request = entries[i];
+      var request = source[i];
       var hit = false;
       if (side != 'response' && await _bodyContains(request, keyword, maxSearchBytes, requestSide: true)) {
         hit = true;

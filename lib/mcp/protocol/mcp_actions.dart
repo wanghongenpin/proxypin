@@ -99,10 +99,22 @@ class McpActions {
         _generateCode(),
       ];
 
-  HttpRequest _requireFlow(String? id) {
-    var request = store.getById(id ?? '');
-    if (request == null) {
-      throw ToolException('Flow not found or expired: $id');
+  /// 定位单条流：传 historyId 时查历史会话，否则查实时缓冲。
+  Future<HttpRequest> _resolveFlow(String? id, int? historyId) async {
+    if (id == null || id.isEmpty) {
+      throw ToolException('Missing required parameter: id');
+    }
+    HttpRequest? request;
+    if (historyId != null) {
+      var histories = await store.listHistories();
+      if (!histories.any((m) => m.id == historyId)) {
+        throw ToolException('History not found: $historyId (call list_histories for valid ids)');
+      }
+      request = await store.historyGetById(historyId, id);
+      if (request == null) throw ToolException('Flow not found in history $historyId: $id');
+    } else {
+      request = store.getById(id);
+      if (request == null) throw ToolException('Flow not found or expired: $id');
     }
     return request;
   }
@@ -1100,14 +1112,20 @@ class McpActions {
   McpTool _replayFlow() => McpTool(
         name: 'replay_flow',
         description:
-            'Re-send a captured request (by id) through the running proxy and return the fresh response (status, headers, body preview).',
+            'Re-send a captured request (by id) through the running proxy and return the fresh response (status, headers, body preview). Pass history_id to replay a flow from a saved history session.',
         inputSchema: {
           'type': 'object',
-          'properties': {'id': {'type': 'string'}},
+          'properties': {
+            'id': {'type': 'string'},
+            'history_id': {
+              'type': 'integer',
+              'description': 'Saved history session id from list_histories; omit for live capture'
+            },
+          },
           'required': ['id'],
         },
         handler: (a) async {
-          var original = _requireFlow(a['id']?.toString());
+          var original = await _resolveFlow(a['id']?.toString(), _int(a['history_id']));
           var copy = original.copy();
           copy.body = original.body;
           return await _send(copy);
@@ -1148,14 +1166,20 @@ class McpActions {
 
   McpTool _addFavorite() => McpTool(
         name: 'add_favorite',
-        description: 'Save a captured flow (by id) to Favorites for later reuse.',
+        description: 'Save a captured flow (by id) to Favorites for later reuse. Pass history_id to favorite a flow from a saved history session.',
         inputSchema: {
           'type': 'object',
-          'properties': {'id': {'type': 'string'}},
+          'properties': {
+            'id': {'type': 'string'},
+            'history_id': {
+              'type': 'integer',
+              'description': 'Saved history session id from list_histories; omit for live capture'
+            },
+          },
           'required': ['id'],
         },
         handler: (a) async {
-          var request = _requireFlow(a['id']?.toString());
+          var request = await _resolveFlow(a['id']?.toString(), _int(a['history_id']));
           await FavoriteStorage.addFavorite(request);
           return {'saved': true, 'id': request.requestId};
         },
@@ -1177,18 +1201,22 @@ class McpActions {
 
   McpTool _generateCode() => McpTool(
         name: 'generate_code',
-        description: 'Generate runnable code for a captured flow. language: curl (default), fetch (JS), or python (requests).',
+        description: 'Generate runnable code for a captured flow. language: curl (default), fetch (JS), or python (requests). Pass history_id to generate from a saved history session.',
         inputSchema: {
           'type': 'object',
           'properties': {
             'id': {'type': 'string'},
+            'history_id': {
+              'type': 'integer',
+              'description': 'Saved history session id from list_histories; omit for live capture'
+            },
             'language': {'type': 'string', 'enum': ['curl', 'fetch', 'python']},
             'redact': {'type': 'boolean'},
           },
           'required': ['id'],
         },
         handler: (a) async {
-          var request = _requireFlow(a['id']?.toString());
+          var request = await _resolveFlow(a['id']?.toString(), _int(a['history_id']));
           var lang = a['language']?.toString() ?? 'curl';
           var redact = _effectiveRedact(a['redact']);
           return {'language': lang, 'code': CurlBuilder.code(request, lang, redact: redact)};

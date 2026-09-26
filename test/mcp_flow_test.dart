@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:proxypin/mcp/capture/curl_builder.dart';
 import 'package:proxypin/mcp/capture/flow_store.dart';
 import 'package:proxypin/mcp/capture/flow_view.dart';
+import 'package:proxypin/mcp/capture/history_provider.dart';
 import 'package:proxypin/mcp/protocol/mcp_actions.dart';
 import 'package:proxypin/mcp/protocol/mcp_server.dart';
 import 'package:proxypin/mcp/transport/mcp_http_server.dart';
@@ -127,7 +128,7 @@ void main() {
     check(names.contains('export_flow_curl'), 'tools/list has export_flow_curl');
     check(names.contains('search_flows'), 'tools/list has search_flows');
     check(names.contains('get_ssl_proxying_list'), 'tools/list has get_ssl_proxying_list');
-    check(tools.length == 8, 'builtin read-only tools expose 8 tools, got ${tools.length}');
+    check(tools.length == 9, 'builtin read-only tools expose 9 tools, got ${tools.length}');
 
     var call = await mcp.handle({
       'jsonrpc': '2.0',
@@ -234,7 +235,7 @@ void main() {
     check(names.contains('create_breakpoint'), 'exposes create_breakpoint');
     check(names.contains('toggle_recording'), 'exposes toggle_recording');
     check(names.contains('replay_flow') && names.contains('generate_code'), 'exposes replay/generate');
-    check(names.length == 8 + actionNames.length, 'exposes builtin + action tools, got ${names.length}');
+    check(names.length == 9 + actionNames.length, 'exposes builtin + action tools, got ${names.length}');
   });
 
   test('generate_code honors redaction hard gate like other tools', () async {
@@ -498,6 +499,120 @@ void main() {
     client.close();
   });
 
+  test('mcp history sessions: read + write tools via history_id', () async {
+    var histFlow = buildFlow(responseSize: 100);
+    histFlow.uri = 'https://hist.example.com/v1/data';
+    var otherHistFlow = buildFlow(responseSize: 10);
+    otherHistFlow.uri = 'https://hist.example.com/v2/other';
+
+    // 用稳定 id（时间戳样式），不依赖列表下标
+    const histId = 1700000000001;
+    const otherId = 1700000000002;
+    var fake = _FakeHistoryProvider({
+      histId: [histFlow],
+      otherId: [otherHistFlow],
+    });
+
+    var liveFlow = buildFlow(responseSize: 10);
+    var store = FlowStore(historyProvider: fake)..backfill([liveFlow]);
+    var actions = McpActions(store: store);
+    var mcp = McpServer(store: store, redactEnabled: () => true, extraTools: actions.tools());
+
+    Future<Map> call(String name, Map args) async {
+      var res = await mcp.handle({
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'tools/call',
+        'params': {'name': name, 'arguments': args}
+      });
+      var isError = res!['result']['isError'] == true;
+      var text = res['result']['content'][0]['text'] as String;
+      if (isError) throw StateError('$name error: $text');
+      return jsonDecode(text) as Map;
+    }
+
+    // list_histories：两个会话，id 为稳定 id
+    var histories = await call('list_histories', {});
+    check(histories['count'] == 2, 'two history sessions');
+    var meta = (histories['histories'] as List).first as Map;
+    check(meta['id'] == histId && meta['requestCount'] == 1, 'first session meta');
+
+    // list_flows(history_id) 命中历史包，且不混入实时缓冲
+    var list = await call('list_flows', {'history_id': histId});
+    var flows = (list['flows'] as List).cast<Map>();
+    check(flows.length == 1 && flows.first['id'] == histFlow.requestId, 'list_flows history only');
+    check(list['totalBuffered'] == 1, 'totalBuffered is session count');
+
+    // 实时仍可独立查询
+    var live = await call('list_flows', {});
+    var liveFlows = (live['flows'] as List).cast<Map>();
+    check(liveFlows.length == 1 && liveFlows.first['id'] == liveFlow.requestId, 'live buffer isolated');
+
+    // search_flows 历史
+    var search = await call('search_flows', {'history_id': histId, 'keyword': 'x'});
+    check(((search['flows'] as List)).length == 1, 'search in history');
+
+    // 详情 / body / curl 带 history_id
+    var detail = await call('get_flow_detail', {'history_id': histId, 'id': histFlow.requestId});
+    check(detail['id'] == histFlow.requestId, 'history detail');
+    var body = await call('get_flow_body', {'history_id': histId, 'id': histFlow.requestId});
+    check(body['available'] == true || body.containsKey('text'), 'history body returned');
+    var curl = await call('export_flow_curl', {'history_id': histId, 'id': histFlow.requestId});
+    check((curl['curl'] as String).contains('hist.example.com'), 'history curl');
+
+    // 历史不保存 websocket 帧
+    var messages = await call('get_flow_messages', {'history_id': histId, 'id': histFlow.requestId});
+    check(messages['available'] == false, 'history messages unavailable');
+
+    // 写工具 history_id：generate_code 不打网络即可验证历史来源解析
+    var code = await call('generate_code', {'history_id': histId, 'id': histFlow.requestId});
+    check((code['code'] as String).isNotEmpty, 'generate_code from history');
+
+    // 无效 history_id -> 工具错误
+    var bad = await mcp.handle({
+      'jsonrpc': '2.0',
+      'id': 2,
+      'method': 'tools/call',
+      'params': {'name': 'list_flows', 'arguments': {'history_id': 99}}
+    });
+    check(bad!['result']['isError'] == true, 'invalid history_id rejected');
+
+    // 历史包不在实时缓冲中：不带 history_id 查询历史 id 应报错
+    var notLive = await mcp.handle({
+      'jsonrpc': '2.0',
+      'id': 3,
+      'method': 'tools/call',
+      'params': {'name': 'get_flow_detail', 'arguments': {'id': histFlow.requestId}}
+    });
+    check(notLive!['result']['isError'] == true, 'history id not resolvable from live buffer');
+  });
+
+  test('mcp history cache is bounded by an LRU over sessions', () async {
+    HttpRequest flow(int n) {
+      var request = buildFlow(responseSize: 10);
+      request.uri = 'https://h$n.test/path';
+      return request;
+    }
+
+    var fake = _FakeHistoryProvider({
+      101: [flow(1)],
+      102: [flow(2)],
+      103: [flow(3)],
+    });
+    var store = FlowStore(historyProvider: fake, maxHistorySessions: 2);
+
+    await store.historyQuery(101);
+    await store.historyQuery(102);
+    check(fake.readCount[101] == 1, 'session 101 loaded once');
+    await store.historyQuery(103); // 触发淘汰 101
+    // 101 已不在缓存：再访问需重新经 provider 读取
+    await store.historyQuery(101);
+    check(fake.readCount[101] == 2, 'evicted session re-read from provider');
+
+    // 命中已有会话不应重复读盘；102 仍在缓存中
+    check(fake.readCount[102] == 1, 'cached session not re-read');
+  });
+
   test('mcp script template is available without runtime', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
@@ -514,4 +629,33 @@ void main() {
     check((payload['template'] as String).contains('onRequest'), 'template has onRequest');
     check(res['result']['isError'] == false, 'get_script_template not error');
   });
+}
+
+/// 内存历史数据源，按稳定 id 返回给定请求列表，供测试历史路径。
+class _FakeHistoryProvider implements HistoryProvider {
+  final Map<int, List<HttpRequest>> sessions;
+
+  /// 每个会话经 [requests] 读取的次数，用于验证 LRU 是否真正释放后重读
+  final Map<int, int> readCount = {};
+
+  _FakeHistoryProvider(this.sessions);
+
+  @override
+  Future<List<HistoryMeta>> list() async => [
+        for (var entry in sessions.entries)
+          HistoryMeta(
+            id: entry.key,
+            name: 'session-${entry.key}',
+            requestCount: entry.value.length,
+            createTimeMs: DateTime.now().millisecondsSinceEpoch,
+          )
+      ];
+
+  @override
+  Future<List<HttpRequest>> requests(int id) async {
+    var requests = sessions[id];
+    if (requests == null) throw ArgumentError('history not found: $id');
+    readCount[id] = (readCount[id] ?? 0) + 1;
+    return requests;
+  }
 }

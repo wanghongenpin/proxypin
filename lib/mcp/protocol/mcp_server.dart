@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'package:proxypin/mcp/capture/curl_builder.dart';
 import 'package:proxypin/mcp/capture/flow_store.dart';
 import 'package:proxypin/mcp/capture/flow_view.dart';
+import 'package:proxypin/mcp/capture/history_provider.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -151,12 +152,29 @@ class McpServer {
           },
         ),
         McpTool(
+          name: 'list_histories',
+          description:
+              'List saved capture-history sessions (the desktop History tab / mobile history records). Each entry has an id; pass it as history_id to list_flows / get_flow_* to analyze the flows saved in that session.',
+          inputSchema: {'type': 'object', 'properties': {}},
+          handler: (_) async {
+            var histories = await store.listHistories();
+            return {
+              'count': histories.length,
+              'histories': histories.map((h) => h.toJson()).toList(),
+            };
+          },
+        ),
+        McpTool(
           name: 'list_flows',
           description:
-              'List captured HTTP flows as compact metadata (no headers/body). Newest first. Use filters, then get_flow_detail / get_flow_body for a specific id.',
+              'List captured HTTP flows as compact metadata (no headers/body). Newest first. Pass history_id to list flows from a saved history session (see list_histories); otherwise lists the live capture buffer. Use filters, then get_flow_detail / get_flow_body for a specific id.',
           inputSchema: {
             'type': 'object',
             'properties': {
+              'history_id': {
+                'type': 'integer',
+                'description': 'Saved history session id from list_histories; omit for live capture'
+              },
               'limit': {'type': 'integer', 'description': 'Max items, default 20, max 100'},
               'offset': {'type': 'integer', 'description': 'Pagination offset, default 0'},
               'host': {'type': 'string', 'description': 'Substring match on host'},
@@ -168,19 +186,39 @@ class McpServer {
             }
           },
           handler: (args) async {
-            var flows = store.query(
-              limit: _intArgOr(args['limit'], 20),
-              offset: _intArgOr(args['offset'], 0),
-              host: args['host']?.toString(),
-              method: args['method']?.toString(),
-              statusFrom: _intArg(args['status_from']),
-              statusTo: _intArg(args['status_to']),
-              keyword: args['keyword']?.toString(),
-              sinceMs: _intArg(args['since_ms']),
-            );
+            var historyId = _intArg(args['history_id']);
+            List<HttpRequest> flows;
+            int total;
+            if (historyId != null) {
+              var meta = await _requireHistory(store, historyId);
+              flows = await store.historyQuery(
+                historyId,
+                limit: _intArgOr(args['limit'], 20),
+                offset: _intArgOr(args['offset'], 0),
+                host: args['host']?.toString(),
+                method: args['method']?.toString(),
+                statusFrom: _intArg(args['status_from']),
+                statusTo: _intArg(args['status_to']),
+                keyword: args['keyword']?.toString(),
+                sinceMs: _intArg(args['since_ms']),
+              );
+              total = meta.requestCount;
+            } else {
+              flows = store.query(
+                limit: _intArgOr(args['limit'], 20),
+                offset: _intArgOr(args['offset'], 0),
+                host: args['host']?.toString(),
+                method: args['method']?.toString(),
+                statusFrom: _intArg(args['status_from']),
+                statusTo: _intArg(args['status_to']),
+                keyword: args['keyword']?.toString(),
+                sinceMs: _intArg(args['since_ms']),
+              );
+              total = store.count;
+            }
             return {
               'count': flows.length,
-              'totalBuffered': store.count,
+              'totalBuffered': total,
               'flows': flows.map(FlowView.summary).toList(),
             };
           },
@@ -192,6 +230,10 @@ class McpServer {
           inputSchema: {
             'type': 'object',
             'properties': {
+              'history_id': {
+                'type': 'integer',
+                'description': 'Saved history session id from list_histories; omit for live capture'
+              },
               'keyword': {'type': 'string', 'description': 'Substring to search in request/response bodies'},
               'side': {
                 'type': 'string',
@@ -204,15 +246,23 @@ class McpServer {
           },
           handler: (args) async {
             var keyword = args['keyword']?.toString() ?? '';
-            var flows = await store.search(
-              keyword,
-              side: args['side']?.toString() ?? 'both',
-              limit: _intArgOr(args['limit'], 20),
-            );
+            var historyId = _intArg(args['history_id']);
+            var side = args['side']?.toString() ?? 'both';
+            var limit = _intArgOr(args['limit'], 20);
+            List<HttpRequest> flows;
+            int total;
+            if (historyId != null) {
+              var meta = await _requireHistory(store, historyId);
+              flows = await store.historySearch(historyId, keyword, side: side, limit: limit);
+              total = meta.requestCount;
+            } else {
+              flows = await store.search(keyword, side: side, limit: limit);
+              total = store.count;
+            }
             return {
               'keyword': keyword,
               'count': flows.length,
-              'totalBuffered': store.count,
+              'totalBuffered': total,
               'flows': flows.map(FlowView.summary).toList(),
             };
           },
@@ -225,6 +275,10 @@ class McpServer {
             'type': 'object',
             'properties': {
               'id': {'type': 'string', 'description': 'Flow id from list_flows'},
+              'history_id': {
+                'type': 'integer',
+                'description': 'Saved history session id from list_histories; omit for live capture'
+              },
               'redact': {
                 'type': 'boolean',
                 'description':
@@ -235,7 +289,7 @@ class McpServer {
             'required': ['id'],
           },
           handler: (args) async {
-            var request = _requireFlow(store, args['id']?.toString());
+            var request = await _resolveFlow(store, args);
             var redact = _effectiveRedact(args['redact'], redactEnabled());
             var preview = _intArgOr(args['preview_bytes'], FlowView.defaultPreviewBytes);
             preview = preview.clamp(1, FlowView.maxBodySliceBytes);
@@ -250,6 +304,10 @@ class McpServer {
             'type': 'object',
             'properties': {
               'id': {'type': 'string'},
+              'history_id': {
+                'type': 'integer',
+                'description': 'Saved history session id from list_histories; omit for live capture'
+              },
               'side': {'type': 'string', 'enum': ['request', 'response'], 'description': 'default response'},
               'offset': {'type': 'integer', 'description': 'Byte offset, default 0'},
               'limit': {'type': 'integer', 'description': 'Max bytes, default 8192, hard cap 65536'},
@@ -257,7 +315,7 @@ class McpServer {
             'required': ['id'],
           },
           handler: (args) async {
-            var request = _requireFlow(store, args['id']?.toString());
+            var request = await _resolveFlow(store, args);
             var side = args['side']?.toString() ?? 'response';
             HttpMessage? message = side == 'request' ? request : request.response;
             if (side == 'response' && request.response == null) {
@@ -277,14 +335,22 @@ class McpServer {
             'type': 'object',
             'properties': {
               'id': {'type': 'string'},
+              'history_id': {
+                'type': 'integer',
+                'description': 'Saved history session id from list_histories; omit for live capture'
+              },
               'offset': {'type': 'integer'},
               'limit': {'type': 'integer', 'description': 'Max frames, default/max 200'},
             },
             'required': ['id'],
           },
           handler: (args) async {
+            // 历史记录只存请求/响应，不保存 WebSocket 帧
+            if (_intArg(args['history_id']) != null) {
+              return {'available': false, 'reason': 'websocket frames are not saved in history records'};
+            }
             var id = args['id']?.toString();
-            _requireFlow(store, id);
+            await _resolveFlow(store, args);
             return FlowView.messages(
               store.frames(id ?? ''),
               offset: _intArgOr(args['offset'], 0),
@@ -321,6 +387,10 @@ class McpServer {
             'type': 'object',
             'properties': {
               'id': {'type': 'string'},
+              'history_id': {
+                'type': 'integer',
+                'description': 'Saved history session id from list_histories; omit for live capture'
+              },
               'redact': {
                 'type': 'boolean',
                 'description':
@@ -330,19 +400,47 @@ class McpServer {
             'required': ['id'],
           },
           handler: (args) async {
-            var request = _requireFlow(store, args['id']?.toString());
+            var request = await _resolveFlow(store, args);
             var redact = _effectiveRedact(args['redact'], redactEnabled());
             return {'curl': CurlBuilder.build(request, redact: redact)};
           },
         ),
       ];
 
-  static HttpRequest _requireFlow(FlowStore store, String? id) {
+  /// 校验历史会话存在并返回其元数据（按稳定 id 匹配，不按列表下标）。
+  static Future<HistoryMeta> _requireHistory(FlowStore store, int historyId) async {
+    var histories = await store.listHistories();
+    HistoryMeta? meta;
+    for (var item in histories) {
+      if (item.id == historyId) {
+        meta = item;
+        break;
+      }
+    }
+    if (meta == null) {
+      throw ToolException('History not found: $historyId (call list_histories for valid ids)');
+    }
+    return meta;
+  }
+
+  /// 定位单条流：传 history_id 时查历史会话，否则查实时缓冲。
+  static Future<HttpRequest> _resolveFlow(FlowStore store, Map<String, dynamic> args) async {
+    var id = args['id']?.toString();
     if (id == null || id.isEmpty) {
       throw ToolException('Missing required parameter: id');
     }
-    var request = store.getById(id);
+    var historyId = _intArg(args['history_id']);
+    HttpRequest? request;
+    if (historyId != null) {
+      await _requireHistory(store, historyId);
+      request = await store.historyGetById(historyId, id);
+    } else {
+      request = store.getById(id);
+    }
     if (request == null) {
+      if (historyId != null) {
+        throw ToolException('Flow not found in history $historyId: $id');
+      }
       throw ToolException('Flow not found or expired (buffer keeps newest ${FlowStore.defaultMaxEntries}): $id');
     }
     return request;
