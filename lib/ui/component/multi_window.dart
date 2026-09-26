@@ -183,7 +183,8 @@ enum Operation {
   update,
   delete,
   enabled,
-  refresh;
+  refresh,
+  reorder;
 
   static Operation of(String name) {
     return values.firstWhere((element) => element.name == name);
@@ -195,13 +196,14 @@ class MultiWindow {
 
   /// 刷新请求重写
   static Future<void> invokeRefreshRewrite(Operation operation,
-      {int? index, RequestRewriteRule? rule, List<RewriteItem>? items, bool? enabled}) async {
+      {int? index, RequestRewriteRule? rule, List<RewriteItem>? items, bool? enabled, List<int>? order}) async {
     await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestRewrite", {
       "enabled": enabled,
       "operation": operation.name,
       'index': index,
       'rule': rule?.toJson(),
-      'items': items?.map((e) => e.toJson()).toList()
+      'items': items?.map((e) => e.toJson()).toList(),
+      'order': order
     });
   }
 
@@ -255,6 +257,15 @@ class MultiWindow {
         break;
       case Operation.enabled:
         requestRewrites.enabled = arguments['enabled'];
+        break;
+      case Operation.reorder:
+        //order 为新的顺序：每个元素是规则在原列表中的下标
+        var newOrder = (arguments['order'] as List<dynamic>).map((e) => e as int).toList();
+        var oldRules = requestRewrites.rules;
+        var reordered = newOrder.map((i) => oldRules[i]).toList();
+        requestRewrites.rules
+          ..clear()
+          ..addAll(reordered);
         break;
       default:
         break;

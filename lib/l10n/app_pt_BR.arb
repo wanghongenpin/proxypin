@@ -53,6 +53,8 @@
   "done": "Concluído",
   "download": "Baixar",
   "edit": "Editar",
+  "moveUp": "Mover para cima",
+  "moveDown": "Mover para baixo",
   "editReportServer": "Editar servidor de relatório",
   "editRequest": "Editar e enviar",
   "emptyData": "Sem dados",
@@ -242,7 +244,6 @@
   "view": "Visualizar",
   "cipher": "Cifra",
   "other": "Outros",
-
   "environment": "Ambiente",
   "environmentVariables": "Variáveis de Ambiente",
   "envGlobal": "Global",
@@ -251,11 +252,10 @@
   "envDeleteConfirm": "Excluir este ambiente?",
   "envEmptyHint": "Nenhuma variável. Clique em + para adicionar.",
   "envUsageHint": "Use %s em regras ou leia/escreva context.env em scripts.",
-
+  "envInsertBuiltIn": "Insert built-in variable",
   "weakNetwork": "Limitação de Rede",
   "weakNetworkPreset": "Predefinição",
   "weakNetworkPresetOffline": "Offline",
-
   "weakNetworkPresetSlow": "Lento",
   "weakNetworkPresetWeak": "Fraco",
   "weakNetworkLatency": "Latência",

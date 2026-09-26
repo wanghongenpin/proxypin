@@ -19,12 +19,18 @@ extension ColorSchemeCompat on ColorScheme {
   /// preferred; here we emulate it with a slightly transparent surface color.
   Color get surfaceContainerLow => surface.withOpacity(0.05);
 
+  /// A medium-emphasis surface color variant.
+  Color get surfaceContainerHigh => surface.withOpacity(0.15);
+
   /// A higher-emphasis surface color variant.
   Color get surfaceContainerHighest => surface.withOpacity(0.25);
 
   /// A mild outline-like color. Emulated from onSurface with low opacity.
   Color get outlineVariant => onSurface.withOpacity(0.12);
 }
+
+/// Newer Flutter renamed MaterialStatePropertyAll to WidgetStatePropertyAll.
+typedef WidgetStatePropertyAll<T> = MaterialStatePropertyAll<T>;
 
 extension ColorWithValues on Color {
   /// If [alpha] is provided, return this color with that opacity.

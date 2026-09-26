@@ -306,6 +306,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get edit => '编辑';
 
   @override
+  String get moveUp => '上移';
+
+  @override
+  String get moveDown => '下移';
+
+  @override
+  String get dragSort => '拖动排序';
+
+  @override
   String get disabled => '禁用';
 
   @override
@@ -1178,6 +1187,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get envUsageHint => '规则中使用 %s 引用变量,脚本中通过 context.env 读写。';
 
   @override
+  String get envInsertBuiltIn => '插入内置变量';
+
+  @override
   String get weakNetwork => '网络限制';
 
   @override
@@ -1209,6 +1221,169 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get weakNetworkRules => 'URL 规则';
+
+  @override
+  String get mcpService => 'MCP Server';
+
+  @override
+  String get mcpServiceDescribe => '为 Model Context Protocol (MCP) 与 Claude 等 AI 工具通信启动本地 HTTP 服务器。';
+
+  @override
+  String get mcpEnable => '启用 MCP 服务器';
+
+  @override
+  String get mcpPort => '端口';
+
+  @override
+  String get mcpAdvanced => '高级设置';
+
+  @override
+  String get mcpConfig => 'MCP 配置';
+
+  @override
+  String get mcpRedact => '在发送给 AI 之前脱敏敏感数据';
+
+  @override
+  String get mcpRedactDescribe => '在发送到 AI 工具前自动脱敏敏感信息。';
+
+  @override
+  String mcpHintRun(String client) {
+    return '在终端中运行此命令，将 ProxyPin MCP 添加到 $client。';
+  }
+
+  @override
+  String get mcpAboutTitle => '关于 MCP 集成';
+
+  @override
+  String get mcpAboutText =>
+      'MCP (Model Context Protocol) 允许像 Claude 这样的 AI 助手与 ProxyPin 交互。AI 可以读取捕获的 HTTP 流量、创建调试规则（Map Local、Map Remote、断点），并帮助分析网络问题。';
+
+  @override
+  String get mcpLearnMore => '了解有关 MCP 的更多信息';
+
+  @override
+  String get mcpSkills => '技能';
+
+  @override
+  String get mcpSkillsTitle => 'MCP 技能';
+
+  @override
+  String get mcpSkillsReadonly => '只读流量工具';
+
+  @override
+  String get mcpSkillsRules => '规则、重放与环境工具';
+
+  @override
+  String get mcpEndpoint => 'MCP 服务地址';
+
+  @override
+  String get mcpPortInvalid => '请输入 1024-65535 之间的有效端口';
+
+  @override
+  String get mcpAccessToken => '访问令牌';
+
+  @override
+  String get mcpLanGuide => '保持手机与电脑连接同一 Wi-Fi，在电脑终端运行下面任一命令，或将配置粘贴到 AI 客户端的 MCP 设置中。';
+
+  @override
+  String get mcpLanTokenNote => '该令牌拥有 MCP 工具的完整访问权限。点击令牌旁的刷新按钮可吊销并重新生成。';
+
+  @override
+  String get mcpOtherClients => '其他 AI 客户端';
+
+  @override
+  String get mcpOtherClientsHint =>
+      '适用于 Cursor、Cline、Gemini CLI、Cherry Studio、VS Code Copilot 等支持 Streamable HTTP 的 MCP 客户端：将服务地址和 Bearer 令牌（或整段 JSON）填入客户端的 MCP 设置即可。';
+
+  @override
+  String get mcpOneClick => '电脑端一键配置';
+
+  @override
+  String get mcpOneClickHint =>
+      '复制对应命令到电脑上执行：macOS/Linux 用终端，Windows 用 PowerShell。脚本会自动探测已安装的 AI 客户端（Claude Code、Codex、Cursor、Gemini CLI）并通过 Wi-Fi 完成配置。';
+
+  @override
+  String get mcpRegenerateToken => '重置令牌';
+
+  @override
+  String get mcpStatusRunning => '运行中';
+
+  @override
+  String get mcpStatusStopped => '已停止';
+
+  @override
+  String get mcpClientLabel => 'AI 客户端';
+
+  @override
+  String get mcpTransportLabel => '传输方式';
+
+  @override
+  String get mcpCommandLabel => '接入命令';
+
+  @override
+  String get mcpClientsIntl => '国际';
+
+  @override
+  String get mcpClientsDomestic => '国内';
+
+  @override
+  String get mcpTransportStdio => 'stdio';
+
+  @override
+  String get mcpTransportHttp => 'HTTP';
+
+  @override
+  String get mcpHintTerminal => '复制后在终端中运行即可。';
+
+  @override
+  String get mcpHintJson => '粘贴到客户端的 MCP 设置中。';
+
+  @override
+  String get mcpHintCopilot => '粘贴到 VS Code 的 settings.json → mcp.servers。';
+
+  @override
+  String get mcpHintLingma => '打开 通义灵码 IDE → 头像 → 个人设置 → MCP 服务 → 手工添加（HTTP/URL 类型）。';
+
+  @override
+  String get mcpHintCherry => 'Cherry Studio → 设置 → MCP 服务器 → 添加。';
+
+  @override
+  String get mcpHintDoubao => 'MarsCode IDE → 设置 → MCP → 添加（HTTP/URL 类型）。';
+
+  @override
+  String get mcpSetup => '一键配置';
+
+  @override
+  String get mcpStartChat => '开始对话';
+
+  @override
+  String get mcpOpenTerminal => '打开终端执行';
+
+  @override
+  String get mcpSetupDone => '已配置，重启 AI 客户端后生效。';
+
+  @override
+  String get mcpSetupFail => '配置失败：';
+
+  @override
+  String mcpCliMissing(Object cli) {
+    return '未在 PATH 中找到 $cli 命令，请改用「打开终端执行」。';
+  }
+
+  @override
+  String get mcpUnsupported => '该客户端不支持一键配置，请手动配置。';
+
+  @override
+  String get mcpCopy => '复制';
+
+  @override
+  String get mcpCopied => '已复制';
+
+  @override
+  String get mcpStartFailed => 'MCP 服务启动失败';
+
+  @override
+  String get mcpPrivacyHint => '仅监听 127.0.0.1（本机），数据只有在 AI 客户端通过工具明确请求时才会离开本应用。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1508,6 +1683,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get edit => '編輯';
+
+  @override
+  String get moveUp => '上移';
+
+  @override
+  String get moveDown => '下移';
 
   @override
   String get disabled => '停用';
@@ -2319,6 +2500,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get envUsageHint => '規則中使用 %s 引用變數,腳本中透過 context.env 讀寫。';
+
+  @override
+  String get envInsertBuiltIn => '插入內建變數';
 
   @override
   String get weakNetwork => '網路限制';

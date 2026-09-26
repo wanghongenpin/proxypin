@@ -53,6 +53,8 @@
   "done": "Xong",
   "download": "Tải xuống",
   "edit": "Sửa",
+  "moveUp": "Di chuyển lên",
+  "moveDown": "Di chuyển xuống",
   "editReportServer": "Sửa máy chủ báo cáo",
   "editRequest": "Sửa và gửi",
   "emptyData": "Không có dữ liệu",
@@ -242,7 +244,6 @@
   "view": "Xem",
   "cipher": "Mật mã",
   "other": "Khác",
-
   "environment": "Môi trường",
   "environmentVariables": "Biến môi trường",
   "envGlobal": "Toàn cục",
@@ -251,11 +252,10 @@
   "envDeleteConfirm": "Xóa môi trường này?",
   "envEmptyHint": "Chưa có biến. Nhấn + để thêm.",
   "envUsageHint": "Dùng %s trong quy tắc hoặc đọc/ghi context.env trong script.",
-
+  "envInsertBuiltIn": "Insert built-in variable",
   "weakNetwork": "Giới hạn mạng",
   "weakNetworkPreset": "Cài sẵn",
   "weakNetworkPresetOffline": "Ngoại tuyến",
-
   "weakNetworkPresetSlow": "Chậm",
   "weakNetworkPresetWeak": "Yếu",
   "weakNetworkLatency": "Độ trễ",

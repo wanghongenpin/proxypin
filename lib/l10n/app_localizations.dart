@@ -700,6 +700,24 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get edit;
 
+  /// No description provided for @moveUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Up'**
+  String get moveUp;
+
+  /// No description provided for @moveDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Down'**
+  String get moveDown;
+
+  /// No description provided for @dragSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to Sort'**
+  String get dragSort;
+
   /// No description provided for @disabled.
   ///
   /// In en, this message translates to:
@@ -2404,6 +2422,12 @@ abstract class AppLocalizations {
   /// **'Reference variables as %s in rules, or read/write via context.env in scripts.'**
   String get envUsageHint;
 
+  /// No description provided for @envInsertBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert built-in variable'**
+  String get envInsertBuiltIn;
+
   /// No description provided for @weakNetwork.
   ///
   /// In en, this message translates to:
@@ -2469,6 +2493,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'URL Rules'**
   String get weakNetworkRules;
+
+  /// No description provided for @mcpService.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Server'**
+  String get mcpService;
+
+  /// No description provided for @mcpServiceDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.'**
+  String get mcpServiceDescribe;
+
+  /// No description provided for @mcpEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable MCP Server'**
+  String get mcpEnable;
+
+  /// No description provided for @mcpPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get mcpPort;
+
+  /// No description provided for @mcpAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced settings'**
+  String get mcpAdvanced;
+
+  /// No description provided for @mcpConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Configuration'**
+  String get mcpConfig;
+
+  /// No description provided for @mcpRedact.
+  ///
+  /// In en, this message translates to:
+  /// **'Redact sensitive data before sending to AI'**
+  String get mcpRedact;
+
+  /// No description provided for @mcpRedactDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically redact sensitive information before it is sent to AI tools.'**
+  String get mcpRedactDescribe;
+
+  /// No description provided for @mcpHintRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run this command in Terminal to add ProxyPin MCP to {client}.'**
+  String mcpHintRun(String client);
+
+  /// No description provided for @mcpAboutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About MCP Integration'**
+  String get mcpAboutTitle;
+
+  /// No description provided for @mcpAboutText.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP (Model Context Protocol) lets AI assistants like Claude interact with ProxyPin. AI can read captured HTTP traffic, create debugging rules (Map Local, Map Remote, Breakpoints), and help analyze network issues.'**
+  String get mcpAboutText;
+
+  /// No description provided for @mcpLearnMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn more about MCP'**
+  String get mcpLearnMore;
+
+  /// No description provided for @mcpSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'Skills'**
+  String get mcpSkills;
+
+  /// No description provided for @mcpSkillsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Skills'**
+  String get mcpSkillsTitle;
+
+  /// No description provided for @mcpSkillsReadonly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only traffic tools'**
+  String get mcpSkillsReadonly;
+
+  /// No description provided for @mcpSkillsRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules, replay & environment tools'**
+  String get mcpSkillsRules;
+
+  /// No description provided for @mcpEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP Endpoint'**
+  String get mcpEndpoint;
+
+  /// No description provided for @mcpPortInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid port between 1024 and 65535'**
+  String get mcpPortInvalid;
+
+  /// No description provided for @mcpAccessToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Token'**
+  String get mcpAccessToken;
+
+  /// No description provided for @mcpLanGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer\'s terminal, or paste the configuration into your AI client\'s MCP settings.'**
+  String get mcpLanGuide;
+
+  /// No description provided for @mcpLanTokenNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The token authorizes full access to the MCP tools. Tap the refresh button next to the token to revoke it and issue a new one.'**
+  String get mcpLanTokenNote;
+
+  /// No description provided for @mcpOtherClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Other AI clients'**
+  String get mcpOtherClients;
+
+  /// No description provided for @mcpOtherClientsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Universal Streamable HTTP config for Cursor, Cline, Gemini CLI, Cherry Studio, VS Code Copilot and other MCP clients. Paste the URL and Bearer token, or the full JSON, into the client\'s MCP settings.'**
+  String get mcpOtherClientsHint;
+
+  /// No description provided for @mcpOneClick.
+  ///
+  /// In en, this message translates to:
+  /// **'One-click setup on your computer'**
+  String get mcpOneClick;
+
+  /// No description provided for @mcpOneClickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the matching command and run it on the computer: Terminal for macOS/Linux, PowerShell for Windows. It auto-detects installed AI clients (Claude Code, Codex, Cursor, Gemini CLI) and configures them over Wi-Fi.'**
+  String get mcpOneClickHint;
+
+  /// No description provided for @mcpRegenerateToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset token'**
+  String get mcpRegenerateToken;
+
+  /// No description provided for @mcpStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get mcpStatusRunning;
+
+  /// No description provided for @mcpStatusStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get mcpStatusStopped;
+
+  /// No description provided for @mcpClientLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI client'**
+  String get mcpClientLabel;
+
+  /// No description provided for @mcpTransportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get mcpTransportLabel;
+
+  /// No description provided for @mcpCommandLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect command'**
+  String get mcpCommandLabel;
+
+  /// No description provided for @mcpClientsIntl.
+  ///
+  /// In en, this message translates to:
+  /// **'International'**
+  String get mcpClientsIntl;
+
+  /// No description provided for @mcpClientsDomestic.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get mcpClientsDomestic;
+
+  /// No description provided for @mcpTransportStdio.
+  ///
+  /// In en, this message translates to:
+  /// **'stdio'**
+  String get mcpTransportStdio;
+
+  /// No description provided for @mcpTransportHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP'**
+  String get mcpTransportHttp;
+
+  /// No description provided for @mcpHintTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy and run in your terminal.'**
+  String get mcpHintTerminal;
+
+  /// No description provided for @mcpHintJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste into your client\'s MCP settings.'**
+  String get mcpHintJson;
+
+  /// No description provided for @mcpHintCopilot.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste into VS Code settings.json → mcp.servers.'**
+  String get mcpHintCopilot;
+
+  /// No description provided for @mcpHintLingma.
+  ///
+  /// In en, this message translates to:
+  /// **'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (HTTP/URL type).'**
+  String get mcpHintLingma;
+
+  /// No description provided for @mcpHintCherry.
+  ///
+  /// In en, this message translates to:
+  /// **'Cherry Studio → Settings → MCP Servers → Add.'**
+  String get mcpHintCherry;
+
+  /// No description provided for @mcpHintDoubao.
+  ///
+  /// In en, this message translates to:
+  /// **'MarsCode IDE → Settings → MCP → Add (HTTP/URL type).'**
+  String get mcpHintDoubao;
+
+  /// No description provided for @mcpSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto setup'**
+  String get mcpSetup;
+
+  /// No description provided for @mcpStartChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Start chat'**
+  String get mcpStartChat;
+
+  /// No description provided for @mcpOpenTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Run in terminal'**
+  String get mcpOpenTerminal;
+
+  /// No description provided for @mcpSetupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured. Restart your AI client to apply.'**
+  String get mcpSetupDone;
+
+  /// No description provided for @mcpSetupFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup failed: '**
+  String get mcpSetupFail;
+
+  /// No description provided for @mcpCliMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'CLI {cli} not found on PATH. Use \"Run in terminal\" instead.'**
+  String mcpCliMissing(Object cli);
+
+  /// No description provided for @mcpUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This client does not support auto setup, configure it manually.'**
+  String get mcpUnsupported;
+
+  /// No description provided for @mcpCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get mcpCopy;
+
+  /// No description provided for @mcpCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get mcpCopied;
+
+  /// No description provided for @mcpStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP service failed to start'**
+  String get mcpStartFailed;
+
+  /// No description provided for @mcpPrivacyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool.'**
+  String get mcpPrivacyHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

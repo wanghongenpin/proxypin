@@ -453,11 +453,62 @@ class _VarRowState extends State<_VarRow> {
             },
           ),
         ),
+        // 移动端:点击图标弹底部 sheet 选内置变量,选完在光标处插入 `{{$name}}`。
+        IconButton(
+          tooltip: l.envInsertBuiltIn,
+          visualDensity: VisualDensity.compact,
+          onPressed: () => _showBuiltInPicker(l, valueCtrl),
+          icon: Icon(Icons.code, size: 18, color: Colors.grey.shade500),
+        ),
         IconButton(
           onPressed: widget.onDelete,
           icon: Icon(Icons.delete_outline, size: 18, color: Colors.grey.shade500),
         ),
       ]),
     );
+  }
+
+  /// 移动端底部 sheet 展示内置变量列表,选中后插入到 [ctrl]。
+  Future<void> _showBuiltInPicker(AppLocalizations l, TextEditingController ctrl) async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(l.envInsertBuiltIn,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+              ),
+            ),
+            for (final entry in EnvironmentManager.builtInVariables)
+              ListTile(
+                dense: true,
+                title: Text(entry.key, style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
+                subtitle: Text(entry.value, style: const TextStyle(fontSize: 11)),
+                onTap: () => Navigator.of(ctx).pop(entry.key),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null) _insertAtCursor(ctrl, '{{$picked}}');
+  }
+
+  /// 把 [snippet] 插入到 [ctrl] 当前光标位置(无选区时光标位置,有选区时替换选区)。
+  void _insertAtCursor(TextEditingController ctrl, String snippet) {
+    final selection = ctrl.selection;
+    final text = ctrl.text;
+    if (!selection.isValid) {
+      ctrl.text = text + snippet;
+      ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+      return;
+    }
+    final newText = text.replaceRange(selection.start, selection.end, snippet);
+    ctrl.text = newText;
+    ctrl.selection = TextSelection.collapsed(offset: selection.start + snippet.length);
   }
 }

@@ -54,3 +54,4 @@ pubspec.lock
 
 # FVM Version Cache
 .fvm/
+.claude/

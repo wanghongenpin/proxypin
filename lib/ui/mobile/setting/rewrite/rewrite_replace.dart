@@ -456,7 +456,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
 
 ///请求头
 class Headers extends StatefulWidget {
-  final Map<String, String>? headers;
+  final Map<String, dynamic>? headers;
   final ScrollController? scrollController;
 
   const Headers({super.key, this.headers, this.scrollController});
@@ -468,7 +468,7 @@ class Headers extends StatefulWidget {
 }
 
 class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
-  final Map<TextEditingController, TextEditingController> _headers = {};
+  final List<MapEntry<TextEditingController, TextEditingController>> _headers = [];
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -485,22 +485,36 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
     setHeaders(widget.headers);
   }
 
-  void setHeaders(Map<String, String>? headers) {
+  void setHeaders(Map<String, dynamic>? headers) {
     _clear();
     headers?.forEach((name, value) {
-      _headers[TextEditingController(text: name)] = TextEditingController(text: value);
+      if (value is List) {
+        for (var v in value) {
+          _headers.add(MapEntry(TextEditingController(text: name), TextEditingController(text: v.toString())));
+        }
+      } else {
+        _headers.add(MapEntry(TextEditingController(text: name), TextEditingController(text: value.toString())));
+      }
     });
   }
 
-  ///获取所有请求头
-  Map<String, String> getHeaders() {
-    var headers = <String, String>{};
-    _headers.forEach((name, value) {
-      if (name.text.isEmpty) {
-        return;
+  ///获取所有请求头。多值 header(如 Set-Cookie)以数组形式返回。
+  Map<String, dynamic> getHeaders() {
+    var headers = <String, dynamic>{};
+    for (var entry in _headers) {
+      var name = entry.key.text;
+      if (name.isEmpty) {
+        continue;
       }
-      headers[name.text] = value.text;
-    });
+      var existing = headers[name];
+      if (existing == null) {
+        headers[name] = entry.value.text;
+      } else if (existing is List) {
+        existing.add(entry.value.text);
+      } else {
+        headers[name] = [existing, entry.value.text];
+      }
+    }
     return headers;
   }
 
@@ -511,10 +525,10 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
   }
 
   void _clear() {
-    _headers.forEach((key, value) {
-      key.dispose();
-      value.dispose();
-    });
+    for (var entry in _headers) {
+      entry.key.dispose();
+      entry.value.dispose();
+    }
     _headers.clear();
   }
 
@@ -537,7 +551,7 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
                     child: Text("${localizations.add}Header", textAlign: TextAlign.center),
                     onPressed: () {
                       setState(() {
-                        _headers[TextEditingController()] = TextEditingController();
+                        _headers.add(MapEntry(TextEditingController(), TextEditingController()));
                       });
                     },
                   ),
@@ -547,7 +561,9 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
   List<Widget> _buildRows() {
     List<Widget> list = [];
 
-    _headers.forEach((key, val) {
+    for (var entry in _headers) {
+      var key = entry.key;
+      var val = entry.value;
       list.add(_row(
           _cell(key, isKey: true),
           _cell(val),
@@ -556,11 +572,11 @@ class HeadersState extends State<Headers> with AutomaticKeepAliveClientMixin {
               child: InkWell(
                   onTap: () {
                     setState(() {
-                      _headers.remove(key);
+                      _headers.remove(entry);
                     });
                   },
                   child: const Icon(Icons.remove_circle, size: 16)))));
-    });
+    }
 
     return list;
   }

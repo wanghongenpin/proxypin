@@ -10,11 +10,13 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/storage/path.dart';
+import 'package:proxypin/utils/lang.dart';
 
 /// 单个环境变量:key/value/enabled
 class EnvironmentVariable {
@@ -85,8 +87,10 @@ class Environment {
 class EnvironmentManager extends ChangeNotifier {
   static const String _fileName = 'environments.json';
 
-  /// {{name}} 匹配。name 允许字母数字、下划线、点、短横线;两侧允许空白
-  static final RegExp _tokenRe = RegExp(r'\{\{\s*([\w.\-]+)\s*\}\}');
+  /// {{name}} 匹配。name 允许字母数字、下划线、点、短横线;两侧允许空白。
+  /// 首字符可选 `$` —— 用于标记"内置动态变量"(如 `{{$date}}` / `{{$guid}}`),
+  /// `resolve()` 看到 `$` 前缀会直接走内置解析,确保用户不能 shadow 内置名。
+  static final RegExp _tokenRe = RegExp(r'\{\{\s*(\$?[\w.\-]+)\s*\}\}');
 
   static EnvironmentManager? _instance;
 
@@ -311,8 +315,10 @@ class EnvironmentManager extends ChangeNotifier {
   }
 
   /// 解析单个变量。激活环境优先,回退到 Global。返回 null 表示未定义。
+  /// 以 `$` 开头的名字是内置动态变量,不在用户 env 中查找 —— 避免被同名用户变量 shadow。
   String? resolve(String name) {
     if (!enabled) return null;
+    if (name.startsWith(r'$')) return null;
     final act = active;
     if (act != null) {
       for (final v in act.variables) {
@@ -324,6 +330,62 @@ class EnvironmentManager extends ChangeNotifier {
     }
     return null;
   }
+
+  /// 共享 `Random` —— 用 `Random()`(非 secure)够 `$randomString` / `$randomInt` 使用。
+  /// UUID v4 单独用 `Random.secure()` 保证不可预测。
+  static final Random _builtinRandom = Random();
+  static final Random _secureRandom = Random.secure();
+
+  /// 内置动态变量解析。无 `{{}}` 的 token 走 `render()` 走不到这里;`{{$xxx}}` 形式
+  /// 才会调到。未知 `$xxx` 返回 null,让 `render()` 把它当字面量保留,方便发现拼错。
+  ///
+  /// 命名约定:`$` 前缀 + 小写英文单词。`$guid` / `$uuid` 双名同义。
+  static String? resolveBuiltIn(String name) {
+    if (!name.startsWith(r'$')) return null;
+    switch (name) {
+      case r'$date':
+        return DateTime.now().dateFormat();
+      case r'$datetime':
+        return DateTime.now().format();
+      case r'$timestamp':
+        return (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+      case r'$timestampMs':
+        return DateTime.now().millisecondsSinceEpoch.toString();
+      case r'$guid':
+      case r'$uuid':
+        return _uuidV4();
+      case r'$randomString':
+        return RandomUtil.randomString(8);
+      case r'$randomInt':
+        return _builtinRandom.nextInt(1000000).toString();
+      default:
+        return null;
+    }
+  }
+
+  /// RFC 4122 v4 UUID —— 36 字符串,hex 段格式 `8-4-4-4-12`。
+  /// 用 `Random.secure()` 保证唯一性 / 不可预测。
+  static String _uuidV4() {
+    final bytes = List<int>.generate(16, (_) => _secureRandom.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10xx
+    String hex(int b) => b.toRadixString(16).padLeft(2, '0');
+    final h = bytes.map(hex).join();
+    return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-'
+        '${h.substring(16, 20)}-${h.substring(20)}';
+  }
+
+  /// 暴露给 UI 展示 / 单测:所有内置变量名 + 简短说明。顺序即 UI 菜单展示顺序。
+  static const List<MapEntry<String, String>> builtInVariables = [
+    MapEntry(r'$date', 'yyyy-MM-dd'),
+    MapEntry(r'$datetime', 'yyyy-MM-dd HH:mm:ss'),
+    MapEntry(r'$timestamp', '1700000000'),
+    MapEntry(r'$timestampMs', '1700000000000'),
+    MapEntry(r'$guid', 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'),
+    MapEntry(r'$uuid', 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'),
+    MapEntry(r'$randomString', '8-char alphanumeric'),
+    MapEntry(r'$randomInt', '0..999999'),
+  ];
 
   /// 展平当前生效变量(用于 script 注入)。同 key 时 active 覆盖 global。
   Map<String, String> flatMap() {
@@ -343,22 +405,42 @@ class EnvironmentManager extends ChangeNotifier {
 
   /// 渲染 `{{name}}`。空 / 不含 `{{` 时直接返回原字符串,避免热路径正则开销。
   /// 未定义变量原样保留(便于用户发现拼写错误)。仅解析一层,不递归。
+  /// `$` 前缀走 [resolveBuiltIn];非 `$` 走用户 env。
+  /// `enabled=false` 时整体跳过替换(包括内置)—— 与"env 禁用 = 不替换"语义保持一致,
+  /// 避免禁用 env 后 `{{$date}}` 还在静默生效的隐式行为。
   String render(String? input) {
     if (input == null || input.isEmpty) return input ?? '';
     if (!input.contains('{{')) return input;
     if (!enabled) return input;
     return input.replaceAllMapped(_tokenRe, (m) {
-      final v = resolve(m.group(1)!);
-      return v ?? m.group(0)!;
+      final name = m.group(1)!;
+      if (name.startsWith(r'$')) {
+        return resolveBuiltIn(name) ?? m.group(0)!;
+      }
+      return resolve(name) ?? m.group(0)!;
     });
   }
 
   /// 便利入口:热路径拦截器统一调用,处理 null / empty / manager 未加载 / disabled 情况。
+  /// - manager 未加载:仅解析内置(`{{$date}}` 等仍生效),用户 env 不可达。
+  /// - manager 已加载:走 [render] 的完整逻辑(内置 + 用户 env,env disabled 时整体不替换)。
   /// 输入为 null 时返回 null,其余情况返回渲染后的字符串。
   static String? tryRender(String? input) {
     if (input == null || input.isEmpty || !input.contains('{{')) return input;
     final mgr = _instance;
-    if (mgr == null || !mgr.enabled) return input;
+    if (mgr == null) return _renderBuiltInsOnly(input);
     return mgr.render(input);
+  }
+
+  /// 不依赖单例的内置渲染。manager 还没加载时(冷启动)给热路径兜底;
+  /// 这种场景下没有用户 env,只有内置变量可以解析。
+  static String? _renderBuiltInsOnly(String input) {
+    return input.replaceAllMapped(_tokenRe, (m) {
+      final name = m.group(1)!;
+      if (name.startsWith(r'$')) {
+        return resolveBuiltIn(name) ?? m.group(0)!;
+      }
+      return m.group(0)!;
+    });
   }
 }

@@ -146,6 +146,9 @@ class _RequestRuleListState extends State<RequestRuleList> {
 
   bool multiple = false;
 
+  //长按菜单进入"拖动排序"后,当前可拖动的行下标;null 表示未进入,此时不劫持列表滑动
+  int? dragIndex;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -170,23 +173,29 @@ class _RequestRuleListState extends State<RequestRuleList> {
         body: Container(
             padding: const EdgeInsets.only(top: 10, bottom: 30),
             decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
-            child: Scrollbar(
-                child: ListView(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(width: 60, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
-                    SizedBox(width: 46, child: Text(localizations.enable, textAlign: TextAlign.center)),
-                    const VerticalDivider(),
-                    const Expanded(child: Text("URL")),
-                    SizedBox(width: 60, child: Text(localizations.action, textAlign: TextAlign.center)),
-                  ],
-                ),
-                const Divider(thickness: 0.5),
-                Column(children: rows(widget.requestRewrites.rules))
-              ],
-            ))));
+            child: Column(children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(width: 60, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
+                  SizedBox(width: 46, child: Text(localizations.enable, textAlign: TextAlign.center)),
+                  const VerticalDivider(),
+                  const Expanded(child: Text("URL")),
+                  SizedBox(width: 60, child: Text(localizations.action, textAlign: TextAlign.center)),
+                ],
+              ),
+              const Divider(thickness: 0.5),
+              Expanded(
+                  child: ReorderableListView.builder(
+                      buildDefaultDragHandles: false,
+                      itemCount: widget.requestRewrites.rules.length,
+                      // Flutter 3.19.6 使用 onReorder，newIndex 按下移场景需减 1 才是直接插入位置
+                      onReorder: (oldIndex, newIndex) {
+                        if (newIndex > oldIndex) newIndex -= 1;
+                        _onReorder(oldIndex, newIndex);
+                      },
+                      itemBuilder: (context, index) => _buildRow(widget.requestRewrites.rules, index)))
+            ])));
   }
 
   Stack globalMenu() {
@@ -231,59 +240,96 @@ class _RequestRuleListState extends State<RequestRuleList> {
     ]);
   }
 
-  List<Widget> rows(List<RequestRewriteRule> list) {
+  Widget _buildRow(List<RequestRewriteRule> list, int index) {
     var primaryColor = Theme.of(context).colorScheme.primary;
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-    return List.generate(list.length, (index) {
-      return InkWell(
-          highlightColor: Colors.transparent,
-          splashColor: Colors.transparent,
-          hoverColor: primaryColor.withValues(alpha: 0.3),
-          onLongPress: () => showMenus(index),
-          onTap: () async {
-            if (multiple) {
-              setState(() {
-                if (!selected.add(index)) {
-                  selected.remove(index);
-                }
-              });
-              return;
-            }
-            showEdit(index);
-          },
-          child: Container(
-              color: selected.contains(index)
-                  ? primaryColor.withValues(alpha: 0.8)
-                  : index.isEven
-                      ? Colors.grey.withValues(alpha: 0.1)
-                      : null,
-              height: 45,
-              padding: const EdgeInsets.all(5),
-              child: Row(
-                children: [
-                  SizedBox(
-                      width: 60,
-                      child: Text(list[index].name ?? "",
-                          overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
-                  SizedBox(
-                      width: 35,
-                      child: SwitchWidget(
-                          scale: 0.65,
-                          value: list[index].enabled,
-                          onChanged: (val) {
-                            list[index].enabled = val;
-                            changed = true;
-                          })),
-                  const SizedBox(width: 20),
-                  Expanded(child: Text(list[index].url, style: const TextStyle(fontSize: 13))),
-                  const SizedBox(width: 3),
-                  SizedBox(
-                      width: 60,
-                      child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
-                          textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
-                ],
-              )));
+    bool draggable = dragIndex == index;
+    Widget row = InkWell(
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        hoverColor: primaryColor.withValues(alpha: 0.3),
+        onLongPress: draggable ? null : () => showMenus(index),
+        onTap: () async {
+          //拖动模式下点击任意处即退出拖动
+          if (dragIndex != null) {
+            setState(() => dragIndex = null);
+            return;
+          }
+          if (multiple) {
+            setState(() {
+              if (!selected.add(index)) {
+                selected.remove(index);
+              }
+            });
+            return;
+          }
+          showEdit(index);
+        },
+            child: Container(
+                color: selected.contains(index)
+                    ? primaryColor.withValues(alpha: 0.8)
+                    : index.isEven
+                        ? Colors.grey.withValues(alpha: 0.1)
+                        : null,
+                height: 45,
+                padding: const EdgeInsets.all(5),
+                child: Row(
+                  children: [
+                    SizedBox(
+                        width: 60,
+                        child: Text(list[index].name ?? "",
+                            overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                    SizedBox(
+                        width: 35,
+                        child: SwitchWidget(
+                            scale: 0.65,
+                            value: list[index].enabled,
+                            onChanged: (val) {
+                              list[index].enabled = val;
+                              changed = true;
+                            })),
+                    const SizedBox(width: 20),
+                    Expanded(child: Text(list[index].url, style: const TextStyle(fontSize: 13))),
+                    const SizedBox(width: 3),
+                    SizedBox(
+                        width: 60,
+                        child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
+                            textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
+                  ],
+                )));
+
+    //仅在"拖动排序"模式下监听拖拽;平时整行不劫持,列表可正常上下滑动
+    if (draggable) {
+      row = ReorderableDragStartListener(index: index, child: row);
+    }
+    return KeyedSubtree(key: ValueKey<RequestRewriteRule>(list[index]), child: row);
+  }
+
+  ///拖拽排序：本地重排并持久化
+  void _onReorder(int oldIndex, int newIndex) {
+    final requestRewrites = widget.requestRewrites;
+    setState(() {
+      final rule = requestRewrites.rules.removeAt(oldIndex);
+      requestRewrites.rules.insert(newIndex, rule);
+      selected.clear();
+      dragIndex = null; //拖完退出拖动模式
     });
+    changed = true;
+  }
+
+  ///上移/下移规则：index 为当前列表下标，offset 为 ±1
+  void _moveRule(int index, int offset) {
+    final requestRewrites = widget.requestRewrites;
+    final target = index + offset;
+    if (target < 0 || target >= requestRewrites.rules.length) {
+      return;
+    }
+    setState(() {
+      final rule = requestRewrites.rules.removeAt(index);
+      requestRewrites.rules.insert(target, rule);
+      selected.clear();
+    });
+    changed = true;
   }
 
   Future<void> showEdit(int index) async {
@@ -327,6 +373,16 @@ class _RequestRuleListState extends State<RequestRuleList> {
                 onPressed: () {
                   rules[index].enabled = !rules[index].enabled;
                   changed = true;
+                }),
+            const Divider(thickness: 0.5, height: 5),
+            BottomSheetItem(text: localizations.moveUp, onPressed: () => _moveRule(index, -1)),
+            const Divider(thickness: 0.5, height: 5),
+            BottomSheetItem(text: localizations.moveDown, onPressed: () => _moveRule(index, 1)),
+            const Divider(thickness: 0.5, height: 5),
+            BottomSheetItem(
+                text: localizations.dragSort,
+                onPressed: () {
+                  setState(() => dragIndex = index);
                 }),
             const Divider(thickness: 0.5, height: 5),
             BottomSheetItem(

@@ -56,6 +56,7 @@ class RequestRow extends StatefulWidget {
   final MultiSelectController selectionController;
   final RequestSelectionHandlers selectionHandlers;
   final Function(VoidCallback refresh)? onMount; // 注册刷新回调
+  final VoidCallback? onUnmount; // 注销刷新回调
 
   const RequestRow({
     super.key,
@@ -67,6 +68,7 @@ class RequestRow extends StatefulWidget {
     required this.index,
     required this.selectionHandlers,
     this.onMount,
+    this.onUnmount,
   });
 
   @override
@@ -106,6 +108,12 @@ class RequestRowState extends State<RequestRow> {
       if (!mounted) return;
       setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    widget.onUnmount?.call();
+    super.dispose();
   }
 
   Color? color(String url) {

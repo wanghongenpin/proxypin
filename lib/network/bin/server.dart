@@ -164,4 +164,9 @@ class ProxyServer {
   void addListener(EventListener listener) {
     listeners.add(listener);
   }
+
+  ///移除监听器
+  void removeListener(EventListener listener) {
+    listeners.remove(listener);
+  }
 }

@@ -108,7 +108,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       // log.d(
       //     "[${channel.id}] streamId:${httpRequest.streamId ?? ''} ${httpRequest.protocolVersion}  ${httpRequest.method.name} ${httpRequest.requestUrl}");
       if (HostFilter.filter(httpRequest.hostAndPort?.host)) {
-        await remoteChannel?.write(channelContext, httpRequest);
+        if (remoteChannel != null) await channelContext.writeForwardedRequest(remoteChannel, httpRequest);
         return;
       }
 
@@ -152,7 +152,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
         final requestUri = request.requestUri!;
         request.uri = "${requestUri.path}${requestUri.hasQuery ? '?${requestUri.query}' : ''}";
       }
-      await remoteChannel?.write(channelContext, request);
+      if (remoteChannel != null) await channelContext.writeForwardedRequest(remoteChannel, request);
     }
   }
 
@@ -202,7 +202,7 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
   Future<Channel> _getRemoteChannel(
       ChannelContext channelContext, Channel clientChannel, HttpRequest httpRequest) async {
     //客户端连接 作为缓存
-    Channel? remoteChannel = channelContext.serverChannel;
+    Channel? remoteChannel = await channelContext.readyServerChannel;
     if (remoteChannel != null) {
       return remoteChannel;
     }

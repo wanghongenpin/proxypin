@@ -156,15 +156,18 @@ extension WindowControllerCompat on WindowController {
   }
 
   Future<void> _invokeWindowMethod(String method, [dynamic arguments]) async {
+    // 新窗口创建后，其 Dart engine 需要时间启动并注册对应的 window channel
+    // （mixin.one/window_controller/<windowId>）。若立刻调用会在启动竞态期间
+    // 收到 CHANNEL_UNREGISTERED，因此轮询等待窗口 engine 就绪。
     for (var i = 0; i < 20; i++) {
       try {
         await invokeMethod(method, arguments);
         return;
       } on WindowChannelException catch (e) {
-        if (e.code != 'CHANNEL_UNREGISTERED' || i == 19) {
+        if (e.code != 'CHANNEL_UNREGISTERED' || i == 99) {
           rethrow;
         }
-        await Future.delayed(const Duration(milliseconds: 50));
+        await Future.delayed(const Duration(milliseconds: 100));
       }
     }
   }

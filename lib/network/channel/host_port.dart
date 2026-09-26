@@ -16,6 +16,7 @@
 
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
+import 'package:proxypin/network/util/idna.dart';
 
 /// 获取主机和端口
 HostAndPort getHostAndPort(HttpRequest request, {bool? ssl}) {
@@ -53,7 +54,16 @@ class HostAndPort {
   static const schemes = [httpsScheme, httpScheme, wssScheme, wsScheme];
 
   String scheme;
-  String host;
+
+  /// 规范化后的主机名: 百分号编码的域名会被解码并转为 IDNA ASCII(punycode),
+  /// 避免含 `%` 的主机名在 [Socket.connect] 时被误判为 IPv6 link-local 作用域(#923)。
+  String _host;
+
+  /// 主机名
+  String get host => _host;
+
+  set host(String host) => _host = hostToAscii(host);
+
   final int port;
   bool? _ipv6;
 
@@ -66,7 +76,9 @@ class HostAndPort {
     return ipV6RegExp.hasMatch(address);
   }
 
-  HostAndPort(this.scheme, this.host, this.port, {bool? ipv6}) : _ipv6 = ipv6;
+  HostAndPort(this.scheme, String host, this.port, {bool? ipv6})
+      : _host = hostToAscii(host),
+        _ipv6 = ipv6;
 
   factory HostAndPort.host(String host, int port, {String? scheme}) {
     return HostAndPort(scheme ?? (port == 443 ? httpsScheme : httpScheme), host, port);

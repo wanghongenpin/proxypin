@@ -53,6 +53,8 @@
   "done": "Selesai",
   "download": "Unduh",
   "edit": "Edit",
+  "moveUp": "Naikkan",
+  "moveDown": "Turunkan",
   "editReportServer": "Edit server laporan",
   "editRequest": "Edit dan kirim",
   "emptyData": "Tidak ada data",
@@ -242,7 +244,6 @@
   "view": "Lihat",
   "cipher": "Sandi",
   "other": "Lainnya",
-
   "environment": "Environment",
   "environmentVariables": "Variabel Environment",
   "envGlobal": "Global",
@@ -251,11 +252,10 @@
   "envDeleteConfirm": "Hapus environment ini?",
   "envEmptyHint": "Belum ada variabel. Klik + untuk menambahkan.",
   "envUsageHint": "Gunakan %s di aturan atau baca/tulis context.env di skrip.",
-
+  "envInsertBuiltIn": "Insert built-in variable",
   "weakNetwork": "Pembatasan Jaringan",
   "weakNetworkPreset": "Preset",
   "weakNetworkPresetOffline": "Offline",
-
   "weakNetworkPresetSlow": "Lambat",
   "weakNetworkPresetWeak": "Lemah",
   "weakNetworkLatency": "Latensi",

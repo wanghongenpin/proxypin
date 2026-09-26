@@ -158,6 +158,13 @@ class Server extends Network {
       }
     }
 
+    // h2c一旦确认，后续TCP分片始终属于HTTP/2，不能再嗅探成TLS/SOCKS。
+    // 过滤域名仍由HTTP处理器跳过记录，不在HPACK已重编码后切换为裸转发。
+    if (channelContext.isHttp2PriorKnowledge) {
+      channel.dispatcher.channelRead(channelContext, channel, data);
+      return;
+    }
+
     HostAndPort? hostAndPort = channelContext.host;
 
     //黑名单 或 没开启https 直接转发

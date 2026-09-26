@@ -17,6 +17,7 @@
 import 'dart:typed_data';
 
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
 
 import '../codec.dart';
 import 'chunked_decoder.dart';
@@ -52,6 +53,23 @@ class BodyReader {
 
     if (message.headers.contentType == 'video/x-flv' || message.headers.contentType.startsWith("text/event-stream")) {
       //Directly forward without processing for now
+      return Result(false, supportedParse: false, body: data);
+    }
+
+    // 响应既没有 Content-Length 也没有 Transfer-Encoding: chunked 时,按
+    // HTTP 语义 body 由连接关闭定界。直接原始转发,保留原始定界并让上游
+    // 关闭信号传递给客户端;否则 body 会被当空处理丢掉,客户端一直等不到
+    // 完整响应导致超时(issue #844)。
+    // 仅当 Content-Length 头缺失时判定(显式 CL:0 是空 body,不属于
+    // close-delimited);204/304/205 等无 body 状态码走原有解析路径。
+    var msg = message;
+    if (msg is HttpResponse &&
+        msg.status.code >= 200 &&
+        msg.status.code != 204 &&
+        msg.status.code != 304 &&
+        msg.status.code != 205 &&
+        msg.headers.get(HttpHeaders.CONTENT_LENGTH) == null &&
+        !msg.headers.isChunked) {
       return Result(false, supportedParse: false, body: data);
     }
 

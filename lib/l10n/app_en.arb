@@ -25,7 +25,6 @@
   "download": "Download",
   "config": "Configuration",
   "version": "Version",
-
   "start": "Start",
   "stop": "Stop",
   "clear": "Clear",
@@ -36,7 +35,6 @@
   "remoteDevice": "Remote Device",
   "remoteDeviceList": "Remote Device List",
   "myQRCode": "My QR Code",
-
   "theme": "Theme",
   "followSystem": "Follow System",
   "themeColor": "Theme Color",
@@ -50,7 +48,6 @@
   "trayClosePromptContent": "Closing the window will keep ProxyPin running in the system tray. Do you want to minimize it now?",
   "trayCloseExitAnyway": "Exit anyway",
   "trayCloseMinimizeToTray": "Minimize to tray",
-
   "copied": "Copied to clipboard",
   "execute": "Execute",
   "cancel": "Cancel",
@@ -82,7 +79,6 @@
   "response": "Response",
   "statusCode": "Status code",
   "duration": "Duration",
-
   "done": "Done",
   "type": "Type",
   "enable": "Enable",
@@ -102,6 +98,9 @@
   "action": "Action",
   "multiple": "Multiple",
   "edit": "Edit",
+  "moveUp": "Move Up",
+  "moveDown": "Move Down",
+  "dragSort": "Drag to Sort",
   "disabled": "Disabled",
   "requestRewriteDeleteConfirm": "Delete {size} rule(s)?",
   "useGuide": "Use Guide",
@@ -131,12 +130,10 @@
   "testData": "Test Data",
   "noChangesDetected": "No changes detected",
   "enterMatchData": "Enter the data to be matched",
-
   "modifyRequestHeader": "Modify Header",
   "headerName": "Header Name",
   "headerValue": "Header Value",
   "deleteHeaderConfirm": "Do you want to delete the request header?",
-
   "sequence": "All Requests",
   "domainList": "Domain List",
   "domainWhitelist": "Proxy Domain Whitelist",
@@ -150,7 +147,6 @@
   "addWhitelist": "Add Proxy Whitelist",
   "deleteWhitelist": "Delete Proxy Whitelist",
   "domainListSubtitle": "Last Request Time: {time},  Count: {count}",
-
   "selectAction": "Select action",
   "select": "Select",
   "copy": "Copy",
@@ -180,18 +176,15 @@
   "exportDomainHar": "Export This Domain HAR",
   "timeDesc": "Descending by time",
   "timeAsc": "Ascending by time",
-
   "search": "Search",
   "clearSearch": "Clear Search",
   "requestType": "Request type",
   "keyword": "Keyword",
   "keywordSearchScope": "Keyword search scope: ",
-
   "favorite": "Favorite",
   "deleteFavorite": "Delete Favorite",
   "emptyFavorite": "Empty Favorite",
   "deleteFavoriteSuccess": "Favorite deleted",
-
   "historyRecord": "History",
   "historyCacheTime": "Cache Time",
   "historyManualSave": "Manual Save",
@@ -202,7 +195,6 @@
   "historySubtitle": "Records {requestLength}  file {size}",
   "historyUnSave": "Current record is not saved",
   "historyDeleteConfirm": "Do you want to delete this history?",
-
   "requestEdit": "Request Editing",
   "encode": "Encode",
   "requestBody": "Request Body",
@@ -210,7 +202,6 @@
   "requestRewrite": "Request Rewrite",
   "newWindow": "New Window",
   "httpRequest": "HTTP Request",
-
   "enabledHttps": "Enable HTTPS Proxy",
   "installRootCa": "Install Certificate",
   "installCaLocal": "Install Certificate to Local-Machine",
@@ -241,22 +232,18 @@
   "caInstallGuide": "Certificate Installation Guide",
   "caAndroidBrowser": "Open Google Browser on Android devices：",
   "caIosBrowser": "Open Safari on iOS devices：",
-
   "localIP": "Local IP ",
   "mobileScan": "Configure Wi-Fi proxy or Scan with Mobile App",
-
   "decode": "Decode",
   "encodeInput": "Enter the content to be converted",
   "encodeResult": "Conversion Result",
   "encodeFail": "Encoding failed",
   "decodeFail": "Decoding failed",
-
   "shareUrl": "Share Request URL",
   "shareCurl": "Share cURL Request",
   "requestResponse": "Request and Response",
   "captureDetail": "Capture Detail",
   "proxyPinSoftware": "ProxyPin Open source traffic capture software for all platforms",
-
   "prompt": "Prompt",
   "curlSchemeRequest": "If the curl format is recognized, should it be converted into an HTTP request?",
   "appExitTips": "Press again to exit the program",
@@ -279,7 +266,6 @@
   "invalidQRCode": "Unrecognized QR code",
   "remoteConnectFail": "Connection failed，Please check if it is allowed on the same LAN and firewall, iOS needs to enable local network permissions",
   "remoteConnectSuccessTips": "Your phone needs to enable packet capture in order to capture requests",
-
   "windowMode": "Window Mode",
   "windowModeSubTitle": "Enabled Packet Capture, Enter the background, Display a small window",
   "pipIcon": "Window shortcut icon",
@@ -292,7 +278,6 @@
   "clearConfirmSubtitle": "Show a confirmation dialog before clearing captured records",
   "unlimited": "Unlimited",
   "custom": "Custom",
-
   "externalProxyAuth": "Proxy Auth (Optional)",
   "externalProxyServer": "Proxy Server",
   "externalProxyConnectFailure": "External Proxy Connect failure",
@@ -310,22 +295,18 @@
   "scrollEnd": "Scroll to End",
   "logger": "Log",
   "material3": "Material 3 is the latest version of Google’s open-source design system",
-
   "iosVpnBackgroundAudio": "After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?",
-
   "markRead": "Mark as read",
   "autoRead": "Auto read",
   "highlight": "Highlight",
-  "blue" : "Blue",
-  "green" : "Green",
-  "yellow" : "Yellow",
-  "red" : "Red",
-  "pink" : "Pink",
-  "gray" : "Gray",
-  "underline" : "Underline",
-
+  "blue": "Blue",
+  "green": "Green",
+  "yellow": "Yellow",
+  "red": "Red",
+  "pink": "Pink",
+  "gray": "Gray",
+  "underline": "Underline",
   "requestBlock": "Request Block",
-
   "other": "Other",
   "certHashName": "CA Hash Name",
   "regExp": "RegExp",
@@ -342,8 +323,12 @@
   "diffSummary": "+{added} −{removed}",
   "@diffSummary": {
     "placeholders": {
-      "added": { "type": "int" },
-      "removed": { "type": "int" }
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      }
     }
   },
   "text": "Text",
@@ -367,7 +352,6 @@
   "decrypt": "Decrypt",
   "cipher": "Cipher",
   "view": "View",
-
   "appUpdateCheckVersion": "Check for Updates",
   "appUpdateNotAvailableMsg": "Already Using The Latest Version",
   "appUpdateDialogTitle": "Update Available",
@@ -381,10 +365,8 @@
   "appUpdateRetry": "Retry",
   "appUpdateBackgroundDownload": "Download in background",
   "appUpdateOpenDownloadPage": "Open Download Page",
-
   "requestMap": "Request Map",
   "requestMapDescribe": "Do not request remote services, use local configuration or script for response",
-
   "automatic": "Automatic",
   "manual": "Manual",
   "certNotInstalled": "Certificate not installed",
@@ -393,23 +375,18 @@
   "sponsorSupport": "Support ongoing development",
   "sponsorThanks": "Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.",
   "sponsorAfdian": "AFDIAN",
-
   "privacyPolicy": "Privacy Policy",
   "privacyContent": "This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.",
-
   "requestCrypto": "Request Crypto",
   "cryptoDecoded": "Decoded",
   "cryptoDecodeToggle": "Decrypt",
   "optional": "Optional",
   "cryptoRuleField": "Field Name",
-
   "cryptoIvPrefixLabel": "IV Prefix",
   "cryptoIvPrefixTooltip": "Use the first N bytes of the response body as IV",
-
   "local": "Local",
   "remoteUrl": "Remote URL",
   "preview": "Preview",
-
   "environment": "Environment",
   "environmentVariables": "Environment Variables",
   "envGlobal": "Global",
@@ -418,11 +395,10 @@
   "envDeleteConfirm": "Delete this environment?",
   "envEmptyHint": "No variables yet. Click + to add.",
   "envUsageHint": "Reference variables as %s in rules, or read/write via context.env in scripts.",
-
+  "envInsertBuiltIn": "Insert built-in variable",
   "weakNetwork": "Network Throttling",
   "weakNetworkPreset": "Preset",
   "weakNetworkPresetOffline": "Offline",
-
   "weakNetworkPresetSlow": "Slow",
   "weakNetworkPresetWeak": "Weak",
   "weakNetworkLatency": "Latency",
@@ -430,5 +406,64 @@
   "weakNetworkDownload": "Download",
   "weakNetworkBandwidth": "Bandwidth",
   "weakNetworkLossRate": "Packet Loss",
-  "weakNetworkRules": "URL Rules"
+  "weakNetworkRules": "URL Rules",
+  "mcpService": "MCP Server",
+  "mcpServiceDescribe": "Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.",
+  "mcpEnable": "Enable MCP Server",
+  "mcpPort": "Port",
+  "mcpAdvanced": "Advanced settings",
+  "mcpConfig": "MCP Configuration",
+  "mcpRedact": "Redact sensitive data before sending to AI",
+  "mcpRedactDescribe": "Automatically redact sensitive information before it is sent to AI tools.",
+  "mcpHintRun": "Run this command in Terminal to add ProxyPin MCP to {client}.",
+  "@mcpHintRun": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpAboutTitle": "About MCP Integration",
+  "mcpAboutText": "MCP (Model Context Protocol) lets AI assistants like Claude interact with ProxyPin. AI can read captured HTTP traffic, create debugging rules (Map Local, Map Remote, Breakpoints), and help analyze network issues.",
+  "mcpLearnMore": "Learn more about MCP",
+  "mcpSkills": "Skills",
+  "mcpSkillsTitle": "MCP Skills",
+  "mcpSkillsReadonly": "Read-only traffic tools",
+  "mcpSkillsRules": "Rules, replay & environment tools",
+  "mcpEndpoint": "MCP Endpoint",
+  "mcpPortInvalid": "Please enter a valid port between 1024 and 65535",
+  "mcpAccessToken": "Access Token",
+  "mcpLanGuide": "Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer's terminal, or paste the configuration into your AI client's MCP settings.",
+  "mcpLanTokenNote": "The token authorizes full access to the MCP tools. Tap the refresh button next to the token to revoke it and issue a new one.",
+  "mcpOtherClients": "Other AI clients",
+  "mcpOtherClientsHint": "Universal Streamable HTTP config for Cursor, Cline, Gemini CLI, Cherry Studio, VS Code Copilot and other MCP clients. Paste the URL and Bearer token, or the full JSON, into the client's MCP settings.",
+  "mcpOneClick": "One-click setup on your computer",
+  "mcpOneClickHint": "Copy the matching command and run it on the computer: Terminal for macOS/Linux, PowerShell for Windows. It auto-detects installed AI clients (Claude Code, Codex, Cursor, Gemini CLI) and configures them over Wi-Fi.",
+  "mcpRegenerateToken": "Reset token",
+  "mcpStatusRunning": "Running",
+  "mcpStatusStopped": "Stopped",
+  "mcpClientLabel": "AI client",
+  "mcpTransportLabel": "Transport",
+  "mcpCommandLabel": "Connect command",
+  "mcpClientsIntl": "International",
+  "mcpClientsDomestic": "Chinese",
+  "mcpTransportStdio": "stdio",
+  "mcpTransportHttp": "HTTP",
+  "mcpHintTerminal": "Copy and run in your terminal.",
+  "mcpHintJson": "Paste into your client's MCP settings.",
+  "mcpHintCopilot": "Paste into VS Code settings.json → mcp.servers.",
+  "mcpHintLingma": "Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (HTTP/URL type).",
+  "mcpHintCherry": "Cherry Studio → Settings → MCP Servers → Add.",
+  "mcpHintDoubao": "MarsCode IDE → Settings → MCP → Add (HTTP/URL type).",
+  "mcpSetup": "Auto setup",
+  "mcpStartChat": "Start chat",
+  "mcpOpenTerminal": "Run in terminal",
+  "mcpSetupDone": "Configured. Restart your AI client to apply.",
+  "mcpSetupFail": "Setup failed: ",
+  "mcpCliMissing": "CLI {cli} not found on PATH. Use \"Run in terminal\" instead.",
+  "mcpUnsupported": "This client does not support auto setup, configure it manually.",
+  "mcpCopy": "Copy",
+  "mcpCopied": "Copied",
+  "mcpStartFailed": "MCP service failed to start",
+  "mcpPrivacyHint": "Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool."
 }

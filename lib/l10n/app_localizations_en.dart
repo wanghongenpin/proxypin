@@ -307,6 +307,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get edit => 'Edit';
 
   @override
+  String get moveUp => 'Move Up';
+
+  @override
+  String get moveDown => 'Move Down';
+
+  @override
+  String get dragSort => 'Drag to Sort';
+
+  @override
   String get disabled => 'Disabled';
 
   @override
@@ -1191,6 +1200,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get envUsageHint => 'Reference variables as %s in rules, or read/write via context.env in scripts.';
 
   @override
+  String get envInsertBuiltIn => 'Insert built-in variable';
+
+  @override
   String get weakNetwork => 'Network Throttling';
 
   @override
@@ -1222,4 +1234,171 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weakNetworkRules => 'URL Rules';
+
+  @override
+  String get mcpService => 'MCP Server';
+
+  @override
+  String get mcpServiceDescribe =>
+      'Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.';
+
+  @override
+  String get mcpEnable => 'Enable MCP Server';
+
+  @override
+  String get mcpPort => 'Port';
+
+  @override
+  String get mcpAdvanced => 'Advanced settings';
+
+  @override
+  String get mcpConfig => 'MCP Configuration';
+
+  @override
+  String get mcpRedact => 'Redact sensitive data before sending to AI';
+
+  @override
+  String get mcpRedactDescribe => 'Automatically redact sensitive information before it is sent to AI tools.';
+
+  @override
+  String mcpHintRun(String client) {
+    return 'Run this command in Terminal to add ProxyPin MCP to $client.';
+  }
+
+  @override
+  String get mcpAboutTitle => 'About MCP Integration';
+
+  @override
+  String get mcpAboutText =>
+      'MCP (Model Context Protocol) lets AI assistants like Claude interact with ProxyPin. AI can read captured HTTP traffic, create debugging rules (Map Local, Map Remote, Breakpoints), and help analyze network issues.';
+
+  @override
+  String get mcpLearnMore => 'Learn more about MCP';
+
+  @override
+  String get mcpSkills => 'Skills';
+
+  @override
+  String get mcpSkillsTitle => 'MCP Skills';
+
+  @override
+  String get mcpSkillsReadonly => 'Read-only traffic tools';
+
+  @override
+  String get mcpSkillsRules => 'Rules, replay & environment tools';
+
+  @override
+  String get mcpEndpoint => 'MCP Endpoint';
+
+  @override
+  String get mcpPortInvalid => 'Please enter a valid port between 1024 and 65535';
+
+  @override
+  String get mcpAccessToken => 'Access Token';
+
+  @override
+  String get mcpLanGuide =>
+      'Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer\'s terminal, or paste the configuration into your AI client\'s MCP settings.';
+
+  @override
+  String get mcpLanTokenNote =>
+      'The token authorizes full access to the MCP tools. Tap the refresh button next to the token to revoke it and issue a new one.';
+
+  @override
+  String get mcpOtherClients => 'Other AI clients';
+
+  @override
+  String get mcpOtherClientsHint =>
+      'Universal Streamable HTTP config for Cursor, Cline, Gemini CLI, Cherry Studio, VS Code Copilot and other MCP clients. Paste the URL and Bearer token, or the full JSON, into the client\'s MCP settings.';
+
+  @override
+  String get mcpOneClick => 'One-click setup on your computer';
+
+  @override
+  String get mcpOneClickHint =>
+      'Copy the matching command and run it on the computer: Terminal for macOS/Linux, PowerShell for Windows. It auto-detects installed AI clients (Claude Code, Codex, Cursor, Gemini CLI) and configures them over Wi-Fi.';
+
+  @override
+  String get mcpRegenerateToken => 'Reset token';
+
+  @override
+  String get mcpStatusRunning => 'Running';
+
+  @override
+  String get mcpStatusStopped => 'Stopped';
+
+  @override
+  String get mcpClientLabel => 'AI client';
+
+  @override
+  String get mcpTransportLabel => 'Transport';
+
+  @override
+  String get mcpCommandLabel => 'Connect command';
+
+  @override
+  String get mcpClientsIntl => 'International';
+
+  @override
+  String get mcpClientsDomestic => 'Chinese';
+
+  @override
+  String get mcpTransportStdio => 'stdio';
+
+  @override
+  String get mcpTransportHttp => 'HTTP';
+
+  @override
+  String get mcpHintTerminal => 'Copy and run in your terminal.';
+
+  @override
+  String get mcpHintJson => 'Paste into your client\'s MCP settings.';
+
+  @override
+  String get mcpHintCopilot => 'Paste into VS Code settings.json → mcp.servers.';
+
+  @override
+  String get mcpHintLingma => 'Tongyi Lingma IDE → Profile → Settings → MCP Service → Add manually (HTTP/URL type).';
+
+  @override
+  String get mcpHintCherry => 'Cherry Studio → Settings → MCP Servers → Add.';
+
+  @override
+  String get mcpHintDoubao => 'MarsCode IDE → Settings → MCP → Add (HTTP/URL type).';
+
+  @override
+  String get mcpSetup => 'Auto setup';
+
+  @override
+  String get mcpStartChat => 'Start chat';
+
+  @override
+  String get mcpOpenTerminal => 'Run in terminal';
+
+  @override
+  String get mcpSetupDone => 'Configured. Restart your AI client to apply.';
+
+  @override
+  String get mcpSetupFail => 'Setup failed: ';
+
+  @override
+  String mcpCliMissing(Object cli) {
+    return 'CLI $cli not found on PATH. Use \"Run in terminal\" instead.';
+  }
+
+  @override
+  String get mcpUnsupported => 'This client does not support auto setup, configure it manually.';
+
+  @override
+  String get mcpCopy => 'Copy';
+
+  @override
+  String get mcpCopied => 'Copied';
+
+  @override
+  String get mcpStartFailed => 'MCP service failed to start';
+
+  @override
+  String get mcpPrivacyHint =>
+      'Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool.';
 }

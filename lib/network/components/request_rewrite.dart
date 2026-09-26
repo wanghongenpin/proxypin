@@ -59,8 +59,10 @@ class RequestRewriteInterceptor extends Interceptor {
   /// 原始配置不修改。
   static RewriteItem _renderItem(RewriteItem item) {
     if (EnvironmentManager.instanceOrNull?.enabled != true) return item;
-    // 快速判断:所有相关字符串字段都不含 `{{` 时直接返回原对象,避免拷贝开销
-    bool hasToken(dynamic v) => v is String && v.contains('{{');
+    // 快速判断:所有相关字符串字段都不含 `{{` 时直接返回原对象,避免拷贝开销。
+    // 多值 header(List,如 Set-Cookie)需逐个值检查。
+    bool hasToken(dynamic v) =>
+        v is String ? v.contains('{{') : (v is List ? v.any((e) => e is String && e.contains('{{')) : false);
     final values = item.values;
     if (!hasToken(values['value']) &&
         !hasToken(values['redirectUrl']) &&
@@ -78,7 +80,12 @@ class RequestRewriteInterceptor extends Interceptor {
     copy.queryParam = _renderEnv(copy.queryParam);
     final headers = copy.headers;
     if (headers != null) {
-      copy.headers = headers.map((k, v) => MapEntry(k, _renderEnv(v) ?? v));
+      copy.headers = headers.map((k, v) {
+        if (v is List) {
+          return MapEntry(k, v.map((e) => _renderEnv(e.toString()) ?? e.toString()).toList());
+        }
+        return MapEntry(k, _renderEnv(v) ?? v);
+      });
     }
     return copy;
   }
@@ -327,7 +334,16 @@ class RequestRewriteInterceptor extends Interceptor {
   Future<void> _replaceHttpMessage(HttpMessage message, RewriteItem item) async {
     if ((item.type == RewriteType.replaceRequestHeader || item.type == RewriteType.replaceResponseHeader) &&
         item.headers != null) {
-      item.headers?.forEach((key, value) => message.headers.set(key, value));
+      item.headers?.forEach((key, value) {
+        message.headers.remove(key);
+        if (value is List) {
+          for (var v in value) {
+            message.headers.add(key, v.toString());
+          }
+        } else {
+          message.headers.set(key, value.toString());
+        }
+      });
       return;
     }
 

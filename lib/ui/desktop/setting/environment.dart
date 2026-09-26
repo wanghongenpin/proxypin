@@ -172,19 +172,25 @@ class _EnvironmentDialogState extends State<EnvironmentDialog> {
       titlePadding: const EdgeInsets.only(top: 10, left: 20, right: 10),
       contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
       actionsPadding: const EdgeInsets.only(right: 15, bottom: 15),
-      title: Row(children: [
-        Text(localizations.environmentVariables, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(localizations.envUsageHint.replaceFirst('%s', '{{name}}'),
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-        ),
-        IconButton(
-          tooltip: localizations.useGuide,
-          onPressed: _openGuide,
-          icon: const Icon(Icons.help_outline, size: 18),
-        ),
-      ]),
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Text(localizations.environmentVariables, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(localizations.envUsageHint.replaceFirst('%s', '{{name}}'),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+            ),
+            IconButton(
+              tooltip: localizations.useGuide,
+              onPressed: _openGuide,
+              icon: const Icon(Icons.help_outline, size: 18),
+            ),
+          ]),
+        ],
+      ),
       content: SizedBox(
         width: 780,
         height: 460,
@@ -351,6 +357,8 @@ class _VariableRow extends StatefulWidget {
 }
 
 class _VariableRowState extends State<_VariableRow> {
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
   late final TextEditingController keyCtrl;
   late final TextEditingController valueCtrl;
 
@@ -419,12 +427,58 @@ class _VariableRowState extends State<_VariableRow> {
             },
           ),
         ),
+        // 插入内置变量。点击弹 PopupMenu,选完在光标处插入 `{{$name}}`。
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: PopupMenuButton<String>(
+            tooltip: localizations.envInsertBuiltIn,
+            icon: Icon(Icons.code, size: 18, color: Colors.grey.shade500),
+            padding: EdgeInsets.zero,
+            splashRadius: 18,
+            itemBuilder: (ctx) => [
+              for (final entry in EnvironmentManager.builtInVariables)
+                PopupMenuItem<String>(
+                  value: entry.key,
+                  child: Row(children: [
+                    Text(entry.key, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(entry.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                    ),
+                  ]),
+                ),
+            ],
+            onSelected: (key) => _insertAtCursor(valueCtrl, '{{$key}}'),
+          ),
+        ),
         IconButton(
+          padding: EdgeInsets.zero,
+          splashRadius: 18,
+          constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
           onPressed: widget.onDelete,
           icon: Icon(Icons.delete_outline, size: 18, color: Colors.grey.shade500),
         ),
       ]),
     );
+  }
+
+  /// 把 [snippet] 插入到 [ctrl] 当前光标位置(无选区时光标位置,有选区时替换选区)。
+  /// 插入后保持焦点,用户可继续编辑。
+  void _insertAtCursor(TextEditingController ctrl, String snippet) {
+    final selection = ctrl.selection;
+    final text = ctrl.text;
+    if (!selection.isValid) {
+      ctrl.text = text + snippet;
+      ctrl.selection = TextSelection.collapsed(offset: ctrl.text.length);
+      return;
+    }
+    final newText = text.replaceRange(selection.start, selection.end, snippet);
+    ctrl.text = newText;
+    ctrl.selection = TextSelection.collapsed(offset: selection.start + snippet.length);
   }
 }
 

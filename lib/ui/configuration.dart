@@ -63,7 +63,7 @@ class ThemeModel {
 }
 
 class AppConfiguration {
-  static const String version = "1.3.1";
+  static const String version = "1.3.2";
 
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
@@ -71,7 +71,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV30 = true;
+  bool upgradeNoticeV32 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -105,6 +105,19 @@ class AppConfiguration {
 
   /// 关闭窗口时最小化到系统托盘
   bool? minimizeToTray;
+
+  /// 是否启用 MCP 服务
+  bool mcpEnabled = false;
+
+  /// 导出给 AI 时是否脱敏 Authorization/Cookie
+  bool mcpRedactEnabled = true;
+
+  /// 移动端 LAN 模式的访问 token（桌面 loopback 不用，留空即可）
+  String? mcpToken;
+
+  /// MCP 服务监听端口。为 null/非法时使用默认端口 9127，
+  /// 被占用时由服务回退到系统随机端口。
+  int? mcpPort;
 
   AppConfiguration._();
 
@@ -202,7 +215,7 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV30 = config['upgradeNoticeV30'] ?? true;
+      upgradeNoticeV32 = config['upgradeNoticeV32'] ?? true;
       _language = config['language'] == null
           ? null
           : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
@@ -223,6 +236,12 @@ class AppConfiguration {
         panelRatio = config['panelRatio'];
       }
       minimizeToTray = config['minimizeToTray'];
+
+      mcpEnabled = config['mcpEnabled'] ?? false;
+      mcpRedactEnabled = config['mcpRedactEnabled'] ?? true;
+      mcpToken = config['mcpToken'] as String?;
+      var port = config['mcpPort'];
+      mcpPort = port is int && port > 0 && port <= 65535 ? port : null;
     } catch (e) {
       logger.e(e);
     }
@@ -252,7 +271,7 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV30': upgradeNoticeV30,
+      'upgradeNoticeV32': upgradeNoticeV32,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerViewMode": headerViewMode,
@@ -268,6 +287,11 @@ class AppConfiguration {
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
       if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
+      // MCP 配置所有平台都写入
+      'mcpEnabled': mcpEnabled,
+      'mcpRedactEnabled': mcpRedactEnabled,
+      if (mcpToken != null) 'mcpToken': mcpToken,
+      if (mcpPort != null) 'mcpPort': mcpPort,
     };
   }
 }

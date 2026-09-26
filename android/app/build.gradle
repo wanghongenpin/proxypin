@@ -105,7 +105,7 @@ flutter {
 android.applicationVariants.all { variant ->
     if (variant.buildType.name == 'release') {
         variant.outputs.all { output ->
-            def apkName = "proxypin-android.apk"
+            def apkName = "proxypin-android-${flutterVersionName}.apk"
             try {
                 // Newer output API
                 output.outputFileName = apkName

@@ -66,6 +66,19 @@ class NetworkTabController extends StatefulWidget {
     state.currentState?.changeState();
   }
 
+  ///更新当前详情请求的响应，请求在详情页打开期间完成时刷新响应内容
+  void updateResponse(HttpResponse? response) {
+    var currentRequest = request.get();
+    if (response?.request == null || currentRequest == null) {
+      return;
+    }
+    if (currentRequest.requestId != response!.request!.requestId) {
+      return;
+    }
+    this.response.set(response);
+    changeState();
+  }
+
   @override
   State<StatefulWidget> createState() {
     return NetworkTabState();

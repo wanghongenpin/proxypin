@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:ffi';
 
 import 'package:archive/archive_io.dart';
+import 'package:ffi/ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/utils/desktop_tray.dart';
@@ -98,7 +100,7 @@ class WindowsZipUpdater {
   }
 
   /// 启动 helper 脚本。
-  /// 实测: 直接运行 bat 可靠(会执行), 而 powershell Start-Process 不会真正拉起 bat。
+  /// 通过 cmd 执行 bat；PowerShell 直接把 bat 作为 FilePath 提权时不可靠。
   /// 普通情况用 cmd start /min 最小化运行以减少黑窗口打扰;
   /// 需要提权(安装在 Program Files)时用 powershell Start-Process -Verb RunAs 触发 UAC。
   static Future<void> _launchHelper({
@@ -108,16 +110,41 @@ class WindowsZipUpdater {
     required bool needsAuth,
   }) async {
     if (needsAuth) {
-      String psQuote(String s) => "'${s.replaceAll("'", "''")}'";
-      final argList = args.map(psQuote).join(',');
-      final psCmd =
-          'Start-Process -FilePath ${psQuote(helper.path)} -ArgumentList $argList -Verb RunAs -WindowStyle Hidden';
-      await _log(logFile, 'launch via powershell runas: $psCmd');
-      await Process.start(
-        'powershell.exe',
-        ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', psCmd],
-        mode: ProcessStartMode.detached,
+      String cmdQuote(String s) => '"${s.replaceAll('"', '\\"')}"';
+      final launchMarker = File(
+        '${helper.parent.path}${Platform.pathSeparator}powershell.started',
       );
+      final commandLine = [
+        'call',
+        cmdQuote(helper.path),
+        ...args.map(cmdQuote),
+        cmdQuote(launchMarker.path),
+      ].join(' ');
+      final comSpec = Platform.environment['ComSpec'] ?? 'cmd.exe';
+      try {
+        if (await launchMarker.exists()) {
+          await launchMarker.delete();
+        }
+      } catch (_) {}
+      final parameters = '/d /s /c $commandLine';
+      await _log(logFile, 'launch via ShellExecute runas: $comSpec $parameters');
+      final shellExecuteResult = _shellExecuteRunAs(
+        executable: comSpec,
+        parameters: parameters,
+        workingDirectory: helper.parent.path,
+      );
+      if (shellExecuteResult <= 32) {
+        throw WindowsZipUpdateException(
+          'UAC 提权启动更新脚本失败，ShellExecuteW result=$shellExecuteResult',
+        );
+      }
+      final started = await _waitForFile(launchMarker, const Duration(seconds: 15));
+      if (!started) {
+        throw WindowsZipUpdateException(
+          '等待 UAC 提权启动更新脚本超时，请确认已在权限提示中点击“是”',
+        );
+      }
+      await _log(logFile, 'powershell launch request accepted, helper start acknowledged');
       return;
     }
 
@@ -130,11 +157,41 @@ class WindowsZipUpdater {
     );
   }
 
+  static int _shellExecuteRunAs({
+    required String executable,
+    required String parameters,
+    required String workingDirectory,
+  }) {
+    final shell32 = DynamicLibrary.open('shell32.dll');
+    final shellExecute = shell32.lookupFunction<_ShellExecuteWNative, _ShellExecuteWDart>('ShellExecuteW');
+    final operation = 'runas'.toNativeUtf16();
+    final file = executable.toNativeUtf16();
+    final args = parameters.toNativeUtf16();
+    final directory = workingDirectory.toNativeUtf16();
+    try {
+      // SW_HIDE 隐藏提权后的 cmd 窗口；UAC 同意框仍由 Windows Shell 显示。
+      return shellExecute(nullptr, operation, file, args, directory, 0);
+    } finally {
+      calloc.free(operation);
+      calloc.free(file);
+      calloc.free(args);
+      calloc.free(directory);
+    }
+  }
+
+  static Future<bool> _waitForFile(File file, Duration timeout) async {
+    final stopwatch = Stopwatch()..start();
+    while (stopwatch.elapsed < timeout) {
+      if (await file.exists()) return true;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    return file.exists();
+  }
+
   static Future<Directory> _createStagingDir(String version) async {
     final base = await getApplicationSupportDirectory();
     final safeVersion = version.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    final dir = Directory(
-        '${base.path}${Platform.pathSeparator}updates${Platform.pathSeparator}windows-$safeVersion');
+    final dir = Directory('${base.path}${Platform.pathSeparator}updates${Platform.pathSeparator}windows-$safeVersion');
     if (await dir.exists()) {
       await dir.delete(recursive: true);
     }
@@ -166,9 +223,7 @@ class WindowsZipUpdater {
   }
 
   static String? _safeOutputPath(Directory root, String name) {
-    final normalized = name
-        .replaceAll('\\', Platform.pathSeparator)
-        .replaceAll('/', Platform.pathSeparator);
+    final normalized = name.replaceAll('\\', Platform.pathSeparator).replaceAll('/', Platform.pathSeparator);
     if (normalized.startsWith(Platform.pathSeparator) ||
         RegExp(r'^[A-Za-z]:').hasMatch(normalized) ||
         normalized.split(Platform.pathSeparator).contains('..')) {
@@ -229,8 +284,10 @@ set "STAGED_ROOT=%~2"
 set "TARGET_DIR=%~3"
 set "TARGET_EXE=%~4"
 set "STAGING_DIR=%~5"
+set "START_MARKER=%~6"
 set "LOG=$logPath"
 
+> "%START_MARKER%" echo started
 echo [%DATE% %TIME%] [bat] start pid=%PID% >> "%LOG%" 2>&1
 echo [%DATE% %TIME%] [bat] staged=%STAGED_ROOT% >> "%LOG%" 2>&1
 echo [%DATE% %TIME%] [bat] target=%TARGET_DIR% >> "%LOG%" 2>&1
@@ -273,6 +330,24 @@ exit /B 0
     return script;
   }
 }
+
+typedef _ShellExecuteWNative = IntPtr Function(
+  Pointer<Void>,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  Int32,
+);
+
+typedef _ShellExecuteWDart = int Function(
+  Pointer<Void>,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  Pointer<Utf16>,
+  int,
+);
 
 class WindowsZipUpdateException implements Exception {
   final String message;

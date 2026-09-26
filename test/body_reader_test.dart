@@ -106,4 +106,38 @@ void main() {
       expect(utf8.decode(r2.body!), 'hello world');
     });
   });
+
+  group('BodyReader close-delimited detection (issue #844)', () {
+    test('no Content-Length and no chunked -> unsupported (raw relay)', () {
+      final resp = HttpResponse(HttpStatus(200, 'OK'))..headers.contentType = 'text/plain';
+      final r = BodyReader(resp);
+      final result = r.readBody(_b('hello'));
+      expect(result.supportedParse, isFalse);
+      expect(utf8.decode(result.body!), 'hello');
+    });
+
+    test('explicit Content-Length: 0 is NOT close-delimited', () {
+      final resp = HttpResponse(HttpStatus(200, 'OK'));
+      resp.headers.contentLength = 0;
+      final r = BodyReader(resp);
+      final result = r.readBody(_b(''));
+      expect(result.supportedParse, isTrue);
+      expect(result.isDone, isTrue);
+      expect(result.body, isEmpty);
+    });
+
+    test('204 without Content-Length is NOT close-delimited', () {
+      final resp = HttpResponse(HttpStatus(204, 'No Content'));
+      final r = BodyReader(resp);
+      final result = r.readBody(_b(''));
+      expect(result.supportedParse, isTrue);
+    });
+
+    test('chunked response is parsed, not close-delimited', () {
+      final r = BodyReader(_chunkedResponse());
+      final result = r.readBody(_b('5\r\nhello\r\n0\r\n\r\n'));
+      expect(result.supportedParse, isTrue);
+      expect(result.isDone, isTrue);
+    });
+  });
 }

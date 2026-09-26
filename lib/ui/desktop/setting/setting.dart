@@ -29,6 +29,7 @@ import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/hosts.dart';
 import 'package:proxypin/ui/desktop/setting/request_block.dart';
 import 'package:proxypin/ui/desktop/setting/weak_network.dart';
+import 'package:proxypin/ui/desktop/toolbar/mcp_panel.dart';
 
 import 'filter.dart';
 
@@ -83,6 +84,7 @@ class _SettingState extends State<Setting> {
         item(localizations.breakpoint, onPressed: requestBreakpoint),
         item(localizations.weakNetwork, onPressed: showWeakNetwork),
         item(localizations.externalProxy, onPressed: setExternalProxy),
+        item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
         item(localizations.about, onPressed: showAbout),
       ],
     );

@@ -58,9 +58,12 @@ class Har {
     };
 
     har['response'] = {
+      // 没有响应不是 HTTP/1.1 回退；保留空协议和可明确判断的缺失状态。
+      '_responseAvailable': request.response != null,
+      '_originalContentEncoding': request.response?.headers.get(HttpHeaders.CONTENT_ENCODING),
       "status": request.response?.status.code ?? 0, // 响应状态码
       "statusText": request.response?.status.reasonPhrase ?? '', // 响应状态码描述
-      "httpVersion": request.response?.protocolVersion ?? 'HTTP/1.1', // HTTP协议版本
+      "httpVersion": request.response?.protocolVersion ?? '', // HTTP协议版本，未知不猜测
       "cookies": [], // 响应携带的cookie
       "headers": _headers(request.response), // 响应头
       "content": {
@@ -114,9 +117,11 @@ class Har {
         "url": request.requestUrl,
       },
       "response": {
+        '_responseAvailable': request.response != null,
+        '_originalContentEncoding': request.response?.headers.get(HttpHeaders.CONTENT_ENCODING),
         "status": request.response?.status.code ?? 0,
         "statusText": request.response?.status.reasonPhrase ?? '',
-        "httpVersion": request.response?.protocolVersion ?? 'HTTP/1.1',
+        "httpVersion": request.response?.protocolVersion ?? '',
         "cookies": [],
         "headers": _headers(request.response),
         "content": {
