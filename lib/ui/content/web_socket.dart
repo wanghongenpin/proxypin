@@ -52,7 +52,7 @@ class Websocket extends StatelessWidget {
         var previewButton = IconButton(
           tooltip: "Preview",
           onPressed: () {
-            showDialog(context: context, builder: (context) => _PreviewDialog(bytes: message.payloadData));
+            showDialog(context: context, builder: (context) => PacketPreviewDialog(bytes: message.payloadData));
           },
           icon: Icon(Icons.expand_more, color: ColorScheme.of(context).primary),
         );
@@ -114,16 +114,16 @@ class Websocket extends StatelessWidget {
   }
 }
 
-class _PreviewDialog extends StatefulWidget {
+class PacketPreviewDialog extends StatefulWidget {
   final List<int> bytes;
 
-  const _PreviewDialog({required this.bytes});
+  const PacketPreviewDialog({super.key, required this.bytes});
 
   @override
-  State<_PreviewDialog> createState() => _PreviewDialogState();
+  State<PacketPreviewDialog> createState() => _PacketPreviewDialogState();
 }
 
-class _PreviewDialogState extends State<_PreviewDialog> {
+class _PacketPreviewDialogState extends State<PacketPreviewDialog> {
   int tabIndex = 0; // 0: HEX, 1: TEXT
 
   @override

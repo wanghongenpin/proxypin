@@ -6,6 +6,7 @@ import 'package:proxypin/native/process_info.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
+import 'package:proxypin/network/mqtt/mqtt_relay_handler.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/handle/websocket_handle.dart';
 import 'package:proxypin/network/http/codec.dart';
@@ -110,7 +111,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       Channel? remoteChannel = channelContext.getAttribute(channel.id);
 
       //大body 不解析直接转发
-      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler && remoteChannel != null) {
+      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler && handler is! MqttRelayHandler && remoteChannel != null) {
         logger.w("[$channel] forward large body");
         relay(channelContext, channel, remoteChannel);
         return;
