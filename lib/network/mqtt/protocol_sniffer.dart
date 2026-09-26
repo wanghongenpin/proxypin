@@ -7,6 +7,7 @@ import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/mqtt/mqtt_relay_handler.dart';
+import 'package:proxypin/network/util/process_info.dart';
 
 enum ProtocolChoice { needMore, http, mqtt }
 
@@ -97,6 +98,9 @@ class ProtocolSniffer extends ChannelHandler<Uint8List> {
       final codec = RawCodec();
       final captureTarget = remote.copyWith(host: serverName);
       final session = MqttCaptureSession(captureTarget);
+      session.request.processInfo = channelContext.currentRequest?.processInfo ??
+          channelContext.processInfo ??
+          await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, captureTarget.domain);
       channel.dispatcher.channelHandle(
         codec,
         MqttRelayHandler(upstream, session, fromClient: true),
