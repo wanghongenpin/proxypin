@@ -25,6 +25,7 @@ import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/channel_dispatcher.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
+import 'package:proxypin/network/mqtt/protocol_sniffer.dart';
 import 'package:proxypin/network/socks/socks5.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/crts.dart';
@@ -232,6 +233,7 @@ class Server extends Network {
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : ['http/1.1'];
+        if (supportProtocols?.isEmpty == true) supportProtocols = null;
         await remoteChannel.startSecureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
@@ -239,9 +241,23 @@ class Server extends Network {
       var certificate = await CertificateManager.getCertificateContext(serviceName!);
       var selectedProtocol = remoteChannel?.selectedProtocol;
 
-      var supportedProtocols = selectedProtocol != null ? [selectedProtocol] : ['http/1.1'];
+      final offeredProtocols = TLS.supportProtocols(data);
+      List<String>? supportedProtocols = selectedProtocol != null
+          ? [selectedProtocol]
+          : (offeredProtocols?.isNotEmpty == true
+              ? (configuration.enabledHttp2
+                  ? offeredProtocols
+                  : offeredProtocols!.where((protocol) => protocol != 'h2').toList())
+              : ['http/1.1']);
+      if (supportedProtocols?.isEmpty == true) supportedProtocols = null;
 
-      certificate.setAlpnProtocols(supportedProtocols, true);
+      if (supportedProtocols != null) certificate.setAlpnProtocols(supportedProtocols, true);
+
+      final httpDecoder = channel.dispatcher.decoder;
+      final httpEncoder = channel.dispatcher.encoder;
+      final httpHandler = channel.dispatcher.handler;
+      channel.dispatcher.channelHandle(RawCodec(),
+          ProtocolSniffer(hostAndPort, serviceName, httpDecoder, httpEncoder, httpHandler));
 
       //处理客户端ssl握手
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,

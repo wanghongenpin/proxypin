@@ -136,13 +136,15 @@ class RequestRowState extends State<RequestRow> {
   Widget build(BuildContext context) {
     String url = widget.displayDomain ? request.requestUrl : request.path;
     var operationName = request.graphqlOperationName;
-    var title = Strings.autoLineString('${request.method.name} $url');
+    var title = request.protocolVersion == 'MQTT' ? 'MQTT $url' : Strings.autoLineString('${request.method.name} $url');
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
     var contentType = response?.contentType.name.toUpperCase() ?? '';
     var packagesSize = getPackagesSize(request, response);
 
-    var subTitle = '$time - [${response?.status.code ?? ''}] $contentType $packagesSize ${response?.costTime() ?? ''}';
+    var subTitle = request.protocolVersion == 'MQTT'
+        ? '$time - ${request.messages.length} packets'
+        : '$time - [${response?.status.code ?? ''}] $contentType $packagesSize ${response?.costTime() ?? ''}';
 
     var highlightColor = color(url);
 
@@ -169,7 +171,9 @@ class RequestRowState extends State<RequestRow> {
                 TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
                 TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
               ])),
-          trailing: getIcon(response, color: highlightColor),
+          trailing: request.protocolVersion == 'MQTT'
+              ? const Icon(Icons.hub_outlined, color: Colors.teal)
+              : getIcon(response, color: highlightColor),
           contentPadding:
               Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
           onTap: () {
