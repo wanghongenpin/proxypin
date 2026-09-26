@@ -20,6 +20,8 @@ as text or hex. These are display records, not HTTP requests sent through
 interceptors; MQTT packets do not always have a one-to-one request/response
 relationship. The existing history/export system may include the raw packet
 bytes, which can contain credentials or private content.
+The connection row uses ProxyPin's existing socket-to-process lookup, so an
+identified Android app gets its normal icon in MQTT captures too.
 
 This change does not alter certificate validation in client apps. The client
 must accept ProxyPin's generated certificate before its decrypted MQTT bytes
