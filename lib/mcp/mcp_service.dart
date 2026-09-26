@@ -19,12 +19,14 @@ import 'dart:math';
 
 import 'package:proxypin/mcp/capture/cert_status.dart';
 import 'package:proxypin/mcp/capture/flow_store.dart';
+import 'package:proxypin/mcp/capture/history_provider.dart';
 import 'package:proxypin/mcp/protocol/mcp_actions.dart';
 import 'package:proxypin/mcp/protocol/mcp_server.dart';
 import 'package:proxypin/mcp/transport/mcp_http_server.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/configuration.dart';
 
 /// MCP 服务编排：挂载抓包索引、启停本地 HTTP 传输。
@@ -48,6 +50,11 @@ class McpService {
   McpServer? _mcp;
   McpHttpServer? _http;
   ProxyServer? _attachedServer;
+
+  /// 桥接 HistoryStorage 的历史数据源（lazy，与 FlowStore 同生命周期）
+  late final HistoryProvider _historyProvider = _HistoryStorageBridge();
+
+  FlowStore _createStore() => FlowStore(historyProvider: _historyProvider);
 
   /// 串行化 start/stop，避免自动启动与手动开关并发时重复 bind 端口
   Future<void>? _transitionLock;
@@ -81,7 +88,7 @@ class McpService {
 
   /// 注册抓包索引到代理服务（幂等）。[existing] 用于启用时一次性回填已抓到的请求。
   void attach(ProxyServer server, {Iterable<HttpRequest>? existing}) {
-    _store ??= FlowStore();
+    _store ??= _createStore();
     _attachedServer = server;
     if (!server.listeners.contains(_store)) {
       server.addListener(_store!);
@@ -101,7 +108,7 @@ class McpService {
     if (proxyServer != null) {
       attach(proxyServer);
     }
-    _store ??= FlowStore();
+    _store ??= _createStore();
 
     var actions = McpActions(
       store: _store!,
@@ -154,5 +161,42 @@ class McpService {
       _attachedServer?.removeListener(_store!);
       _store!.clear();
     }
+  }
+}
+
+/// 桥接 [HistoryStorage] 为 [HistoryProvider]。
+///
+/// 放在编排层，避免 mcp 核心直接依赖历史存储及其平台插件。请求列表的懒加载/缓存
+/// 由 [HistoryStorage.getRequests] 自身保证（缓存在 HistoryItem.requests）。
+class _HistoryStorageBridge implements HistoryProvider {
+  @override
+  Future<List<HistoryMeta>> list() async {
+    var storage = await HistoryStorage.instance;
+    var histories = storage.histories;
+    return [
+      for (var history in histories)
+        HistoryMeta(
+          id: history.stableId,
+          name: history.name,
+          requestCount: history.requestLength,
+          fileSize: history.fileSize,
+          createTimeMs: history.createTime.millisecondsSinceEpoch,
+        )
+    ];
+  }
+
+  @override
+  Future<List<HttpRequest>> requests(int id) async {
+    var storage = await HistoryStorage.instance;
+    HistoryItem? history;
+    for (var item in storage.histories) {
+      if (item.stableId == id) {
+        history = item;
+        break;
+      }
+    }
+    if (history == null) throw ArgumentError('history not found: $id');
+    // 不写入 HistoryItem 永久缓存：报文只由 FlowStore 的 LRU 有界持有
+    return await storage.readRequests(history);
   }
 }

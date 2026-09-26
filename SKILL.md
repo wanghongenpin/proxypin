@@ -6,13 +6,13 @@ ProxyPin's MCP service exposes captured traffic to AI assistants (Claude Code, C
 
 - **HTTP** (the user-facing transport): the desktop app listens on `http://127.0.0.1:9127/mcp` (loopback, no auth). Register it with e.g. `claude mcp add proxypin_desktop -s user --transport http "http://127.0.0.1:9127/mcp"`. If port 9127 is already in use the app picks a random free port — use the URL shown in the settings panel rather than hand-copying. No extra bridge process is started, so launching the AI client does not launch ProxyPin.
 
-Prerequisites: desktop ProxyPin is running, the proxy is capturing, and the MCP service is enabled. Tools can only read **already-captured** traffic — ask the user to trigger the request first, then call a tool.
+Prerequisites: desktop ProxyPin is running and the MCP service is enabled. By default tools read the **live capture buffer** (already-captured traffic — ask the user to trigger the request first), but they can also read **saved history sessions** (the History tab): call `list_histories`, then pass `history_id`. The proxy itself does not need to be capturing to analyze a saved session.
 
 ## Tool surface
 
 The service always exposes the full tool set (like Proxyman — there is no read-only mode):
 
-- **Read-only tools**: `get_proxy_status`, `list_flows`, `search_flows`, `get_flow_detail`, `get_flow_body`, `get_flow_messages`, `get_ssl_proxying_list`, `export_flow_curl`.
+- **Read-only tools**: `get_proxy_status`, `list_histories`, `list_flows`, `search_flows`, `get_flow_detail`, `get_flow_body`, `get_flow_messages`, `get_ssl_proxying_list`, `export_flow_curl`.
 - **Write tools**: rule writes (breakpoint / block / map-local / rewrite / script), host filter, replay, system proxy, favorites, clear session, code generation.
 
 Confirm reachability with `get_proxy_status` first; then get the rule index from `list_rules` (every `remove_*` / `update_*` tool takes `index`).
@@ -20,6 +20,7 @@ Confirm reachability with `get_proxy_status` first; then get the rule index from
 ## Recommended workflow
 
 1. **Overview**: `list_flows(limit: 20)` for the latest traffic; for aggregates (host/method/status) pull a batch once and count locally — don't call `get_flow_detail` per flow.
+   - **Saved history**: to analyze an earlier session, call `list_histories` to get its `id`, then pass `history_id` to `list_flows` / `search_flows` / `get_flow_detail` / `get_flow_body` / `export_flow_curl` / `replay_flow` / `generate_code`. The same flow `id` is used; `history_id` only selects the session. WebSocket frames are not saved in history (`get_flow_messages` returns `available:false`).
 2. **Locate**:
    - Filter by URL/host/method/status: `list_flows(host:, method:, keyword:, status_from:, status_to:)` (`keyword` matches the full URL; `host` is a substring).
    - **Search inside bodies**: `search_flows(keyword: "error 500")` — only searches bodies; binary and >2MB bodies are skipped.
@@ -79,5 +80,6 @@ Semantics: when the whitelist is enabled, only whitelisted hosts are captured; w
 ## Boundaries
 
 - MCP operates only on rules ProxyPin supports: breakpoints, blocks, map-local, rewrites/redirects, JS scripts. Don't invent anything.
-- The capture cache keeps the most recent 1000 flows; older ones are dropped. Flows expire — if `get_flow_detail` returns `Flow not found`, ask the user to re-trigger the request.
+- The **live** capture buffer keeps the most recent 1000 flows; older ones are dropped. If `get_flow_detail` on the live buffer returns `Flow not found`, either ask the user to re-trigger the request or look in `list_histories` — captured sessions are persisted and do not expire that way.
+- `history_id` is a stable id (the session's filename timestamp), not a list index. The in-memory history cache is a small LRU: evicted sessions are re-read from disk automatically, so a flow "not found" from history only happens if the session file itself was deleted.
 - Tool results are JSON text — `jsonDecode` before reading fields.
