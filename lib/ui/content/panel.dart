@@ -23,6 +23,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/web_socket.dart';
+import 'package:proxypin/ui/content/mqtt.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 
@@ -87,13 +88,9 @@ class NetworkTabController extends StatefulWidget {
   static NetworkTabController? get current => currentKey?.currentWidget as NetworkTabController?;
 }
 
-class NetworkTabState extends State<NetworkTabController> with SingleTickerProviderStateMixin {
-  final tabs = [
-    'General',
-    'Request',
-    'Response',
-    'Cookies',
-  ];
+class NetworkTabState extends State<NetworkTabController> with TickerProviderStateMixin {
+  late List<String> tabs;
+  late bool _mqttTabs;
 
   final TextStyle textStyle = const TextStyle(fontSize: 14);
   late TabController _tabController;
@@ -102,14 +99,17 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
   final GlobalKey<HttpBodyState> responseHttpBodyKey = GlobalKey<HttpBodyState>();
 
   void changeState() {
+    final mqtt = widget.request.get()?.protocolVersion == 'MQTT';
+    if (mqtt != _mqttTabs) {
+      _tabController.dispose();
+      _configureTabs(mqtt);
+    }
     setState(() {});
   }
 
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
-
-  @override
-  void initState() {
-    super.initState();
+  void _configureTabs(bool mqtt) {
+    _mqttTabs = mqtt;
+    tabs = mqtt ? ['General', 'MQTT'] : ['General', 'Request', 'Response', 'Cookies'];
     _tabController = TabController(length: tabs.length, vsync: this);
     _tabController.addListener(() {
       if (_tabController.index != 1) {
@@ -119,6 +119,14 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
         responseHttpBodyKey.currentState?.hideSearchOverlay();
       }
     });
+  }
+
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  @override
+  void initState() {
+    super.initState();
+    _configureTabs(widget.request.get()?.protocolVersion == 'MQTT');
 
     if (widget.windowId != null) {
       HardwareKeyboard.instance.addHandler(onKeyEvent);
@@ -145,10 +153,13 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
 
   @override
   Widget build(BuildContext context) {
+    bool isMqtt = widget.request.get()?.protocolVersion == 'MQTT';
     bool isWebSocket = widget.request.get()?.isWebSocket == true;
     bool isSse = widget.response.get()?.headers.contentType.toLowerCase().startsWith('text/event-stream') == true;
     bool isStreamMessages = isWebSocket || isSse;
-    if (isSse) {
+    if (isMqtt) {
+      tabs[tabs.length - 1] = 'MQTT';
+    } else if (isSse) {
       tabs[tabs.length - 1] = "SSE";
     } else if (isWebSocket) {
       tabs[tabs.length - 1] = "WebSocket";
@@ -187,15 +198,20 @@ class NetworkTabState extends State<NetworkTabController> with SingleTickerProvi
           child: TabBarView(
             physics: Platforms.isDesktop() ? const NeverScrollableScrollPhysics() : null, //桌面禁止滑动
             controller: _tabController,
-            children: [
-              SelectionArea(child: General(widget.request, widget.response)),
-              KeepAliveWrapper(child: request()),
-              KeepAliveWrapper(child: response()),
-              SelectionArea(
-                  child: isStreamMessages
-                      ? Websocket(widget.request, widget.response)
-                      : Cookies(widget.request, widget.response)),
-            ],
+            children: isMqtt
+                ? [
+                    SelectionArea(child: General(widget.request, widget.response)),
+                    SelectionArea(child: MqttMessages(widget.request)),
+                  ]
+                : [
+                    SelectionArea(child: General(widget.request, widget.response)),
+                    KeepAliveWrapper(child: request()),
+                    KeepAliveWrapper(child: response()),
+                    SelectionArea(
+                        child: isStreamMessages
+                            ? Websocket(widget.request, widget.response)
+                            : Cookies(widget.request, widget.response)),
+                  ],
           )),
     );
   }
@@ -308,6 +324,22 @@ class General extends StatelessWidget {
     try {
       requestUrl = Uri.decodeFull(request.requestUrl);
     } catch (_) {}
+    if (request.protocolVersion == 'MQTT') {
+      return ListView(children: [
+        expansionTile('General', [
+          const SizedBox(height: 10),
+          RowWidget('Connection', requestUrl),
+          const SizedBox(height: 15),
+          RowWidget('Protocol', 'MQTT over TLS'),
+          const SizedBox(height: 15),
+          RowWidget('Packets', request.messages.length.toString()),
+          const SizedBox(height: 15),
+          RowWidget('Start Time', request.requestTime.formatMillisecond()),
+          const SizedBox(height: 15),
+          if (request.processInfo != null) RowWidget('App', request.processInfo!.name),
+        ])
+      ]);
+    }
     var content = [
       const SizedBox(height: 10),
       RowWidget("Request URL", requestUrl),
