@@ -300,9 +300,15 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
     // log.i("[${clientChannel.id}] Response $msg");
 
     HttpResponse? response = msg;
+    //请求上下文缺失（如 h2 响应早于请求关联）时直接透传，不走拦截器
+    if (request == null) {
+      listener?.onResponse(channelContext, msg);
+      await clientChannel.write(channelContext, msg);
+      return;
+    }
     //拦截器
     for (var interceptor in interceptors) {
-      response = await interceptor.onResponse(request!, response!);
+      response = await interceptor.onResponse(request, response!);
       if (response == null) {
         logger.d("[${clientChannel.id}] Interceptor returned null, stopping processing");
         // Interceptor returned null, stopping processing

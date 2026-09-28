@@ -404,7 +404,8 @@ class DomainRequests extends StatefulWidget {
   final MultiSelectController selectionController;
 
   DomainRequests(this.domain,
-      {this.selected = false,
+      {GlobalKey? key,
+      this.selected = false,
       this.onDelete,
       this.onExportHar,
       required this.proxyServer,
@@ -412,7 +413,7 @@ class DomainRequests extends StatefulWidget {
       required this.selectionHandlers,
       this.trailing,
       required this.selectionController})
-      : super(key: GlobalKey<_DomainRequestsState>());
+      : super(key: key ?? GlobalKey<_DomainRequestsState>());
 
   ///添加请求
   void addRequest(String? requestId, HttpRequest request, bool sortDesc) {
@@ -469,6 +470,7 @@ class DomainRequests extends StatefulWidget {
   DomainRequests copy({Iterable<RequestWidget>? body, bool? selected}) {
     var state = key as GlobalKey<_DomainRequestsState>;
     var headerBody = DomainRequests(domain,
+        key: state,
         trailing: trailing,
         selected: selected ?? state.currentState?.selected == true,
         onDelete: onDelete,
