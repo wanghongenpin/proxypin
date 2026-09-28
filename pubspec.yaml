@@ -22,6 +22,7 @@ dependencies:
   desktop_multi_window: ^0.3.1
   path_provider: ^2.1.5
   file_picker: ^13.1.0
+  mime: ^2.1.0
   proxy_manager: ^0.0.3
   permission_handler: ^12.0.1
   flutter_toastr: ^1.0.3
