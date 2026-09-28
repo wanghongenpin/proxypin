@@ -10,7 +10,9 @@ import '../../utils/aes.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 
 class AesPage extends StatefulWidget {
-  const AesPage({super.key});
+  final String? text;
+
+  const AesPage({super.key, this.text});
 
   @override
   State<AesPage> createState() => _AesWidgetState();
@@ -28,6 +30,12 @@ class _AesWidgetState extends State<AesPage> {
   final List<String> modes = ['ECB', 'CBC'];
   final List<String> paddingModes = ['PKCS7', 'ZeroPadding'];
   final List<int> keyLengths = [128, 192, 256];
+
+  @override
+  void initState() {
+    super.initState();
+    inputController.text = widget.text ?? '';
+  }
 
   void encryptText() {
     try {

@@ -153,7 +153,7 @@ Widget multiWindow(String windowId, Map<dynamic, dynamic> argument) {
   }
 
   if (argument['name'] == 'AesPage') {
-    return AesPage();
+    return AesPage(text: argument['text']);
   }
 
   //脚本日志
@@ -372,6 +372,26 @@ Future<void> encodeWindow(EncoderType type, BuildContext context, [String? text]
   if (!context.mounted) return;
   await window.setTitle(AppLocalizations.of(context)!.encode);
   await window.setSize(Size(900 * ratio, 600 * ratio));
+  await window.center();
+  await window.show();
+}
+
+///打开 AES 窗口
+Future<void> openAesWindow(BuildContext context, String text) async {
+  if (Platforms.isMobile()) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => AesPage(text: text)));
+    return;
+  }
+
+  var ratio = 1.0;
+  if (Platform.isWindows) {
+    ratio = WindowManager.instance.getDevicePixelRatio();
+  }
+  final window = await DesktopMultiWindow.createWindow(jsonEncode(
+    {'name': 'AesPage', 'text': text},
+  ));
+  await window.setTitle('AES');
+  await window.setSize(Size(700 * ratio, 672 * ratio));
   await window.center();
   await window.show();
 }

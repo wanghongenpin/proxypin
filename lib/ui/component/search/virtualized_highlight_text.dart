@@ -12,7 +12,6 @@ class VirtualizedHighlightText extends StatefulWidget {
   final String text;
   final String? language;
   final TextStyle? style;
-  final EditableTextContextMenuBuilder? contextMenuBuilder;
   final SearchTextController searchController;
   final ScrollController? scrollController;
   final double? height;
@@ -23,7 +22,6 @@ class VirtualizedHighlightText extends StatefulWidget {
     required this.text,
     this.language,
     this.style,
-    this.contextMenuBuilder,
     required this.searchController,
     this.scrollController,
     this.height,
@@ -43,6 +41,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   String _lastSearchSignature = '';
   bool _searchUpdateScheduled = false;
   int _scrollRequestId = 0;
+  String _selectedText = '';
 
   // 缓存机制，避免重复计算
   HighlightTextDocument? _cachedDocument;
@@ -144,6 +143,9 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       width: double.infinity,
       height: viewHeight,
       child: SelectionArea(
+        onSelectionChanged: (content) => _selectedText = content?.plainText ?? '',
+        contextMenuBuilder: (context, state) =>
+            selectableRegionContextMenu(context, state, _selectedText),
         child: ScrollablePositionedList.builder(
           key: const ValueKey('virtualized-highlight-text'),
           physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),

@@ -147,6 +147,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
         text: text,
         language: 'http',
         searchController: SearchTextController(),
+        contextMenuBuilder: contextMenu,
       ),
     ];
   }

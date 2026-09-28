@@ -53,6 +53,10 @@ import '../component/search/search_controller.dart';
 import '../component/search/virtualized_highlight_text.dart';
 import '../toolbox/encoder.dart';
 
+/// body 选区菜单：整个文本即全部内容，复制全部用“全选”即可，故不提供“复制值”
+Widget bodyContextMenu(BuildContext context, EditableTextState editableTextState) =>
+    contextMenu(context, editableTextState, copyValue: false);
+
 ///请求响应的body部分
 ///@Author wanghongen
 class HttpBodyWidget extends StatefulWidget {
@@ -739,7 +743,7 @@ class _BodyState extends State<_Body> {
       return HighlightTextWidget(
           text: _formatTextBodyIsolate({'type': type.name, 'body': message.getBodyString()}),
           searchController: widget.searchController,
-          contextMenuBuilder: contextMenu);
+          contextMenuBuilder: bodyContextMenu);
     }
 
     return futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
@@ -751,7 +755,8 @@ class _BodyState extends State<_Body> {
               indent: Platforms.isDesktop() ? '    ' : '  ',
               colorTheme: ColorTheme.of(context),
               searchController: widget.searchController,
-              scrollController: widget.scrollController);
+              scrollController: widget.scrollController,
+              contextMenuBuilder: bodyContextMenu);
         }
 
         if (type == ViewType.json) {
@@ -765,7 +770,7 @@ class _BodyState extends State<_Body> {
       }
 
       return HighlightTextWidget(
-          text: body, searchController: widget.searchController, contextMenuBuilder: contextMenu);
+          text: body, searchController: widget.searchController, contextMenuBuilder: bodyContextMenu);
     });
   }
 
@@ -806,7 +811,6 @@ class _BodyState extends State<_Body> {
           return VirtualizedHighlightText(
             text: formattedText,
             language: language,
-            contextMenuBuilder: contextMenu,
             searchController: widget.searchController,
             scrollController: widget.scrollController,
           );
@@ -816,7 +820,7 @@ class _BodyState extends State<_Body> {
             language: language,
             text: formattedText,
             searchController: widget.searchController,
-            contextMenuBuilder: contextMenu);
+            contextMenuBuilder: bodyContextMenu);
       },
     );
   }
@@ -910,7 +914,7 @@ class HexViewer extends StatelessWidget {
         style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
         text: _formatHex(data, bytesPerRow),
         searchController: searchController,
-        contextMenuBuilder: contextMenu);
+        contextMenuBuilder: bodyContextMenu);
   }
 
   String _formatHex(Uint8List data, int bytesPerRow) {

@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/font.dart';
 import 'package:scrollable_positioned_list_nic/scrollable_positioned_list_nic.dart';
 
@@ -31,6 +32,7 @@ class JsonText extends StatefulWidget {
   final String indent;
   final ScrollController? scrollController;
   final SearchTextController? searchController;
+  final EditableTextContextMenuBuilder? contextMenuBuilder;
 
   const JsonText({
     super.key,
@@ -39,6 +41,7 @@ class JsonText extends StatefulWidget {
     required this.colorTheme,
     this.scrollController,
     this.searchController,
+    this.contextMenuBuilder,
   });
 
   @override
@@ -49,6 +52,7 @@ class _JsonTextState extends State<JsonText> {
   ScrollController? trackingScrollController;
   SearchTextController? searchController;
   final ItemScrollController itemScrollController = ItemScrollController();
+  String _selectedText = '';
 
   @override
   void initState() {
@@ -88,13 +92,17 @@ class _JsonTextState extends State<JsonText> {
     });
 
     if (textList.length < 1000) {
-      return SelectableText.rich(TextSpan(children: textList), showCursor: true);
+      return SelectableText.rich(TextSpan(children: textList),
+          showCursor: true, contextMenuBuilder: widget.contextMenuBuilder);
     } else {
       chunks = chunks ?? splitTextSpans(textList, 500);
       return SizedBox(
           width: double.infinity,
           height: MediaQuery.of(context).size.height - 200,
           child: SelectionArea(
+              onSelectionChanged: (content) => _selectedText = content?.plainText ?? '',
+              contextMenuBuilder: (context, state) =>
+                  selectableRegionContextMenu(context, state, _selectedText),
               child: ScrollablePositionedList.builder(
             physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
             scrollController: Platforms.isDesktop() ? null : trackingScroll(),
