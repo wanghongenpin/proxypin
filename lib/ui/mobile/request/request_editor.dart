@@ -649,6 +649,8 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
   Widget _bodyToolbar() {
     final isCN = localizations.localeName == 'zh';
     final color = Theme.of(context).colorScheme.primary;
+    // 窄屏（小屏手机）按钮只显示图标，避免工具栏溢出
+    final narrow = MediaQuery.of(context).size.width < 380;
     // NONE 无 body；FORM-DATA/FORM-URL 由表单构建器管理，纯文本工具均不适用
     final textToolsDisabled = _bodyLanguage == _BodyLanguage.none ||
         _bodyLanguage == _BodyLanguage.formData ||
@@ -680,20 +682,38 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
           // FORM-DATA/FORM-URL：添加入口放工具栏（添加文本；multipart 另有选择文件）
           if (_bodyLanguage == _BodyLanguage.formData || _bodyLanguage == _BodyLanguage.formUrl) ...[
             const Spacer(),
-            TextButton.icon(
-              onPressed: () => formEditorKey.currentState?.addTextField(),
-              icon: const Icon(Icons.text_fields, size: 16),
-              // 中文"添加文本"不空格，英文"Add Text"需空格
-              label: Text(isCN ? '${localizations.add}${localizations.text}'
-                  : '${localizations.add} ${localizations.text}',
-                  style: const TextStyle(fontSize: 12.5)),
-            ),
+            // 中文"添加文本"不空格，英文"Add Text"需空格
+            () {
+              final addTextLabel = isCN ? '${localizations.add}${localizations.text}'
+                  : '${localizations.add} ${localizations.text}';
+              return narrow
+                  ? IconButton(
+                      onPressed: () => formEditorKey.currentState?.addTextField(),
+                      tooltip: addTextLabel,
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.text_fields),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => formEditorKey.currentState?.addTextField(),
+                      icon: const Icon(Icons.text_fields, size: 16),
+                      label: Text(addTextLabel, style: const TextStyle(fontSize: 12.5)),
+                    );
+            }(),
             if (_bodyLanguage == _BodyLanguage.formData)
-              TextButton.icon(
-                onPressed: () => formEditorKey.currentState?.addFiles(),
-                icon: const Icon(Icons.upload_file, size: 16),
-                label: Text(localizations.selectFile, style: const TextStyle(fontSize: 12.5)),
-              ),
+              narrow
+                  ? IconButton(
+                      onPressed: () => formEditorKey.currentState?.addFiles(),
+                      tooltip: localizations.selectFile,
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.upload_file),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => formEditorKey.currentState?.addFiles(),
+                      icon: const Icon(Icons.upload_file, size: 16),
+                      label: Text(localizations.selectFile, style: const TextStyle(fontSize: 12.5)),
+                    ),
           ],
           // 其他文本类型：换行/美化/复制
           if (!textToolsDisabled) ...[

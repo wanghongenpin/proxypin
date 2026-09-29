@@ -16,7 +16,6 @@
 
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
-import 'package:proxypin/utils/lang.dart';
 import 'dart:convert';
 
 /// 复制为 fetch 请求
@@ -189,100 +188,236 @@ class Curl {
   static const String _dataRaw = "--data-raw";
   static const String _d = "-d";
 
+  /// 这些选项会带一个值，但当前不实现其功能；
+  /// 仅消费掉其值，避免被误当成 URL。
+  static const List<String> _ignoredValueOptions = [
+    // 长选项
+    '--max-time', '--connect-timeout', '--retry', '--limit-rate', '--interface',
+    '--local-port', '--resolve', '--dns-ipv4-addr', '--dns-ipv6-addr',
+    '--doh-url', '--cacert', '--cert', '--key', '--ciphers', '--proxy',
+    '--proxy-user', '--unix-socket', '--output',
+    '--upload-file', '--range', '--time-cond', '--form-string', '--form',
+    '--etag-save', '--etag-compare', '--aws-sigv4', '--netrc-file',
+    '--request-target',
+    // 短选项
+    '-m', '-y', '-F', '-T', '-o', '-r', '-z', '-x', '-C', '-K',
+  ];
+
   static HttpRequest parse(String curlCommand) {
     HttpMethod method = HttpMethod.get;
     HttpHeaders headers = HttpHeaders();
 
     String? url;
-    String? data;
+    final List<String> dataList = [];
+    // -G/--get：数据拼到 URL query，而不是作为 body，方法保持 GET
+    bool httpGet = false;
+    // 是否通过 -X/--request 或 -I 显式指定了方法
+    bool methodExplicit = false;
 
-    // 去除 "curl" 关键字并去除首尾空格
-    String trimmedCommand = curlCommand.replaceFirst('curl', '').trim();
-
-    List<String> parts = [];
-    String currentPart = '';
-    bool inQuotes = false;
-    bool inBody = false;
-
-    // 处理可能包含引号的参数
-    for (int i = 0; i < trimmedCommand.length; i++) {
-      String char = trimmedCommand[i];
-      if (char == '"' || char == "'") {
-        if (inBody) {
-          currentPart += char;
-          continue;
-        }
-
-        // 如果当前字符是引号，切换 inQuotes 状态
-        inQuotes = !inQuotes;
-      } else if (char == ' ' && !inQuotes) {
-        if (inBody && currentPart.length > 2) {
-          // 如果当前部分是数据，去掉前后的引号
-          currentPart = currentPart.substring(1, currentPart.length - 1);
-        }
-
-        if (currentPart == '-d' || currentPart == '--data' || currentPart == '--data-raw') {
-          inBody = true;
-        } else {
-          inBody = false;
-        }
-
-        parts.add(currentPart);
-        currentPart = '';
-      } else {
-        currentPart += char;
-      }
-    }
-
-    if (currentPart.isNotEmpty) {
-      if (inBody && currentPart.length > 2) {
-        // 如果当前部分是数据，去掉前后的引号
-        currentPart = currentPart.substring(1, currentPart.length - 1);
-      }
-
-      parts.add(currentPart);
+    List<String> parts = _tokenize(curlCommand);
+    if (parts.isNotEmpty && parts.first.toLowerCase() == 'curl') {
+      parts.removeAt(0);
     }
 
     String protocolVersion = "HTTP/1.1";
 
-    // 遍历参数列表进行解析
-    for (int i = 0; i < parts.length; i++) {
-      String part = parts[i];
-      if (part == _x || part == _request) {
-        // 解析请求方法
-        if (i + 1 < parts.length) {
-          method = HttpMethod.valueOf(parts[++i]);
-        }
-      } else if (part == _h || part == _header) {
-        // 解析请求头
-        if (i + 1 < parts.length) {
-          String headerStr = parts[++i];
-          List<String> headerParts = headerStr.splitFirst(':'.codeUnits.first);
-          if (headerParts.length == 2) {
-            headers.add(headerParts[0], headerParts[1]);
-          }
-        }
-      } else if (part == _d || part == _dataRaw || part == _data) {
-        // 解析请求数据
-        if (i + 1 < parts.length) {
-          data = parts[++i];
-        }
-      } else if (url == null && !part.startsWith('-') && part.contains("http")) {
-        // 解析请求 URL
-        url = part.replaceAll("'", "").replaceAll('"', '');
-      } else if ("--http2" == part) {
-        // protocolVersion = "HTTP2";
+    int i = 0;
+
+    // 读取选项的值，支持 "-X POST"、"-XPOST"、"--request POST"、"--request=POST" 四种写法
+    String? optionValue(String token, List<String> longNames, List<String> shortNames) {
+      for (final name in longNames) {
+        if (token == name) return i + 1 < parts.length ? parts[++i] : null;
+        if (token.startsWith('$name=')) return token.substring(name.length + 1);
       }
+      for (final name in shortNames) {
+        if (token == name) return i + 1 < parts.length ? parts[++i] : null;
+        if (token.startsWith(name) && token.length > name.length) return token.substring(name.length);
+      }
+      return null;
     }
 
-    if (data?.isNotEmpty == true && method == HttpMethod.get) {
-      method = HttpMethod.post;
+    // 遍历参数列表进行解析
+    while (i < parts.length) {
+      String part = parts[i];
+      String? value;
+
+      if ((value = optionValue(part, const [_request], const [_x])) != null) {
+        method = HttpMethod.valueOf(value!);
+        methodExplicit = true;
+      } else if ((value = optionValue(part, const [_header], const [_h])) != null) {
+        _addHeader(headers, value!);
+      } else if ((value = optionValue(
+          part, const [_data, _dataRaw, '--data-binary', '--data-ascii', '--data-urlencode'], const [_d])) != null) {
+        dataList.add(value!);
+      } else if ((value = optionValue(part, const ['--user'], const ['-u'])) != null) {
+        // basic 认证
+        final credential = base64Encode(utf8.encode(value!));
+        headers.add('Authorization', 'Basic $credential');
+      } else if ((value = optionValue(part, const ['--cookie'], const ['-b'])) != null) {
+        headers.add(HttpHeaders.Cookie, value!);
+      } else if ((value = optionValue(part, const ['--referer'], const ['-e'])) != null) {
+        headers.add('Referer', value!);
+      } else if ((value = optionValue(part, const ['--user-agent'], const ['-A'])) != null) {
+        headers.add('User-Agent', value!);
+      } else if ((value = optionValue(part, const ['--url'], const [])) != null) {
+        url = value;
+      } else if ((value = optionValue(part, const ['--json'], const [])) != null) {
+        // --json：body 用 JSON，并设置 JSON 的 Content-Type / Accept
+        dataList.add(value!);
+        headers.add('Content-Type', 'application/json');
+        headers.add('Accept', 'application/json');
+      } else if (part == '-I' || part == '--head') {
+        method = HttpMethod.head;
+        methodExplicit = true;
+      } else if (part == '-G' || part == '--get') {
+        httpGet = true;
+      } else if (part == '-0' || part == '--http1.0') {
+        protocolVersion = "HTTP/1.0";
+      } else if (part == '--http1.1') {
+        protocolVersion = "HTTP/1.1";
+      } else if (part == '--http2') {
+        protocolVersion = "HTTP/2";
+      } else if (_isIgnoredValueOption(part)) {
+        // 识别但不实现的带值选项：消费掉其值，避免漏成 URL
+        if (!_optionHasInlineValue(part) && i + 1 < parts.length) {
+          i++;
+        }
+      } else if (part.startsWith('-')) {
+        // 其它无值选项（-L/--location、--compressed、-k/--insecure、-s、-v 等）忽略
+      } else if (url == null) {
+        // 位置参数视为 URL
+        url = part;
+      }
+      i++;
+    }
+
+    String? data = dataList.isEmpty ? null : dataList.join('&');
+    bool hasData = data?.isNotEmpty == true;
+
+    if (hasData) {
+      if (httpGet) {
+        // -G：数据拼到 query 串，方法保持（默认 GET，若 -X 显式指定则遵从 -X）
+        url = _appendQuery(url ?? '', data!);
+        data = null;
+        hasData = false;
+      } else if (!methodExplicit && method == HttpMethod.get) {
+        // 无 -G、未显式指定方法却带 body：curl 默认转 POST
+        method = HttpMethod.post;
+      }
     }
 
     HttpRequest request = HttpRequest(method, url ?? '', protocolVersion: protocolVersion);
     request.headers.addAll(headers);
     request.body = data?.codeUnits;
     return request;
+  }
+
+  /// 把查询参数追加到 URL，自动判断用 '?' 还是 '&'
+  static String _appendQuery(String url, String query) {
+    if (query.isEmpty) return url;
+    final sep = url.contains('?') ? (url.endsWith('?') || url.endsWith('&') ? '' : '&') : '?';
+    return '$url$sep$query';
+  }
+
+  /// 判断 part 是否为「识别但不实现」的带值选项（含 --opt=v、-mv 连写形式）
+  static bool _isIgnoredValueOption(String part) {
+    final eq = part.indexOf('=');
+    final name = eq >= 0 ? part.substring(0, eq) : part;
+    if (_ignoredValueOptions.contains(name)) return true;
+    // 短选项连写，如 -m30
+    if (!name.startsWith('--') && name.length > 2) {
+      return _ignoredValueOptions.contains(name.substring(0, 2));
+    }
+    return false;
+  }
+
+  /// 值是否已内联在 token 中（--opt=v 或短选项 -mv）；否则值是下一个独立 token
+  static bool _optionHasInlineValue(String part) {
+    if (part.contains('=')) return true;
+    return !part.startsWith('--') && part.length > 2;
+  }
+
+  /// 解析单个 header 字符串 "Name: value"，自动去除 value 前导空白
+  static void _addHeader(HttpHeaders headers, String headerStr) {
+    int idx = headerStr.indexOf(':');
+    if (idx <= 0) return;
+    String name = headerStr.substring(0, idx).trim();
+    String value = headerStr.substring(idx + 1).trim();
+    headers.add(name, value);
+  }
+
+  /// 类 shell 分词：正确处理反斜杠续行、单/双引号、转义字符
+  static List<String> _tokenize(String command) {
+    // 去除行尾反斜杠续行 "\" + 换行
+    final input = command.replaceAll(RegExp(r'\\\r?\n'), ' ');
+
+    final List<String> tokens = [];
+    final StringBuffer current = StringBuffer();
+    bool hasToken = false;
+    // 0=无引号 1=单引号 2=双引号
+    int quote = 0;
+
+    void finishToken() {
+      if (hasToken) {
+        tokens.add(current.toString());
+        current.clear();
+        hasToken = false;
+      }
+    }
+
+    for (int i = 0; i < input.length; i++) {
+      final char = input[i];
+
+      if (quote == 1) {
+        // 单引号内全部字面
+        if (char == "'") {
+          quote = 0;
+        } else {
+          current.write(char);
+          hasToken = true;
+        }
+        continue;
+      }
+
+      if (quote == 2) {
+        // 双引号内，仅 $ ` " \ 换行 可被反斜杠转义
+        if (char == '"') {
+          quote = 0;
+        } else if (char == r'\' && i + 1 < input.length) {
+          final next = input[i + 1];
+          if (next == r'$' || next == '`' || next == '"' || next == r'\' || next == '\n' || next == '\r') {
+            current.write(next);
+            i++;
+          } else {
+            current.write(char);
+          }
+          hasToken = true;
+        } else {
+          current.write(char);
+          hasToken = true;
+        }
+        continue;
+      }
+
+      // 无引号
+      if (char == "'") {
+        quote = 1;
+        hasToken = true;
+      } else if (char == '"') {
+        quote = 2;
+        hasToken = true;
+      } else if (char == r'\' && i + 1 < input.length) {
+        current.write(input[++i]);
+        hasToken = true;
+      } else if (char == ' ' || char == '\t' || char == '\n' || char == '\r') {
+        finishToken();
+      } else {
+        current.write(char);
+        hasToken = true;
+      }
+    }
+    finishToken();
+    return tokens;
   }
 }
 
