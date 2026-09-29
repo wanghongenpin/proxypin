@@ -5,7 +5,7 @@ cd ../build/linux/x64/release
 rm -rf package
 mkdir -p package/DEBIAN
 echo "Package: ProxyPin" >> package/DEBIAN/control
-echo "Version: 1.3.2" >> package/DEBIAN/control
+echo "Version: 1.3.3" >> package/DEBIAN/control
 echo "Priority: optional" >> package/DEBIAN/control
 echo "Architecture: amd64" >> package/DEBIAN/control
 echo "Depends: ca-certificates" >> package/DEBIAN/control
@@ -19,4 +19,4 @@ cp ../../../../linux/proxy-pin.desktop package/usr/share/applications
 mkdir package/opt
 cp -r bundle package/opt/proxypin
 
-dpkg -b package ProxyPin-Linux.deb
+dpkg -b package proxypin-linux.deb
