@@ -91,11 +91,19 @@ class AppUpdateRepository {
 
   static bool compareVersions(String currentVersion, String latestVersion) {
     String normalizeVersion(String version) {
-      return version.startsWith('v') ? version.substring(1) : version;
+      // 去掉版本前缀, 兼容 v / V 两种写法(如 v1.3.3、V1.3.3)
+      if (version.isNotEmpty && (version[0] == 'v' || version[0] == 'V')) {
+        return version.substring(1);
+      }
+      return version;
     }
 
     List<int> parseVersion(String version) {
-      return normalizeVersion(version).split('.').map(int.parse).toList();
+      // 每段只取前导数字, 兼容 beta / rc 等后缀, 无法解析时按 0 处理
+      return normalizeVersion(version).split('.').map((segment) {
+        final match = RegExp(r'\d+').firstMatch(segment);
+        return match == null ? 0 : int.parse(match.group(0)!);
+      }).toList();
     }
 
     List<int> current = parseVersion(currentVersion);
