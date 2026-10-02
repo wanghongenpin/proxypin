@@ -138,8 +138,9 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T> {
         //  - [pendingConnectResponse]：本端刚编码发出 CONNECT（如 App 内部重放走本地代理）；
         //  - currentRequest == CONNECT：ProxyPin 串联上游代理时解码上游的 200。
         // 这些响应必须走原有解析路径，不能按无 Content-Length 响应进 raw relay，否则 TLS 隧道被接管。
-        bool isConnectResponse =
-            pendingConnectResponse || channelContext.currentRequest?.method == HttpMethod.connect;
+        bool isConnectResponse = pendingConnectResponse ||
+            (this is HttpResponseCodec && channelContext.currentRequest?.method == HttpMethod.connect);
+
         bool resolveBody = channelContext.currentRequest?.method != HttpMethod.head && !isConnectResponse;
         var bodyResult = resolveBody ? bodyReader!.readBody(data.readAvailableBytes()) : null;
         if (!resolveBody || bodyResult?.isDone == true) {
