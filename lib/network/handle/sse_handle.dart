@@ -19,14 +19,22 @@ import 'package:proxypin/network/util/logger.dart';
 /// We still forward the original (chunk-encoded) bytes to the peer channel
 /// verbatim so the client sees an unchanged framing.
 class SseChannelHandler extends ChannelHandler<Uint8List> {
+  static const int _maxEncodedBody = 8 * 1024 * 1024;
+
   final SseDecoder decoder = SseDecoder();
   final ChunkedDecoder? _chunkDecoder;
 
   final Channel proxyChannel;
   final HttpMessage message; // HttpResponse on server->client, HttpRequest on client->server
 
+  /// Dechunked payload when Content-Encoding is set. Plain event streams are
+  /// parsed as they arrive and are not copied.
+  final List<int>? _encoded;
+  bool _encodedClosed = false;
+
   SseChannelHandler(this.proxyChannel, this.message)
-      : _chunkDecoder = message.headers.isChunked ? ChunkedDecoder() : null;
+      : _chunkDecoder = message.headers.isChunked ? ChunkedDecoder() : null,
+        _encoded = sseBodyIsEncoded(message.headers.contentEncoding) ? <int>[] : null;
 
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, Uint8List msg) async {
@@ -35,18 +43,70 @@ class SseChannelHandler extends ChannelHandler<Uint8List> {
 
     try {
       final Uint8List payload = _chunkDecoder != null ? _chunkDecoder!.feed(msg) : msg;
+      if (_encoded != null) {
+        _captureEncoded(payload);
+        // A chunked event stream usually keeps the TCP connection. The body
+        // ends at the 0-chunk, which is the earliest a one-shot inflate can run.
+        // A non-chunked body is finished in channelInactive.
+        if (_chunkDecoder?.isDone == true) {
+          _decodeEncoded(channelContext, channel);
+        }
+        return;
+      }
       if (payload.isEmpty) return;
 
-      final frames = decoder.feed(payload);
-      for (final WebSocketFrame frame in frames) {
-        frame.isFromClient = message is HttpRequest;
-        message.messages.add(frame);
-        channelContext.listener?.onMessage(channel, message, frame);
-        logger.d(
-            "[${channelContext.clientChannel?.id}] sse channelRead ${frame.payloadLength} ${frame.payloadDataAsString}");
-      }
+      _publish(channelContext, channel, decoder.feed(payload));
     } catch (e, stackTrace) {
       log.e("sse decode error", error: e, stackTrace: stackTrace);
+    }
+  }
+
+  @override
+  void channelInactive(ChannelContext channelContext, Channel channel) {
+    if (_encoded != null) {
+      _decodeEncoded(channelContext, channel);
+      return;
+    }
+    try {
+      _publish(channelContext, channel, decoder.flush());
+    } catch (e, stackTrace) {
+      log.e("sse decode error", error: e, stackTrace: stackTrace);
+    }
+  }
+
+  void _captureEncoded(Uint8List payload) {
+    if (payload.isEmpty || _encoded!.length >= _maxEncodedBody) return;
+    final int room = _maxEncodedBody - _encoded!.length;
+    if (payload.length <= room) {
+      _encoded!.addAll(payload);
+      return;
+    }
+    _encoded!.addAll(payload.take(room));
+    log.w("sse encoded body truncated at $_maxEncodedBody bytes");
+  }
+
+  void _decodeEncoded(ChannelContext channelContext, Channel channel) {
+    if (_encodedClosed || _encoded == null) return;
+    _encodedClosed = true;
+    final Uint8List body = Uint8List.fromList(_encoded!);
+    decodeEncodedEventStream(body, message.headers.contentEncoding).then((frames) {
+      try {
+        _publish(channelContext, channel, frames);
+      } catch (e, stackTrace) {
+        log.e("sse decode error", error: e, stackTrace: stackTrace);
+      }
+    }, onError: (Object e, StackTrace stackTrace) {
+      log.e("sse decode error", error: e, stackTrace: stackTrace);
+    });
+  }
+
+  void _publish(ChannelContext channelContext, Channel channel, List<WebSocketFrame> frames) {
+    for (final WebSocketFrame frame in frames) {
+      frame.isFromClient = message is HttpRequest;
+      message.messages.add(frame);
+      channelContext.listener?.onMessage(channel, message, frame);
+      logger.d(
+          "[${channelContext.clientChannel?.id}] sse channelRead ${frame.payloadLength} ${frame.payloadDataAsString}");
     }
   }
 }

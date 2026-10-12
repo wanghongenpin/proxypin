@@ -669,9 +669,8 @@ class _BodyState extends State<_Body> {
     final parent = context.findAncestorStateOfType<HttpBodyState>();
     final currentMessage = _effectiveMessage(parent);
 
-    if (currentMessage?.isWebSocket == true) {
-      return currentMessage?.messages.map((e) => e.payloadDataAsString).join("\n");
-    }
+    final streamText = currentMessage?.messagesText;
+    if (streamText != null) return streamText;
 
     if (currentMessage == null || currentMessage.body == null) {
       return null;
@@ -712,16 +711,18 @@ class _BodyState extends State<_Body> {
                 ],
               )))
           .toList();
-      return Column(
-        children: [
-          const SelectionContainer.disabled(
-              child: Row(children: [
-            Expanded(child: Text("Data")),
-            SizedBox(width: 130, child: Text("Time")),
-          ])),
-          Divider(height: 5, thickness: 1, color: Colors.grey[300]),
-          ...list ?? []
-        ],
+      return SelectionArea(
+        child: Column(
+          children: [
+            const SelectionContainer.disabled(
+                child: Row(children: [
+              Expanded(child: Text("Data")),
+              SizedBox(width: 130, child: Text("Time")),
+            ])),
+            Divider(height: 5, thickness: 1, color: Colors.grey[300]),
+            ...list ?? []
+          ],
+        ),
       );
     }
 
