@@ -150,11 +150,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       buffer.clearRead();
 
       var data = decodeResult.data;
-      if (data is HttpMessage) {
-        data.packageSize ??= length;
-        data.remoteHost = channel.remoteSocketAddress.host;
-        data.remotePort = channel.remoteSocketAddress.port;
-      }
+      _fillMessageMeta(channelContext, channel, data, length);
 
       if (data is HttpRequest) {
         if (data.protocolVersion == 'HTTP/2') {
@@ -174,11 +170,6 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
           return;
         }
         await prepareRequest(channelContext, channel, data);
-      }
-
-      if (data is HttpResponse) {
-        data.request ??= channelContext.currentRequest;
-        data.requestId = data.request?.requestId ?? data.requestId;
       }
 
       //websocket协议
@@ -228,6 +219,19 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     }
     await _fixAndroidVpnPort(channelContext, channel, data);
     data.processInfo ??= await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, data.remoteDomain()!);
+  }
+
+  /// 填充 HTTP 消息的通用元数据：包大小、远端地址，以及响应与请求的关联。
+  /// 正常解码完成路径与 close 定界收尾路径共用，避免两处重复。
+  void _fillMessageMeta(ChannelContext channelContext, Channel channel, Object? data, int length) {
+    if (data is! HttpMessage) return;
+    data.packageSize ??= length;
+    data.remoteHost = channel.remoteSocketAddress.host;
+    data.remotePort = channel.remoteSocketAddress.port;
+    if (data is HttpResponse) {
+      data.request ??= channelContext.currentRequest;
+      data.requestId = data.request?.requestId ?? data.requestId;
+    }
   }
 
   /// 修正 Android VPN 透明代理明文 HTTP 请求的目标端口。
@@ -356,6 +360,23 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     while (_pendingReads.isNotEmpty) {
       await Future.wait(_pendingReads.map((c) => c.future).toList());
     }
+
+    // 上游关闭：冲刷被缓冲的 close 定界响应（无 Content-Length / 无 chunked），
+    // 使其照常进入响应拦截器链，而不是被 raw relay 绕过（issue #956）。
+    if (identical(channel, channelContext.serverChannel) && decoder is CloseDelimitedBodyFinalizer) {
+      var finalized = (decoder as CloseDelimitedBodyFinalizer).finishCloseDelimitedBody();
+      var data = finalized?.data;
+      if (data is HttpResponse) {
+        _fillMessageMeta(channelContext, channel, data, buffer.length);
+        buffer.clear();
+        try {
+          await handler.channelRead(channelContext, channel, data);
+        } catch (error, trace) {
+          onError(channelContext, channel, error, trace: trace);
+        }
+      }
+    }
+
     channel.isOpen = false;
     handler.channelInactive(channelContext, channel);
   }

@@ -198,7 +198,21 @@ class HttpHeaders {
 
   bool get isGzip => contentEncoding == "gzip";
 
-  bool get isChunked => get(HttpHeaders.TRANSFER_ENCODING)?.toLowerCase().trimLeft() == "chunked";
+  /// 是否为 chunked 定界。RFC 9112 §6.3：Transfer-Encoding 可含多个 coding，
+  /// 只有最后一个 coding 是 chunked 时才按 chunked 帧定界（如 `gzip, chunked`）。
+  /// 多条同名 Transfer-Encoding 头等价于逗号拼接（RFC 9110 §5.2），需合并全部值后判断。
+  bool get isChunked {
+    final values = getList(HttpHeaders.TRANSFER_ENCODING);
+    if (values == null || values.isEmpty) return false;
+    final tokens = <String>[];
+    for (final value in values) {
+      for (final token in value.split(',')) {
+        final t = token.trim().toLowerCase();
+        if (t.isNotEmpty) tokens.add(t);
+      }
+    }
+    return tokens.isNotEmpty && tokens.last == 'chunked';
+  }
 
   List<String> get cookies => getList(Cookie) ?? [];
 

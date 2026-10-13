@@ -43,7 +43,30 @@ class BodyReader {
 
   bool _done = false;
 
+  /// 无 Content-Length、无 Transfer-Encoding: chunked、且非 flv/SSE 的响应，
+  /// body 由连接关闭定界。此类 body 先缓冲，待上游关闭时经 [finish] 产出完整内容，
+  /// 以便继续参与响应拦截器链（issue #956）。flv/SSE 仍走 unsupported 裸转。
+  ///
+  /// 惰性判定：不在构造器求值，而是首次读取 body 时计算——能走到 body 解析
+  /// 本身就说明 headers 已解析完整（BodyReader 仅在 parseHeaders 完成后才被用于读 body）。
+  bool? _closeDelimited;
+
+  bool get closeDelimited => _closeDelimited ??= _isCloseDelimited();
+
   BodyReader(this.message) : _chunkedDecoder = message.headers.isChunked ? ChunkedDecoder() : null;
+
+  bool _isCloseDelimited() {
+    var msg = message;
+    return msg is HttpResponse &&
+        msg.status.code >= 200 &&
+        msg.status.code != 204 &&
+        msg.status.code != 304 &&
+        msg.status.code != 205 &&
+        msg.headers.get(HttpHeaders.CONTENT_LENGTH) == null &&
+        !msg.headers.isChunked &&
+        msg.headers.contentType != 'video/x-flv' &&
+        !msg.headers.contentType.startsWith('text/event-stream');
+  }
 
   Result readBody(Uint8List data) {
     if (_bodyBuffer.length > Codec.maxBodyLength) {
@@ -56,21 +79,18 @@ class BodyReader {
       return Result(false, supportedParse: false, body: data);
     }
 
-    // 响应既没有 Content-Length 也没有 Transfer-Encoding: chunked 时,按
-    // HTTP 语义 body 由连接关闭定界。直接原始转发,保留原始定界并让上游
-    // 关闭信号传递给客户端;否则 body 会被当空处理丢掉,客户端一直等不到
-    // 完整响应导致超时(issue #844)。
-    // 仅当 Content-Length 头缺失时判定(显式 CL:0 是空 body,不属于
-    // close-delimited);204/304/205 等无 body 状态码走原有解析路径。
-    var msg = message;
-    if (msg is HttpResponse &&
-        msg.status.code >= 200 &&
-        msg.status.code != 204 &&
-        msg.status.code != 304 &&
-        msg.status.code != 205 &&
-        msg.headers.get(HttpHeaders.CONTENT_LENGTH) == null &&
-        !msg.headers.isChunked) {
-      return Result(false, supportedParse: false, body: data);
+    if (closeDelimited) {
+      // 超上限：放弃缓冲，回退 raw relay。上层 ChannelDispatcher 的 buffer
+      // 仍保留完整原始字节（headers + body），可直接透传。
+      if (_bodyBuffer.length + data.length > Codec.maxBodyLength) {
+        _bodyBuffer.clear();
+        return Result(false, supportedParse: false, body: data);
+      }
+      if (data.isNotEmpty) {
+        _bodyBuffer.add(data);
+      }
+      // 未结束：body 长度未知，只有上游关闭连接才知道完整内容。
+      return Result(false);
     }
 
     if (_chunkedDecoder != null) {
@@ -86,6 +106,17 @@ class BodyReader {
     }
 
     return Result(false);
+  }
+
+  /// 上游连接关闭时调用，产出缓冲中的完整 close-delimited body。
+  Result finish() {
+    if (!closeDelimited) {
+      return Result(false);
+    }
+    _done = true;
+    var body = _bodyBuffer.toBytes();
+    _bodyBuffer.clear();
+    return Result(true, body: body);
   }
 
   void _readFixedLengthContent(Uint8List data) {
