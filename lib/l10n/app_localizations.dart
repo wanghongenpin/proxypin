@@ -1390,6 +1390,30 @@ abstract class AppLocalizations {
   /// **'Import Root Certificate(.p12)'**
   String get importCaP12;
 
+  /// No description provided for @clientCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Certificate (mTLS)'**
+  String get clientCertificate;
+
+  /// No description provided for @importClientCert.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Client Certificate(.p12)'**
+  String get importClientCert;
+
+  /// No description provided for @expires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get expires;
+
+  /// No description provided for @expired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get expired;
+
   /// No description provided for @trustCa.
   ///
   /// In en, this message translates to:

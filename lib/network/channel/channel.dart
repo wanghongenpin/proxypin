@@ -20,6 +20,7 @@ import 'dart:math';
 
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/components/manager/client_cert_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/socket_address.dart';
 
@@ -86,8 +87,9 @@ class Channel {
   //向远程发起ssl连接
   Future<SecureSocket> secureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
+    SecurityContext? context = await ClientCertManager.securityContextForHost(host);
     SecureSocket secureSocket = await SecureSocket.secure(socket,
-        host: host, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+        host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
 
     _socket = secureSocket;
     _socket.done.then((value) => isOpen = false);
@@ -98,8 +100,9 @@ class Channel {
 
   Future<SecureSocket> startSecureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
+    SecurityContext? context = await ClientCertManager.securityContextForHost(host);
     SecureSocket secureSocket = await SecureSocket.secure(socket,
-        host: host, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+        host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
 
     _socket = secureSocket;
     _socket.done.then((value) => isOpen = false);

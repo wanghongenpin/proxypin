@@ -24,6 +24,7 @@ import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/channel_dispatcher.dart';
 import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/manager/client_cert_manager.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
 import 'package:proxypin/network/mqtt/protocol_sniffer.dart';
 import 'package:proxypin/network/socks/socks5.dart';
@@ -324,8 +325,9 @@ class Client extends Network {
 
   /// ssl连接
   Future<Channel> secureConnect(HostAndPort hostAndPort, ChannelContext channelContext) async {
+    SecurityContext? context = await ClientCertManager.securityContextForHost(hostAndPort.host);
     return SecureSocket.connect(_stripIPv6Brackets(hostAndPort.host), hostAndPort.port,
-        timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
+        context: context, timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
       var channel = Channel(socket);
       channelContext.serverChannel = channel;
       return listen(channel, channelContext);

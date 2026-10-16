@@ -8,6 +8,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/utils.dart';
+import 'package:proxypin/ui/desktop/ssl/client_cert.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/utils/ip.dart';
 import 'package:proxypin/utils/platform.dart';
@@ -52,6 +53,8 @@ class _SslState extends State<SslWidget> {
           exportMenu(),
           const Divider(thickness: 0.3, height: 3),
           importMenu(),
+          const Divider(thickness: 0.3, height: 3),
+          item(localizations.clientCertificate, onPressed: () => showClientCertDialog(context)),
           const Divider(thickness: 0.3, height: 3),
           item(localizations.generateCA, onPressed: () async {
             showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,

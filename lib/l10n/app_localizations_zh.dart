@@ -661,6 +661,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importCaP12 => '导入根证书 (.p12)';
 
   @override
+  String get clientCertificate => '客户端证书 (mTLS)';
+
+  @override
+  String get importClientCert => '导入客户端证书 (.p12)';
+
+  @override
+  String get expires => '有效期至';
+
+  @override
+  String get expired => '已过期';
+
+  @override
   String get trustCa => '信任证书';
 
   @override

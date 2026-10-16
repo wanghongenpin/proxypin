@@ -664,6 +664,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get importCaP12 => 'Impor sertifikat root (.p12)';
 
   @override
+  String get clientCertificate => 'Client Certificate (mTLS)';
+
+  @override
+  String get importClientCert => 'Import Client Certificate(.p12)';
+
+  @override
+  String get expires => 'Expires';
+
+  @override
+  String get expired => 'Expired';
+
+  @override
   String get trustCa => 'Percayai sertifikat';
 
   @override
