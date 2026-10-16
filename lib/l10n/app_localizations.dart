@@ -2877,6 +2877,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Overview'**
   String get overview;
+
+  /// No description provided for @rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get rules;
+
+  /// No description provided for @network.
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get network;
+
+  /// No description provided for @trafficControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic Control'**
+  String get trafficControl;
+
+  /// No description provided for @rulesPageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click a row to open its window'**
+  String get rulesPageHint;
+
+  /// No description provided for @notEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enabled'**
+  String get notEnabled;
+
+  /// No description provided for @statusEnabledRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled · {count} rules'**
+  String statusEnabledRules(int count);
+
+  /// No description provided for @statusEnabledScripts.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled · {count} scripts'**
+  String statusEnabledScripts(int count);
+
+  /// No description provided for @requestBlockDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Block matching requests, disconnect or return an error'**
+  String get requestBlockDesc;
+
+  /// No description provided for @requestRewriteDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite request/response line, headers and body by rule'**
+  String get requestRewriteDesc;
+
+  /// No description provided for @requestMapDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Map requests to a local file or a remote URL'**
+  String get requestMapDesc;
+
+  /// No description provided for @requestCryptoDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypt or decrypt request and response bodies'**
+  String get requestCryptoDesc;
+
+  /// No description provided for @scriptDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Handle requests and responses with JavaScript'**
+  String get scriptDesc;
+
+  /// No description provided for @breakpointDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Intercept requests/responses, modify, then resume'**
+  String get breakpointDesc;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

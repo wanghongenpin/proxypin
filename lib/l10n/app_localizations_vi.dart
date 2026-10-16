@@ -1431,4 +1431,47 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get overview => 'Tổng quan';
+
+  @override
+  String get rules => 'Rules';
+
+  @override
+  String get network => 'Network';
+
+  @override
+  String get trafficControl => 'Traffic Control';
+
+  @override
+  String get rulesPageHint => 'Click a row to open its window';
+
+  @override
+  String get notEnabled => 'Not enabled';
+
+  @override
+  String statusEnabledRules(int count) {
+    return 'Enabled · $count rules';
+  }
+
+  @override
+  String statusEnabledScripts(int count) {
+    return 'Enabled · $count scripts';
+  }
+
+  @override
+  String get requestBlockDesc => 'Block matching requests, disconnect or return an error';
+
+  @override
+  String get requestRewriteDesc => 'Rewrite request/response line, headers and body by rule';
+
+  @override
+  String get requestMapDesc => 'Map requests to a local file or a remote URL';
+
+  @override
+  String get requestCryptoDesc => 'Encrypt or decrypt request and response bodies';
+
+  @override
+  String get scriptDesc => 'Handle requests and responses with JavaScript';
+
+  @override
+  String get breakpointDesc => 'Intercept requests/responses, modify, then resume';
 }

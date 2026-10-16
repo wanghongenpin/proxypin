@@ -1420,6 +1420,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get overview => '概览';
+
+  @override
+  String get rules => '规则';
+
+  @override
+  String get network => '网络';
+
+  @override
+  String get trafficControl => '流量控制';
+
+  @override
+  String get rulesPageHint => '点击行打开对应窗口';
+
+  @override
+  String get notEnabled => '未开启';
+
+  @override
+  String statusEnabledRules(int count) {
+    return '启用中 · $count 条规则';
+  }
+
+  @override
+  String statusEnabledScripts(int count) {
+    return '启用中 · $count 个脚本';
+  }
+
+  @override
+  String get requestBlockDesc => '按规则拦截请求，直接断开或返回错误';
+
+  @override
+  String get requestRewriteDesc => '按规则修改请求 / 响应的行、头、体';
+
+  @override
+  String get requestMapDesc => '映射到本地文件或远程地址';
+
+  @override
+  String get requestCryptoDesc => '加解密请求 / 响应体，便于查看明文';
+
+  @override
+  String get scriptDesc => '用 JavaScript 编程化处理请求与响应';
+
+  @override
+  String get breakpointDesc => '拦截请求 / 响应，修改后再放行';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2596,4 +2639,47 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get overview => '概覽';
+
+  @override
+  String get rules => '規則';
+
+  @override
+  String get network => '網絡';
+
+  @override
+  String get trafficControl => '流量控制';
+
+  @override
+  String get rulesPageHint => '點擊行開啟對應視窗';
+
+  @override
+  String get notEnabled => '未開啟';
+
+  @override
+  String statusEnabledRules(int count) {
+    return '啟用中 · $count 條規則';
+  }
+
+  @override
+  String statusEnabledScripts(int count) {
+    return '啟用中 · $count 個腳本';
+  }
+
+  @override
+  String get requestBlockDesc => '按規則攔截請求，直接斷開或返回錯誤';
+
+  @override
+  String get requestRewriteDesc => '按規則修改請求 / 響應的行、頭、體';
+
+  @override
+  String get requestMapDesc => '映射到本地檔案或遠端地址';
+
+  @override
+  String get requestCryptoDesc => '加解密請求 / 響應體，便於查看明文';
+
+  @override
+  String get scriptDesc => '用 JavaScript 編程化處理請求與響應';
+
+  @override
+  String get breakpointDesc => '攔截請求 / 響應，修改後再放行';
 }

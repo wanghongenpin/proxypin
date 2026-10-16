@@ -55,6 +55,10 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
             label: Text(localizations.history, style: Theme.of(context).textTheme.bodySmall)),
         NavigationRailDestination(
             padding: const EdgeInsets.only(bottom: 5),
+            icon: Icon(Icons.rule_outlined),
+            label: Text(localizations.rules, style: Theme.of(context).textTheme.bodySmall)),
+        NavigationRailDestination(
+            padding: const EdgeInsets.only(bottom: 5),
             icon: Icon(Icons.hardware_outlined),
             label: Text(localizations.toolbox, style: Theme.of(context).textTheme.bodySmall)),
       ];
@@ -74,7 +78,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
                 BoxDecoration(border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2))),
             child: Column(children: <Widget>[
               SizedBox(
-                height: 320,
+                height: 400,
                 child: leftNavigation(index),
               ),
               Expanded(

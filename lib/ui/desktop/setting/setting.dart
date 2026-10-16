@@ -19,15 +19,12 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/network_condition_manager.dart';
-import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
-import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/about.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/hosts.dart';
-import 'package:proxypin/ui/desktop/setting/request_block.dart';
 import 'package:proxypin/ui/desktop/setting/weak_network.dart';
 import 'package:proxypin/ui/desktop/toolbar/mcp_panel.dart';
 
@@ -72,27 +69,33 @@ class _SettingState extends State<Setting> {
             });
       },
       menuChildren: [
+        groupLabel(localizations.network),
         _ProxyMenu(proxyServer: widget.proxyServer),
-        item(localizations.domainFilter, onPressed: hostFilter),
-        item(localizations.hosts, onPressed: hosts),
-        item(localizations.requestBlock, onPressed: showRequestBlock),
-        item(localizations.requestRewrite, onPressed: requestRewrite),
-        item(localizations.requestMap, onPressed: requestMap),
-        item(localizations.requestCrypto, onPressed: showRequestCrypto),
-        item(localizations.script,
-            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
-        item(localizations.breakpoint, onPressed: requestBreakpoint),
-        item(localizations.weakNetwork, onPressed: showWeakNetwork),
-        item(localizations.externalProxy, onPressed: setExternalProxy),
-        item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
-        item(localizations.about, onPressed: showAbout),
+        item(localizations.domainFilter, icon: Icons.filter_alt_outlined, onPressed: hostFilter),
+        item(localizations.hosts, icon: Icons.list_alt_outlined, onPressed: hosts),
+        item(localizations.externalProxy, icon: Icons.north_east, onPressed: setExternalProxy),
+        item(localizations.weakNetwork, icon: Icons.bolt_outlined, onPressed: showWeakNetwork),
+        groupLabel(localizations.other),
+        item(localizations.mcpService, icon: Icons.hub_outlined,
+            onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
+        item(localizations.about, icon: Icons.info_outline, onPressed: showAbout),
       ],
     );
   }
 
-  Widget item(String text, {VoidCallback? onPressed}) {
+  Widget groupLabel(String text) {
+    return Padding(
+        padding: const EdgeInsets.only(left: 14, top: 6, bottom: 2),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurfaceVariant)));
+  }
+
+  Widget item(String text, {IconData? icon, VoidCallback? onPressed}) {
     return MenuItemButton(
-        trailingIcon: const Icon(Icons.arrow_right),
+        leadingIcon: icon == null ? null : Icon(icon, size: 18),
         onPressed: onPressed,
         child: Padding(
             padding: const EdgeInsets.only(left: 10, right: 5),
@@ -113,21 +116,6 @@ class _SettingState extends State<Setting> {
         });
   }
 
-  ///请求重写Dialog
-  void requestRewrite() async {
-    MultiWindow.openWindow(localizations.requestRewrite, 'RequestRewriteWidget', size: const Size(800, 750));
-  }
-
-  void requestBreakpoint() async {
-    MultiWindow.openWindow(localizations.breakpoint, 'RequestBreakpointPage', size: const Size(800, 750));
-  }
-
-  ///请求本地映射
-  void requestMap() async {
-    if (!mounted) return;
-    MultiWindow.openWindow(localizations.requestMap, 'RequestMapPage', size: const Size(800, 720));
-  }
-
   ///show域名过滤Dialog
   void hostFilter() {
     showDialog(
@@ -139,20 +127,6 @@ class _SettingState extends State<Setting> {
     var hosts = await HostsManager.instance;
     if (!mounted) return;
     showDialog(barrierDismissible: false, context: context, builder: (context) => HostsDialog(hostsManager: hosts));
-  }
-
-  //请求屏蔽
-  void showRequestBlock() async {
-    var requestBlockManager = await RequestBlockManager.instance;
-    if (!mounted) return;
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
-  }
-
-  void showRequestCrypto() {
-    MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
   }
 
   void showWeakNetwork() async {
@@ -280,6 +254,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                 minLines: 1)),
         const SizedBox(height: 10),
       ],
+      leadingIcon: const Icon(Icons.lan_outlined, size: 18),
       child: Padding(
           padding: const EdgeInsets.only(left: 10),
           child: Text(localizations.proxy, style: const TextStyle(fontSize: 14))),

@@ -466,5 +466,32 @@
   "statusPaused": "已暂停",
   "pause": "暂停",
   "resume": "继续",
-  "overview": "概览"
+  "overview": "概览",
+  "rules": "规则",
+  "network": "网络",
+  "trafficControl": "流量控制",
+  "rulesPageHint": "点击行打开对应窗口",
+  "notEnabled": "未开启",
+  "statusEnabledRules": "启用中 · {count} 条规则",
+  "@statusEnabledRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusEnabledScripts": "启用中 · {count} 个脚本",
+  "@statusEnabledScripts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "requestBlockDesc": "按规则拦截请求，直接断开或返回错误",
+  "requestRewriteDesc": "按规则修改请求 / 响应的行、头、体",
+  "requestMapDesc": "映射到本地文件或远程地址",
+  "requestCryptoDesc": "加解密请求 / 响应体，便于查看明文",
+  "scriptDesc": "用 JavaScript 编程化处理请求与响应",
+  "breakpointDesc": "拦截请求 / 响应，修改后再放行"
 }

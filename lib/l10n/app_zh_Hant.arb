@@ -383,5 +383,32 @@
   "statusPaused": "已暫停",
   "pause": "暫停",
   "resume": "繼續",
-  "overview": "概覽"
+  "overview": "概覽",
+  "rules": "規則",
+  "network": "網絡",
+  "trafficControl": "流量控制",
+  "rulesPageHint": "點擊行開啟對應視窗",
+  "notEnabled": "未開啟",
+  "statusEnabledRules": "啟用中 · {count} 條規則",
+  "@statusEnabledRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusEnabledScripts": "啟用中 · {count} 個腳本",
+  "@statusEnabledScripts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "requestBlockDesc": "按規則攔截請求，直接斷開或返回錯誤",
+  "requestRewriteDesc": "按規則修改請求 / 響應的行、頭、體",
+  "requestMapDesc": "映射到本地檔案或遠端地址",
+  "requestCryptoDesc": "加解密請求 / 響應體，便於查看明文",
+  "scriptDesc": "用 JavaScript 編程化處理請求與響應",
+  "breakpointDesc": "攔截請求 / 響應，修改後再放行"
 }

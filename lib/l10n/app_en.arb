@@ -477,5 +477,32 @@
   "statusPaused": "Paused",
   "pause": "Pause",
   "resume": "Resume",
-  "overview": "Overview"
+  "overview": "Overview",
+  "rules": "Rules",
+  "network": "Network",
+  "trafficControl": "Traffic Control",
+  "rulesPageHint": "Click a row to open its window",
+  "notEnabled": "Not enabled",
+  "statusEnabledRules": "Enabled · {count} rules",
+  "@statusEnabledRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusEnabledScripts": "Enabled · {count} scripts",
+  "@statusEnabledScripts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "requestBlockDesc": "Block matching requests, disconnect or return an error",
+  "requestRewriteDesc": "Rewrite request/response line, headers and body by rule",
+  "requestMapDesc": "Map requests to a local file or a remote URL",
+  "requestCryptoDesc": "Encrypt or decrypt request and response bodies",
+  "scriptDesc": "Handle requests and responses with JavaScript",
+  "breakpointDesc": "Intercept requests/responses, modify, then resume"
 }
