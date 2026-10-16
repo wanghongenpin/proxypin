@@ -434,6 +434,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     // Incremental SSE parsing: do not accumulate full body to avoid large memory usage
     final decoder = sseDecoders.putIfAbsent(frameHeader.streamIdentifier, () => SseDecoder());
     final frames = decoder.feed(Uint8List.fromList(data));
+    if (frameHeader.hasEndStreamFlag) frames.addAll(decoder.flush());
     for (final WebSocketFrame frame in frames) {
       frame.isFromClient = false; // server -> client
       message.messages.add(frame);

@@ -179,6 +179,12 @@ abstract class HttpMessage {
   List<String> get cookies => headers.cookies;
 
   List<WebSocketFrame> messages = [];
+
+  /// SSE and websocket frames are not stored in [body].
+  String? get messagesText {
+    if (messages.isEmpty || (!isWebSocket && contentType != ContentType.sse)) return null;
+    return messages.map((e) => e.payloadDataAsString).join('\n');
+  }
 }
 
 ///HTTP请求。
