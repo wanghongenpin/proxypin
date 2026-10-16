@@ -465,5 +465,6 @@
   "statusCancelled": "已取消",
   "statusPaused": "已暂停",
   "pause": "暂停",
-  "resume": "继续"
+  "resume": "继续",
+  "overview": "概览"
 }

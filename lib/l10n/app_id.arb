@@ -270,5 +270,6 @@
   "statusCancelled": "Dibatalkan",
   "statusPaused": "Dijeda",
   "pause": "Jeda",
-  "resume": "Lanjutkan"
+  "resume": "Lanjutkan",
+  "overview": "Ringkasan"
 }

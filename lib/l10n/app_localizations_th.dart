@@ -1428,4 +1428,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get resume => 'ทำงานต่อ';
+
+  @override
+  String get overview => 'ภาพรวม';
 }

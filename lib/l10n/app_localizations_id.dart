@@ -1430,4 +1430,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get resume => 'Lanjutkan';
+
+  @override
+  String get overview => 'Ringkasan';
 }

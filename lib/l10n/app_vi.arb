@@ -270,5 +270,6 @@
   "statusCancelled": "Đã hủy",
   "statusPaused": "Đã tạm dừng",
   "pause": "Tạm dừng",
-  "resume": "Tiếp tục"
+  "resume": "Tiếp tục",
+  "overview": "Tổng quan"
 }

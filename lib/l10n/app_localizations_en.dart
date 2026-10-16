@@ -1434,4 +1434,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resume => 'Resume';
+
+  @override
+  String get overview => 'Overview';
 }

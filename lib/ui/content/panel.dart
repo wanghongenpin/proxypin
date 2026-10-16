@@ -17,9 +17,13 @@
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_client.dart';
+import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/web_socket.dart';
@@ -172,27 +176,38 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       controller: _tabController,
       dividerColor: Theme.of(context).dividerColor.withValues(alpha: 0.15),
       labelPadding: const EdgeInsets.symmetric(horizontal: 10),
-      tabs: tabs.map((title) => Tab(child: Text(title, style: widget.tabStyle, maxLines: 1))).toList(),
+      tabs: tabs.map((title) => Tab(child: Text(tabLabel(title), style: widget.tabStyle, maxLines: 1))).toList(),
     );
 
-    Widget appBar = widget.title == null
-        ? tabBar
-        : AppBar(
-            title: widget.title,
-            bottom: tabBar,
-            centerTitle: true,
-            actions: [
-              ShareWidget(
-                  proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
-              const SizedBox(width: 3),
-              DetailMenuWidget(request: widget.request.get()),
-              const SizedBox(width: 10),
-            ],
-          );
+    PreferredSizeWidget appBar;
+    if (widget.title != null) {
+      appBar = AppBar(
+        title: widget.title,
+        bottom: tabBar,
+        centerTitle: true,
+        actions: [
+          ShareWidget(
+              proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
+          const SizedBox(width: 3),
+          DetailMenuWidget(request: widget.request.get()),
+          const SizedBox(width: 10),
+        ],
+      );
+    } else if (widget.windowId == null && Platforms.isDesktop()) {
+      var request = widget.request.get();
+      appBar = PreferredSize(
+          preferredSize: Size.fromHeight(kTextTabBarHeight + (request == null ? 0 : 46)),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            if (request != null) detailTitleBar(request),
+            tabBar,
+          ]));
+    } else {
+      appBar = tabBar;
+    }
 
     return Scaffold(
       endDrawerEnableOpenDragGesture: false,
-      appBar: appBar as PreferredSizeWidget?,
+      appBar: appBar,
       body: Padding(
           padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
           child: TabBarView(
@@ -200,11 +215,11 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
             controller: _tabController,
             children: isMqtt
                 ? [
-                    SelectionArea(child: General(widget.request, widget.response)),
+                    SelectionArea(child: Overview(widget.request, widget.response)),
                     SelectionArea(child: MqttMessages(widget.request)),
                   ]
                 : [
-                    SelectionArea(child: General(widget.request, widget.response)),
+                    SelectionArea(child: Overview(widget.request, widget.response)),
                     KeepAliveWrapper(child: request()),
                     KeepAliveWrapper(child: response()),
                     SelectionArea(
@@ -248,6 +263,77 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
           RowWidget("StatusCode", widget.response.get()?.status.toString()),
           ...message(widget.response.get(), "Response", scrollController)
         ]));
+  }
+
+  String tabLabel(String title) {
+    if (title == 'General') {
+      return localizations.overview;
+    }
+    return title;
+  }
+
+  Widget detailTitleBar(HttpRequest request) {
+    var url = request.requestUrl;
+    try {
+      url = Uri.decodeFull(url);
+    } catch (_) {}
+
+    var theme = Theme.of(context);
+    return Container(
+        height: 46,
+        padding: const EdgeInsets.only(left: 20, right: 8, top: 4, bottom: 2),
+        child: Row(children: [
+          Text(request.method.name.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                  color: request.isWebSocket == true
+                      ? const Color(0xFF6E3FC1)
+                      : methodColor(request.method, theme))),
+          const SizedBox(width: 10),
+          Expanded(
+              child: SelectableText(url,
+                  maxLines: 1,
+                  contextMenuBuilder: contextMenu,
+                  style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface))),
+          const SizedBox(width: 2),
+          IconButton(
+              visualDensity: VisualDensity.compact,
+              iconSize: 18,
+              tooltip: localizations.copyUrl,
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: request.requestUrl)).then((_) {
+                  if (mounted) FlutterToastr.show(localizations.copied, context);
+                });
+              },
+              icon: const Icon(Icons.copy)),
+          IconButton(
+              visualDensity: VisualDensity.compact,
+              iconSize: 18,
+              tooltip: localizations.repeat,
+              onPressed: () => resendRequest(request),
+              icon: const Icon(Icons.replay)),
+          IconButton(
+              visualDensity: VisualDensity.compact,
+              iconSize: 18,
+              tooltip: localizations.favorite,
+              onPressed: () {
+                FavoriteStorage.addFavorite(request);
+                FlutterToastr.show(localizations.addSuccess, context);
+              },
+              icon: const Icon(Icons.star_border)),
+        ]));
+  }
+
+  void resendRequest(HttpRequest httpRequest) {
+    var proxyServer = widget.proxyServer;
+    var proxyInfo = proxyServer != null && proxyServer.isRunning
+        ? ProxyInfo.of("127.0.0.1", proxyServer.port)
+        : null;
+    HttpClients.proxyRequest(httpRequest.copy(uri: httpRequest.requestUrl), proxyInfo: proxyInfo);
+    FlutterToastr.show(localizations.reSendRequest, context, rootNavigator: true);
   }
 
   List<Widget> message(HttpMessage? message, String type, ScrollController scrollController) {
@@ -306,12 +392,12 @@ class RequestParams extends StatelessWidget {
   }
 }
 
-class General extends StatelessWidget {
+class Overview extends StatelessWidget {
   final ValueWrap<HttpRequest> request;
 
   final ValueWrap<HttpResponse> response;
 
-  const General(this.request, this.response, {super.key});
+  const Overview(this.request, this.response, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -326,53 +412,108 @@ class General extends StatelessWidget {
     } catch (_) {}
     if (request.protocolVersion == 'MQTT') {
       return ListView(children: [
-        expansionTile('General', [
-          const SizedBox(height: 10),
-          RowWidget('Connection', requestUrl),
-          const SizedBox(height: 15),
-          RowWidget('Protocol', 'MQTT over TLS'),
-          const SizedBox(height: 15),
-          RowWidget('Packets', request.messages.length.toString()),
-          const SizedBox(height: 15),
-          RowWidget('Start Time', request.requestTime.formatMillisecond()),
-          const SizedBox(height: 15),
-          if (request.processInfo != null) RowWidget('App', request.processInfo!.name),
+        overviewCard(context, [
+          overviewRow(context, 'Connection', requestUrl),
+          overviewRow(context, 'Protocol', 'MQTT over TLS'),
+          overviewRow(context, 'Packets', request.messages.length.toString()),
+          overviewRow(context, 'Start Time', request.requestTime.formatMillisecond()),
+          if (request.processInfo != null) overviewRow(context, 'App', request.processInfo!.name),
         ])
       ]);
     }
-    var content = [
-      const SizedBox(height: 10),
-      RowWidget("Request URL", requestUrl),
-      const SizedBox(height: 15),
-      RowWidget("Request Method", request.method.name),
-      const SizedBox(height: 15),
-      RowWidget("Protocol", request.protocolVersion),
-      const SizedBox(height: 15),
-      RowWidget("Status Code", response?.status.toString()),
-      const SizedBox(height: 15),
-      RowWidget("Remote Address",
-          '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
-      const SizedBox(height: 15),
-      RowWidget("Request Time", request.requestTime.formatMillisecond()),
-      const SizedBox(height: 15),
-      RowWidget("Duration", response?.costTime()),
-      const SizedBox(height: 15),
-      RowWidget("Request Content-Type", request.headers.contentType),
-      const SizedBox(height: 15),
-      RowWidget("Response Content-Type", response?.headers.contentType),
-      const SizedBox(height: 15),
-      RowWidget("Request Package", getPackage(request.packageSize)),
-      const SizedBox(height: 15),
-      RowWidget("Response Package", getPackage(response?.packageSize)),
-      const SizedBox(height: 15),
-    ];
-    if (request.processInfo != null) {
-      content.add(RowWidget("App", request.processInfo!.name));
-      content.add(const SizedBox(height: 15));
-    }
 
-    return ListView(children: [expansionTile("General", content)]);
+    return ListView(padding: const EdgeInsets.only(top: 2), children: [
+      overviewCard(context, [
+        overviewRow(context, 'Status Code', response?.status.toString(),
+            valueColor: statusColor(response?.status.code)),
+        overviewRow(context, 'Protocol', request.protocolVersion),
+        overviewRow(context, 'Duration', response?.costTime()),
+        overviewRow(context, 'Size', getPackagesSize(request, response)),
+        overviewRow(context, 'Remote Address',
+            '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
+        overviewRow(context, 'Request Time', request.requestTime.formatMillisecond()),
+        overviewRow(context, 'Request Content-Type', request.headers.contentType),
+        overviewRow(context, 'Response Content-Type', response?.headers.contentType),
+        overviewRow(context, 'Request URL', requestUrl),
+        overviewRow(context, 'Request Method', request.method.name),
+        if (request.processInfo != null) overviewRow(context, 'App', request.processInfo!.name),
+      ]),
+      if (response != null && ((response.body?.isNotEmpty ?? false) || response.messages.isNotEmpty)) ...[
+        const SizedBox(height: 12),
+        Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                color: Theme.of(context).colorScheme.surface),
+            child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: HttpBodyWidget(httpMessage: response))),
+        const SizedBox(height: 10),
+      ],
+    ]);
   }
+}
+
+Color methodColor(HttpMethod method, ThemeData theme) {
+  switch (method) {
+    case HttpMethod.get:
+      return const Color(0xFF1F8B4C);
+    case HttpMethod.post:
+      return const Color(0xFFB76E00);
+    case HttpMethod.put:
+      return const Color(0xFF0E6BB8);
+    case HttpMethod.delete:
+      return const Color(0xFFC4321F);
+    default:
+      return theme.colorScheme.onSurfaceVariant;
+  }
+}
+
+Color? statusColor(int? status) {
+  if (status == null) {
+    return null;
+  }
+  if (status >= 200 && status < 300) {
+    return const Color(0xFF1F8B4C);
+  }
+  if (status >= 300 && status < 400) {
+    return const Color(0xFFB76E00);
+  }
+  return const Color(0xFFC4321F);
+}
+
+Widget overviewCard(BuildContext context, List<Widget> rows) {
+  var theme = Theme.of(context);
+  var children = <Widget>[];
+  for (var i = 0; i < rows.length; i++) {
+    if (i > 0) {
+      children.add(Divider(height: 1, thickness: 0.5, color: theme.dividerColor.withValues(alpha: 0.4)));
+    }
+    children.add(rows[i]);
+  }
+  return Container(
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+          color: theme.colorScheme.surface),
+      child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Column(children: children)));
+}
+
+Widget overviewRow(BuildContext context, String label, String? value, {Color? valueColor}) {
+  var theme = Theme.of(context);
+  return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        SizedBox(
+            width: 132,
+            child:
+                Text(label, style: TextStyle(fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant))),
+        Expanded(
+            child: SelectableText(value ?? '',
+                contextMenuBuilder: contextMenu,
+                style: TextStyle(
+                    fontFamily: 'Courier', fontSize: 12.5, color: valueColor ?? theme.colorScheme.onSurface))),
+      ]));
 }
 
 class Cookies extends StatelessWidget {

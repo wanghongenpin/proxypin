@@ -1428,4 +1428,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get resume => 'Tiếp tục';
+
+  @override
+  String get overview => 'Tổng quan';
 }

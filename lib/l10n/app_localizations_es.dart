@@ -1429,4 +1429,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get resume => 'Reanudar';
+
+  @override
+  String get overview => 'Vista general';
 }

@@ -270,5 +270,6 @@
   "statusCancelled": "Cancelado",
   "statusPaused": "En pausa",
   "pause": "Pausar",
-  "resume": "Reanudar"
+  "resume": "Reanudar",
+  "overview": "Vista general"
 }

@@ -1417,6 +1417,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get resume => '继续';
+
+  @override
+  String get overview => '概览';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2590,4 +2593,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get resume => '繼續';
+
+  @override
+  String get overview => '概覽';
 }

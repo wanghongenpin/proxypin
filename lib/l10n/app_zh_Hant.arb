@@ -382,5 +382,6 @@
   "statusCancelled": "已取消",
   "statusPaused": "已暫停",
   "pause": "暫停",
-  "resume": "繼續"
+  "resume": "繼續",
+  "overview": "概覽"
 }

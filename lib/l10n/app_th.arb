@@ -270,5 +270,6 @@
   "statusCancelled": "ยกเลิกแล้ว",
   "statusPaused": "หยุดชั่วคราว",
   "pause": "หยุดชั่วคราว",
-  "resume": "ทำงานต่อ"
+  "resume": "ทำงานต่อ",
+  "overview": "ภาพรวม"
 }

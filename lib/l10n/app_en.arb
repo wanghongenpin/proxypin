@@ -476,5 +476,6 @@
   "statusCancelled": "Cancelled",
   "statusPaused": "Paused",
   "pause": "Pause",
-  "resume": "Resume"
+  "resume": "Resume",
+  "overview": "Overview"
 }
