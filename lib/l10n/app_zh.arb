@@ -498,5 +498,8 @@
   "customizeToolbar": "自定义快捷工具栏",
   "restoreDefaults": "恢复默认",
   "pinnedDragSort": "已固定（拖拽排序）",
-  "pinToolsHint": "全部功能（点 + 固定到工具栏）"
+  "pinToolsHint": "全部功能（点 + 固定到工具栏）",
+  "searchHint": "搜索 URL / 域名 / 内容…",
+  "image": "图片",
+  "filtered": "过滤"
 }

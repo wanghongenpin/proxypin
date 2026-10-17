@@ -2985,6 +2985,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All tools (tap + to pin to toolbar)'**
   String get pinToolsHint;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search URL / domain / content…'**
+  String get searchHint;
+
+  /// No description provided for @image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get image;
+
+  /// No description provided for @filtered.
+  ///
+  /// In en, this message translates to:
+  /// **'Filtered'**
+  String get filtered;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

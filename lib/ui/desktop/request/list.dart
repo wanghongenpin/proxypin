@@ -126,10 +126,10 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                     automaticallyImplyLeading: false,
                     actions: [popupMenus()],
                   ),
-                  bottomNavigationBar: Search(key: searchKey, onSearch: search),
                   body: Padding(
                       padding: const EdgeInsets.only(right: 5),
                       child: Column(children: [
+                        Search(key: searchKey, onSearch: search),
                         Obx(() => selectionController.selectionMode.value
                             ? SelectionActionBar(
                                 selectionController: selectionController,

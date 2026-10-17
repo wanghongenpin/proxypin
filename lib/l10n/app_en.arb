@@ -509,5 +509,8 @@
   "customizeToolbar": "Customize toolbar",
   "restoreDefaults": "Restore defaults",
   "pinnedDragSort": "Pinned (drag to reorder)",
-  "pinToolsHint": "All tools (tap + to pin to toolbar)"
+  "pinToolsHint": "All tools (tap + to pin to toolbar)",
+  "searchHint": "Search URL / domain / content…",
+  "image": "Image",
+  "filtered": "Filtered"
 }

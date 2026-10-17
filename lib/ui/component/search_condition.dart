@@ -157,10 +157,13 @@ class SearchConditionsState extends State<SearchConditions> {
           row(
             Text('${localizations.responseType}:'),
             DropdownMenu(
-              initialValue: Maps.getKey(responseContentMap, searchModel.responseContentType) ?? localizations.all,
+              initialValue: searchModel.responseContentTypes.length == 1
+                  ? Maps.getKey(responseContentMap, searchModel.responseContentTypes.first) ?? localizations.all
+                  : localizations.all,
               items: responseContentMap.keys,
               onSelected: (String value) {
-                searchModel.responseContentType = responseContentMap[value];
+                var contentType = responseContentMap[value];
+                searchModel.responseContentTypes = contentType == null ? {} : {contentType};
               },
             ),
           ),

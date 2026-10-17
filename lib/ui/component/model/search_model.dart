@@ -37,8 +37,8 @@ class SearchModel {
   //请求类型
   ContentType? requestContentType;
 
-  //响应类型
-  ContentType? responseContentType;
+  //响应类型（空集合表示不过滤，支持多选）
+  Set<ContentType> responseContentTypes = {};
 
   // 状态码范围（包含两端）
   int? statusCodeFrom;
@@ -57,7 +57,7 @@ class SearchModel {
     return keyword?.trim().isNotEmpty == true ||
         requestMethod != null ||
         requestContentType != null ||
-        responseContentType != null ||
+        responseContentTypes.isNotEmpty ||
         statusCodeFrom != null ||
         statusCodeTo != null ||
         durationFromMs != null ||
@@ -75,7 +75,7 @@ class SearchModel {
     searchModel.searchOptions = Set.from(searchOptions);
     searchModel.requestMethod = requestMethod;
     searchModel.requestContentType = requestContentType;
-    searchModel.responseContentType = responseContentType;
+    searchModel.responseContentTypes = Set.from(responseContentTypes);
     searchModel.statusCodeFrom = statusCodeFrom;
     searchModel.statusCodeTo = statusCodeTo;
     searchModel.durationFromMs = durationFromMs;
@@ -88,7 +88,7 @@ class SearchModel {
 
   @override
   String toString() {
-    return 'SearchModel{keyword: $keyword, isRegExp: ${isRegExp.value}, searchOptions: $searchOptions, responseContentType: $responseContentType, requestMethod: $requestMethod, requestContentType: $requestContentType, statusRange: [$statusCodeFrom-$statusCodeTo], durationRangeMs: [$durationFromMs-$durationToMs], protocols: $protocols}';
+    return 'SearchModel{keyword: $keyword, isRegExp: ${isRegExp.value}, searchOptions: $searchOptions, responseContentTypes: $responseContentTypes, requestMethod: $requestMethod, requestContentType: $requestContentType, statusRange: [$statusCodeFrom-$statusCodeTo], durationRangeMs: [$durationFromMs-$durationToMs], protocols: $protocols}';
   }
 
   /// 根据 keyword、caseSensitive、isRegExp 构造一个文本匹配函数。
@@ -129,7 +129,7 @@ class SearchModel {
       return false;
     }
 
-    if (responseContentType != null && response?.contentType != responseContentType) {
+    if (responseContentTypes.isNotEmpty && !responseContentTypes.contains(response?.contentType)) {
       return false;
     }
 

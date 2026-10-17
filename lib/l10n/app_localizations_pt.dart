@@ -1495,6 +1495,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pinToolsHint => 'All tools (tap + to pin to toolbar)';
+
+  @override
+  String get searchHint => 'Search URL / domain / content…';
+
+  @override
+  String get image => 'Image';
+
+  @override
+  String get filtered => 'Filtered';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).

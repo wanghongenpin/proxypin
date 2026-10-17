@@ -415,5 +415,8 @@
   "customizeToolbar": "自訂快捷工具欄",
   "restoreDefaults": "恢復默認",
   "pinnedDragSort": "已固定（拖曳排序）",
-  "pinToolsHint": "全部功能（點 + 固定到工具欄）"
+  "pinToolsHint": "全部功能（點 + 固定到工具欄）",
+  "searchHint": "搜索 URL / 域名 / 內容…",
+  "image": "圖片",
+  "filtered": "過濾"
 }

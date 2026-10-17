@@ -1478,6 +1478,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pinToolsHint => '全部功能（点 + 固定到工具栏）';
+
+  @override
+  String get searchHint => '搜索 URL / 域名 / 内容…';
+
+  @override
+  String get image => '图片';
+
+  @override
+  String get filtered => '过滤';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2712,4 +2721,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get pinToolsHint => '全部功能（點 + 固定到工具欄）';
+
+  @override
+  String get searchHint => '搜索 URL / 域名 / 內容…';
+
+  @override
+  String get image => '圖片';
+
+  @override
+  String get filtered => '過濾';
 }
