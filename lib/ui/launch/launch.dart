@@ -215,40 +215,70 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   @override
   Widget build(BuildContext context) {
     Color primaryColor = Theme.of(context).colorScheme.primary;
+    if (Platforms.isDesktop()) {
+      return Tooltip(
+          message: started ? localizations.stop : localizations.start,
+          child: InkWell(borderRadius: BorderRadius.circular(8), onTap: onToggle, child: capsule()));
+    }
     return IconButton(
         tooltip: started ? localizations.stop : localizations.start,
         icon: Icon(started ? Icons.stop : Icons.play_arrow_sharp,
             color: started ? Colors.red : primaryColor, size: widget.size.toDouble()),
-        onPressed: () async {
-          if (started) {
-            if (!widget.serverLaunch) {
-              setState(() {
-                widget.onStop?.call();
-                started = !started;
-              });
-              return;
-            }
+        onPressed: onToggle);
+  }
 
-            widget.proxyServer.stop().then((value) {
-              widget.onStop?.call();
-              if (mounted) {
-                setState(() {
-                  started = !started;
-                });
-              }
-            }).catchError((e) {
-              logger.e("stop proxy server failed", error: e);
-              if (mounted) {
-                FlutterToastr.show(localizations.fail, context, duration: 3);
-                setState(() {
-                  started = false;
-                });
-              }
-            });
-          } else {
-            start();
-          }
+  Future<void> onToggle() async {
+    if (started) {
+      if (!widget.serverLaunch) {
+        setState(() {
+          widget.onStop?.call();
+          started = !started;
         });
+        return;
+      }
+
+      widget.proxyServer.stop().then((value) {
+        widget.onStop?.call();
+        if (mounted) {
+          setState(() {
+            started = !started;
+          });
+        }
+      }).catchError((e) {
+        logger.e("stop proxy server failed", error: e);
+        if (mounted) {
+          FlutterToastr.show(localizations.fail, context, duration: 3);
+          setState(() {
+            started = false;
+          });
+        }
+      });
+    } else {
+      start();
+    }
+  }
+
+  /// 桌面端浅色胶囊（设计稿 .proxy-state）：电源图标 + 状态点 +「运行中 · :9099」
+  Widget capsule() {
+    const green = Color(0xFF1F8B4C);
+    var theme = Theme.of(context);
+    var color = started ? green : theme.colorScheme.onSurfaceVariant;
+    return Container(
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: started ? const Color(0xFFF0F8F2) : theme.colorScheme.surface,
+            border: Border.all(
+                color: started ? green.withValues(alpha: 0.4) : theme.dividerColor.withValues(alpha: 0.8))),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.power_settings_new, size: 14, color: color),
+          const SizedBox(width: 6),
+          Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+          const SizedBox(width: 6),
+          Text(started ? '${localizations.statusRunning} · :${widget.proxyServer.port}' : localizations.statusStopped,
+              style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface)),
+        ]));
   }
 
   ///启动代理服务器
