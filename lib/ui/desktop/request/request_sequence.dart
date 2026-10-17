@@ -131,9 +131,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   Widget build(BuildContext context) {
     super.build(context);
 
-    return ListView.separated(
+    return ListView.builder(
       cacheExtent: 1000,
-      separatorBuilder: (context, index) => Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
       itemCount: view.length,
       itemBuilder: (context, index) {
         final request = view.elementAt(index);

@@ -541,28 +541,39 @@ class _DomainRequestsState extends State<DomainRequests> {
     ]);
   }
 
-  //domain title
+  //domain title（设计稿 .group：浅灰底 + 箭头 + 应用图标 + 域名 + 请求数胶囊）
   Widget _hostWidget(String title) {
+    var theme = Theme.of(context);
     var host = GestureDetector(
         onSecondaryTapDown: (details) => menu(details),
-        child: ListTile(
-            minLeadingWidth: 25,
-            leading: Icon(selected ? Icons.arrow_drop_down : Icons.arrow_right, size: 18),
-            trailing: trailing,
-            dense: true,
-            horizontalTitleGap: 0,
-            contentPadding: const EdgeInsets.only(left: 3, right: 8),
-            visualDensity: const VisualDensity(vertical: -3.6),
-            title: Text(title,
-                textAlign: TextAlign.left,
-                style: const TextStyle(fontSize: 14),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-            onTap: () {
-              setState(() {
-                selected = !selected;
-              });
-            }));
+        onTap: () {
+          setState(() {
+            selected = !selected;
+          });
+        },
+        child: Container(
+            height: 34,
+            padding: const EdgeInsets.only(left: 8, right: 10),
+            decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.025),
+                border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5), width: 0.5))),
+            child: Row(children: [
+              Icon(selected ? Icons.arrow_drop_down : Icons.arrow_right, size: 18, color: theme.colorScheme.onSurfaceVariant),
+              if (trailing != null) ...[trailing!, const SizedBox(width: 6)],
+              Expanded(
+                  child: Text(title,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis)),
+              Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.06)),
+                  child: Text('${widget.body.length}',
+                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant))),
+            ])));
 
     return ColorTransition(
         key: transitionState,
@@ -669,3 +680,4 @@ class HostWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis)));
   }
 }
+

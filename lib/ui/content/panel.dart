@@ -453,7 +453,7 @@ class Overview extends StatelessWidget {
                 valueColor: statusColor(response?.status.code)),
             overviewRow(context, 'Protocol', request.protocolVersion),
             overviewRow(context, 'Duration', response?.costTime()),
-            overviewRow(context, 'Size', getPackagesSize(request, response)),
+            overviewRow(context, 'Size', _sizeText(context, request, response)),
             overviewRow(context, 'Remote Address',
                 '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
             overviewRow(context, 'Request Time', request.requestTime.formatMillisecond()),
@@ -469,6 +469,21 @@ class Overview extends StatelessWidget {
           ],
         ]));
   }
+}
+
+/// 设计稿 Overview 大小行：请求 1.2 KB · 响应 8.6 KB (gzip)
+String _sizeText(BuildContext context, HttpRequest request, HttpResponse? response) {
+  var localizations = AppLocalizations.of(context)!;
+  var reqSize = getPackage(request.packageSize);
+  var respSize = getPackage(response?.packageSize);
+  if (respSize.isEmpty) {
+    return '${localizations.request} $reqSize';
+  }
+  var text = '${localizations.request} $reqSize · ${localizations.response} $respSize';
+  if (response?.headers.isGzip == true) {
+    text += ' (gzip)';
+  }
+  return text;
 }
 
 Color methodColor(HttpMethod method, ThemeData theme) {

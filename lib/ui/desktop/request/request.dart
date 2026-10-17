@@ -16,7 +16,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:date_format/date_format.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -158,18 +157,17 @@ class _RequestWidgetState extends State<RequestWidget> {
 
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
     var request = widget.request;
     var response = widget.response.get() ?? request.response;
     var operationName = request.graphqlOperationName;
     String path = widget.displayDomain ? request.domainPath : request.path;
-    String title = '${request.method.name} $path';
-
-    var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
-    String contentType = response?.contentType.name.toUpperCase() ?? '';
-    var packagesSize = getPackagesSize(request, response);
 
     var requestColor = color(path);
     bool selectedInSelectionMode = widget.multiSelectController.contains(request.requestId);
+    bool selected = _selected || selectedInSelectionMode;
+
+    // 设计稿 .row：单行（method 语义色 + status 语义色 + path + 耗时），选中浅色底
     return GestureDetector(
         onLongPress: () {
           if (!selectionMode) {
@@ -177,54 +175,51 @@ class _RequestWidgetState extends State<RequestWidget> {
           }
         },
         onSecondaryTapDown: (details) => contextualMenu(details),
-        child: ListTile(
-            minLeadingWidth: 5,
-            textColor: requestColor,
-            selectedColor: requestColor,
-            selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            leading: _leading(requestColor),
-            trailing: widget.trailing,
-            title: Text.rich(
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                TextSpan(children: [
-                  TextSpan(text: title.fixAutoLines()),
-                  if (operationName != null) graphqlOperationSpan(request, fixAutoLines: true)!,
-                ])),
-            subtitle: Container(
-                padding: const EdgeInsets.only(top: 3),
-                child: Text.rich(
-                    maxLines: 1,
-                    TextSpan(
-                      children: [
-                        TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
-                        TextSpan(
-                            text:
-                                '$time - [${response?.status.code ?? ''}]  $contentType $packagesSize ${response?.costTime() ?? ''}',
-                            style: const TextStyle(fontSize: 11, color: Colors.grey))
-                      ],
-                    ))),
-            selected: _selected || selectedInSelectionMode,
-            dense: true,
-            visualDensity: const VisualDensity(vertical: -4),
-            contentPadding: EdgeInsets.only(left: selectedInSelectionMode ? 6 : 28),
-            onTap: onClick));
-  }
-
-  Widget _leading(Color? requestColor) {
-    bool selectedInSelectionMode = widget.multiSelectController.contains(widget.request.requestId);
-
-    var icon = getIcon(widget.response.get() ?? widget.request.response, color: requestColor);
-    if (!selectedInSelectionMode) {
-      return icon;
-    }
-
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(selectedInSelectionMode ? Icons.check_box_outlined : Icons.check_box_outline_blank_outlined,
-          size: 18, color: selectedInSelectionMode ? Theme.of(context).colorScheme.primary : Colors.grey),
-      const SizedBox(width: 4),
-      icon,
-    ]);
+        onTap: onClick,
+        child: Container(
+            height: widget.displayDomain ? 38 : 34,
+            padding: EdgeInsets.only(left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26), right: 10),
+            decoration: BoxDecoration(
+                color: selected ? theme.colorScheme.primary.withValues(alpha: 0.08) : null,
+                border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3), width: 0.5))),
+            child: Row(children: [
+              if (selectedInSelectionMode) ...[
+                Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 4),
+              ],
+              SizedBox(
+                  width: 56,
+                  child: Text(request.method.name,
+                      maxLines: 1,
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: requestColor ?? methodColor(request.method, theme)))),
+              SizedBox(
+                  width: 44,
+                  child: Text(response == null ? '' : '${response.status.code}',
+                      maxLines: 1,
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          color: statusColor(response?.status.code) ?? theme.colorScheme.onSurfaceVariant))),
+              Expanded(
+                  child: Text.rich(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      TextSpan(children: [
+                        TextSpan(text: path.fixAutoLines()),
+                        if (operationName != null) graphqlOperationSpan(request, fontSize: 12.5, fixAutoLines: true)!,
+                      ]),
+                      style: TextStyle(
+                          fontSize: 12.5, color: requestColor ?? theme.colorScheme.onSurfaceVariant, height: 1.2))),
+              if (widget.trailing != null) ...[widget.trailing!, const SizedBox(width: 6)],
+              SizedBox(
+                  width: 70,
+                  child: Text(response?.costTime() ?? '',
+                      maxLines: 1,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8)))),
+            ])));
   }
 
   Color? color(String url) {

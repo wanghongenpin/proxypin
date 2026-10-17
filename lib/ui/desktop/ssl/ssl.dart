@@ -30,18 +30,26 @@ class _SslState extends State<SslWidget> {
   Widget build(BuildContext context) {
     return MenuAnchor(
         builder: (context, controller, child) {
-          return IconButton(
-              icon: widget.proxyServer.enableSsl
-                  ? Icon(Icons.lock_open, size: 21)
-                  : Icon(Icons.https_outlined, color: Colors.red, size: 21),
-              tooltip: localizations.httpsProxy,
-              onPressed: () {
-                if (controller.isOpen) {
-                  controller.close();
-                } else {
-                  controller.open();
-                }
-              });
+          // 设计稿：锁图标 + HTTPS 文字
+          return Tooltip(
+              message: localizations.httpsProxy,
+              child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 36),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant),
+                  icon: widget.proxyServer.enableSsl
+                      ? const Icon(Icons.lock_open, size: 21)
+                      : const Icon(Icons.https_outlined, color: Colors.red, size: 21),
+                  label: const Text('HTTPS', style: TextStyle(fontSize: 12)),
+                  onPressed: () {
+                    if (controller.isOpen) {
+                      controller.close();
+                    } else {
+                      controller.open();
+                    }
+                  }));
         },
         menuChildren: [
           _Switch(proxyServer: widget.proxyServer, onEnableChange: (val) => setState(() {})),
