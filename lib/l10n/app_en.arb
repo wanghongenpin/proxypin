@@ -504,5 +504,10 @@
   "requestMapDesc": "Map requests to a local file or a remote URL",
   "requestCryptoDesc": "Encrypt or decrypt request and response bodies",
   "scriptDesc": "Handle requests and responses with JavaScript",
-  "breakpointDesc": "Intercept requests/responses, modify, then resume"
+  "breakpointDesc": "Intercept requests/responses, modify, then resume",
+  "allFunctions": "All functions",
+  "customizeToolbar": "Customize toolbar",
+  "restoreDefaults": "Restore defaults",
+  "pinnedDragSort": "Pinned (drag to reorder)",
+  "pinToolsHint": "All tools (tap + to pin to toolbar)"
 }

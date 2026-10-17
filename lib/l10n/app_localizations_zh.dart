@@ -1463,6 +1463,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get breakpointDesc => '拦截请求 / 响应，修改后再放行';
+
+  @override
+  String get allFunctions => '全部功能';
+
+  @override
+  String get customizeToolbar => '自定义快捷工具栏';
+
+  @override
+  String get restoreDefaults => '恢复默认';
+
+  @override
+  String get pinnedDragSort => '已固定（拖拽排序）';
+
+  @override
+  String get pinToolsHint => '全部功能（点 + 固定到工具栏）';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2682,4 +2697,19 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get breakpointDesc => '攔截請求 / 響應，修改後再放行';
+
+  @override
+  String get allFunctions => '全部功能';
+
+  @override
+  String get customizeToolbar => '自訂快捷工具欄';
+
+  @override
+  String get restoreDefaults => '恢復默認';
+
+  @override
+  String get pinnedDragSort => '已固定（拖曳排序）';
+
+  @override
+  String get pinToolsHint => '全部功能（點 + 固定到工具欄）';
 }

@@ -2955,6 +2955,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Intercept requests/responses, modify, then resume'**
   String get breakpointDesc;
+
+  /// No description provided for @allFunctions.
+  ///
+  /// In en, this message translates to:
+  /// **'All functions'**
+  String get allFunctions;
+
+  /// No description provided for @customizeToolbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize toolbar'**
+  String get customizeToolbar;
+
+  /// No description provided for @restoreDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore defaults'**
+  String get restoreDefaults;
+
+  /// No description provided for @pinnedDragSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned (drag to reorder)'**
+  String get pinnedDragSort;
+
+  /// No description provided for @pinToolsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'All tools (tap + to pin to toolbar)'**
+  String get pinToolsHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

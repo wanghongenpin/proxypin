@@ -119,6 +119,11 @@ class AppConfiguration {
   /// 被占用时由服务回退到系统随机端口。
   int? mcpPort;
 
+  /// 桌面端工具栏已固定的快捷功能 id 列表
+  static const List<String> defaultToolbarPins = ['requestRewrite', 'requestMap', 'script'];
+
+  final ValueNotifier<List<String>> toolbarPins = ValueNotifier(defaultToolbarPins);
+
   AppConfiguration._();
 
   /// 单例
@@ -242,6 +247,10 @@ class AppConfiguration {
       mcpToken = config['mcpToken'] as String?;
       var port = config['mcpPort'];
       mcpPort = port is int && port > 0 && port <= 65535 ? port : null;
+      var pins = config['toolbarPins'];
+      if (pins is List) {
+        toolbarPins.value = pins.map((e) => e.toString()).toList();
+      }
     } catch (e) {
       logger.e(e);
     }
@@ -287,6 +296,7 @@ class AppConfiguration {
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
       if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
+      if (Platforms.isDesktop()) 'toolbarPins': toolbarPins.value,
       // MCP 配置所有平台都写入
       'mcpEnabled': mcpEnabled,
       'mcpRedactEnabled': mcpRedactEnabled,

@@ -1480,4 +1480,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get breakpointDesc => 'Intercept requests/responses, modify, then resume';
+
+  @override
+  String get allFunctions => 'All functions';
+
+  @override
+  String get customizeToolbar => 'Customize toolbar';
+
+  @override
+  String get restoreDefaults => 'Restore defaults';
+
+  @override
+  String get pinnedDragSort => 'Pinned (drag to reorder)';
+
+  @override
+  String get pinToolsHint => 'All tools (tap + to pin to toolbar)';
 }

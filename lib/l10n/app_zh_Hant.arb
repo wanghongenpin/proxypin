@@ -410,5 +410,10 @@
   "requestMapDesc": "映射到本地檔案或遠端地址",
   "requestCryptoDesc": "加解密請求 / 響應體，便於查看明文",
   "scriptDesc": "用 JavaScript 編程化處理請求與響應",
-  "breakpointDesc": "攔截請求 / 響應，修改後再放行"
+  "breakpointDesc": "攔截請求 / 響應，修改後再放行",
+  "allFunctions": "全部功能",
+  "customizeToolbar": "自訂快捷工具欄",
+  "restoreDefaults": "恢復默認",
+  "pinnedDragSort": "已固定（拖曳排序）",
+  "pinToolsHint": "全部功能（點 + 固定到工具欄）"
 }
