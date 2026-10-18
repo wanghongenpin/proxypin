@@ -11,6 +11,7 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/desktop/setting/environment.dart';
 
 /// 顶部工具栏的环境切换器
@@ -127,29 +128,32 @@ class _EnvironmentSwitcherState extends State<EnvironmentSwitcher> {
         ));
         return items;
       },
+      // 设计稿 .env-switch：状态点 + 名称 + 小箭头，高 30 圆角 7
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.4)),
-          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(7),
         ),
         constraints: const BoxConstraints(maxWidth: 160),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(
-            m?.active != null ? Icons.public : Icons.public_off,
-            size: 16,
-            color: Colors.grey.shade600,
-          ),
+          Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: m?.active != null ? const Color(0xFF1F8B4C) : Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
-          const SizedBox(width: 2),
-          Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 4),
+          SvgIcon('chevron_down', size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ]),
       ),
     );

@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/toolbar/phone_connect.dart';
 import 'package:proxypin/ui/desktop/toolbar/environment_switcher.dart';
@@ -101,27 +102,32 @@ class _ToolbarState extends State<Toolbar> {
 
   @override
   Widget build(BuildContext context) {
+    // 设计稿 .toolbar：间距 6，图标 17px，清空后有分隔线
+    var iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(children: [
       Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
       SocketLaunch(proxyServer: widget.proxyServer, startup: widget.proxyServer.configuration.startup),
-      const Padding(padding: EdgeInsets.only(left: 18)),
-      IconButton(tooltip: localizations.clear, icon: const Icon(Icons.delete_outline, size: 21), onPressed: _onClear),
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
+      IconButton(
+          tooltip: localizations.clear,
+          icon: SvgIcon('trash', size: 17, color: iconColor),
+          onPressed: _onClear),
+      Container(width: 1, height: 20, margin: const EdgeInsets.symmetric(horizontal: 6), color: Theme.of(context).dividerColor),
       SslWidget(proxyServer: widget.proxyServer), // SSL配置
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
       QuickToolbar(proxyServer: widget.proxyServer), // 快捷工具栏
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
       Setting(proxyServer: widget.proxyServer), // 设置
       const WeakNetworkIndicator(), // 网络限制启用时显示，未启用时隐藏
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
       IconButton(
           tooltip: localizations.mobileConnect,
-          icon: const Icon(Icons.phone_iphone_outlined, size: 21),
+          icon: SvgIcon('phone', size: 17, color: iconColor),
           onPressed: () async {
             final ips = await localIps(readCache: false);
             phoneConnect(ips, widget.proxyServer.port);
           }),
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
       const EnvironmentSwitcher(), // 环境变量切换器
       const Padding(padding: EdgeInsets.only(left: 10)),
     ]);

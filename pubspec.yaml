@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   intl: any
   cupertino_icons: ^1.0.9
+  flutter_svg: ^2.2.1
   pointycastle: ^4.0.0
   logger: ^2.8.0
   date_format: ^2.0.9
@@ -65,4 +66,5 @@ flutter:
     - assets/icon.ico
     - assets/icon_foreground.png
     - assets/js/
+    - assets/icons/
     - SKILL.md

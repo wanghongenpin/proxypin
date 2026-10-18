@@ -7,6 +7,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/ssl/client_cert.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
@@ -39,9 +40,11 @@ class _SslState extends State<SslWidget> {
                       minimumSize: const Size(0, 36),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant),
-                  icon: widget.proxyServer.enableSsl
-                      ? const Icon(Icons.lock_open, size: 21)
-                      : const Icon(Icons.https_outlined, color: Colors.red, size: 21),
+                  icon: SvgIcon('lock',
+                      size: 17,
+                      color: widget.proxyServer.enableSsl
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Colors.red),
                   label: const Text('HTTPS', style: TextStyle(fontSize: 12)),
                   onPressed: () {
                     if (controller.isOpen) {

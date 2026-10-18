@@ -16,11 +16,12 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/preference.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-///左侧导航栏
+///左侧导航栏（设计稿 .rail / .ritem：宽 64，项 52x48 圆角 9，图标 19 + 标签 10）
 /// @author wanghongen
 /// 2024/8/6
 class LeftNavigationBar extends StatefulWidget {
@@ -32,36 +33,11 @@ class LeftNavigationBar extends StatefulWidget {
       {super.key, required this.appConfiguration, required this.proxyServer, required this.selectIndex});
 
   @override
-  State<StatefulWidget> createState() {
-    return _LeftNavigationBarState();
-  }
+  State<StatefulWidget> createState() => _LeftNavigationBarState();
 }
 
 class _LeftNavigationBarState extends State<LeftNavigationBar> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
-
-  List<NavigationRailDestination> get destinations => [
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.workspaces_outlined),
-            label: Text(localizations.requests, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.favorite_outline_outlined),
-            label: Text(localizations.favorites, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.history_outlined),
-            label: Text(localizations.history, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.rule_outlined),
-            label: Text(localizations.rules, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.hardware_outlined),
-            label: Text(localizations.toolbox, style: Theme.of(context).textTheme.bodySmall)),
-      ];
 
   @override
   Widget build(BuildContext context) {
@@ -72,60 +48,85 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
             return const SizedBox();
           }
 
+          var items = [
+            (icon: 'list', label: localizations.requests),
+            (icon: 'star', label: localizations.favorites),
+            (icon: 'clock', label: localizations.history),
+            (icon: 'rules', label: localizations.rules),
+            (icon: 'wrench', label: localizations.toolbox),
+          ];
+
           return Container(
-            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 57 : 70,
+            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 64 : 76,
             decoration:
                 BoxDecoration(border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2))),
             child: Column(children: <Widget>[
-              SizedBox(
-                height: 400,
-                child: leftNavigation(index),
-              ),
-              Expanded(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Tooltip(
-                      message: localizations.preference,
-                      preferBelow: false,
-                      child: IconButton(
-                          iconSize: 22,
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (_) => Preference(widget.appConfiguration, widget.proxyServer.configuration));
-                          },
-                          icon: Icon(Icons.settings_outlined, color: Colors.grey.shade500))),
-                  const SizedBox(height: 5),
-                  Tooltip(
-                      preferBelow: true,
-                      message: localizations.feedback,
-                      child: IconButton(
-                        iconSize: 22,
-                        onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin/issues")),
-                        icon: Icon(Icons.feedback_outlined, color: Colors.grey.shade500),
-                      )),
-                  const SizedBox(height: 10),
-                ],
-              ))
+              const SizedBox(height: 8),
+              for (var i = 0; i < items.length; i++)
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: _RailItem(
+                        icon: items[i].icon,
+                        label: items[i].label,
+                        active: index == i,
+                        onTap: () => widget.selectIndex.value = i)),
+              const Spacer(),
+              _RailItem(
+                  icon: 'gear',
+                  label: localizations.preference,
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (_) => Preference(widget.appConfiguration, widget.proxyServer.configuration));
+                  }),
+              const SizedBox(height: 2),
+              Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _RailItem(
+                      icon: 'chat',
+                      label: localizations.feedback,
+                      onTap: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin/issues")))),
             ]),
           );
         });
   }
+}
 
-  //left menu eg: requests, favorites, history, toolbox
-  Widget leftNavigation(int index) {
-    return NavigationRail(
-        minWidth: 57,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        selectedIconTheme: IconTheme.of(context).copyWith(color: Theme.of(context).colorScheme.primary, size: 22),
-        unselectedIconTheme:
-            IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.55), size: 22),
-        labelType: NavigationRailLabelType.all,
-        destinations: destinations,
-        selectedIndex: index,
-        onDestinationSelected: (int index) {
-          widget.selectIndex.value = index;
-        });
+/// 设计稿 .ritem：52x48 圆角 9，图标 19px + 标签 10px，选中 primary-soft 底 + primary 字
+class _RailItem extends StatelessWidget {
+  final String icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _RailItem({required this.icon, required this.label, this.active = false, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    var color = active ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
+    return Tooltip(
+        message: label,
+        preferBelow: false,
+        child: InkWell(
+            borderRadius: BorderRadius.circular(9),
+            onTap: onTap,
+            child: Container(
+                width: 52,
+                height: 48,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(9),
+                    color: active ? theme.colorScheme.primary.withValues(alpha: 0.08) : null),
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  SvgIcon(icon, size: 19, color: color),
+                  const SizedBox(height: 3),
+                  Text(label,
+                      maxLines: 1,
+                      style: TextStyle(
+                          fontSize: 10,
+                          height: 1.1,
+                          color: color,
+                          fontWeight: active ? FontWeight.w500 : FontWeight.w400)),
+                ]))));
   }
 }

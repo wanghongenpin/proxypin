@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/ui/component/search_condition.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 
 import '../../component/model/search_model.dart';
 
@@ -87,8 +88,10 @@ class SearchState extends State<Search> {
                 borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.4), width: 0.8),
                 borderRadius: BorderRadius.circular(7)),
             prefixIcon: InkWell(
-                child: Icon(Icons.search,
-                    size: 17, color: searched ? Colors.green : theme.colorScheme.onSurfaceVariant),
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: SvgIcon('search',
+                        size: 14, color: searched ? Colors.green : theme.colorScheme.onSurfaceVariant)),
                 onTapDown: (details) {
                   searchDialog(details);
                 }),
@@ -96,7 +99,9 @@ class SearchState extends State<Search> {
             hintText: localizations.searchHint,
             hintStyle: TextStyle(fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant),
             suffixIcon: InkWell(
-                child: Icon(Icons.filter_list, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: SvgIcon('funnel', size: 14, color: theme.colorScheme.onSurfaceVariant)),
                 onTapDown: (details) {
                   searchDialog(details);
                 }),

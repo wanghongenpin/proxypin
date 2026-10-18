@@ -30,6 +30,7 @@ import 'package:proxypin/storage/favorites.dart';
 import 'package:proxypin/ui/component/json/json_text.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/state_component.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/content/web_socket.dart';
 import 'package:proxypin/ui/content/mqtt.dart';
@@ -184,7 +185,10 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       tabAlignment: isDesktop ? TabAlignment.start : null,
       dividerColor: Theme.of(context).dividerColor.withValues(alpha: 0.15),
       labelPadding: EdgeInsets.symmetric(horizontal: isDesktop ? 14 : 10),
-      tabs: tabs.map((title) => Tab(child: Text(tabLabel(title), style: widget.tabStyle, maxLines: 1))).toList(),
+      tabs: tabs
+          .map((title) =>
+              Tab(height: isDesktop ? 34 : null, child: Text(tabLabel(title), style: widget.tabStyle, maxLines: 1)))
+          .toList(),
     );
 
     PreferredSizeWidget appBar;
@@ -219,7 +223,7 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       endDrawerEnableOpenDragGesture: false,
       appBar: appBar,
       body: Padding(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+          padding: EdgeInsets.only(left: isDesktop ? 16 : 20, right: isDesktop ? 16 : 20, top: isDesktop ? 12 : 10),
           child: TabBarView(
             physics: Platforms.isDesktop() ? const NeverScrollableScrollPhysics() : null, //桌面禁止滑动
             controller: _tabController,
@@ -317,17 +321,17 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
           const SizedBox(width: 4),
           miniAction(
               tooltip: localizations.copyUrl,
-              icon: Icons.copy,
+              icon: 'copy',
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: request.requestUrl)).then((_) {
                   if (mounted) FlutterToastr.show(localizations.copied, context);
                 });
               }),
           miniAction(
-              tooltip: localizations.repeat, icon: Icons.replay, onPressed: () => resendRequest(request)),
+              tooltip: localizations.repeat, icon: 'refresh', onPressed: () => resendRequest(request)),
           miniAction(
               tooltip: localizations.favorite,
-              icon: Icons.star_border,
+              icon: 'star',
               onPressed: () {
                 FavoriteStorage.addFavorite(request);
                 FlutterToastr.show(localizations.addSuccess, context);
@@ -336,7 +340,7 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
   }
 
   /// 设计稿 .mini：26x26 灰色小图标按钮
-  Widget miniAction({required String tooltip, required IconData icon, required VoidCallback onPressed}) {
+  Widget miniAction({required String tooltip, required String icon, required VoidCallback onPressed}) {
     return Tooltip(
         message: tooltip,
         child: InkWell(
@@ -345,7 +349,8 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
             child: SizedBox(
                 width: 26,
                 height: 26,
-                child: Icon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant))));
+                child: Center(
+                    child: SvgIcon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant)))));
   }
 
   void resendRequest(HttpRequest httpRequest) {
@@ -426,6 +431,7 @@ class Overview extends StatelessWidget {
     if (request == null) {
       return const SizedBox();
     }
+    var localizations = AppLocalizations.of(context)!;
     var response = this.response.get();
     String requestUrl = request.requestUrl;
     try {
@@ -449,19 +455,19 @@ class Overview extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         child: ListView(padding: const EdgeInsets.only(top: 2, bottom: 12), children: [
           overviewCard(context, [
-            overviewRow(context, 'Status Code', response?.status.toString(),
+            overviewRow(context, localizations.statusCode, response?.status.toString(),
                 valueColor: statusColor(response?.status.code)),
-            overviewRow(context, 'Protocol', request.protocolVersion),
-            overviewRow(context, 'Duration', response?.costTime()),
-            overviewRow(context, 'Size', _sizeText(context, request, response)),
-            overviewRow(context, 'Remote Address',
+            overviewRow(context, localizations.protocol, request.protocolVersion),
+            overviewRow(context, localizations.duration, response?.costTime()),
+            overviewRow(context, localizations.size, _sizeText(context, request, response)),
+            overviewRow(context, localizations.remoteAddress,
                 '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
-            overviewRow(context, 'Request Time', request.requestTime.formatMillisecond()),
-            if (request.processInfo != null) overviewRow(context, 'App', request.processInfo!.name),
-            overviewRow(context, 'Request URL', requestUrl),
-            overviewRow(context, 'Request Method', request.method.name),
-            overviewRow(context, 'Request Content-Type', request.headers.contentType),
-            overviewRow(context, 'Response Content-Type', response?.headers.contentType),
+            overviewRow(context, localizations.requestTime, request.requestTime.formatMillisecond()),
+            if (request.processInfo != null) overviewRow(context, localizations.app, request.processInfo!.name),
+            overviewRow(context, localizations.requestUrl, requestUrl),
+            overviewRow(context, localizations.requestMethod, request.method.name),
+            overviewRow(context, localizations.requestType, request.headers.contentType),
+            overviewRow(context, localizations.responseType, response?.headers.contentType),
           ]),
           if (response != null && (response.body?.isNotEmpty ?? false)) ...[
             const SizedBox(height: 12),
@@ -534,10 +540,10 @@ Widget overviewCard(BuildContext context, List<Widget> rows) {
 Widget overviewRow(BuildContext context, String label, String? value, {Color? valueColor}) {
   var theme = Theme.of(context);
   return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
         SizedBox(
-            width: 150,
+            width: 130,
             child: Text(label,
                 maxLines: 1,
                 softWrap: false,
@@ -614,7 +620,7 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
               ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: _maxHeight),
                   child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       child: SizedBox(width: double.infinity, child: bodyView()))),
             ])));
   }

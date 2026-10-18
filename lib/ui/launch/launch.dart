@@ -23,6 +23,7 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -272,7 +273,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
             border: Border.all(
                 color: started ? green.withValues(alpha: 0.4) : theme.dividerColor.withValues(alpha: 0.8))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.power_settings_new, size: 14, color: color),
+          SvgIcon('power', size: 14, color: color),
           const SizedBox(width: 6),
           Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 6),

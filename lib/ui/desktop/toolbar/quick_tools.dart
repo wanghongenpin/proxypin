@@ -5,6 +5,7 @@ import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/network_condition_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/filter.dart';
@@ -18,7 +19,9 @@ typedef QuickToolLaunch = Future<void> Function(BuildContext context, ProxyServe
 
 class QuickTool {
   final String id;
-  final IconData icon;
+
+  /// assets/icons/ 下的设计稿线条图标名
+  final String icon;
   final QuickToolName name;
   final QuickToolLaunch launch;
 
@@ -28,7 +31,7 @@ class QuickTool {
 final trafficQuickTools = <QuickTool>[
   QuickTool(
       id: 'requestBlock',
-      icon: Icons.block,
+      icon: 'block',
       name: (l) => l.requestBlock,
       launch: (context, proxyServer) async {
         var manager = await RequestBlockManager.instance;
@@ -40,7 +43,7 @@ final trafficQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'requestRewrite',
-      icon: Icons.edit_outlined,
+      icon: 'pencil',
       name: (l) => l.requestRewrite,
       launch: (context, proxyServer) async {
         await MultiWindow.openWindow(AppLocalizations.of(context)!.requestRewrite, 'RequestRewriteWidget',
@@ -48,7 +51,7 @@ final trafficQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'requestMap',
-      icon: Icons.compare_arrows_outlined,
+      icon: 'swap',
       name: (l) => l.requestMap,
       launch: (context, proxyServer) async {
         await MultiWindow.openWindow(AppLocalizations.of(context)!.requestMap, 'RequestMapPage',
@@ -56,7 +59,7 @@ final trafficQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'requestCrypto',
-      icon: Icons.lock_outline,
+      icon: 'lock',
       name: (l) => l.requestCrypto,
       launch: (context, proxyServer) async {
         await MultiWindow.openWindow(AppLocalizations.of(context)!.requestCrypto, 'RequestCryptoPage',
@@ -64,7 +67,7 @@ final trafficQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'script',
-      icon: Icons.code,
+      icon: 'code',
       name: (l) => l.script,
       launch: (context, proxyServer) async {
         await MultiWindow.openWindow(AppLocalizations.of(context)!.script, 'ScriptWidget',
@@ -72,7 +75,7 @@ final trafficQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'breakpoint',
-      icon: Icons.pause_circle_outline,
+      icon: 'breakpoint',
       name: (l) => l.breakpoint,
       launch: (context, proxyServer) async {
         await MultiWindow.openWindow(AppLocalizations.of(context)!.breakpoint, 'RequestBreakpointPage',
@@ -83,7 +86,7 @@ final trafficQuickTools = <QuickTool>[
 final settingQuickTools = <QuickTool>[
   QuickTool(
       id: 'domainFilter',
-      icon: Icons.filter_alt_outlined,
+      icon: 'funnel',
       name: (l) => l.domainFilter,
       launch: (context, proxyServer) async {
         await showDialog(
@@ -93,7 +96,7 @@ final settingQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'hosts',
-      icon: Icons.list_alt_outlined,
+      icon: 'lines',
       name: (l) => l.hosts,
       launch: (context, proxyServer) async {
         var hosts = await HostsManager.instance;
@@ -103,7 +106,7 @@ final settingQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'externalProxy',
-      icon: Icons.north_east,
+      icon: 'arrow_out',
       name: (l) => l.externalProxy,
       launch: (context, proxyServer) async {
         await showDialog(
@@ -113,7 +116,7 @@ final settingQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'weakNetwork',
-      icon: Icons.bolt_outlined,
+      icon: 'zap',
       name: (l) => l.weakNetwork,
       launch: (context, proxyServer) async {
         var manager = await NetworkConditionManager.instance;
@@ -123,7 +126,7 @@ final settingQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'mcpService',
-      icon: Icons.hub_outlined,
+      icon: 'mcp',
       name: (l) => l.mcpService,
       launch: (context, proxyServer) async {
         await McpServiceDialog.show(context, proxyServer);
@@ -169,11 +172,11 @@ class QuickToolbar extends StatelessWidget {
             for (var tool in tools) ...[
               IconButton(
                   tooltip: tool.name(AppLocalizations.of(context)!),
-                  icon: Icon(tool.icon, size: 21),
+                  icon: SvgIcon(tool.icon, size: 17, color: Theme.of(context).colorScheme.primary),
                   onPressed: () {
                     tool.launch(context, proxyServer);
                   }),
-              const SizedBox(width: 18),
+              const SizedBox(width: 6),
             ],
             _menuButton(context, appConfiguration),
           ]);
@@ -185,7 +188,7 @@ class QuickToolbar extends StatelessWidget {
     var theme = Theme.of(context);
     return PopupMenuButton<String>(
         tooltip: localizations.allFunctions,
-        icon: const Icon(Icons.more_horiz, size: 21),
+        icon: SvgIcon('dots', size: 17, color: Theme.of(context).colorScheme.onSurfaceVariant),
         position: PopupMenuPosition.under,
         itemBuilder: (menuContext) => [
               PopupMenuItem<String>(
@@ -222,7 +225,7 @@ class QuickToolbar extends StatelessWidget {
             height: 40,
             child: Row(children: [
               const SizedBox(width: 14),
-              Icon(tool.icon, size: 17, color: theme.colorScheme.onSurfaceVariant),
+              SvgIcon(tool.icon, size: 15, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 10),
               Expanded(child: Text(tool.name(localizations), style: const TextStyle(fontSize: 13))),
               ValueListenableBuilder<List<String>>(
@@ -330,7 +333,7 @@ class CustomizeToolbarDialog extends StatelessWidget {
                       child:
                           Icon(Icons.drag_indicator, size: 16, color: theme.colorScheme.onSurfaceVariant))),
               const SizedBox(width: 6),
-              Icon(tool.icon, size: 15, color: theme.colorScheme.primary),
+              SvgIcon(tool.icon, size: 15, color: theme.colorScheme.primary),
               const SizedBox(width: 6),
               Padding(
                   padding: const EdgeInsets.only(right: 6, top: 7, bottom: 7),
@@ -358,7 +361,7 @@ class CustomizeToolbarDialog extends StatelessWidget {
                 border: Border.all(color: theme.dividerColor.withValues(alpha: pinned ? 0 : 0.5))),
             child: Stack(children: [
               Column(children: [
-                Icon(tool.icon, size: 19, color: theme.colorScheme.onSurfaceVariant),
+                SvgIcon(tool.icon, size: 19, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(height: 5),
                 Text(tool.name(localizations),
                     maxLines: 1,

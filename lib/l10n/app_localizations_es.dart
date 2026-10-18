@@ -274,6 +274,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get requestMethod => 'Método de solicitud';
 
   @override
+  String get protocol => 'Protocol';
+
+  @override
+  String get size => 'Size';
+
+  @override
+  String get remoteAddress => 'Remote Address';
+
+  @override
+  String get requestTime => 'Request Time';
+
+  @override
+  String get app => 'App';
+
+  @override
+  String get requestUrl => 'Request URL';
+
+  @override
   String get param => 'Parámetro';
 
   @override

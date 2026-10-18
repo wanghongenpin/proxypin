@@ -273,6 +273,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestMethod => '请求方法';
 
   @override
+  String get protocol => '协议';
+
+  @override
+  String get size => '大小';
+
+  @override
+  String get remoteAddress => '远程地址';
+
+  @override
+  String get requestTime => '请求时间';
+
+  @override
+  String get app => '应用';
+
+  @override
+  String get requestUrl => '请求 URL';
+
+  @override
   String get param => '参数';
 
   @override
@@ -1753,6 +1771,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get requestMethod => '請求方法';
+
+  @override
+  String get protocol => '協議';
+
+  @override
+  String get size => '大小';
+
+  @override
+  String get remoteAddress => '遠程地址';
+
+  @override
+  String get requestTime => '請求時間';
+
+  @override
+  String get app => '應用';
+
+  @override
+  String get requestUrl => '請求 URL';
 
   @override
   String get param => '參數';

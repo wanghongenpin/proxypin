@@ -552,13 +552,16 @@ class _DomainRequestsState extends State<DomainRequests> {
           });
         },
         child: Container(
-            height: 34,
-            padding: const EdgeInsets.only(left: 8, right: 10),
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.025),
                 border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5), width: 0.5))),
             child: Row(children: [
-              Icon(selected ? Icons.arrow_drop_down : Icons.arrow_right, size: 18, color: theme.colorScheme.onSurfaceVariant),
+              SizedBox(
+                  width: 14,
+                  child: Text(selected ? '▼' : '▶',
+                      style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurfaceVariant))),
               if (trailing != null) ...[trailing!, const SizedBox(width: 6)],
               Expanded(
                   child: Text(title,
@@ -680,4 +683,5 @@ class HostWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis)));
   }
 }
+
 

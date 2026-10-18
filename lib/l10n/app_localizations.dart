@@ -634,6 +634,42 @@ abstract class AppLocalizations {
   /// **'Request Method'**
   String get requestMethod;
 
+  /// No description provided for @protocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get protocol;
+
+  /// No description provided for @size.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get size;
+
+  /// No description provided for @remoteAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Address'**
+  String get remoteAddress;
+
+  /// No description provided for @requestTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Time'**
+  String get requestTime;
+
+  /// No description provided for @app.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get app;
+
+  /// No description provided for @requestUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Request URL'**
+  String get requestUrl;
+
   /// No description provided for @param.
   ///
   /// In en, this message translates to:

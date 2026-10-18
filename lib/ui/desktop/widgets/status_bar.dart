@@ -111,8 +111,8 @@ class _DesktopStatusBarState extends State<DesktopStatusBar> {
 
     var style = TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant);
     return Container(
-        height: 24,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 26,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3)))),

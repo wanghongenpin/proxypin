@@ -21,6 +21,7 @@ import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/network_condition_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/about.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
@@ -58,7 +59,7 @@ class _SettingState extends State<Setting> {
     return MenuAnchor(
       builder: (context, controller, child) {
         return IconButton(
-            icon: const Icon(Icons.settings, size: 21),
+            icon: SvgIcon('gear', size: 17, color: Theme.of(context).colorScheme.onSurfaceVariant),
             tooltip: localizations.setting,
             onPressed: () {
               if (controller.isOpen) {
@@ -71,14 +72,14 @@ class _SettingState extends State<Setting> {
       menuChildren: [
         groupLabel(localizations.network),
         _ProxyMenu(proxyServer: widget.proxyServer),
-        item(localizations.domainFilter, icon: Icons.filter_alt_outlined, onPressed: hostFilter),
-        item(localizations.hosts, icon: Icons.list_alt_outlined, onPressed: hosts),
-        item(localizations.externalProxy, icon: Icons.north_east, onPressed: setExternalProxy),
-        item(localizations.weakNetwork, icon: Icons.bolt_outlined, onPressed: showWeakNetwork),
+        item(localizations.domainFilter, icon: 'funnel', onPressed: hostFilter),
+        item(localizations.hosts, icon: 'lines', onPressed: hosts),
+        item(localizations.externalProxy, icon: 'arrow_out', onPressed: setExternalProxy),
+        item(localizations.weakNetwork, icon: 'zap', onPressed: showWeakNetwork),
         groupLabel(localizations.other),
-        item(localizations.mcpService, icon: Icons.hub_outlined,
+        item(localizations.mcpService, icon: 'mcp',
             onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
-        item(localizations.about, icon: Icons.info_outline, onPressed: showAbout),
+        item(localizations.about, icon: 'info', onPressed: showAbout),
       ],
     );
   }
@@ -93,9 +94,9 @@ class _SettingState extends State<Setting> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant)));
   }
 
-  Widget item(String text, {IconData? icon, VoidCallback? onPressed}) {
+  Widget item(String text, {String? icon, VoidCallback? onPressed}) {
     return MenuItemButton(
-        leadingIcon: icon == null ? null : Icon(icon, size: 18),
+        leadingIcon: icon == null ? null : SvgIcon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         onPressed: onPressed,
         child: Padding(
             padding: const EdgeInsets.only(left: 10, right: 5),
@@ -254,7 +255,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                 minLines: 1)),
         const SizedBox(height: 10),
       ],
-      leadingIcon: const Icon(Icons.lan_outlined, size: 18),
+      leadingIcon: SvgIcon('server', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
       child: Padding(
           padding: const EdgeInsets.only(left: 10),
           child: Text(localizations.proxy, style: const TextStyle(fontSize: 14))),
