@@ -20,10 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
-import 'package:proxypin/network/components/manager/request_block_manager.dart';
-import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
-import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
@@ -32,163 +29,14 @@ import 'package:proxypin/ui/mobile/setting/environment.dart';
 import 'package:proxypin/ui/mobile/setting/hosts.dart';
 import 'package:proxypin/ui/mobile/setting/mcp.dart';
 import 'package:proxypin/ui/mobile/setting/preference.dart';
-import 'package:proxypin/ui/mobile/mobile.dart';
-import 'package:proxypin/ui/mobile/request/favorite.dart';
-import 'package:proxypin/ui/mobile/request/history.dart';
-import 'package:proxypin/ui/mobile/setting/request_block.dart';
-import 'package:proxypin/ui/mobile/setting/request_crypto.dart';
-import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
-import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
-import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 
-import '../../../network/components/manager/request_breakpoint_manager.dart';
 import '../../component/widgets.dart';
 import '../setting/proxy.dart';
-import '../setting/request_map.dart';
 
 /// @author wanghongen
 /// 2024/9/30
-class ConfigPage extends StatefulWidget {
-  final ProxyServer proxyServer;
-
-  const ConfigPage({super.key, required this.proxyServer});
-
-  @override
-  State<StatefulWidget> createState() => _ConfigPageState();
-}
-
-class _ConfigPageState extends State<ConfigPage> {
-  late ProxyServer proxyServer = widget.proxyServer;
-  late HistoryTask historyTask;
-
-  @override
-  void initState() {
-    super.initState();
-    historyTask = HistoryTask.ensureInstance(proxyServer.configuration, MobileApp.container);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    AppLocalizations localizations = AppLocalizations.of(context)!;
-
-    Color color = Theme.of(context).colorScheme.primary.withValues(alpha: 0.85);
-
-    Widget section(List<Widget> tiles) => Card(
-          color: Colors.transparent,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-              side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.13)),
-              borderRadius: BorderRadius.circular(10)),
-          child: Column(children: tiles),
-        );
-
-    Widget arrow = const Icon(Icons.arrow_forward_ios, size: 16);
-
-    return Scaffold(
-        appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(42),
-            child: AppBar(
-              title: Text(localizations.config, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
-              centerTitle: true,
-            )),
-        body: ListView(
-          padding: const EdgeInsets.all(12),
-          children: [
-            section([
-              ListTile(
-                  leading: Icon(Icons.favorite_outline, color: color),
-                  title: Text(localizations.favorites),
-                  trailing: arrow,
-                  onTap: () => navigator(context, MobileFavorites(proxyServer: proxyServer))),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                leading: Icon(Icons.history, color: color),
-                title: Text(localizations.history),
-                trailing: arrow,
-                onTap: () => navigator(context,
-                    MobileHistory(proxyServer: proxyServer, container: MobileApp.container, historyTask: historyTask)),
-              ),
-            ]),
-            const SizedBox(height: 12),
-            section([
-              ListTile(
-                  title: Text(localizations.hosts),
-                  leading: Icon(Icons.domain, color: color),
-                  trailing: arrow,
-                  onTap: () async {
-                    var hostsManager = await HostsManager.instance;
-                    if (context.mounted) {
-                      navigator(context, HostsPage(hostsManager: hostsManager));
-                    }
-                  }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.requestBlock),
-                  leading: Icon(Icons.block_flipped, color: color),
-                  trailing: arrow,
-                  onTap: () async {
-                    var requestBlockManager = await RequestBlockManager.instance;
-                    if (context.mounted) {
-                      navigator(context, MobileRequestBlock(requestBlockManager: requestBlockManager));
-                    }
-                  }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.requestRewrite),
-                  leading: Icon(Icons.edit_outlined, color: color),
-                  trailing: arrow,
-                  onTap: () async {
-                    var requestRewrites = await RequestRewriteManager.instance;
-                    if (context.mounted) {
-                      navigator(context, MobileRequestRewrite(requestRewrites: requestRewrites));
-                    }
-                  }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.requestMap),
-                  leading: Icon(Icons.swap_horiz_outlined, color: color),
-                  trailing: arrow,
-                  onTap: () => navigator(context, MobileRequestMapPage())),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.requestCrypto),
-                  leading: Icon(Icons.lock_outline, color: color),
-                  trailing: arrow,
-                  onTap: () => navigator(context, const MobileRequestCryptoPage())),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.script),
-                  leading: Icon(Icons.javascript_outlined, color: color),
-                  trailing: arrow,
-                  onTap: () => navigator(context, const MobileScript())),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.breakpoint),
-                  leading: Icon(Icons.bug_report_outlined, color: color),
-                  trailing: arrow,
-                  onTap: () async {
-                    var manager = await RequestBreakpointManager.instance;
-                    if (context.mounted) {
-                      navigator(context, MobileRequestBreakpointPage(manager: manager));
-                    }
-                  }),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              WeakNetworkMenuTile(color: color, trailing: arrow),
-              Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
-              ListTile(
-                  title: Text(localizations.environmentVariables),
-                  leading: Icon(Icons.public, color: color),
-                  trailing: arrow,
-                  onTap: () => navigator(context, const MobileEnvironmentPage()))
-            ]),
-            const SizedBox(height: 16)
-          ],
-        ));
-  }
-}
-
 void navigator(BuildContext context, Widget widget) async {
   if (context.mounted) {
     Navigator.of(context).push(
@@ -212,6 +60,9 @@ class SettingPage extends StatelessWidget {
     AppLocalizations localizations = AppLocalizations.of(context)!;
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
+    Color color = Theme.of(context).colorScheme.primary.withValues(alpha: 0.85);
+    Widget arrow = const Icon(Icons.keyboard_arrow_right);
+
     Widget section(List<Widget> tiles) => Card(
           color: Colors.transparent,
           elevation: 0,
@@ -231,14 +82,27 @@ class SettingPage extends StatelessWidget {
         body: ListView(padding: const EdgeInsets.all(12), children: [
           section([
             ListTile(
+                leading: Icon(Icons.https_outlined, color: color),
                 title: Text(localizations.httpsProxy),
-                trailing: const Icon(Icons.keyboard_arrow_right),
+                trailing: arrow,
                 onTap: () => navigator(context, MobileSslWidget(proxyServer: proxyServer))),
             Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
             ListTile(
+                leading: Icon(Icons.filter_alt_outlined, color: color),
                 title: Text(localizations.filter),
-                trailing: const Icon(Icons.keyboard_arrow_right),
+                trailing: arrow,
                 onTap: () => navigator(context, FilterMenu(proxyServer: proxyServer))),
+            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+            ListTile(
+                leading: Icon(Icons.domain, color: color),
+                title: Text(localizations.hosts),
+                trailing: arrow,
+                onTap: () async {
+                  var hostsManager = await HostsManager.instance;
+                  if (context.mounted) {
+                    navigator(context, HostsPage(hostsManager: hostsManager));
+                  }
+                }),
           ]),
           const SizedBox(height: 12),
           // Port and switches
@@ -287,8 +151,9 @@ class SettingPage extends StatelessWidget {
                         })),
                 Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(
+                    leading: Icon(Icons.open_in_new_outlined, color: color),
                     title: Text(localizations.externalProxy),
-                    trailing: const Icon(Icons.keyboard_arrow_right),
+                    trailing: arrow,
                     onTap: () {
                       showDialog(
                           context: context,
@@ -338,20 +203,31 @@ class SettingPage extends StatelessWidget {
               ])),
           const SizedBox(height: 12),
           section([
+            WeakNetworkMenuTile(color: color, trailing: arrow),
+            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
             ListTile(
+                leading: Icon(Icons.public, color: color),
+                title: Text(localizations.environmentVariables),
+                trailing: arrow,
+                onTap: () => navigator(context, const MobileEnvironmentPage())),
+            Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+            ListTile(
+                leading: Icon(Icons.hub_outlined, color: color),
                 title: Text(localizations.mcpService),
-                trailing: const Icon(Icons.keyboard_arrow_right),
+                trailing: arrow,
                 onTap: () => navigator(context, MobileMcpSetting(proxyServer: proxyServer))),
             Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
             ListTile(
-                title: Text(localizations.setting),
-                trailing: const Icon(Icons.keyboard_arrow_right),
+                leading: Icon(Icons.tune, color: color),
+                title: Text(localizations.preference),
+                trailing: arrow,
                 onTap: () =>
                     navigator(context, Preference(proxyServer: proxyServer, appConfiguration: appConfiguration))),
             Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
             ListTile(
+                leading: Icon(Icons.info_outline, color: color),
                 title: Text(localizations.about),
-                trailing: const Icon(Icons.keyboard_arrow_right),
+                trailing: arrow,
                 onTap: () => navigator(context, const About())),
           ]),
           const SizedBox(height: 8),

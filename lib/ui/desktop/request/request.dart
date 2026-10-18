@@ -122,6 +122,7 @@ class _RequestWidgetState extends State<RequestWidget> {
   int get selectionCount => widget.multiSelectController.selectedCount;
 
   bool _selected = false;
+  bool _hover = false;
 
   @override
   void initState() {
@@ -167,21 +168,25 @@ class _RequestWidgetState extends State<RequestWidget> {
     bool selectedInSelectionMode = widget.multiSelectController.contains(request.requestId);
     bool selected = _selected || selectedInSelectionMode;
 
-    // 设计稿 .row：单行（method 语义色 + status 语义色 + path + 耗时），选中浅色底
-    return GestureDetector(
-        onLongPress: () {
-          if (!selectionMode) {
-            widget.multiSelectController.enterSelectionMode(widget.request.requestId);
-          }
-        },
-        onSecondaryTapDown: (details) => contextualMenu(details),
-        onTap: onClick,
-        child: Container(
-            height: widget.displayDomain ? 38 : 34,
-            padding: EdgeInsets.only(left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26), right: 10),
-            decoration: BoxDecoration(
-                color: selected ? theme.colorScheme.primary.withValues(alpha: 0.08) : null,
-                border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.35), width: 1))),
+    // 设计稿 .row：单行（method 语义色 + status 语义色 + path + 耗时），选中浅色底，hover #F7F8FA
+    return MouseRegion(
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: GestureDetector(
+            onLongPress: () {
+              if (!selectionMode) {
+                widget.multiSelectController.enterSelectionMode(widget.request.requestId);
+              }
+            },
+            onSecondaryTapDown: (details) => contextualMenu(details),
+            onTap: onClick,
+            child: Container(
+                height: widget.displayDomain ? 38 : 34,
+                padding:
+                    EdgeInsets.only(left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26), right: 10),
+                decoration: BoxDecoration(
+                    color: selected ? theme.colorScheme.primary.withValues(alpha: 0.08) : (_hover ? rowHoverColor(theme) : null),
+                    border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.35), width: 1))),
             child: Row(children: [
               if (selectedInSelectionMode) ...[
                 Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),
@@ -219,7 +224,7 @@ class _RequestWidgetState extends State<RequestWidget> {
                       maxLines: 1,
                       textAlign: TextAlign.right,
                       style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8)))),
-            ])));
+            ]))));
   }
 
   Color? color(String url) {

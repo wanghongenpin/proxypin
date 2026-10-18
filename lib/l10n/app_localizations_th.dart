@@ -33,6 +33,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get preference => 'ค่ากำหนด';
 
   @override
+  String get preferenceShort => 'Preferences';
+
+  @override
   String get feedback => 'ข้อเสนอแนะ';
 
   @override
@@ -634,6 +637,9 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get requestBody => 'เนื้อหาคำขอ';
+
+  @override
+  String get queryParams => 'Query Params';
 
   @override
   String get responseBody => 'เนื้อหาการตอบกลับ';

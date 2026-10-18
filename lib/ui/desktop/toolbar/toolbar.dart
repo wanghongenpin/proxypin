@@ -102,7 +102,7 @@ class _ToolbarState extends State<Toolbar> {
 
   @override
   Widget build(BuildContext context) {
-    // 设计稿 .toolbar：间距 6，图标 17px，清空后有分隔线
+    // 设计稿 .toolbar：间距 6，图标 17px；顺序 代理/清空 | HTTPS | 快捷区 ⋯ / 手机 / 设置，右侧 弱网徽章 + 环境切换
     var iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(children: [
       Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
@@ -112,13 +112,11 @@ class _ToolbarState extends State<Toolbar> {
           tooltip: localizations.clear,
           icon: SvgIcon('trash', size: 17, color: iconColor),
           onPressed: _onClear),
-      Container(width: 1, height: 20, margin: const EdgeInsets.symmetric(horizontal: 6), color: Theme.of(context).dividerColor),
+      _sep(),
       SslWidget(proxyServer: widget.proxyServer), // SSL配置
       const SizedBox(width: 6),
+      _sep(),
       QuickToolbar(proxyServer: widget.proxyServer), // 快捷工具栏
-      const SizedBox(width: 6),
-      Setting(proxyServer: widget.proxyServer), // 设置
-      const WeakNetworkIndicator(), // 网络限制启用时显示，未启用时隐藏
       const SizedBox(width: 6),
       IconButton(
           tooltip: localizations.mobileConnect,
@@ -128,9 +126,22 @@ class _ToolbarState extends State<Toolbar> {
             phoneConnect(ips, widget.proxyServer.port);
           }),
       const SizedBox(width: 6),
+      Setting(proxyServer: widget.proxyServer), // 设置
+      const Spacer(),
+      const WeakNetworkIndicator(), // 网络限制启用时显示徽章，未启用时隐藏
+      const SizedBox(width: 6),
       const EnvironmentSwitcher(), // 环境变量切换器
       const Padding(padding: EdgeInsets.only(left: 10)),
     ]);
+  }
+
+  /// 设计稿 .tsep / .qt-div：1x20 分隔线
+  Widget _sep() {
+    return Container(
+        width: 1,
+        height: 20,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        color: Theme.of(context).dividerColor);
   }
 
   void phoneConnect(List<String> hosts, int port) {

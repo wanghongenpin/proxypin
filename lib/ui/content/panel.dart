@@ -185,6 +185,11 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       tabAlignment: isDesktop ? TabAlignment.start : null,
       dividerColor: Theme.of(context).dividerColor,
       labelPadding: EdgeInsets.symmetric(horizontal: isDesktop ? 14 : 10),
+      // 设计稿 .tab：12.5px，选中 primary 加粗，未选中 text-2
+      labelStyle: widget.tabStyle ?? (isDesktop ? const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500) : null),
+      unselectedLabelStyle:
+          widget.tabStyle ?? (isDesktop ? const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400) : null),
+      unselectedLabelColor: isDesktop ? Theme.of(context).colorScheme.onSurfaceVariant : null,
       tabs: tabs
           .map((title) =>
               Tab(height: isDesktop ? 34 : null, child: Text(tabLabel(title), style: widget.tabStyle, maxLines: 1)))
@@ -223,7 +228,7 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       endDrawerEnableOpenDragGesture: false,
       appBar: appBar,
       body: Padding(
-          padding: EdgeInsets.only(left: isDesktop ? 16 : 20, right: isDesktop ? 16 : 20, top: isDesktop ? 12 : 10),
+          padding: EdgeInsets.only(left: isDesktop ? 16 : 20, right: isDesktop ? 16 : 20, top: isDesktop ? 14 : 10),
           child: TabBarView(
             physics: Platforms.isDesktop() ? const NeverScrollableScrollPhysics() : null, //桌面禁止滑动
             controller: _tabController,
@@ -245,6 +250,20 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
     );
   }
 
+  /// 设计稿 .dp-panel：桌面端请求/响应/Cookies tab 内容包白卡片（圆角 10 + 边框）
+  Widget detailCard(Widget child) {
+    if (!Platforms.isDesktop()) {
+      return child; // 手机端保持平铺
+    }
+    var theme = Theme.of(context);
+    return Container(
+        decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border.all(color: theme.dividerColor),
+            borderRadius: BorderRadius.circular(10)),
+        child: ClipRRect(borderRadius: BorderRadius.circular(10), child: child));
+  }
+
   Widget request() {
     if (widget.request.get() == null) {
       return const SizedBox();
@@ -256,13 +275,13 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       path = Uri.decodeFull(path);
     } catch (_) {}
 
-    return SingleChildScrollView(
+    return detailCard(SingleChildScrollView(
         controller: scrollController,
-        child: Column(children: [
-          RowWidget("Path", path),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          overviewRow(context, "Path", path),
           RequestParams(widget.request),
           ...message(widget.request.get(), "Request", scrollController)
-        ]));
+        ])));
   }
 
   Widget response() {
@@ -271,12 +290,14 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
     }
 
     var scrollController = ScrollController();
-    return SingleChildScrollView(
+    return detailCard(SingleChildScrollView(
         controller: scrollController,
-        child: Column(children: [
-          RowWidget("StatusCode", widget.response.get()?.status.toString()),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // 设计稿：StatusCode 值按状态码语义色（200 绿）
+          overviewRow(context, "StatusCode", widget.response.get()?.status.toString(),
+              valueColor: statusColor(widget.response.get()?.status.code)),
           ...message(widget.response.get(), "Response", scrollController)
-        ]));
+        ])));
   }
 
   String tabLabel(String title) {
@@ -369,25 +390,36 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
         httpMessage: message,
         scrollController: scrollController);
 
-    return [HeadersWidget(title: type, message: message, valueTextStyle: textStyle), bodyWidgets];
+    return [
+      HeadersWidget(title: type, message: message, valueTextStyle: textStyle),
+      // 卡片内统一 14px 水平内边距（设计稿 .kv/.d-sec padding 14）
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: bodyWidgets),
+    ];
   }
 }
 
-Widget expansionTile(String title, List<Widget> content,
-    {bool initiallyExpanded = true, ValueChanged<bool>? onExpansionChanged}) {
-  return ExpansionTile(
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-      tilePadding: const EdgeInsets.only(left: 0),
-      expandedAlignment: Alignment.topLeft,
-      initiallyExpanded: initiallyExpanded,
-      onExpansionChanged: onExpansionChanged,
-      shape: const Border(),
-      children: content);
+/// 设计稿 --text-3：#8F959E（浅色）；深色跟随 onSurfaceVariant
+Color text3Color(ThemeData theme) =>
+    theme.brightness == Brightness.light ? const Color(0xFF8F959E) : theme.colorScheme.onSurfaceVariant;
+
+/// 设计稿 .row:hover / .rl-row:hover：#F7F8FA（浅色）；深色用 onSurface 6%
+Color rowHoverColor(ThemeData theme) =>
+    theme.brightness == Brightness.light ? const Color(0xFFF7F8FA) : theme.colorScheme.onSurface.withValues(alpha: 0.06);
+
+/// 设计稿 .d-sec：11px 灰色分区小标签
+Widget sectionLabel(BuildContext context, String label) {
+  var theme = Theme.of(context);
+  return Padding(
+      padding: const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 2),
+      child: Text(label, style: TextStyle(fontSize: 11, height: 1.5, letterSpacing: 0.3, color: text3Color(theme))));
+}
+
+/// 设计稿 .kv 行之间的 #F2F3F5 细分隔线
+Widget kvDivider(BuildContext context) {
+  return Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.35));
 }
 
 class RequestParams extends StatelessWidget {
-  static bool initiallyExpanded = false;
-
   final ValueWrap<HttpRequest> request;
 
   const RequestParams(this.request, {super.key});
@@ -405,16 +437,18 @@ class RequestParams extends StatelessWidget {
     var content = <Widget>[];
     params.forEach((name, values) {
       for (var val in values) {
-        content.add(RowWidget(name, val));
-        content.add(const Divider(thickness: 0.1, height: 10));
+        if (content.isNotEmpty) {
+          content.add(kvDivider(context));
+        }
+        content.add(overviewRow(context, name, val));
       }
     });
 
-    return expansionTile("Request Params", content, initiallyExpanded: initiallyExpanded,
-        onExpansionChanged: (expanded) {
-      //保存展开状态
-      initiallyExpanded = expanded;
-    });
+    // 设计稿：扁平「Query 参数」分区（不再折叠）
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      sectionLabel(context, AppLocalizations.of(context)!.queryParams),
+      ...content,
+    ]);
   }
 }
 
@@ -451,6 +485,9 @@ class Overview extends StatelessWidget {
           ]));
     }
 
+    // 设计稿 Overview 卡：状态码/协议/耗时/大小/远程地址/请求时间/App 七行（桌面端严格对齐）；
+    // URL/方法/双 Content-Type 仅手机端 General 保留（桌面端 URL+方法已在顶部标题栏，类型见 Body 分区标签）
+    var isDesktop = Platforms.isDesktop();
     return Container(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         child: ListView(padding: const EdgeInsets.only(top: 2, bottom: 12), children: [
@@ -458,16 +495,18 @@ class Overview extends StatelessWidget {
             overviewRow(context, localizations.statusCode, response?.status.toString(),
                 valueColor: statusColor(response?.status.code)),
             overviewRow(context, localizations.protocol, request.protocolVersion),
-            overviewRow(context, localizations.duration, response?.costTime()),
+            overviewRow(context, localizations.duration, _durationText(response)),
             overviewRow(context, localizations.size, _sizeText(context, request, response)),
             overviewRow(context, localizations.remoteAddress,
                 '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
             overviewRow(context, localizations.requestTime, request.requestTime.formatMillisecond()),
             if (request.processInfo != null) overviewRow(context, localizations.app, request.processInfo!.name),
-            overviewRow(context, localizations.requestUrl, requestUrl),
-            overviewRow(context, localizations.requestMethod, request.method.name),
-            overviewRow(context, localizations.requestType, request.headers.contentType),
-            overviewRow(context, localizations.responseType, response?.headers.contentType),
+            if (!isDesktop) ...[
+              overviewRow(context, localizations.requestUrl, requestUrl),
+              overviewRow(context, localizations.requestMethod, request.method.name),
+              overviewRow(context, localizations.requestType, request.headers.contentType),
+              overviewRow(context, localizations.responseType, response?.headers.contentType),
+            ],
           ]),
           if (response != null && (response.body?.isNotEmpty ?? false)) ...[
             const SizedBox(height: 12),
@@ -475,6 +514,15 @@ class Overview extends StatelessWidget {
           ],
         ]));
   }
+}
+
+/// 设计稿 Overview 耗时长："342 ms"（数值与单位间空格；costTime 原始格式 "84ms"/"1.23s"）
+String? _durationText(HttpResponse? response) {
+  var cost = response?.costTime();
+  if (cost == null || cost.isEmpty) {
+    return cost;
+  }
+  return cost.replaceAllMapped(RegExp(r'(\d)(ms|s)$'), (m) => '${m[1]} ${m[2]}');
 }
 
 /// 设计稿 Overview 大小行：请求 1.2 KB · 响应 8.6 KB (gzip)
@@ -564,7 +612,7 @@ Widget overviewRow(BuildContext context, String label, String? value, {Color? va
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.visible,
-                style: TextStyle(fontSize: 12.5, height: 1.5, color: theme.colorScheme.onSurfaceVariant))),
+                style: TextStyle(fontSize: 12.5, height: 1.5, color: text3Color(theme)))),
         Expanded(
             child: SelectableText(value ?? '',
                 contextMenuBuilder: contextMenu,
@@ -695,44 +743,45 @@ class Cookies extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var requestCookie = request.get()?.cookies.expand((cookie) => _cookieWidget(cookie)!);
+    var requestCookie = request.get()?.cookies.expand((cookie) => _cookieWidget(context, cookie)!).toList();
 
-    var responseCookie = response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(e)!);
-    return ListView(children: [
-      requestCookie == null ? const SizedBox() : expansionTile("Request Cookies", requestCookie.toList()),
-      const SizedBox(height: 15),
-      responseCookie == null ? const SizedBox() : expansionTile("Response Cookies", responseCookie.toList()),
+    var responseCookie =
+        response.get()?.headers.getList("Set-Cookie")?.expand((e) => _cookieWidget(context, e)!).toList();
+
+    // 设计稿：扁平 d-sec 分区标签 + kv 行（不再折叠）
+    var content = ListView(children: [
+      if (requestCookie != null) ...[
+        sectionLabel(context, "Request Cookies"),
+        ...requestCookie,
+      ],
+      if (responseCookie != null) ...[
+        sectionLabel(context, "Response Cookies"),
+        ...responseCookie,
+      ],
     ]);
+
+    if (!Platforms.isDesktop()) {
+      return content;
+    }
+    var theme = Theme.of(context);
+    return Container(
+        decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border.all(color: theme.dividerColor),
+            borderRadius: BorderRadius.circular(10)),
+        child: ClipRRect(borderRadius: BorderRadius.circular(10), child: content));
   }
 
-  Iterable<Widget>? _cookieWidget(String? cookie) {
+  Iterable<Widget>? _cookieWidget(BuildContext context, String? cookie) {
     var headers = <Widget>[];
 
     cookie?.split(";").map((e) => Strings.splitFirst(e, "=")).where((element) => element != null).forEach((e) {
-      headers.add(RowWidget(e!.key.trim(), e.value));
-      headers.add(const Divider(thickness: 0.1, height: 10));
+      if (headers.isNotEmpty) {
+        headers.add(kvDivider(context));
+      }
+      headers.add(overviewRow(context, e!.key.trim(), e.value));
     });
 
     return headers;
-  }
-}
-
-class RowWidget extends StatelessWidget {
-  final String name;
-  final String? value;
-  final TextStyle textStyle = const TextStyle(fontSize: 14);
-
-  const RowWidget(this.name, this.value, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(
-          flex: 2,
-          child: SelectableText(name,
-              contextMenuBuilder: contextMenu,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.deepOrangeAccent))),
-      Expanded(flex: 4, child: SelectableText(contextMenuBuilder: contextMenu, style: textStyle, value ?? ''))
-    ]);
   }
 }

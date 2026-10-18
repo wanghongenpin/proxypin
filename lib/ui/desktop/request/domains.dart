@@ -507,6 +507,7 @@ class _DomainRequestsState extends State<DomainRequests> {
   late bool selected;
   Widget? trailing;
   bool changing = false;
+  bool _hover = false;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -541,22 +542,27 @@ class _DomainRequestsState extends State<DomainRequests> {
     ]);
   }
 
-  //domain title（设计稿 .group：浅灰底 + 箭头 + 应用图标 + 域名 + 请求数胶囊）
+  //domain title（设计稿 .group：浅灰底 + 箭头 + 应用图标 + 域名 + 请求数胶囊；.rl-row:hover #F7F8FA）
   Widget _hostWidget(String title) {
     var theme = Theme.of(context);
-    var host = GestureDetector(
-        onSecondaryTapDown: (details) => menu(details),
-        onTap: () {
-          setState(() {
-            selected = !selected;
-          });
-        },
-        child: Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.025),
-                border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
+    var host = MouseRegion(
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: GestureDetector(
+            onSecondaryTapDown: (details) => menu(details),
+            onTap: () {
+              setState(() {
+                selected = !selected;
+              });
+            },
+            child: Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                    color: _hover
+                        ? rowHoverColor(theme)
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.025),
+                    border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
             child: Row(children: [
               SizedBox(
                   width: 14,
@@ -576,7 +582,7 @@ class _DomainRequestsState extends State<DomainRequests> {
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.06)),
                   child: Text('${widget.body.length}',
                       style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant))),
-            ])));
+            ]))));
 
     return ColorTransition(
         key: transitionState,

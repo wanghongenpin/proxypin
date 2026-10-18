@@ -203,6 +203,7 @@
   "encode": "編碼",
   "decode": "解碼",
   "requestBody": "請求體",
+  "queryParams": "Query 參數",
   "responseBody": "回應體",
   "requestRewrite": "請求重寫",
   "newWindow": "新視窗開啟",

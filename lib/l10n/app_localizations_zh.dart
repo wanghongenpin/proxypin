@@ -33,6 +33,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get preference => '偏好设置';
 
   @override
+  String get preferenceShort => '偏好';
+
+  @override
   String get feedback => '反馈';
 
   @override
@@ -632,6 +635,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get requestBody => '请求体';
+
+  @override
+  String get queryParams => 'Query 参数';
 
   @override
   String get responseBody => '响应体';
@@ -2129,6 +2135,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get requestBody => '請求體';
+
+  @override
+  String get queryParams => 'Query 參數';
 
   @override
   String get responseBody => '回應體';

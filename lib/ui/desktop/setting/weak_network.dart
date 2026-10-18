@@ -22,7 +22,7 @@ const String _kUrlRulePatternLabel = 'URL Rule Pattern';
 
 /// 内置预设 name 字段为 l10n key，这里集中做一次映射；
 /// 自建预设直接返回其 name。
-String _profileDisplayName(AppLocalizations l10n, NetworkConditionProfile p) {
+String profileDisplayName(AppLocalizations l10n, NetworkConditionProfile p) {
   if (!p.isBuiltin) return p.name;
   switch (p.name) {
     case 'weakNetworkPresetOffline':
@@ -75,7 +75,7 @@ class _WeakNetworkDialogState extends State<WeakNetworkDialog> {
 
   NetworkConditionManager get m => widget.manager;
 
-  String _profileLabel(NetworkConditionProfile p) => _profileDisplayName(l10n, p);
+  String _profileLabel(NetworkConditionProfile p) => profileDisplayName(l10n, p);
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +441,7 @@ class _RuleEditDialogState extends State<_RuleEditDialog> {
     super.dispose();
   }
 
-  String _profileLabel(NetworkConditionProfile p) => _profileDisplayName(l10n, p);
+  String _profileLabel(NetworkConditionProfile p) => profileDisplayName(l10n, p);
 
   @override
   Widget build(BuildContext context) {

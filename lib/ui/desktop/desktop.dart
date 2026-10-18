@@ -36,7 +36,6 @@ import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/left_menus/favorite.dart';
 import 'package:proxypin/ui/desktop/left_menus/history.dart';
 import 'package:proxypin/ui/desktop/left_menus/navigation.dart';
-import 'package:proxypin/ui/desktop/left_menus/rules.dart';
 import 'package:proxypin/ui/desktop/request/list.dart';
 import 'package:proxypin/ui/desktop/toolbar/toolbar.dart';
 import 'package:proxypin/ui/desktop/widgets/status_bar.dart';
@@ -145,7 +144,6 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
       DesktopRequestListWidget(key: requestListStateKey, proxyServer: proxyServer, list: container, panel: panel),
       Favorites(panel: panel),
       HistoryPageWidget(proxyServer: proxyServer, container: container, panel: panel),
-      RulesPage(proxyServer: proxyServer, selectIndex: _selectIndex, index: 3),
       const Toolbox()
     ];
 

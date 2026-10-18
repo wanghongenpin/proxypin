@@ -19,13 +19,16 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/network_condition_manager.dart';
+import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
 import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/about.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/hosts.dart';
+import 'package:proxypin/ui/desktop/setting/request_block.dart';
 import 'package:proxypin/ui/desktop/setting/weak_network.dart';
 import 'package:proxypin/ui/desktop/toolbar/mcp_panel.dart';
 
@@ -69,38 +72,64 @@ class _SettingState extends State<Setting> {
               }
             });
       },
+      // 旧版全部平铺（含流量控制 6 项）；底部保留「自定义快捷工具栏…」入口
       menuChildren: [
-        groupLabel(localizations.network),
         _ProxyMenu(proxyServer: widget.proxyServer),
-        item(localizations.domainFilter, icon: 'funnel', onPressed: hostFilter),
-        item(localizations.hosts, icon: 'lines', onPressed: hosts),
-        item(localizations.externalProxy, icon: 'arrow_out', onPressed: setExternalProxy),
-        item(localizations.weakNetwork, icon: 'zap', onPressed: showWeakNetwork),
-        groupLabel(localizations.other),
-        item(localizations.mcpService, icon: 'mcp',
-            onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
-        item(localizations.about, icon: 'info', onPressed: showAbout),
+        item(localizations.domainFilter, onPressed: hostFilter),
+        item(localizations.hosts, onPressed: hosts),
+        item(localizations.requestBlock, onPressed: showRequestBlock),
+        item(localizations.requestRewrite, onPressed: requestRewrite),
+        item(localizations.requestMap, onPressed: requestMap),
+        item(localizations.requestCrypto, onPressed: showRequestCrypto),
+        item(localizations.script,
+            onPressed: () =>
+                MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
+        item(localizations.breakpoint, onPressed: requestBreakpoint),
+        item(localizations.weakNetwork, onPressed: showWeakNetwork),
+        item(localizations.externalProxy, onPressed: setExternalProxy),
+        item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
+        item(localizations.about, onPressed: showAbout),
       ],
     );
   }
 
-  Widget groupLabel(String text) {
-    return Padding(
-        padding: const EdgeInsets.only(left: 14, top: 6, bottom: 2),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurfaceVariant)));
-  }
-
-  Widget item(String text, {String? icon, VoidCallback? onPressed}) {
+  Widget item(String text, {VoidCallback? onPressed}) {
     return MenuItemButton(
-        leadingIcon: icon == null ? null : SvgIcon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        trailingIcon: const Icon(Icons.arrow_right),
         onPressed: onPressed,
         child: Padding(
             padding: const EdgeInsets.only(left: 10, right: 5),
             child: Text(text, style: const TextStyle(fontSize: 14))));
+  }
+
+  ///请求重写
+  void requestRewrite() {
+    MultiWindow.openWindow(localizations.requestRewrite, 'RequestRewriteWidget', size: const Size(800, 750));
+  }
+
+  ///断点
+  void requestBreakpoint() {
+    MultiWindow.openWindow(localizations.breakpoint, 'RequestBreakpointPage', size: const Size(800, 750));
+  }
+
+  ///请求映射
+  void requestMap() {
+    MultiWindow.openWindow(localizations.requestMap, 'RequestMapPage', size: const Size(800, 720));
+  }
+
+  ///请求加密
+  void showRequestCrypto() {
+    MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
+  }
+
+  ///请求屏蔽
+  void showRequestBlock() async {
+    var requestBlockManager = await RequestBlockManager.instance;
+    if (!mounted) return;
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
   }
 
   void showAbout() {

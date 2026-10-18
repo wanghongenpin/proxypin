@@ -154,6 +154,12 @@ abstract class AppLocalizations {
   /// **'Preferences'**
   String get preference;
 
+  /// No description provided for @preferenceShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferenceShort;
+
   /// No description provided for @feedback.
   ///
   /// In en, this message translates to:
@@ -1335,6 +1341,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Request Body'**
   String get requestBody;
+
+  /// No description provided for @queryParams.
+  ///
+  /// In en, this message translates to:
+  /// **'Query Params'**
+  String get queryParams;
 
   /// No description provided for @responseBody.
   ///

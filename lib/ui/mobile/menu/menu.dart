@@ -19,7 +19,10 @@ import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/ui/mobile/request/favorite.dart';
+import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/setting/app_filter.dart';
 import 'package:proxypin/ui/mobile/setting/report_servers.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
@@ -34,6 +37,8 @@ class MoreMenu extends StatelessWidget {
   final ValueNotifier<RemoteModel> remoteDevice;
 
   const MoreMenu({super.key, required this.proxyServer, required this.remoteDevice});
+
+  HistoryTask get historyTask => HistoryTask.ensureInstance(proxyServer.configuration, MobileApp.container);
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +95,27 @@ class MoreMenu extends StatelessWidget {
                 },
               )),
           const PopupMenuDivider(height: 0),
+          PopupMenuItem(
+              height: 32,
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.favorite_outline),
+                title: Text(localizations.favorites),
+                onTap: () {
+                  navigator(context, MobileFavorites(proxyServer: proxyServer));
+                },
+              )),
+          PopupMenuItem(
+              height: 32,
+              child: ListTile(
+                dense: true,
+                leading: const Icon(Icons.history),
+                title: Text(localizations.history),
+                onTap: () {
+                  navigator(context,
+                      MobileHistory(proxyServer: proxyServer, container: MobileApp.container, historyTask: historyTask));
+                },
+              )),
           PopupMenuItem(
               height: 32,
               child: ListTile(

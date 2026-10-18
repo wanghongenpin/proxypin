@@ -45,6 +45,7 @@ import 'package:proxypin/ui/launch/launch.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
 import 'package:proxypin/ui/mobile/menu/menu.dart';
+import 'package:proxypin/ui/mobile/menu/rules.dart';
 import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
@@ -129,6 +130,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer = ProxyServer(widget.configuration);
     proxyServer.addListener(this);
     proxyServer.start();
+    // 启动历史记录任务（单例；原由 ConfigPage 触发，配置页移除后在这里保证初始化）
+    HistoryTask.ensureInstance(widget.configuration, MobileApp.container);
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
 
     // MCP 局域网服务：启用时随抓包一起启动，clear_session 同步清空界面列表
@@ -182,7 +185,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   void toRequestsView(HistoryItem item, HistoryStorage storage) {}
 
   void _openHistoryPage(HistoryItem item) {
-    _selectIndex.value = 2;
+    _selectIndex.value = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -200,8 +203,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   int exitTime = 0;
 
   var requestPageNavigatorKey = GlobalKey<NavigatorState>();
+  var rulesNavigatorKey = GlobalKey<NavigatorState>();
   var toolboxNavigatorKey = GlobalKey<NavigatorState>();
-  var configNavigatorKey = GlobalKey<NavigatorState>();
   var settingNavigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -210,6 +213,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
       NavigatorPage(
           navigatorKey: requestPageNavigatorKey,
           child: RequestPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
+      NavigatorPage(navigatorKey: rulesNavigatorKey, child: const MobileRulesPage()),
       NavigatorPage(
           navigatorKey: toolboxNavigatorKey,
           child: Scaffold(
@@ -220,7 +224,6 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
                       centerTitle: true)),
               body: Toolbox(proxyServer: proxyServer))),
-      NavigatorPage(navigatorKey: configNavigatorKey, child: ConfigPage(proxyServer: proxyServer)),
       NavigatorPage(
           navigatorKey: settingNavigatorKey,
           child: SettingPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
@@ -280,13 +283,13 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                                   icon: const Icon(Icons.workspaces_outlined),
                                   label: localizations.requests),
                               BottomNavigationBarItem(
+                                  tooltip: localizations.rules,
+                                  icon: const Icon(Icons.rule_outlined),
+                                  label: localizations.rules),
+                              BottomNavigationBarItem(
                                   tooltip: localizations.toolbox,
                                   icon: const Icon(Icons.hardware_outlined),
                                   label: localizations.toolbox),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.config,
-                                  icon: const Icon(Icons.description_outlined),
-                                  label: localizations.config),
                               BottomNavigationBarItem(
                                   tooltip: localizations.setting,
                                   icon: const Icon(Icons.settings_outlined),

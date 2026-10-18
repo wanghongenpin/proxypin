@@ -33,6 +33,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get preference => 'Tùy chọn';
 
   @override
+  String get preferenceShort => 'Preferences';
+
+  @override
   String get feedback => 'Phản hồi';
 
   @override
@@ -634,6 +637,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get requestBody => 'Thân request';
+
+  @override
+  String get queryParams => 'Query Params';
 
   @override
   String get responseBody => 'Thân response';

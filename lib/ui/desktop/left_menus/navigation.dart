@@ -52,7 +52,6 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
             (icon: 'list', label: localizations.request),
             (icon: 'star', label: localizations.favorites),
             (icon: 'clock', label: localizations.history),
-            (icon: 'rules', label: localizations.rules),
             (icon: 'wrench', label: localizations.toolbox),
           ];
 
@@ -74,7 +73,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
               const Spacer(),
               _RailItem(
                   icon: 'gear',
-                  label: localizations.preference,
+                  label: localizations.preferenceShort,
                   onTap: () {
                     showDialog(
                         context: context,

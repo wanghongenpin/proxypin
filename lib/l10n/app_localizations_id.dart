@@ -33,6 +33,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get preference => 'Preferensi';
 
   @override
+  String get preferenceShort => 'Preferences';
+
+  @override
   String get feedback => 'Umpan balik';
 
   @override
@@ -634,6 +637,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get requestBody => 'Body permintaan';
+
+  @override
+  String get queryParams => 'Query Params';
 
   @override
   String get responseBody => 'Body respons';

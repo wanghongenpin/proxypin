@@ -67,16 +67,32 @@ class _WeakNetworkIndicatorState extends State<WeakNetworkIndicator> {
     if (mounted) setState(() {});
   }
 
+  /// 生效规则绑定的预设名（取第一条启用规则），用于徽章展示「弱网 3G」
+  String? get _activeProfileName {
+    final m = _manager;
+    if (m == null) return null;
+    final rule = m.rules.where((r) => r.enabled).firstOrNull;
+    if (rule == null) return null;
+    final profile = m.findProfile(rule.profileId) ?? m.defaultProfile;
+    return profileDisplayName(l10n, profile);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 设计稿 .badge：#FFF3E8 底 + #B76E00 字 + 圆角 10 的橙色小徽章（如「弱网 3G」）
     if (!_isActive) return const SizedBox.shrink();
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(left: 18),
-      child: IconButton(
-        tooltip: '${l10n.weakNetwork} · ${l10n.enable}',
-        icon: Icon(Icons.speed, size: 21, color: theme.colorScheme.primary),
-        onPressed: _openDialog,
+    final profileName = _activeProfileName;
+    return Tooltip(
+      message: '${l10n.weakNetwork} · ${l10n.enable}',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: _openDialog,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(color: const Color(0xFFFFF3E8), borderRadius: BorderRadius.circular(10)),
+          child: Text(profileName == null ? l10n.weakNetwork : '${l10n.weakNetwork} $profileName',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFFB76E00))),
+        ),
       ),
     );
   }

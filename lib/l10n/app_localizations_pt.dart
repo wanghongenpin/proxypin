@@ -33,6 +33,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get preference => 'Preferences';
 
   @override
+  String get preferenceShort => 'Preferences';
+
+  @override
   String get feedback => 'Feedback';
 
   @override
@@ -634,6 +637,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get requestBody => 'Request Body';
+
+  @override
+  String get queryParams => 'Query Params';
 
   @override
   String get responseBody => 'Response Body';
