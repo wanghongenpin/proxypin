@@ -955,7 +955,7 @@ abstract class AppLocalizations {
   /// No description provided for @sequence.
   ///
   /// In en, this message translates to:
-  /// **'All Requests'**
+  /// **'Timeline'**
   String get sequence;
 
   /// No description provided for @domainList.

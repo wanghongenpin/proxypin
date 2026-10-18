@@ -435,7 +435,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get deleteHeaderConfirm => 'Do you want to delete the request header?';
 
   @override
-  String get sequence => 'All Requests';
+  String get sequence => 'Timeline';
 
   @override
   String get domainList => 'รายการโดเมน';

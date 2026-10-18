@@ -49,7 +49,7 @@ class SearchState extends State<Search> {
     return Container(
         padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 9),
         decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3)))),
+            border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
         child: Column(children: [
           searchBox(theme),
           const SizedBox(height: 8),

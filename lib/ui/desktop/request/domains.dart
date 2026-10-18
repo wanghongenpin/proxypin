@@ -556,7 +556,7 @@ class _DomainRequestsState extends State<DomainRequests> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.025),
-                border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5), width: 0.5))),
+                border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
             child: Row(children: [
               SizedBox(
                   width: 14,
@@ -683,5 +683,6 @@ class HostWidget extends StatelessWidget {
                 overflow: TextOverflow.ellipsis)));
   }
 }
+
 
 

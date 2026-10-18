@@ -140,7 +140,7 @@
   "headerName": "请求头名称",
   "headerValue": "请求头值",
   "deleteHeaderConfirm": "是否删除该请求头",
-  "sequence": "全部请求",
+  "sequence": "时序",
   "domainList": "域名列表",
   "domainWhitelist": "代理域名白名单",
   "domainBlacklist": "代理域名黑名单",

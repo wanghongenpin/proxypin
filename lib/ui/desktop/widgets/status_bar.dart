@@ -115,7 +115,7 @@ class _DesktopStatusBarState extends State<DesktopStatusBar> {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            border: Border(top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3)))),
+            border: Border(top: BorderSide(color: theme.dividerColor, width: 1))),
         child: Row(children: [
           Icon(Icons.circle, size: 7, color: running ? _green : theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 5),

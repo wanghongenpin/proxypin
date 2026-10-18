@@ -95,8 +95,8 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     super.build(context);
 
     List<Tab> tabs = [
-      Tab(child: Text(localizations.domainList, style: const TextStyle(fontSize: 13))),
-      Tab(child: Text(localizations.sequence, style: const TextStyle(fontSize: 13))),
+      Tab(height: 30, child: Text(localizations.domainList, style: const TextStyle(fontSize: 12.5))),
+      Tab(height: 30, child: Text(localizations.sequence, style: const TextStyle(fontSize: 12.5))),
     ];
 
     return FocusableActionDetector(
@@ -120,6 +120,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
             child: Builder(builder: (tabContext) {
               _tabController = DefaultTabController.of(tabContext);
               return Scaffold(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   appBar: AppBar(
                     toolbarHeight: 40,
                     title: SizedBox(height: 40, child: TabBar(tabs: tabs, dividerColor: Colors.transparent)),

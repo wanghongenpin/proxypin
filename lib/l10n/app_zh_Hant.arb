@@ -137,7 +137,7 @@
   "headerName": "請求標頭名稱",
   "headerValue": "請求標頭值",
   "deleteHeaderConfirm": "是否刪除該請求標頭",
-  "sequence": "全部請求",
+  "sequence": "時序",
   "domainList": "網域名稱列表",
   "domainWhitelist": "代理網域名稱白名單",
   "domainBlacklist": "代理網域名稱黑名單",

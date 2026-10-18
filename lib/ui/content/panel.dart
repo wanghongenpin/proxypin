@@ -183,7 +183,7 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       controller: _tabController,
       isScrollable: isDesktop, // 桌面左对齐紧凑排列，手机均分
       tabAlignment: isDesktop ? TabAlignment.start : null,
-      dividerColor: Theme.of(context).dividerColor.withValues(alpha: 0.15),
+      dividerColor: Theme.of(context).dividerColor,
       labelPadding: EdgeInsets.symmetric(horizontal: isDesktop ? 14 : 10),
       tabs: tabs
           .map((title) =>
@@ -480,8 +480,8 @@ class Overview extends StatelessWidget {
 /// 设计稿 Overview 大小行：请求 1.2 KB · 响应 8.6 KB (gzip)
 String _sizeText(BuildContext context, HttpRequest request, HttpResponse? response) {
   var localizations = AppLocalizations.of(context)!;
-  var reqSize = getPackage(request.packageSize);
-  var respSize = getPackage(response?.packageSize);
+  var reqSize = _kbText(request.packageSize);
+  var respSize = _kbText(response?.packageSize);
   if (respSize.isEmpty) {
     return '${localizations.request} $reqSize';
   }
@@ -490,6 +490,22 @@ String _sizeText(BuildContext context, HttpRequest request, HttpResponse? respon
     text += ' (gzip)';
   }
   return text;
+}
+
+/// 1.2 KB / 8.6 KB 风格（去除多余的 0）
+String _kbText(int? size) {
+  if (size == null) {
+    return '';
+  }
+  if (size < 1025) {
+    return '$size B';
+  }
+  if (size > 1024 * 1024) {
+    var mb = size / 1024 / 1024;
+    return '${mb.toStringAsFixed(mb == mb.roundToDouble() ? 0 : 1)} MB';
+  }
+  var kb = size / 1024;
+  return '${kb.toStringAsFixed(kb == kb.roundToDouble() ? 0 : 1)} KB';
 }
 
 Color methodColor(HttpMethod method, ThemeData theme) {
@@ -525,14 +541,14 @@ Widget overviewCard(BuildContext context, List<Widget> rows) {
   var children = <Widget>[];
   for (var i = 0; i < rows.length; i++) {
     if (i > 0) {
-      children.add(Divider(height: 1, thickness: 0.5, color: theme.dividerColor.withValues(alpha: 0.25)));
+      children.add(Divider(height: 1, thickness: 1, color: theme.dividerColor.withValues(alpha: 0.35)));
     }
     children.add(rows[i]);
   }
   return Container(
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.35)),
+          border: Border.all(color: theme.dividerColor),
           color: theme.colorScheme.surface),
       child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Column(children: children)));
 }
@@ -616,7 +632,7 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
                         const Spacer(),
                         for (var i = 0; i < views.length; i++) fmtButton(i),
                       ]))),
-              Divider(height: 1, thickness: 0.5, color: theme.dividerColor.withValues(alpha: 0.25)),
+              Divider(height: 1, thickness: 1, color: theme.dividerColor.withValues(alpha: 0.35)),
               ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: _maxHeight),
                   child: SingleChildScrollView(

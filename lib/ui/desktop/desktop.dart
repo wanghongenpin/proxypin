@@ -117,7 +117,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
         logger.e('MCP auto-start failed: $e');
       }));
     }
-    panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 16), proxyServer: proxyServer);
+    panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 12.5), proxyServer: proxyServer);
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((_) {
       if (mounted) {
         _selectIndex.value = 2;
@@ -151,15 +151,12 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
 
     return Scaffold(
         appBar: Tab(
+            height: 52, // 设计稿 .toolbar 高 52
             child: Container(
-          padding: EdgeInsets.only(bottom: 2.5),
-          margin: EdgeInsets.only(bottom: 5),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-              // color: Theme.of(context).brightness == Brightness.dark ? null : Color(0xFFF9F9F9),
-              border: Border(
-                  bottom: BorderSide(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
-                      width: Platform.isMacOS ? 0.2 : 0.55))),
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1))),
           child: Platform.isMacOS
               ? Toolbar(proxyServer, requestListStateKey)
               : WindowsToolbar(title: Toolbar(proxyServer, requestListStateKey)),
@@ -236,3 +233,4 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
         });
   }
 }
+

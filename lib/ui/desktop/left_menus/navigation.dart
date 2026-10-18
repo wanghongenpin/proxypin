@@ -49,7 +49,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
           }
 
           var items = [
-            (icon: 'list', label: localizations.requests),
+            (icon: 'list', label: localizations.request),
             (icon: 'star', label: localizations.favorites),
             (icon: 'clock', label: localizations.history),
             (icon: 'rules', label: localizations.rules),
@@ -58,8 +58,9 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
 
           return Container(
             width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 64 : 76,
-            decoration:
-                BoxDecoration(border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2))),
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 1))),
             child: Column(children: <Widget>[
               const SizedBox(height: 8),
               for (var i = 0; i < items.length; i++)

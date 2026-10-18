@@ -434,7 +434,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteHeaderConfirm => '是否删除该请求头';
 
   @override
-  String get sequence => '全部请求';
+  String get sequence => '时序';
 
   @override
   String get domainList => '域名列表';
@@ -1931,7 +1931,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get deleteHeaderConfirm => '是否刪除該請求標頭';
 
   @override
-  String get sequence => '全部請求';
+  String get sequence => '時序';
 
   @override
   String get domainList => '網域名稱列表';

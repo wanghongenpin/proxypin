@@ -181,7 +181,7 @@ class _RequestWidgetState extends State<RequestWidget> {
             padding: EdgeInsets.only(left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26), right: 10),
             decoration: BoxDecoration(
                 color: selected ? theme.colorScheme.primary.withValues(alpha: 0.08) : null,
-                border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.3), width: 0.5))),
+                border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.35), width: 1))),
             child: Row(children: [
               if (selectedInSelectionMode) ...[
                 Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),

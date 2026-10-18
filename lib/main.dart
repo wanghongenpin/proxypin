@@ -138,8 +138,23 @@ class FluentApp extends StatelessWidget {
       surfaceContainerHigh: surfaceContainer,
     );
 
+    // 浅色结构色严格按设计稿 token：--bg #F5F6F8 / --panel #FFF / --border #E4E6EB / --text-1/2/3
+    if (!isDark) {
+      colorScheme = colorScheme.copyWith(
+        surface: Colors.white,
+        onSurface: const Color(0xFF1F2329),
+        onSurfaceVariant: const Color(0xFF646A73),
+        outlineVariant: const Color(0xFFE4E6EB),
+        surfaceContainerLow: const Color(0xFFF5F6F8),
+      );
+    }
+
     var themeData =
         ThemeData(brightness: brightness, useMaterial3: appConfiguration.useMaterial3, colorScheme: colorScheme);
+    if (!isDark) {
+      themeData = themeData.copyWith(
+          scaffoldBackgroundColor: const Color(0xFFF5F6F8), dividerColor: const Color(0xFFE4E6EB));
+    }
 
     if (!appConfiguration.useMaterial3) {
       themeData = themeData.copyWith(

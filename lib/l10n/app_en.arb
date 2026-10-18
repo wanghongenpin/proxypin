@@ -140,7 +140,7 @@
   "headerName": "Header Name",
   "headerValue": "Header Value",
   "deleteHeaderConfirm": "Do you want to delete the request header?",
-  "sequence": "All Requests",
+  "sequence": "Timeline",
   "domainList": "Domain List",
   "domainWhitelist": "Proxy Domain Whitelist",
   "domainBlacklist": "Proxy Domain Blacklist",
