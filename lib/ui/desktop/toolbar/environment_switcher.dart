@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/setting/environment.dart';
 
 /// 顶部工具栏的环境切换器
@@ -143,7 +144,7 @@ class _EnvironmentSwitcherState extends State<EnvironmentSwitcher> {
               height: 7,
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: m?.active != null ? const Color(0xFF1F8B4C) : Theme.of(context).colorScheme.onSurfaceVariant)),
+                  color: m?.active != null ? okColor(Theme.of(context)) : Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(width: 6),
           Flexible(
             child: Text(

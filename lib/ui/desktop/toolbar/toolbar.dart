@@ -108,8 +108,11 @@ class _ToolbarState extends State<Toolbar> {
       Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
       SocketLaunch(proxyServer: widget.proxyServer, startup: widget.proxyServer.configuration.startup),
       const SizedBox(width: 6),
+      // 设计稿 .tbtn：32x32 点击盒（IconButton 默认 48 会把图标撑得太散）
       IconButton(
           tooltip: localizations.clear,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
           icon: SvgIcon('trash', size: 17, color: iconColor),
           onPressed: _onClear),
       _sep(),
@@ -120,6 +123,8 @@ class _ToolbarState extends State<Toolbar> {
       const SizedBox(width: 6),
       IconButton(
           tooltip: localizations.mobileConnect,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
           icon: SvgIcon('phone', size: 17, color: iconColor),
           onPressed: () async {
             final ips = await localIps(readCache: false);
@@ -141,7 +146,7 @@ class _ToolbarState extends State<Toolbar> {
         width: 1,
         height: 20,
         margin: const EdgeInsets.symmetric(horizontal: 6),
-        color: Theme.of(context).dividerColor);
+        color: chromeBorderColor(Theme.of(context)));
   }
 
   void phoneConnect(List<String> hosts, int port) {

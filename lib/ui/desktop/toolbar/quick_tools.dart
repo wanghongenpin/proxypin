@@ -6,6 +6,7 @@ import 'package:proxypin/network/components/manager/network_condition_manager.da
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
 import 'package:proxypin/ui/desktop/setting/filter.dart';
@@ -59,7 +60,7 @@ final trafficQuickTools = <QuickTool>[
       }),
   QuickTool(
       id: 'requestCrypto',
-      icon: 'lock',
+      icon: 'key',
       name: (l) => l.requestCrypto,
       launch: (context, proxyServer) async {
         await MultiWindow.openWindow(AppLocalizations.of(context)!.requestCrypto, 'RequestCryptoPage',
@@ -172,6 +173,9 @@ class QuickToolbar extends StatelessWidget {
             for (var tool in tools) ...[
               IconButton(
                   tooltip: tool.name(AppLocalizations.of(context)!),
+                  // 设计稿 .tbtn：32x32 点击盒
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
                   icon: SvgIcon(tool.icon, size: 17, color: Theme.of(context).colorScheme.primary),
                   onPressed: () {
                     tool.launch(context, proxyServer);
@@ -359,7 +363,8 @@ class CustomizeToolbarDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9),
                 color: pinned ? theme.colorScheme.primary.withValues(alpha: 0.06) : null,
                 border: Border.all(color: theme.dividerColor.withValues(alpha: pinned ? 0 : 0.5))),
-            child: Stack(children: [
+            // 设计稿 .cz-item：图标+文字整体在格子里水平居中（Stack 默认 topStart 会导致短名字左偏）
+            child: Stack(alignment: Alignment.topCenter, children: [
               Column(children: [
                 SvgIcon(tool.icon, size: 19, color: theme.colorScheme.onSurfaceVariant),
                 const SizedBox(height: 5),
@@ -376,7 +381,7 @@ class CustomizeToolbarDialog extends StatelessWidget {
                       height: 15,
                       decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: pinned ? const Color(0xFF1F8B4C) : theme.colorScheme.primary),
+                          color: pinned ? okColor(theme) : theme.colorScheme.primary),
                       child: Icon(pinned ? Icons.check : Icons.add, size: 11, color: Colors.white))),
             ])));
   }

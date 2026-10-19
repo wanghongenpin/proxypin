@@ -43,6 +43,47 @@ const contentMap = {
   ContentType.sse: Icons.stream,
 };
 
+/// 暗黑设计稿 docs/design/homepage-dark.html 令牌（浅色令牌在 main.dart 注入主题）
+abstract final class DarkPalette {
+  static const primary = Color(0xFF5D7CFA); // --primary（深底提亮版主色）
+  static const bg = Color(0xFF1B1D22); // --bg 窗口/外框底
+  static const panel = Color(0xFF24262C); // --panel 面板底
+  static const border = Color(0xFF36393F); // --border 结构/卡片描边
+  static const divider = Color(0xFF2D3036); // --divider 卡片内行分隔
+  static const hover = Color(0xFF31343B); // --hover 小控件 hover
+  static const hoverWeak = Color(0xFF2A2D33); // --hover-weak 行 hover
+  static const subtle = Color(0xFF202228); // --subtle 域名组头底
+  static const countBg = Color(0xFF3A3D44); // --cnt-bg 计数胶囊底
+  static const text1 = Color(0xFFE6E8EC); // --text-1
+  static const text2 = Color(0xFFA7ACB4); // --text-2
+  static const text3 = Color(0xFF6F747D); // --text-3
+  static const ok = Color(0xFF3FB96A); // --ok / --get
+  static const warn = Color(0xFFE8A33D); // --warn / --post
+  static const put = Color(0xFF4C9BE8); // --put
+  static const err = Color(0xFFE35B48); // --err / --delete
+  static const ws = Color(0xFF9B72E0); // --ws
+}
+
+/// 结构描边色（工具栏底边 / 导航栏右边 / 状态栏顶边 / 分栏分隔条 / 工具栏小分隔线）。
+/// 深浅色的 dividerColor 都已在 main.dart 注入设计稿 --border 值，直接取用
+Color chromeBorderColor(ThemeData theme) => theme.dividerColor;
+
+/// 主色软底（设计稿 --primary-soft）：浅色主题主色低透明度，暗黑 16%
+Color primarySoftBg(ThemeData theme, {double lightAlpha = 0.08}) =>
+    theme.colorScheme.primary.withValues(alpha: theme.brightness == Brightness.light ? lightAlpha : 0.16);
+
+/// 启用/成功绿（设计稿 --ok）：浅色 #1F8B4C，暗黑 #3FB96A
+Color okColor(ThemeData theme) =>
+    theme.brightness == Brightness.light ? const Color(0xFF1F8B4C) : DarkPalette.ok;
+
+/// 弱网徽章（设计稿 .badge）：浅色黄底深字，暗黑 16% 黄底 + --warn 字
+Color warnBadgeBg(ThemeData theme) => theme.brightness == Brightness.light
+    ? const Color(0xFFFFF3E8)
+    : DarkPalette.warn.withValues(alpha: 0.16);
+
+Color warnBadgeText(ThemeData theme) =>
+    theme.brightness == Brightness.light ? const Color(0xFFB76E00) : DarkPalette.warn;
+
 /// GraphQL 操作类型对应的高亮颜色
 /// mutation/subscription 会修改或订阅数据，用更醒目的橙红；query 用柔和的紫红
 Color graphqlOperationColor(String? operationType) {

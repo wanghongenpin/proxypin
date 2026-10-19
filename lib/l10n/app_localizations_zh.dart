@@ -637,7 +637,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestBody => '请求体';
 
   @override
-  String get queryParams => 'Query 参数';
+  String get queryParams => '查询参数';
+
+  @override
+  String get path => '路径';
+
+  @override
+  String get requestCookies => '请求 Cookies';
+
+  @override
+  String get responseCookies => '响应 Cookies';
 
   @override
   String get responseBody => '响应体';
@@ -2137,7 +2146,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get requestBody => '請求體';
 
   @override
-  String get queryParams => 'Query 參數';
+  String get queryParams => '查詢參數';
+
+  @override
+  String get path => '路徑';
+
+  @override
+  String get requestCookies => '請求 Cookies';
+
+  @override
+  String get responseCookies => '回應 Cookies';
 
   @override
   String get responseBody => '回應體';

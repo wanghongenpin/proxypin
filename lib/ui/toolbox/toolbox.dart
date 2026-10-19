@@ -37,7 +37,8 @@ class _ToolboxState extends State<Toolbox> {
   @override
   Widget build(BuildContext context) {
     return IconTheme(
-        data: IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.65), size: 22),
+        // 设计稿 .tb-item svg：20px（全局 IconTheme 统一，移动端共用）
+        data: IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.65), size: 20),
         child: SingleChildScrollView(
             child: Container(
           padding: const EdgeInsets.all(10),

@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/request/list.dart';
 import 'package:proxypin/ui/launch/launch.dart';
@@ -38,8 +39,6 @@ class DesktopStatusBar extends StatefulWidget {
 }
 
 class _DesktopStatusBarState extends State<DesktopStatusBar> {
-  static const _green = Color(0xFF1F8B4C);
-
   Timer? _timer;
   late final _ListListener _listListener = _ListListener(onChanged: _refresh);
   int _lastUpBytes = 0;
@@ -115,9 +114,9 @@ class _DesktopStatusBarState extends State<DesktopStatusBar> {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            border: Border(top: BorderSide(color: theme.dividerColor, width: 1))),
+            border: Border(top: BorderSide(color: chromeBorderColor(theme), width: 1))),
         child: Row(children: [
-          Icon(Icons.circle, size: 7, color: running ? _green : theme.colorScheme.onSurfaceVariant),
+          Icon(Icons.circle, size: 7, color: running ? okColor(theme) : theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 5),
           Text('${localizations.proxy} 127.0.0.1:${widget.proxyServer.port}', style: style),
           const SizedBox(width: 14),

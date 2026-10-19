@@ -30,6 +30,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -144,7 +145,12 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
       DesktopRequestListWidget(key: requestListStateKey, proxyServer: proxyServer, list: container, panel: panel),
       Favorites(panel: panel),
       HistoryPageWidget(proxyServer: proxyServer, container: container, panel: panel),
-      const Toolbox()
+      // Toolbox 与移动端共用，桌面侧在这里统一刷白底，不动共享文件。
+      // 用 Material 而非 Container(color:)：给内部点击控件提供 Material 祖先（水波纹/hover 才能画上），
+      // 同时 SizedBox.expand 撑满 Stack 松约束，避免底部漏灰
+      Material(
+          color: Theme.of(context).colorScheme.surface,
+          child: const SizedBox.expand(child: Toolbox()))
     ];
 
     return Scaffold(
@@ -154,7 +160,7 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
           alignment: Alignment.center,
           decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1))),
+              border: Border(bottom: BorderSide(color: chromeBorderColor(Theme.of(context)), width: 1))),
           child: Platform.isMacOS
               ? Toolbar(proxyServer, requestListStateKey)
               : WindowsToolbar(title: Toolbar(proxyServer, requestListStateKey)),
@@ -170,6 +176,8 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
                   ratio: widget.appConfiguration.panelRatio,
                   minRatio: 0.15,
                   maxRatio: 0.9,
+                  // 左右面板都是白底，分隔拖拽区透出的灰色 scaffold 底刷白
+                  dividerBackground: Theme.of(context).colorScheme.surface,
                   onRatioChanged: (ratio) {
                     widget.appConfiguration.panelRatio = double.parse(ratio.toStringAsFixed(2));
                     widget.appConfiguration.flushConfig();

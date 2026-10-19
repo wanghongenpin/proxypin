@@ -62,6 +62,9 @@ class _SettingState extends State<Setting> {
     return MenuAnchor(
       builder: (context, controller, child) {
         return IconButton(
+            // 设计稿 .tbtn：32x32 点击盒
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            padding: EdgeInsets.zero,
             icon: SvgIcon('gear', size: 17, color: Theme.of(context).colorScheme.onSurfaceVariant),
             tooltip: localizations.setting,
             onPressed: () {
@@ -284,7 +287,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                 minLines: 1)),
         const SizedBox(height: 10),
       ],
-      leadingIcon: SvgIcon('server', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      // 不带 leadingIcon：与菜单内其他项保持一致（设计稿分组菜单项无图标）
       child: Padding(
           padding: const EdgeInsets.only(left: 10),
           child: Text(localizations.proxy, style: const TextStyle(fontSize: 14))),

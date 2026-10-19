@@ -561,7 +561,10 @@ class _DomainRequestsState extends State<DomainRequests> {
                 decoration: BoxDecoration(
                     color: _hover
                         ? rowHoverColor(theme)
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.025),
+                        // 设计稿 .group 底：浅色近似白的浅灰，暗黑 --subtle #202228
+                        : theme.brightness == Brightness.light
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.025)
+                            : DarkPalette.subtle,
                     border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
             child: Row(children: [
               SizedBox(
@@ -579,7 +582,10 @@ class _DomainRequestsState extends State<DomainRequests> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(9),
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.06)),
+                      // 设计稿 .cnt 胶囊底：暗黑 --cnt-bg #3A3D44
+                      color: theme.brightness == Brightness.light
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.06)
+                          : DarkPalette.countBg),
                   child: Text('${widget.body.length}',
                       style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant))),
             ]))));

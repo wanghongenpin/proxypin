@@ -642,6 +642,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get queryParams => 'Query Params';
 
   @override
+  String get path => 'Path';
+
+  @override
+  String get requestCookies => 'Request Cookies';
+
+  @override
+  String get responseCookies => 'Response Cookies';
+
+  @override
   String get responseBody => 'Cuerpo de la respuesta';
 
   @override

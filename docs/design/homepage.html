@@ -379,9 +379,6 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>历史
       </div>
       <div class="ritem">
-        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2.4"/></svg>规则
-      </div>
-      <div class="ritem">
         <svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱
       </div>
       <div class="spacer"></div>
@@ -568,9 +565,9 @@
   <span class="tag">5</span>视觉规范：主色 #4A6CF7、圆角 8–10px、边框 #E4E6EB、代码与数值用等宽字体；语义色 GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / WS 紫。
 </div>
 
-<!-- ===== 设置菜单瘦身：流量控制 6 项 → 左侧导航「规则」页 ===== -->
+<!-- ===== 设置菜单瘦身：13 → 7 项，流量控制走 ⋯ 菜单 ===== -->
 <div class="notes" style="width:1280px">
-  <b>最终方案：设置菜单 13 → 7 项；「流量控制」6 项晋升为主窗口左侧导航「规则」页（一级功能，非工具）</b>
+  <b>最终方案：设置菜单 13 → 7 项；「流量控制」6 项走顶部 ⋯ 菜单，可固定到快捷工具栏（不进左侧导航）</b>
   <div class="gm-row">
 
     <!-- 瘦身后的设置菜单 -->
@@ -590,50 +587,11 @@
       </div>
     </div>
 
-    <!-- 左侧导航「规则」页 -->
-    <div class="gm-col">
-      <div class="gm-label">左侧导航新增「规则」页（历史与工具箱之间）· 一级入口 + 状态总览</div>
-      <div class="rl-panel">
-        <div class="rl-head">流量控制 <span class="hint">点击打开对应窗口，与现有窗口完全一致</span></div>
-        <div class="rl-row">
-          <span class="ric"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></span>
-          <div class="rt"><div class="t">请求屏蔽</div><div class="d">按规则拦截请求，直接断开或返回错误</div></div>
-          <span class="off">未开启</span><span class="go">›</span>
-        </div>
-        <div class="rl-row">
-          <span class="ric"><svg viewBox="0 0 24 24"><path d="M14 3l7 7-9 9H5v-7z"/><path d="M12 5l7 7"/></svg></span>
-          <div class="rt"><div class="t">请求重写</div><div class="d">按规则修改请求 / 响应的行、头、体</div></div>
-          <span class="on">启用中 · 4 条规则</span><span class="go">›</span>
-        </div>
-        <div class="rl-row">
-          <span class="ric"><svg viewBox="0 0 24 24"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg></span>
-          <div class="rt"><div class="t">请求映射</div><div class="d">映射到本地文件或远程地址</div></div>
-          <span class="on">启用中 · 2 条规则</span><span class="go">›</span>
-        </div>
-        <div class="rl-row">
-          <span class="ric"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-          <div class="rt"><div class="t">请求加密</div><div class="d">加解密请求 / 响应体，便于查看明文</div></div>
-          <span class="off">未开启</span><span class="go">›</span>
-        </div>
-        <div class="rl-row">
-          <span class="ric"><svg viewBox="0 0 24 24"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></span>
-          <div class="rt"><div class="t">脚本</div><div class="d">用 JavaScript 编程化处理请求与响应</div></div>
-          <span class="on">启用中 · 1 个脚本</span><span class="go">›</span>
-        </div>
-        <div class="rl-row">
-          <span class="ric"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
-          <div class="rt"><div class="t">断点</div><div class="d">拦截请求 / 响应，修改后再放行</div></div>
-          <span class="off">未开启</span><span class="go">›</span>
-        </div>
-      </div>
-    </div>
   </div>
   <br>
-  <span class="tag">1</span><b>为什么不放工具箱</b>：这 6 项是持续作用于抓包流量的核心调试能力（和 Reqable 左侧栏同级），工具箱里是无状态小工具，性质不同。<br>
-  <span class="tag">2</span><b>左侧导航变为</b>：请求 / 收藏 / 历史 / <b>规则</b> / 工具箱（+ 底部偏好、反馈），desktop.dart 的 navigationView 对应加一项。<br>
-  <span class="tag">3</span><b>规则页 = 状态总览 + 入口</b>：每行显示启用状态和规则数，点击原样打开现有窗口（重写 / 映射 / 脚本等窗口代码零改动）。<br>
-  <span class="tag">4</span><b>设置菜单只剩 7 项</b>：代理▸ / 域名过滤 / Hosts / 外部代理 / 弱网 / MCP 服务 / 关于，弹出来不再是一堵墙。<br>
-  <span class="tag">5</span>高频项仍可固定到顶部快捷工具栏（见下节），请求右键菜单的 重写 / 映射 / 脚本 快捷入口保留。
+  <span class="tag">1</span><b>为什么不放工具箱</b>：这 6 项是持续作用于抓包流量的核心调试能力，工具箱里是无状态小工具，性质不同。<br>
+  <span class="tag">2</span><b>设置菜单只剩 7 项</b>：代理▸ / 域名过滤 / Hosts / 外部代理 / 弱网 / MCP 服务 / 关于，弹出来不再是一堵墙。<br>
+  <span class="tag">3</span>高频项固定到顶部快捷工具栏（见下节），请求右键菜单的 重写 / 映射 / 脚本 快捷入口保留。
 </div>
 
 <!-- ===== 可自定义快捷工具栏 ===== -->
@@ -715,7 +673,7 @@
     </div>
   </div>
   <br>
-  <span class="tag">1</span><b>四层入口各司其职</b>：快捷区 = 高频（纯图标）；⋯ = 流量控制菜单；左侧「规则」页 = 流量控制总览；工具箱 = 无状态小工具（不混）；⚙ 设置 = 真设置（7 项）。<br>
+  <span class="tag">1</span><b>三层入口各司其职</b>：快捷区 = 高频（纯图标）；⋯ = 流量控制菜单；工具箱 = 无状态小工具（不混）；⚙ 设置 = 真设置（7 项）。<br>
   <span class="tag">2</span><b>快捷区纯图标</b>，尺寸样式与工具栏其他图标完全一致，名称靠 hover tooltip 展示，不放文字。<br>
   <span class="tag">3</span><b>⋯ 流量控制菜单</b>：只含 屏蔽 / 重写 / 映射 / 加密 / 脚本 / 断点 6 项，点项直接打开；行尾 📌 一键固定 / 取消固定；底部「自定义快捷工具栏…」进入排序面板。<br>
   <span class="tag">4</span><b>自定义面板</b>只管排序和批量增删：已固定 chip 拖拽排序、点 × 移除；支持「恢复默认」。<br>
@@ -726,7 +684,7 @@
 
 <!-- ===== 手机端 ===== -->
 <div class="notes" style="width:1280px">
-  <b>手机端：与桌面同一套入口逻辑（规则一级入口 / 设置归位 / 状态语言统一）</b>
+  <b>手机端：与桌面同一套入口逻辑（设置归位 / 状态语言统一）</b>
   <div class="phones-row">
 
     <!-- 手机 1：首页 -->
@@ -749,33 +707,9 @@
           <div class="p-group"><span class="arrow">▶</span>cdn.example.com<span class="cnt">12</span></div>
           <div class="p-fab" title="运行中，点击停止"><span class="stopsq"></span></div>
         </div>
-        <div class="p-bnav"><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2.4"/></svg>规则</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+        <div class="p-bnav"><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
       </div></div>
-      <div class="phone-label">首页 · 底部导航加「规则」；FAB 启停（运行=绿 ⏹ / 停止=灰 ▶）</div>
-    </div>
-
-    <!-- 手机 2：规则页 -->
-    <div>
-      <div class="phone"><div class="p-screen">
-        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
-        <div class="p-title">流量控制</div>
-        <div class="p-body">
-          <div class="p-rrow"><span class="ric"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></span>
-            <div class="rt"><div class="t">请求屏蔽</div><div class="d">按规则拦截请求</div></div><span class="off">未开启</span><span class="go">›</span></div>
-          <div class="p-rrow"><span class="ric"><svg viewBox="0 0 24 24"><path d="M14 3l7 7-9 9H5v-7z"/><path d="M12 5l7 7"/></svg></span>
-            <div class="rt"><div class="t">请求重写</div><div class="d">修改请求 / 响应</div></div><span class="on">4 条规则</span><span class="go">›</span></div>
-          <div class="p-rrow"><span class="ric"><svg viewBox="0 0 24 24"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg></span>
-            <div class="rt"><div class="t">请求映射</div><div class="d">本地 / 远程映射</div></div><span class="on">2 条规则</span><span class="go">›</span></div>
-          <div class="p-rrow"><span class="ric"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-            <div class="rt"><div class="t">请求加密</div><div class="d">加解密请求体</div></div><span class="off">未开启</span><span class="go">›</span></div>
-          <div class="p-rrow"><span class="ric"><svg viewBox="0 0 24 24"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></span>
-            <div class="rt"><div class="t">脚本</div><div class="d">JavaScript 处理流量</div></div><span class="on">1 个脚本</span><span class="go">›</span></div>
-          <div class="p-rrow"><span class="ric"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
-            <div class="rt"><div class="t">断点</div><div class="d">拦截后修改再放行</div></div><span class="off">未开启</span><span class="go">›</span></div>
-        </div>
-        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="2.4"/></svg>规则</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
-      </div></div>
-      <div class="phone-label">规则 tab · 与桌面规则页一致的状态总览，点击 push 到现有页面</div>
+      <div class="phone-label">首页 · 底部导航保持原 4 项（请求/配置/工具箱/设置）；FAB 启停（运行=绿 ⏹ / 停止=灰 ▶）</div>
     </div>
 
     <!-- 手机 3：请求详情页 -->
@@ -812,14 +746,12 @@
     </div>
   </div>
   <br>
-  <span class="tag">1</span><b>底部导航保持 4 项，「配置」由「规则」替换</b>：请求 / 规则 / 工具箱 / 设置 —— 与桌面左侧导航（请求、收藏、历史、<b>规则</b>、工具箱）对应。<br>
-  <span class="tag">2</span><b>规则 tab</b>：与桌面「规则」页同源，6 行状态总览（启用状态 + 规则数），点击 Navigator push 到现有页面（页面零改动）。<br>
-  <span class="tag">3</span><b>原「配置」页内容分流</b>：流量控制 6 项 → 规则 tab；代理 / 抓包过滤 / Hosts / 外部代理 / 弱网 / 环境变量 / MCP / 关于 → <b>设置 tab</b>（升级为完整设置页，与桌面设置菜单 7 项对应）；收藏 / 历史 → 请求页 ⋮ MoreMenu。<br>
-  <span class="tag">4</span><b>VPN 启停 FAB 保留在右下</b>（单手可达，优于挪到 AppBar），状态语言与桌面胶囊统一：<b>运行中 = 绿底白 ⏹</b>，<b>已停止 = 灰底白 ▶</b>。<br>
-  <span class="tag">5</span>搜索本就在 AppBar 顶部，与桌面新设计一致；⋮ MoreMenu（HTTPS / 应用白名单 / 高亮 / 导出 / 多选 / 排序）保持不变。<br>
-  <span class="tag">6</span>域名分组列表、App 图标、Method / 状态码语义色、详情页（General / 请求 / 响应 / Cookies）全部与桌面同一视觉规范。<br>
-  <span class="tag">7</span><b>请求详情页</b>：push 全屏路由（无底部导航），AppBar = 返回 + Method/URL + 收藏 / 重发 / ⋮（复制 cURL·Python / 编辑 / 导出 / 删除），Tab = General / 请求 / 响应 / Cookies，与桌面右侧面板同一结构与视觉规范。<br>
-  <span class="tag">8</span>手机端屏幕窄，不做顶部快捷图标区；高频功能靠「规则」tab + 请求长按菜单触达。
+  <span class="tag">1</span><b>底部导航保持原 4 项不变</b>：请求 / 配置 / 工具箱 / 设置，「配置」页保持现有实现；收藏 / 历史入口可放请求页 ⋮ MoreMenu。<br>
+  <span class="tag">2</span><b>VPN 启停 FAB 保留在右下</b>（单手可达，优于挪到 AppBar），状态语言与桌面胶囊统一：<b>运行中 = 绿底白 ⏹</b>，<b>已停止 = 灰底白 ▶</b>。<br>
+  <span class="tag">3</span>搜索本就在 AppBar 顶部，与桌面新设计一致；⋮ MoreMenu（HTTPS / 应用白名单 / 高亮 / 导出 / 多选 / 排序）保持不变。<br>
+  <span class="tag">4</span>域名分组列表、App 图标、Method / 状态码语义色、详情页（General / 请求 / 响应 / Cookies）全部与桌面同一视觉规范。<br>
+  <span class="tag">5</span><b>请求详情页</b>：push 全屏路由（无底部导航），AppBar = 返回 + Method/URL + 收藏 / 重发 / ⋮（复制 cURL·Python / 编辑 / 导出 / 删除），Tab = General / 请求 / 响应 / Cookies，与桌面右侧面板同一结构与视觉规范。<br>
+  <span class="tag">6</span>手机端屏幕窄，不做顶部快捷图标区；高频功能靠请求长按菜单触达。
 </div>
 
 <!-- ===== 手机端 · 请求详情各 Tab ===== -->

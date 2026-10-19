@@ -1348,6 +1348,24 @@ abstract class AppLocalizations {
   /// **'Query Params'**
   String get queryParams;
 
+  /// No description provided for @path.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get path;
+
+  /// No description provided for @requestCookies.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Cookies'**
+  String get requestCookies;
+
+  /// No description provided for @responseCookies.
+  ///
+  /// In en, this message translates to:
+  /// **'Response Cookies'**
+  String get responseCookies;
+
   /// No description provided for @responseBody.
   ///
   /// In en, this message translates to:

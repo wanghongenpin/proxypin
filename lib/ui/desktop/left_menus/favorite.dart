@@ -72,7 +72,12 @@ class _FavoritesState extends State<Favorites> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    // 与请求列表一致的白底面板（主题 scaffold 底色是灰）；强制撑满，避免加载中/空态缩到内容高度漏灰。
+    // 必须用 Material 而非 Container(color:)：否则 ListTile 的水波纹/选中底色没有 Material 祖先可画
+    return Material(
+        color: Theme.of(context).colorScheme.surface,
+        child: SizedBox.expand(
+        child: FutureBuilder(
         future: FavoriteStorage.favorites,
         builder: (BuildContext context, AsyncSnapshot<Queue<Favorite>> snapshot) {
           if (snapshot.hasData) {
@@ -105,7 +110,7 @@ class _FavoritesState extends State<Favorites> {
           } else {
             return const SizedBox();
           }
-        });
+        })));
   }
 }
 

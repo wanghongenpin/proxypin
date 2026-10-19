@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/components/manager/request_breakpoint_manager.dart';
@@ -184,7 +185,7 @@ class _RulesPageState extends State<RulesPage> {
               Text(status,
                   style: TextStyle(
                       fontSize: 11.5,
-                      color: on ? const Color(0xFF1F8B4C) : theme.colorScheme.onSurfaceVariant)),
+                      color: on ? okColor(theme) : theme.colorScheme.onSurfaceVariant)),
               Icon(Icons.chevron_right, size: 18, color: theme.colorScheme.onSurfaceVariant),
             ])));
   }

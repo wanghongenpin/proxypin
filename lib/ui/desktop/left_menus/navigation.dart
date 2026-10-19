@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/preference.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,12 +60,12 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
             width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 64 : 76,
             decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 1))),
+                border: Border(right: BorderSide(color: chromeBorderColor(Theme.of(context)), width: 1))),
             child: Column(children: <Widget>[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               for (var i = 0; i < items.length; i++)
                 Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: _RailItem(
                         icon: items[i].icon,
                         label: items[i].label,
@@ -92,7 +93,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
   }
 }
 
-/// 设计稿 .ritem：52x48 圆角 9，图标 19px + 标签 10px，选中 primary-soft 底 + primary 字
+/// 设计稿 .ritem 基础上整体放大：56x52 圆角 9，图标 21px + 标签 11px，选中 primary-soft 底 + primary 字
 class _RailItem extends StatelessWidget {
   final String icon;
   final String label;
@@ -104,7 +105,10 @@ class _RailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    var color = active ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant;
+    // 设计稿 .ritem：未选中用 --text-3（暗黑 #6F747D），选中主色
+    var color = active
+        ? theme.colorScheme.primary
+        : (theme.brightness == Brightness.light ? theme.colorScheme.onSurfaceVariant : DarkPalette.text3);
     return Tooltip(
         message: label,
         preferBelow: false,
@@ -112,18 +116,18 @@ class _RailItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(9),
             onTap: onTap,
             child: Container(
-                width: 52,
-                height: 48,
+                width: 56,
+                height: 52,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(9),
-                    color: active ? theme.colorScheme.primary.withValues(alpha: 0.08) : null),
+                    color: active ? primarySoftBg(theme) : null),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  SvgIcon(icon, size: 19, color: color),
-                  const SizedBox(height: 3),
+                  SvgIcon(icon, size: 21, color: color),
+                  const SizedBox(height: 4),
                   Text(label,
                       maxLines: 1,
                       style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           height: 1.1,
                           color: color,
                           fontWeight: active ? FontWeight.w500 : FontWeight.w400)),

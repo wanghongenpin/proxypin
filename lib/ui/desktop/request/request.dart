@@ -16,6 +16,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:date_format/date_format.dart';
+
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -168,7 +170,13 @@ class _RequestWidgetState extends State<RequestWidget> {
     bool selectedInSelectionMode = widget.multiSelectController.contains(request.requestId);
     bool selected = _selected || selectedInSelectionMode;
 
-    // 设计稿 .row：单行（method 语义色 + status 语义色 + path + 耗时），选中浅色底，hover #F7F8FA
+    var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
+    String contentType = response?.contentType.name.toUpperCase() ?? '';
+    var packagesSize = getPackagesSize(request, response);
+    var metaStyle = TextStyle(fontSize: 11, height: 1.2, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8));
+
+    // 紧凑两行：主行保持设计稿（method + status + path + 耗时），副行小号灰字 #编号/时间/类型/大小。
+    // 宽度零新增需求（副行弹性省略），避免单行全列逼宽左栏挤压详情区。
     return MouseRegion(
         onEnter: (_) => setState(() => _hover = true),
         onExit: (_) => setState(() => _hover = false),
@@ -181,50 +189,76 @@ class _RequestWidgetState extends State<RequestWidget> {
             onSecondaryTapDown: (details) => contextualMenu(details),
             onTap: onClick,
             child: Container(
-                height: widget.displayDomain ? 38 : 34,
+                height: widget.displayDomain ? 50 : 46,
                 padding:
                     EdgeInsets.only(left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26), right: 10),
                 decoration: BoxDecoration(
-                    color: selected ? theme.colorScheme.primary.withValues(alpha: 0.08) : (_hover ? rowHoverColor(theme) : null),
+                    color: selected
+                        ? primarySoftBg(theme)
+                        : (_hover ? rowHoverColor(theme) : null),
                     border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.35), width: 1))),
-            child: Row(children: [
-              if (selectedInSelectionMode) ...[
-                Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),
-                const SizedBox(width: 4),
-              ],
-              SizedBox(
-                  width: 56,
-                  child: Text(request.method.name,
-                      maxLines: 1,
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: requestColor ?? methodColor(request.method, theme)))),
-              SizedBox(
-                  width: 44,
-                  child: Text(response == null ? '' : '${response.status.code}',
-                      maxLines: 1,
-                      style: TextStyle(
-                          fontSize: 11.5,
-                          color: statusColor(response?.status.code) ?? theme.colorScheme.onSurfaceVariant))),
-              Expanded(
-                  child: Text.rich(
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      TextSpan(children: [
-                        TextSpan(text: path.fixAutoLines()),
-                        if (operationName != null) graphqlOperationSpan(request, fontSize: 12.5, fixAutoLines: true)!,
-                      ]),
-                      style: TextStyle(
-                          fontSize: 12.5, color: requestColor ?? theme.colorScheme.onSurfaceVariant, height: 1.2))),
-              if (widget.trailing != null) ...[widget.trailing!, const SizedBox(width: 6)],
-              SizedBox(
-                  width: 70,
-                  child: Text(response?.costTime() ?? '',
-                      maxLines: 1,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8)))),
-            ]))));
+                child: Row(children: [
+                  if (selectedInSelectionMode) ...[
+                    Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 4),
+                  ],
+                  Expanded(
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    // 主行：设计稿单行
+                    Row(children: [
+                      SizedBox(
+                          width: 56,
+                          child: Text(request.method.name,
+                              maxLines: 1,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: requestColor ?? methodColor(request.method, theme)))),
+                      SizedBox(
+                          width: 44,
+                          child: Text(response == null ? '' : '${response.status.code}',
+                              maxLines: 1,
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: statusColor(response?.status.code, theme) ?? theme.colorScheme.onSurfaceVariant))),
+                      Expanded(
+                          child: Text.rich(
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              TextSpan(children: [
+                                TextSpan(text: path.fixAutoLines()),
+                                if (operationName != null)
+                                  graphqlOperationSpan(request, fontSize: 12.5, fixAutoLines: true)!,
+                              ]),
+                              style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: requestColor ?? theme.colorScheme.onSurfaceVariant,
+                                  height: 1.2))),
+                      if (widget.trailing != null) ...[widget.trailing!, const SizedBox(width: 6)],
+                      SizedBox(
+                          width: 56,
+                          child: Text(response?.costTime() ?? '',
+                              maxLines: 1, textAlign: TextAlign.right, style: metaStyle)),
+                    ]),
+                    const SizedBox(height: 3),
+                    // 副行：#编号 + 时间 + 类型 + 大小（对齐 path 起点）
+                    Row(children: [
+                      const SizedBox(width: 100),
+                      Expanded(
+                          child: Text.rich(
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              TextSpan(children: [
+                                TextSpan(
+                                    text: '#${widget.index}  ',
+                                    style: const TextStyle(fontSize: 10.5, color: Colors.teal, height: 1.2)),
+                                TextSpan(text: time, style: metaStyle.copyWith(fontFamily: 'monospace')),
+                                if (contentType.isNotEmpty) TextSpan(text: ' · $contentType', style: metaStyle),
+                                if (packagesSize.isNotEmpty) TextSpan(text: ' · $packagesSize', style: metaStyle),
+                              ]))),
+                    ]),
+                  ])),
+                ]))));
   }
 
   Color? color(String url) {

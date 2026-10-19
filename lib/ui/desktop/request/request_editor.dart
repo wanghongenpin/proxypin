@@ -207,6 +207,7 @@ class RequestEditorState extends State<RequestEditor> {
           Expanded(
               child: VerticalSplitView(
             ratio: 0.53,
+            dividerBackground: Theme.of(context).colorScheme.surface,
             left: _HttpWidget(
               key: requestKey,
               title: const Text("Request", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/component/utils.dart';
 
 class VerticalSplitView extends StatefulWidget {
   final Widget left;
@@ -8,6 +9,9 @@ class VerticalSplitView extends StatefulWidget {
   final double maxRatio;
   final Function(double ratio)? onRatioChanged;
 
+  /// 分隔条拖拽区的背景色；null 时透明显示下层（scaffold）背景
+  final Color? dividerBackground;
+
   const VerticalSplitView(
       {super.key,
       required this.left,
@@ -15,7 +19,8 @@ class VerticalSplitView extends StatefulWidget {
       this.ratio = 0.5,
       this.minRatio = 0,
       this.maxRatio = 1,
-      this.onRatioChanged})
+      this.onRatioChanged,
+      this.dividerBackground})
       : assert(ratio >= 0 && ratio <= 1);
 
   @override
@@ -59,12 +64,13 @@ class _VerticalSplitViewState extends State<VerticalSplitView> {
               behavior: HitTestBehavior.translucent,
               child: MouseRegion(
                   cursor: SystemMouseCursors.resizeColumn,
-                  child: SizedBox(
+                  child: Container(
+                    color: widget.dividerBackground,
                     width: _dividerWidth,
                     height: double.infinity,
                     child: (_ratio <= 0 || _ratio >= 1)
                         ? const Icon(Icons.drag_handle, size: 16)
-                        : const VerticalDivider(thickness: 1),
+                        : VerticalDivider(thickness: 1, color: chromeBorderColor(Theme.of(context))),
                   )),
               onPanEnd: (DragEndDetails details) {
                 widget.onRatioChanged?.call(_ratio);

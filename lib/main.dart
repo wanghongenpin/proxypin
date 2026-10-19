@@ -24,6 +24,7 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
@@ -143,9 +144,22 @@ class FluentApp extends StatelessWidget {
       colorScheme = colorScheme.copyWith(
         surface: Colors.white,
         onSurface: const Color(0xFF1F2329),
-        onSurfaceVariant: const Color(0xFF646A73),
+        // onSurfaceVariant: const Color(0xFF646A73),
         outlineVariant: const Color(0xFFE4E6EB),
         surfaceContainerLow: const Color(0xFFF5F6F8),
+      );
+    } else {
+      // 暗黑结构色按设计稿 homepage-dark.html：--bg #1B1D22 / --panel #24262C / --border #36393F / --text-1/2/3
+      colorScheme = colorScheme.copyWith(
+        // 默认蓝（设计稿 #4A6CF7）在深底上偏暗，切换为暗黑设计稿 --primary #5D7CFA；用户自选主题色不干预
+        primary: appConfiguration.themeColor == const Color(0xFF4A6CF7) ? DarkPalette.primary : null,
+        surface: DarkPalette.panel,
+        onSurface: DarkPalette.text1,
+        onSurfaceVariant: DarkPalette.text2,
+        outlineVariant: DarkPalette.border,
+        surfaceContainer: DarkPalette.panel,
+        surfaceContainerHigh: DarkPalette.panel,
+        surfaceContainerLow: DarkPalette.bg,
       );
     }
 
@@ -154,6 +168,8 @@ class FluentApp extends StatelessWidget {
     if (!isDark) {
       themeData = themeData.copyWith(
           scaffoldBackgroundColor: const Color(0xFFF5F6F8), dividerColor: const Color(0xFFE4E6EB));
+    } else {
+      themeData = themeData.copyWith(scaffoldBackgroundColor: DarkPalette.bg, dividerColor: DarkPalette.border);
     }
 
     if (!appConfiguration.useMaterial3) {

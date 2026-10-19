@@ -24,6 +24,7 @@ import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -218,7 +219,9 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     Color primaryColor = Theme.of(context).colorScheme.primary;
     if (Platforms.isDesktop()) {
       return Tooltip(
-          message: started ? localizations.stop : localizations.start,
+          // 设计稿 title：状态 · 端口 · 操作提示（端口不进胶囊文案，避免启停时宽度变化推动右侧图标）
+          message:
+              '${started ? localizations.statusRunning : localizations.statusStopped} · :${widget.proxyServer.port} · ${started ? localizations.stop : localizations.start}',
           child: InkWell(borderRadius: BorderRadius.circular(8), onTap: onToggle, child: capsule()));
     }
     return IconButton(
@@ -261,15 +264,20 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
   /// 桌面端浅色胶囊（设计稿 .proxy-state）：电源图标 + 状态点 +「运行中 · :9099」
   Widget capsule() {
-    const green = Color(0xFF1F8B4C);
     var theme = Theme.of(context);
+    final green = okColor(theme);
     var color = started ? green : theme.colorScheme.onSurfaceVariant;
     return Container(
         height: 30,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: started ? const Color(0xFFF0F8F2) : theme.colorScheme.surface,
+            // 运行中底色：浅色 #F0F8F2，暗黑 --proxy-bg（绿 13%）
+            color: started
+                ? (theme.brightness == Brightness.light
+                    ? const Color(0xFFF0F8F2)
+                    : DarkPalette.ok.withValues(alpha: 0.13))
+                : theme.colorScheme.surface,
             border: Border.all(
                 color: started ? green.withValues(alpha: 0.4) : theme.dividerColor.withValues(alpha: 0.8))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -277,7 +285,8 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
           const SizedBox(width: 6),
           Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 6),
-          Text(started ? '${localizations.statusRunning} · :${widget.proxyServer.port}' : localizations.statusStopped,
+          // 不带端口：两种状态等宽（端口见 tooltip 与底部状态栏），胶囊宽度稳定，右侧图标不随启停移位
+          Text(started ? localizations.statusRunning : localizations.statusStopped,
               style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface)),
         ]));
   }

@@ -244,59 +244,36 @@ class HttpBodyState extends State<HttpBodyWidget> {
             bodyString.startsWith('[') && bodyString.endsWith(']'));
   }
 
-  /// 设计稿：body 分区标题「请求体 · JSON」内容的类型后缀
-  String? _contentTypeLabel() {
-    switch (widget.httpMessage?.contentType) {
-      case ContentType.json:
-        return 'JSON';
-      case ContentType.formUrl:
-        return 'Form';
-      case ContentType.formData:
-        return 'Form Data';
-      case ContentType.js:
-        return 'JavaScript';
-      case ContentType.html:
-        return 'HTML';
-      case ContentType.xml:
-        return 'XML';
-      case ContentType.css:
-        return 'CSS';
-      case ContentType.image:
-        return 'Image';
-      case ContentType.video:
-        return 'Video';
-      default:
-        return null;
-    }
-  }
-
   /// 设计稿 .fmt 分段小胶囊：选中 primary-soft 底 + primary 字，未选中灰色
   List<Widget> _fmtChips(BuildContext context, Tabs? tabs) {
     if (tabs == null || tabs.list.length <= 1) {
       return [const SizedBox()];
     }
     var theme = Theme.of(context);
-    var text3 = theme.brightness == Brightness.light ? const Color(0xFF8F959E) : theme.colorScheme.onSurfaceVariant;
+    var text3 = theme.brightness == Brightness.light ? const Color(0xFF8F959E) : DarkPalette.text3;
     return [
       for (var i = 0; i < tabs.list.length; i++)
         Padding(
             padding: const EdgeInsets.only(right: 4),
-            child: InkWell(
+            // 选中底色由 Material 绘制，InkWell 的 hover/水波纹才能显示在底色之上
+            child: Material(
+                color: i == tabIndex ? primarySoftBg(theme, lightAlpha: 0.12) : Colors.transparent,
                 borderRadius: BorderRadius.circular(5),
-                onTap: () {
-                  setState(() => tabIndex = i);
-                  bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[i]);
-                },
-                child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: i == tabIndex ? theme.colorScheme.primary.withValues(alpha: 0.12) : null),
-                    child: Text(tabs.list[i].title,
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: i == tabIndex ? FontWeight.w500 : FontWeight.w400,
-                            color: i == tabIndex ? theme.colorScheme.primary : text3))))),
+                child: InkWell(
+                    borderRadius: BorderRadius.circular(5),
+                    // 设计稿小控件 hover：浅色 #F0F1F3，暗黑 --hover
+                    hoverColor: theme.brightness == Brightness.light ? const Color(0xFFF0F1F3) : DarkPalette.hover,
+                    onTap: () {
+                      setState(() => tabIndex = i);
+                      bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[i]);
+                    },
+                    child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        child: Text(tabs.list[i].title,
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: i == tabIndex ? FontWeight.w500 : FontWeight.w400,
+                                color: i == tabIndex ? theme.colorScheme.primary : text3)))))),
     ];
   }
 
@@ -309,11 +286,14 @@ class HttpBodyState extends State<HttpBodyWidget> {
 
     final isMobile = Platforms.isMobile();
 
+    // 操作图标与工具栏同色：onSurfaceVariant 淡灰（设计稿 .mini text-3）
+    final iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
+
     // Build common actions as widgets so we can either display them inline (desktop)
     // or move them into an overflow menu (mobile) to avoid hiding important buttons.
     final searchBtn = InkWell(
       key: searchIconKey,
-      child: const Padding(padding: EdgeInsets.all(2), child: Icon(Icons.search, size: 17)),
+      child: Padding(padding: const EdgeInsets.all(2), child: Icon(Icons.search, size: 15, color: iconColor)),
       onTap: () {
         if (searchController.isSearchOverlayVisible) {
           searchController.removeSearchOverlay();
@@ -330,7 +310,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
         : IconButton(
             visualDensity: visualDensity,
             iconSize: 15,
-            icon: const Icon(Icons.copy),
+            icon: Icon(Icons.copy, color: iconColor),
             tooltip: localizations.copy,
             onPressed: () async {
               var body = await bodyKey.currentState?.getBody();
@@ -345,15 +325,15 @@ class HttpBodyState extends State<HttpBodyWidget> {
       visualDensity: visualDensity,
       iconSize: 15,
       icon: Obx(() => Icon(Icons.edit_document,
-          color: rewriteEnabled.value ? Colors.deepOrangeAccent : null)),
+          color: rewriteEnabled.value ? Colors.deepOrangeAccent : iconColor)),
       tooltip: localizations.requestRewrite,
       onPressed: showRequestRewrite,
     );
 
     final encodeBtn = IconButton(
         visualDensity: visualDensity,
-        iconSize: 17,
-        icon: const Icon(Icons.text_format),
+        iconSize: 15,
+        icon: Icon(Icons.text_format, color: iconColor),
         tooltip: localizations.encode,
         onPressed: () async {
           var body = await bodyKey.currentState?.getBody();
@@ -365,7 +345,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final openNewBtn = IconButton(
         visualDensity: visualDensity,
         iconSize: 15,
-        icon: const Icon(Icons.open_in_new),
+        icon: Icon(Icons.open_in_new, color: iconColor),
         tooltip: localizations.newWindow,
         onPressed: () => openNew());
 
@@ -427,17 +407,14 @@ class HttpBodyState extends State<HttpBodyWidget> {
       );
     }
 
-    // 设计稿 .d-sec + .fmt：11px 灰色分区标签「请求体 · JSON」+ 格式分段胶囊 + 紧凑操作图标
+    // 设计稿 .d-sec + .fmt：11px 灰色分区标签（请求体/响应体）+ 格式分段胶囊 + 紧凑操作图标
     final theme = Theme.of(context);
-    final text3 = theme.brightness == Brightness.light ? const Color(0xFF8F959E) : theme.colorScheme.onSurfaceVariant;
+    final text3 = theme.brightness == Brightness.light ? const Color(0xFF8F959E) : DarkPalette.text3;
+    // 标签不再带「· JSON」类型后缀：格式分段已按类型默认选中
     var label = widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody;
-    var ctLabel = _contentTypeLabel();
-    if (ctLabel != null) {
-      label = '$label · $ctLabel';
-    }
 
     final list = <Widget>[
-      Text(label, style: TextStyle(fontSize: 11, height: 1.5, letterSpacing: 0.3, color: text3)),
+      Text(label, style: TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3)),
       const SizedBox(width: 12),
       ..._fmtChips(context, tabs),
       const SizedBox(width: 8),
@@ -467,7 +444,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     return IconButton(
         iconSize: 19,
         visualDensity: VisualDensity.comfortable,
-        icon: Icon(Icons.download),
+        icon: Icon(Icons.download, color: Theme.of(context).colorScheme.onSurfaceVariant),
         tooltip: localizations.saveImage,
         onPressed: () async {
           var body = bodyKey.currentState?.message?.body;

@@ -11,6 +11,7 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/network_condition_manager.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/setting/weak_network.dart';
 
 /// 顶部工具栏「网络限制」指示器
@@ -79,9 +80,10 @@ class _WeakNetworkIndicatorState extends State<WeakNetworkIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    // 设计稿 .badge：#FFF3E8 底 + #B76E00 字 + 圆角 10 的橙色小徽章（如「弱网 3G」）
+    // 设计稿 .badge：浅色 #FFF3E8 底 + #B76E00 字；暗黑 16% --warn 底 + --warn 字
     if (!_isActive) return const SizedBox.shrink();
     final profileName = _activeProfileName;
+    final theme = Theme.of(context);
     return Tooltip(
       message: '${l10n.weakNetwork} · ${l10n.enable}',
       child: InkWell(
@@ -89,9 +91,9 @@ class _WeakNetworkIndicatorState extends State<WeakNetworkIndicator> {
         onTap: _openDialog,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(color: const Color(0xFFFFF3E8), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: warnBadgeBg(theme), borderRadius: BorderRadius.circular(10)),
           child: Text(profileName == null ? l10n.weakNetwork : '${l10n.weakNetwork} $profileName',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFFB76E00))),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: warnBadgeText(theme))),
         ),
       ),
     );
