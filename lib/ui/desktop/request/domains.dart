@@ -542,7 +542,7 @@ class _DomainRequestsState extends State<DomainRequests> {
     ]);
   }
 
-  //domain title（设计稿 .group：浅灰底 + 箭头 + 应用图标 + 域名 + 请求数胶囊；.rl-row:hover #F7F8FA）
+  //domain title（内容沿用旧版：箭头图标 + 14px 域名 + 右侧 app 图标；外观仅保留 hover 高亮，无底色无分割线）
   Widget _hostWidget(String title) {
     var theme = Theme.of(context);
     var host = MouseRegion(
@@ -556,38 +556,21 @@ class _DomainRequestsState extends State<DomainRequests> {
               });
             },
             child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                    color: _hover
-                        ? rowHoverColor(theme)
-                        // 设计稿 .group 底：浅色近似白的浅灰，暗黑 --subtle #202228
-                        : theme.brightness == Brightness.light
-                            ? theme.colorScheme.onSurface.withValues(alpha: 0.025)
-                            : DarkPalette.subtle,
-                    border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
+                height: 40,
+                padding: const EdgeInsets.only(left: 6, right: 10),
+                decoration: BoxDecoration(color: _hover ? rowHoverColor(theme) : null),
             child: Row(children: [
               SizedBox(
-                  width: 14,
-                  child: Text(selected ? '▼' : '▶',
-                      style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurfaceVariant))),
-              if (trailing != null) ...[trailing!, const SizedBox(width: 6)],
+                  width: 25,
+                  child: Icon(selected ? Icons.arrow_drop_down : Icons.arrow_right,
+                      size: 18, color: theme.colorScheme.onSurfaceVariant)),
               Expanded(
                   child: Text(title,
                       textAlign: TextAlign.left,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                      style: const TextStyle(fontSize: 14),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis)),
-              Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(9),
-                      // 设计稿 .cnt 胶囊底：暗黑 --cnt-bg #3A3D44
-                      color: theme.brightness == Brightness.light
-                          ? theme.colorScheme.onSurface.withValues(alpha: 0.06)
-                          : DarkPalette.countBg),
-                  child: Text('${widget.body.length}',
-                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant))),
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
             ]))));
 
     return ColorTransition(

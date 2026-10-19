@@ -130,7 +130,6 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                   body: Padding(
                       padding: const EdgeInsets.only(right: 5),
                       child: Column(children: [
-                        Search(key: searchKey, onSearch: search),
                         Obx(() => selectionController.selectionMode.value
                             ? SelectionActionBar(
                                 selectionController: selectionController,
@@ -173,6 +172,8 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                             },
                           ),
                         ])),
+                        // 搜索挪到底部（旧版位置）
+                        Search(key: searchKey, onSearch: search),
                       ])));
             })));
   }

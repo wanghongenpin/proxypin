@@ -17,11 +17,11 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/ui/component/search_condition.dart';
-import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 
 import '../../component/model/search_model.dart';
 
-/// 列表头部搜索（设计稿 .list-head）：搜索框 + 类型过滤 Chip
+/// 列表底部搜索：旧版胶囊样式（圆角 20 + 阴影），左搜索图标开条件弹窗，右响应类型下拉
 /// @author wanghongen
 /// 2023/10/8
 class Search extends StatefulWidget {
@@ -46,163 +46,80 @@ class SearchState extends State<Search> {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    return Container(
-        padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 9),
-        decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: theme.dividerColor, width: 1))),
-        child: Column(children: [
-          searchBox(theme),
-          const SizedBox(height: 8),
-          filterChips(theme),
-        ]));
-  }
-
-  /// 搜索框（设计稿 .search）：高 30 圆角 7，左搜索图标，右漏斗开搜索条件弹窗
-  Widget searchBox(ThemeData theme) {
-    return SizedBox(
-        height: 30,
-        child: TextField(
-          cursorHeight: 16,
-          controller: keywordController,
-          style: const TextStyle(fontSize: 12.5),
-          onChanged: (val) async {
-            searchModel.keyword = val;
-            if (!changing) {
-              changing = true;
-              Future.delayed(const Duration(milliseconds: 500), () {
-                changing = false;
-                if (!searched) {
-                  searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
-                }
+    bool dark = theme.brightness == Brightness.dark;
+    // 主题适配：亮色沿用旧版 hoverColor 底；暗黑用设计稿 --hover；描边取主题 dividerColor（已注入设计稿 --border）
+    var fillColor = dark ? DarkPalette.hover : theme.hoverColor;
+    return Padding(
+        padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom: 8),
+        child: Container(
+          height: 32,
+          decoration: BoxDecoration(
+            color: fillColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withValues(alpha: dark ? 0.25 : 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 1),
+              )
+            ],
+          ),
+          child: TextField(
+            cursorHeight: 16,
+            controller: keywordController,
+            style: const TextStyle(fontSize: 13),
+            onChanged: (val) async {
+              searchModel.keyword = val;
+              if (!changing) {
+                changing = true;
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  changing = false;
+                  if (!searched) {
+                    searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
+                  }
+                  widget.onSearch?.call(searchModel);
+                });
+              }
+            },
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.all(0),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.dividerColor, width: 0.5),
+                  borderRadius: BorderRadius.circular(15)),
+              focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5), width: 0.8),
+                  borderRadius: BorderRadius.circular(15)),
+              prefixIcon: InkWell(
+                  child: Icon(Icons.search,
+                      size: 20, color: searched ? okColor(theme) : theme.colorScheme.primary),
+                  onTapDown: (details) {
+                    searchDialog(details);
+                  }),
+              hintText: localizations.searchHint,
+              hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+              suffixIcon: ContentTypeSelect(onSelected: (contentType) {
+                setState(() {
+                  searchModel.responseContentTypes = contentType == null ? {} : {contentType};
+                  searchModel.protocols = {};
+                  searched = searchModel.isNotEmpty;
+                });
                 widget.onSearch?.call(searchModel);
-              });
-            }
-          },
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.all(0),
-            filled: true,
-            fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-            enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide.none, borderRadius: BorderRadius.circular(7)),
-            focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.4), width: 0.8),
-                borderRadius: BorderRadius.circular(7)),
-            prefixIcon: InkWell(
-                child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: SvgIcon('search',
-                        size: 14, color: searched ? Colors.green : theme.colorScheme.onSurfaceVariant)),
-                onTapDown: (details) {
-                  searchDialog(details);
-                }),
-            prefixIconConstraints: const BoxConstraints(minWidth: 34),
-            hintText: localizations.searchHint,
-            hintStyle: TextStyle(fontSize: 12.5, color: theme.colorScheme.onSurfaceVariant),
-            suffixIcon: InkWell(
-                child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: SvgIcon('funnel', size: 14, color: theme.colorScheme.onSurfaceVariant)),
-                onTapDown: (details) {
-                  searchDialog(details);
-                }),
-            suffixIconConstraints: const BoxConstraints(minWidth: 32),
+              }),
+            ),
           ),
         ));
-  }
-
-  /// 类型过滤 Chip（设计稿 .filters）
-  Widget filterChips(ThemeData theme) {
-    var chips = <(String, String)>[
-      ('all', localizations.all),
-      ('xhr', 'XHR'),
-      ('jscss', 'JS/CSS'),
-      ('image', localizations.image),
-      ('ws', 'WebSocket'),
-    ];
-    return Align(
-        alignment: Alignment.centerLeft,
-        child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [for (var chip in chips) filterChip(theme, chip.$1, chip.$2)]));
-  }
-
-  Widget filterChip(ThemeData theme, String id, String label) {
-    var selected = currentChip == id;
-    return InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => onChipSelected(id),
-        child: Container(
-            height: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: selected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
-                border: Border.all(
-                    color: selected ? Colors.transparent : theme.dividerColor.withValues(alpha: 0.6))),
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: selected ? FontWeight.w500 : FontWeight.normal,
-                    color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant))));
-  }
-
-  /// 当前选中的 Chip（由搜索条件反推，弹窗修改条件后能保持同步）
-  String get currentChip {
-    if (searchModel.protocols.contains(Protocol.ws)) {
-      return 'ws';
-    }
-    var types = searchModel.responseContentTypes;
-    if (types.isEmpty) {
-      return 'all';
-    }
-    if (types.length == 1 && types.contains(ContentType.json)) {
-      return 'xhr';
-    }
-    if (types.length == 2 && types.contains(ContentType.js) && types.contains(ContentType.css)) {
-      return 'jscss';
-    }
-    if (types.length == 1 && types.contains(ContentType.image)) {
-      return 'image';
-    }
-    return 'all';
-  }
-
-  void onChipSelected(String id) {
-    setState(() {
-      searchModel.protocols = {};
-      switch (id) {
-        case 'xhr':
-          searchModel.responseContentTypes = {ContentType.json};
-          break;
-        case 'jscss':
-          searchModel.responseContentTypes = {ContentType.js, ContentType.css};
-          break;
-        case 'image':
-          searchModel.responseContentTypes = {ContentType.image};
-          break;
-        case 'ws':
-          searchModel.responseContentTypes = {};
-          searchModel.protocols = {Protocol.ws};
-          break;
-        default:
-          searchModel.responseContentTypes = {};
-      }
-      searched = searchModel.isNotEmpty;
-      widget.onSearch?.call(searchModel);
-    });
   }
 
   void searchDialog([TapDownDetails? details]) {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
-    // 从搜索框位置向下弹出
+    // 搜索框在列表底部，从搜索框位置向上弹出
     var box = context.findRenderObject() as RenderBox;
     var offset = box.localToGlobal(Offset.zero);
     showMenu(
         context: context,
-        position: RelativeRect.fromLTRB(offset.dx + 12, offset.dy + 36, offset.dx + 12, 0),
+        position: RelativeRect.fromLTRB(offset.dx + 12, offset.dy - 6, offset.dx + 12, 0),
         constraints: const BoxConstraints(minWidth: 260, maxWidth: 330),
         items: [
           PopupMenuItem(
@@ -222,5 +139,61 @@ class SearchState extends State<Search> {
                             });
                           }))))
         ]);
+  }
+}
+
+/// 响应类型下拉（旧版 suffix 样式：当前值 + 上箭头，上弹菜单）
+class ContentTypeSelect extends StatefulWidget {
+  final Function(ContentType? contentType) onSelected;
+
+  const ContentTypeSelect({super.key, required this.onSelected});
+
+  @override
+  State<StatefulWidget> createState() {
+    return ContentTypeState();
+  }
+}
+
+class ContentTypeState extends State<ContentTypeSelect> {
+  AppLocalizations get localizations => AppLocalizations.of(context)!;
+
+  String? value;
+  List<String>? types;
+
+  @override
+  Widget build(BuildContext context) {
+    value ??= localizations.all;
+    types ??= ["JSON", "IMAGE", "HTML", "XML", "JS", "CSS", "TEXT", localizations.all];
+
+    return PopupMenuButton(
+      initialValue: value,
+      offset: Offset(-10, (types!.length - types!.indexOf(value!)) * -30.0 - 10),
+      tooltip: localizations.responseType,
+      constraints: const BoxConstraints(maxWidth: 75),
+      child: Wrap(runAlignment: WrapAlignment.center, children: [
+        Text(value!, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        const Icon(Icons.arrow_drop_up, size: 20)
+      ]),
+      onSelected: (String value) {
+        if (this.value == value) {
+          return;
+        }
+        setState(() {
+          this.value = value;
+        });
+        widget.onSelected(value == localizations.all ? null : ContentType.valueOf(value));
+      },
+      itemBuilder: (BuildContext context) {
+        return types!.map(item).toList();
+      },
+    );
+  }
+
+  PopupMenuItem<String> item(String value) {
+    return PopupMenuItem(
+      height: 30,
+      value: value,
+      child: Text(value, style: const TextStyle(fontSize: 12)),
+    );
   }
 }
