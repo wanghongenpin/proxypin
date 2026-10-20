@@ -126,8 +126,11 @@ Widget getIcon(HttpResponse? response, {Color? color}) {
 
   var contentType = response.contentType;
   if (contentType.isImage && response.body != null) {
+    // 已是 Uint8List 就直接复用：避免每次 build 拷贝整份图片字节，
+    // 且 MemoryImage 以字节对象身份做缓存键，同一实例才能命中 ImageCache 免于重复解码
+    var body = response.body!;
     return Image.memory(
-      Uint8List.fromList(response.body!),
+      body is Uint8List ? body : Uint8List.fromList(body),
       width: Platforms.isDesktop() ? 19 : 26,
       errorBuilder: (context, error, stackTrace) => Icon(Icons.image, size: 16, color: color ?? Colors.green),
     );

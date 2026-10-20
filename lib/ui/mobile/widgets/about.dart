@@ -37,9 +37,11 @@ class _AboutState extends State<About> {
   @override
   Widget build(BuildContext context) {
     AppLocalizations localizations = AppLocalizations.of(context)!;
+    final bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     String gitHub = "https://github.com/wanghongenpin/proxypin";
     final String sponsorUrl = "https://github.com/sponsors/wanghongenpin";
+    final String downloadUrl = isCN ? "https://gitee.com/wanghongenpin/proxypin/releases" : "$gitHub/releases";
 
     return Scaffold(
         appBar: AppBar(title: Text(localizations.about, style: const TextStyle(fontSize: 16)), centerTitle: true),
@@ -91,8 +93,7 @@ class _AboutState extends State<About> {
                     title: Text(localizations.download),
                     trailing: const Icon(Icons.open_in_new, size: 22),
                     onTap: () {
-                      final url = "$gitHub/releases";
-                      _safeLaunch(Uri.parse(url));
+                      _safeLaunch(Uri.parse(downloadUrl));
                     }),
                 Divider(height: 0, thickness: 0.4, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(

@@ -99,6 +99,12 @@ class RequestWidget extends StatefulWidget {
   static void removeAutoReadByIds(Iterable<String> requestIds) {
     _RequestWidgetState.removeAutoReadByIds(requestIds);
   }
+
+  /// 清理行的全部共享状态（已读 + 手动高亮），请求从容器删除/清空时调用
+  static void removeRowStatesByIds(Iterable<String> requestIds) {
+    _RequestWidgetState.removeAutoReadByIds(requestIds);
+    _RequestWidgetState.removeManualHighlightByIds(requestIds);
+  }
 }
 
 class _RequestWidgetState extends State<RequestWidget> {
@@ -106,6 +112,10 @@ class _RequestWidgetState extends State<RequestWidget> {
   static final ValueNotifier<String?> selectedRequestId = ValueNotifier<String?>(null);
 
   static LruCacheSet<String> autoReadRequests = LruCacheSet<String>(5000);
+
+  /// 右键手动标记的高亮色（按 requestId 共享存储）：
+  /// 行被回收、域名收起/展开、滚动出屏重建后都不丢失（此前存 State 实例，回收即丢）
+  static final LruCache<String, Color> manualHighlights = LruCache<String, Color>(1000);
 
   static bool markAutoRead(String requestId) {
     return autoReadRequests.add(requestId);
@@ -115,7 +125,13 @@ class _RequestWidgetState extends State<RequestWidget> {
     autoReadRequests.removeAll(requestIds);
   }
 
-  Color? highlightColor; //高亮颜色
+  static void removeManualHighlightByIds(Iterable<String> requestIds) {
+    for (final id in requestIds) {
+      manualHighlights.remove(id);
+    }
+  }
+
+  Color? highlightColor; //关键词高亮颜色缓存（规则派生，可重建，无需共享）
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
@@ -124,7 +140,6 @@ class _RequestWidgetState extends State<RequestWidget> {
   int get selectionCount => widget.multiSelectController.selectedCount;
 
   bool _selected = false;
-  bool _hover = false;
 
   @override
   void initState() {
@@ -165,7 +180,6 @@ class _RequestWidgetState extends State<RequestWidget> {
     var response = widget.response.get() ?? request.response;
     var operationName = request.graphqlOperationName;
     String path = widget.displayDomain ? request.domainPath : request.path;
-    String title = '${request.method.name} $path';
 
     var time = formatDate(request.requestTime, [HH, ':', nn, ':', ss]);
     String contentType = response?.contentType.name.toUpperCase() ?? '';
@@ -175,29 +189,26 @@ class _RequestWidgetState extends State<RequestWidget> {
     bool selectedInSelectionMode = widget.multiSelectController.contains(request.requestId);
     bool selected = _selected || selectedInSelectionMode;
 
-    // 内容沿用旧版（类型图标 + 「METHOD path」标题 + 「#编号 时间 - [状态] 类型 大小 耗时」副行 + 右侧 app 图标），
-    // 外观适配新版：hover/选中底色区分行，无分割线，替代原 ListTile。
-    return MouseRegion(
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: GestureDetector(
+    // 内容沿用旧版（类型图标 + 「METHOD path」标题 + 「#编号 时间 - [状态] 类型 大小 耗时」副行 + 右侧 app 图标）。
+    // Material+InkWell：hover/水波纹由组件自身处理，不触发整行 setState 重建
+    //（之前 MouseRegion+setState 会让图片缩略图每次 hover 都重新解码，闪烁且费性能）。
+    return Material(
+        color: selected ? primarySoftBg(theme) : Colors.transparent,
+        child: InkWell(
+            onTap: onClick,
             onLongPress: () {
               if (!selectionMode) {
                 widget.multiSelectController.enterSelectionMode(widget.request.requestId);
               }
             },
             onSecondaryTapDown: (details) => contextualMenu(details),
-            onTap: onClick,
+            hoverColor: rowHoverColor(theme),
             child: Container(
                 padding: EdgeInsets.only(
                     left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26),
                     right: 10,
                     top: 7,
                     bottom: 7),
-                decoration: BoxDecoration(
-                    color: selected
-                        ? primarySoftBg(theme)
-                        : (_hover ? rowHoverColor(theme) : null)),
                 child: Row(children: [
                   if (selectedInSelectionMode) ...[
                     Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),
@@ -211,7 +222,8 @@ class _RequestWidgetState extends State<RequestWidget> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         TextSpan(children: [
-                          TextSpan(text: title.fixAutoLines()),
+                          TextSpan(text: '${request.method.name} '),
+                          TextSpan(text: path.fixAutoLines()),
                           if (operationName != null) graphqlOperationSpan(request, fixAutoLines: true)!,
                         ]),
                         style: TextStyle(fontSize: 13, height: 1.25, color: requestColor)),
@@ -221,10 +233,13 @@ class _RequestWidgetState extends State<RequestWidget> {
                         overflow: TextOverflow.ellipsis,
                         TextSpan(children: [
                           TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
+                          TextSpan(text: '$time - ', style: TextStyle(fontSize: 11, color: text3Color(theme))),
                           TextSpan(
-                              text:
-                                  '$time - [${response?.status.code ?? ''}]  $contentType $packagesSize ${response?.costTime() ?? ''}',
-                              style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              text: '[${response?.status.code ?? ''}]',
+                              style: TextStyle(fontSize: 11, color: text3Color(theme))),
+                          TextSpan(
+                              text: '  $contentType $packagesSize ${response?.costTime() ?? ''}',
+                              style: TextStyle(fontSize: 11, color: text3Color(theme))),
                         ])),
                   ])),
                   if (widget.trailing != null) ...[const SizedBox(width: 8), widget.trailing!],
@@ -232,6 +247,12 @@ class _RequestWidgetState extends State<RequestWidget> {
   }
 
   Color? color(String url) {
+    // 手动标记优先，取自共享存储（回收/重建不丢）
+    var manual = manualHighlights.get(widget.request.requestId);
+    if (manual != null) {
+      return manual;
+    }
+
     if (highlightColor != null) {
       return highlightColor;
     }
@@ -241,7 +262,7 @@ class _RequestWidgetState extends State<RequestWidget> {
       return highlightColor;
     }
 
-    return autoReadRequests.contains(widget.request.requestId) ? Colors.grey : null;
+    return autoReadRequests.contains(widget.request.requestId) ? text3Color(Theme.of(context)) : null;
   }
 
   void contextualMenu(TapDownDetails details) {
@@ -444,35 +465,35 @@ class _RequestWidgetState extends State<RequestWidget> {
           label: localizations.red,
           onClick: () {
             setState(() {
-              highlightColor = Colors.red;
+              manualHighlights.set(widget.request.requestId, Colors.red);
             });
           }),
       ContextMenuItem.normal(
           label: localizations.yellow,
           onClick: () {
             setState(() {
-              highlightColor = Colors.yellow.shade600;
+              manualHighlights.set(widget.request.requestId, Colors.yellow.shade600);
             });
           }),
       ContextMenuItem.normal(
           label: localizations.blue,
           onClick: () {
             setState(() {
-              highlightColor = Colors.blue;
+              manualHighlights.set(widget.request.requestId, Colors.blue);
             });
           }),
       ContextMenuItem.normal(
           label: localizations.green,
           onClick: () {
             setState(() {
-              highlightColor = Colors.green;
+              manualHighlights.set(widget.request.requestId, Colors.green);
             });
           }),
       ContextMenuItem.normal(
           label: localizations.gray,
           onClick: () {
             setState(() {
-              highlightColor = Colors.grey;
+              manualHighlights.set(widget.request.requestId, Colors.grey);
             });
           }),
       ContextMenuItem.separator(),
@@ -489,6 +510,7 @@ class _RequestWidgetState extends State<RequestWidget> {
           label: localizations.reset,
           onClick: () {
             setState(() {
+              manualHighlights.remove(widget.request.requestId);
               highlightColor = null;
               autoReadRequests.clear();
             });

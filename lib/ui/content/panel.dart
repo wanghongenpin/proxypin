@@ -112,6 +112,47 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
   final GlobalKey<HttpBodyState> requestHttpBodyKey = GlobalKey<HttpBodyState>();
   final GlobalKey<HttpBodyState> responseHttpBodyKey = GlobalKey<HttpBodyState>();
 
+  /// 当前请求的手动收藏状态，按 requestId 缓存避免每次 build 查存储
+  String? _favoritedId;
+  bool _favorited = false;
+
+  void _checkFavorited(HttpRequest request) {
+    if (_favoritedId == request.requestId) return;
+    var id = request.requestId;
+    FavoriteStorage.favorites.then((favorites) {
+      if (!mounted) return;
+      setState(() {
+        _favoritedId = id;
+        _favorited = favorites.any((f) => f.request.requestId == id);
+      });
+    });
+  }
+
+  Future<void> _toggleFavorite(HttpRequest request) async {
+    var localizations = AppLocalizations.of(context)!;
+    if (_favorited) {
+      var favorites = await FavoriteStorage.favorites;
+      Favorite? target;
+      for (final f in favorites) {
+        if (f.request.requestId == request.requestId) {
+          target = f;
+          break;
+        }
+      }
+      if (target != null) {
+        await FavoriteStorage.removeFavorite(target);
+      }
+      if (!mounted) return;
+      setState(() => _favorited = false);
+      FlutterToastr.show(localizations.deleteSuccess, context);
+    } else {
+      await FavoriteStorage.addFavorite(request);
+      if (!mounted) return;
+      setState(() => _favorited = true);
+      FlutterToastr.show(localizations.addSuccess, context);
+    }
+  }
+
   void changeState() {
     final mqtt = widget.request.get()?.protocolVersion == 'MQTT';
     if (mqtt != _mqttTabs) {
@@ -371,18 +412,27 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
               }),
           miniAction(
               tooltip: localizations.repeat, icon: 'refresh', onPressed: () => resendRequest(request)),
-          miniAction(
-              tooltip: localizations.favorite,
-              icon: 'star',
-              onPressed: () {
-                FavoriteStorage.addFavorite(request);
-                FlutterToastr.show(localizations.addSuccess, context);
-              }),
+          Builder(builder: (context) {
+            _checkFavorited(request);
+            var favorited = _favoritedId == request.requestId && _favorited;
+            // 已收藏：琥珀色实心星（Material filled）；未收藏：中性灰线条星（设计 SVG）
+            var amber = Theme.of(context).brightness == Brightness.light ? const Color(0xFFB76E00) : DarkPalette.warn;
+            return miniAction(
+                tooltip: localizations.favorite,
+                icon: 'star',
+                iconWidget: favorited ? Icon(Icons.star, size: 16, color: amber) : null,
+                onPressed: () => _toggleFavorite(request));
+          }),
         ]));
   }
 
-  /// 设计稿 .mini：26x26 灰色小图标按钮
-  Widget miniAction({required String tooltip, required String icon, required VoidCallback onPressed}) {
+  /// 设计稿 .mini：26x26 灰色小图标按钮（iconWidget 优先于 icon，用于实心/自定义图标）
+  Widget miniAction(
+      {required String tooltip,
+      required String icon,
+      required VoidCallback onPressed,
+      Color? color,
+      Widget? iconWidget}) {
     return Tooltip(
         message: tooltip,
         child: InkWell(
@@ -392,7 +442,8 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
                 width: 26,
                 height: 26,
                 child: Center(
-                    child: SvgIcon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant)))));
+                    child: iconWidget ??
+                        SvgIcon(icon, size: 15, color: color ?? Theme.of(context).colorScheme.onSurfaceVariant)))));
   }
 
   void resendRequest(HttpRequest httpRequest) {
@@ -801,6 +852,17 @@ class _CookiesState extends State<Cookies> {
             ])));
   }
 
+  /// 请求 Cookie 个数：headers.cookies 是原始 Cookie 头行（通常 1 行含全部 cookie），
+  /// 需按 ';' 拆开数键值对，否则折叠条数恒为行数（与展开后的行数对不上）
+  int _requestCookieCount(List<String>? headerLines) {
+    if (headerLines == null) return 0;
+    var count = 0;
+    for (final line in headerLines) {
+      count += line.split(';').where((e) => e.contains('=')).length;
+    }
+    return count;
+  }
+
   @override
   Widget build(BuildContext context) {
     var requestCookies = widget.request.get()?.cookies;
@@ -812,7 +874,7 @@ class _CookiesState extends State<Cookies> {
     var localizations = AppLocalizations.of(context)!;
     var content = ListView(children: [
       if (requestRows != null) ...[
-        _sectionLabel(context, localizations.requestCookies, requestCookies?.length ?? 0, _requestExpanded,
+        _sectionLabel(context, localizations.requestCookies, _requestCookieCount(requestCookies), _requestExpanded,
             () => setState(() => _requestExpanded = !_requestExpanded)),
         if (_requestExpanded) ...requestRows,
       ],

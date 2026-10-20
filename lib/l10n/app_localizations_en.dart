@@ -66,9 +66,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get password => 'Password';
 
   @override
-  String get proxySetting => 'Proxy Setting';
-
-  @override
   String get setAs => 'Set as ';
 
   @override
@@ -360,9 +357,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get replace => 'Replace';
 
   @override
-  String get clickEdit => 'Click Edit';
-
-  @override
   String get refresh => 'Refresh';
 
   @override
@@ -438,7 +432,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteHeaderConfirm => 'Do you want to delete the request header?';
 
   @override
-  String get sequence => 'Timeline';
+  String get sequence => 'All Requests';
 
   @override
   String get domainList => 'Domain List';
@@ -714,9 +708,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trustCa => 'Trust Certificate';
 
   @override
-  String get profileDownload => 'Profile Download';
-
-  @override
   String get exportCA => 'Export Root Certificate';
 
   @override
@@ -824,9 +815,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connect => 'Connect';
 
   @override
-  String get reconnect => 'Reconnect';
-
-  @override
   String remoteConnected(Object os) {
     return 'Connected $os, traffic will be forwarded to $os';
   }
@@ -836,9 +824,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectSuccess => 'Connect successful';
-
-  @override
-  String get connectedRemote => 'Connected to remote';
 
   @override
   String get connected => 'Connected';
@@ -970,13 +955,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get material3 => 'Material 3 is the latest version of Google’s open-source design system';
 
   @override
-  String get iosVpnBackgroundAudio =>
-      'After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?';
-
-  @override
-  String get markRead => 'Mark as read';
-
-  @override
   String get autoRead => 'Auto read';
 
   @override
@@ -1020,12 +998,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qrCode => 'QR Code';
-
-  @override
-  String get jsonViewer => 'JSON Viewer';
-
-  @override
-  String get xmlViewer => 'XML Viewer';
 
   @override
   String get textDiff => 'Text Diff';
@@ -1294,9 +1266,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpPort => 'Port';
 
   @override
-  String get mcpAdvanced => 'Advanced settings';
-
-  @override
   String get mcpConfig => 'MCP Configuration';
 
   @override
@@ -1319,18 +1288,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mcpLearnMore => 'Learn more about MCP';
-
-  @override
-  String get mcpSkills => 'Skills';
-
-  @override
-  String get mcpSkillsTitle => 'MCP Skills';
-
-  @override
-  String get mcpSkillsReadonly => 'Read-only traffic tools';
-
-  @override
-  String get mcpSkillsRules => 'Rules, replay & environment tools';
 
   @override
   String get mcpEndpoint => 'MCP Endpoint';
@@ -1373,27 +1330,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusStopped => 'Stopped';
 
   @override
-  String get mcpClientLabel => 'AI client';
-
-  @override
-  String get mcpTransportLabel => 'Transport';
-
-  @override
-  String get mcpCommandLabel => 'Connect command';
-
-  @override
-  String get mcpClientsIntl => 'International';
-
-  @override
-  String get mcpClientsDomestic => 'Chinese';
-
-  @override
-  String get mcpTransportStdio => 'stdio';
-
-  @override
-  String get mcpTransportHttp => 'HTTP';
-
-  @override
   String get mcpHintTerminal => 'Copy and run in your terminal.';
 
   @override
@@ -1418,9 +1354,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpStartChat => 'Start chat';
 
   @override
-  String get mcpOpenTerminal => 'Run in terminal';
-
-  @override
   String get mcpSetupDone => 'Configured. Restart your AI client to apply.';
 
   @override
@@ -1442,10 +1375,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mcpStartFailed => 'MCP service failed to start';
-
-  @override
-  String get mcpPrivacyHint =>
-      'Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool.';
 
   @override
   String get replayTasks => 'Replay Tasks';
@@ -1528,9 +1457,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pinToolsHint => 'All tools (tap + to pin to toolbar)';
-
-  @override
-  String get searchHint => 'Search URL / domain / content…';
 
   @override
   String get image => 'Image';

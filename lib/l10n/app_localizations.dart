@@ -220,12 +220,6 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get password;
 
-  /// No description provided for @proxySetting.
-  ///
-  /// In en, this message translates to:
-  /// **'Proxy Setting'**
-  String get proxySetting;
-
   /// No description provided for @setAs.
   ///
   /// In en, this message translates to:
@@ -802,12 +796,6 @@ abstract class AppLocalizations {
   /// **'Replace'**
   String get replace;
 
-  /// No description provided for @clickEdit.
-  ///
-  /// In en, this message translates to:
-  /// **'Click Edit'**
-  String get clickEdit;
-
   /// No description provided for @refresh.
   ///
   /// In en, this message translates to:
@@ -961,7 +949,7 @@ abstract class AppLocalizations {
   /// No description provided for @sequence.
   ///
   /// In en, this message translates to:
-  /// **'Timeline'**
+  /// **'All Requests'**
   String get sequence;
 
   /// No description provided for @domainList.
@@ -1486,12 +1474,6 @@ abstract class AppLocalizations {
   /// **'Trust Certificate'**
   String get trustCa;
 
-  /// No description provided for @profileDownload.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile Download'**
-  String get profileDownload;
-
   /// No description provided for @exportCA.
   ///
   /// In en, this message translates to:
@@ -1696,12 +1678,6 @@ abstract class AppLocalizations {
   /// **'Connect'**
   String get connect;
 
-  /// No description provided for @reconnect.
-  ///
-  /// In en, this message translates to:
-  /// **'Reconnect'**
-  String get reconnect;
-
   /// No description provided for @remoteConnected.
   ///
   /// In en, this message translates to:
@@ -1719,12 +1695,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect successful'**
   String get connectSuccess;
-
-  /// No description provided for @connectedRemote.
-  ///
-  /// In en, this message translates to:
-  /// **'Connected to remote'**
-  String get connectedRemote;
 
   /// No description provided for @connected.
   ///
@@ -1972,18 +1942,6 @@ abstract class AppLocalizations {
   /// **'Material 3 is the latest version of Google’s open-source design system'**
   String get material3;
 
-  /// No description provided for @iosVpnBackgroundAudio.
-  ///
-  /// In en, this message translates to:
-  /// **'After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?'**
-  String get iosVpnBackgroundAudio;
-
-  /// No description provided for @markRead.
-  ///
-  /// In en, this message translates to:
-  /// **'Mark as read'**
-  String get markRead;
-
   /// No description provided for @autoRead.
   ///
   /// In en, this message translates to:
@@ -2073,18 +2031,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'QR Code'**
   String get qrCode;
-
-  /// No description provided for @jsonViewer.
-  ///
-  /// In en, this message translates to:
-  /// **'JSON Viewer'**
-  String get jsonViewer;
-
-  /// No description provided for @xmlViewer.
-  ///
-  /// In en, this message translates to:
-  /// **'XML Viewer'**
-  String get xmlViewer;
 
   /// No description provided for @textDiff.
   ///
@@ -2608,12 +2554,6 @@ abstract class AppLocalizations {
   /// **'Port'**
   String get mcpPort;
 
-  /// No description provided for @mcpAdvanced.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced settings'**
-  String get mcpAdvanced;
-
   /// No description provided for @mcpConfig.
   ///
   /// In en, this message translates to:
@@ -2655,30 +2595,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Learn more about MCP'**
   String get mcpLearnMore;
-
-  /// No description provided for @mcpSkills.
-  ///
-  /// In en, this message translates to:
-  /// **'Skills'**
-  String get mcpSkills;
-
-  /// No description provided for @mcpSkillsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'MCP Skills'**
-  String get mcpSkillsTitle;
-
-  /// No description provided for @mcpSkillsReadonly.
-  ///
-  /// In en, this message translates to:
-  /// **'Read-only traffic tools'**
-  String get mcpSkillsReadonly;
-
-  /// No description provided for @mcpSkillsRules.
-  ///
-  /// In en, this message translates to:
-  /// **'Rules, replay & environment tools'**
-  String get mcpSkillsRules;
 
   /// No description provided for @mcpEndpoint.
   ///
@@ -2752,48 +2668,6 @@ abstract class AppLocalizations {
   /// **'Stopped'**
   String get statusStopped;
 
-  /// No description provided for @mcpClientLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'AI client'**
-  String get mcpClientLabel;
-
-  /// No description provided for @mcpTransportLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Transport'**
-  String get mcpTransportLabel;
-
-  /// No description provided for @mcpCommandLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect command'**
-  String get mcpCommandLabel;
-
-  /// No description provided for @mcpClientsIntl.
-  ///
-  /// In en, this message translates to:
-  /// **'International'**
-  String get mcpClientsIntl;
-
-  /// No description provided for @mcpClientsDomestic.
-  ///
-  /// In en, this message translates to:
-  /// **'Chinese'**
-  String get mcpClientsDomestic;
-
-  /// No description provided for @mcpTransportStdio.
-  ///
-  /// In en, this message translates to:
-  /// **'stdio'**
-  String get mcpTransportStdio;
-
-  /// No description provided for @mcpTransportHttp.
-  ///
-  /// In en, this message translates to:
-  /// **'HTTP'**
-  String get mcpTransportHttp;
-
   /// No description provided for @mcpHintTerminal.
   ///
   /// In en, this message translates to:
@@ -2842,12 +2716,6 @@ abstract class AppLocalizations {
   /// **'Start chat'**
   String get mcpStartChat;
 
-  /// No description provided for @mcpOpenTerminal.
-  ///
-  /// In en, this message translates to:
-  /// **'Run in terminal'**
-  String get mcpOpenTerminal;
-
   /// No description provided for @mcpSetupDone.
   ///
   /// In en, this message translates to:
@@ -2889,12 +2757,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'MCP service failed to start'**
   String get mcpStartFailed;
-
-  /// No description provided for @mcpPrivacyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool.'**
-  String get mcpPrivacyHint;
 
   /// No description provided for @replayTasks.
   ///
@@ -3051,12 +2913,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All tools (tap + to pin to toolbar)'**
   String get pinToolsHint;
-
-  /// No description provided for @searchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Search URL / domain / content…'**
-  String get searchHint;
 
   /// No description provided for @image.
   ///

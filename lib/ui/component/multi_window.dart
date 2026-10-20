@@ -282,6 +282,10 @@ class MultiWindow {
 
 bool _registerHandler = false;
 
+/// 主窗口管理器状态版本号：子窗口经 invokeMainWindowMethod 触发主窗口 reload 后递增，
+/// 观察者（如工具栏快捷图标启用态高亮）据此刷新
+final ValueNotifier<int> managerStateVersion = ValueNotifier<int>(0);
+
 /// 桌面端多窗口 注册方法处理器
 void registerMethodHandler() {
   if (_registerHandler) {
@@ -296,6 +300,7 @@ void registerMethodHandler() {
     }
     if (call.method == 'refreshRequestRewrite') {
       await MultiWindow._handleRefreshRewrite(Operation.of(call.arguments['operation']), call.arguments);
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -303,6 +308,7 @@ void registerMethodHandler() {
       await ScriptManager.instance.then((value) {
         return value.reloadScript();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -310,6 +316,7 @@ void registerMethodHandler() {
       await RequestMapManager.instance.then((value) {
         return value.reloadConfig();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -317,6 +324,7 @@ void registerMethodHandler() {
       await RequestCryptoManager.instance.then((value) {
         return value.reloadConfig();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -324,6 +332,7 @@ void registerMethodHandler() {
       await RequestBreakpointManager.instance.then((value) {
         return value.load();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 

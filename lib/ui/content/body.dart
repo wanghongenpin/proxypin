@@ -291,10 +291,15 @@ class HttpBodyState extends State<HttpBodyWidget> {
 
     // Build common actions as widgets so we can either display them inline (desktop)
     // or move them into an overflow menu (mobile) to avoid hiding important buttons.
-    final searchBtn = InkWell(
+    // IconButton：获得 hover 光晕/水波纹/焦点环（原 InkWell 热区只有 19px，反馈几乎不可见）
+    final searchBtn = IconButton(
       key: searchIconKey,
-      child: Padding(padding: const EdgeInsets.all(2), child: Icon(Icons.search, size: 15, color: iconColor)),
-      onTap: () {
+      visualDensity: visualDensity,
+      iconSize: 15,
+      splashRadius: 14,
+      icon: Icon(Icons.search, color: iconColor),
+      tooltip: localizations.search,
+      onPressed: () {
         if (searchController.isSearchOverlayVisible) {
           searchController.removeSearchOverlay();
         } else {

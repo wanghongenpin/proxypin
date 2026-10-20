@@ -51,19 +51,15 @@ class SearchState extends State<Search> {
     var fillColor = dark ? DarkPalette.hover : theme.hoverColor;
     return Padding(
         padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom: 8),
-        child: Container(
+        // Material：给内部 IconButton/PopupMenuButton 提供画水波纹的祖先（Container+BoxDecoration 画不出 ink 效果）
+        child: Material(
+          color: fillColor,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          elevation: dark ? 2 : 0.8,
+          shadowColor: theme.shadowColor.withValues(alpha: dark ? 0.4 : 0.15),
+          child: SizedBox(
           height: 32,
-          decoration: BoxDecoration(
-            color: fillColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: theme.shadowColor.withValues(alpha: dark ? 0.25 : 0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 1),
-              )
-            ],
-          ),
           child: TextField(
             cursorHeight: 16,
             controller: keywordController,
@@ -89,13 +85,14 @@ class SearchState extends State<Search> {
               focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5), width: 0.8),
                   borderRadius: BorderRadius.circular(15)),
-              prefixIcon: InkWell(
-                  child: Icon(Icons.search,
+              prefixIcon: IconButton(
+                  icon: Icon(Icons.search,
                       size: 20, color: searched ? okColor(theme) : theme.colorScheme.primary),
-                  onTapDown: (details) {
-                    searchDialog(details);
-                  }),
-              hintText: localizations.searchHint,
+                  splashRadius: 16,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 32),
+                  onPressed: () => searchDialog()),
+              hintText: 'Search',
               hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
               suffixIcon: ContentTypeSelect(onSelected: (contentType) {
                 setState(() {
@@ -107,38 +104,63 @@ class SearchState extends State<Search> {
               }),
             ),
           ),
+          ),
         ));
   }
 
-  void searchDialog([TapDownDetails? details]) {
+  void searchDialog() {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
-    // 搜索框在列表底部，从搜索框位置向上弹出
+    // 搜索框在列表底部，条件面板需向上弹出。showMenu 只按 position.top 向下排（SDK 无自动上翻），
+    // 故用 OverlayEntry 按底边锚定：面板底贴搜索框顶，与面板实际高度无关；窗口过矮时内部滚动。
+    var theme = Theme.of(context);
     var box = context.findRenderObject() as RenderBox;
     var offset = box.localToGlobal(Offset.zero);
-    showMenu(
-        context: context,
-        position: RelativeRect.fromLTRB(offset.dx + 12, offset.dy - 6, offset.dx + 12, 0),
-        constraints: const BoxConstraints(minWidth: 260, maxWidth: 330),
-        items: [
-          PopupMenuItem(
-              padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 5),
-              enabled: false,
-              child: DefaultTextStyle.merge(
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
-                  child: SizedBox(
-                      child: SearchConditions(
-                          searchModel: searchModel,
-                          onSearch: (val) {
-                            setState(() {
-                              searchModel = val;
-                              searched = searchModel.isNotEmpty;
-                              keywordController.text = searchModel.keyword ?? '';
-                              widget.onSearch?.call(searchModel);
-                            });
-                          }))))
-        ]);
+    var screen = MediaQuery.of(context).size;
+    var width = (box.size.width - 24).clamp(260.0, 330.0);
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(builder: (overlayContext) {
+      return Stack(children: [
+        // 点击空白处关闭
+        Positioned.fill(
+            child: GestureDetector(
+                behavior: HitTestBehavior.opaque, onTap: () => entry.remove(), child: const SizedBox.shrink())),
+        Positioned(
+            left: offset.dx + 12,
+            bottom: screen.height - offset.dy + 4,
+            width: width,
+            child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 120),
+                builder: (context, value, child) => Opacity(opacity: value, child: child),
+                child: Material(
+                    elevation: 8,
+                    borderRadius: BorderRadius.circular(8),
+                    clipBehavior: Clip.antiAlias,
+                    color: theme.cardColor,
+                    shadowColor: theme.shadowColor,
+                    child: ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: offset.dy - 16),
+                        child: SingleChildScrollView(
+                            child: Padding(
+                                padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 5),
+                                child: DefaultTextStyle.merge(
+                                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
+                                    child: SearchConditions(
+                                        searchModel: searchModel,
+                                        onSearch: (val) {
+                                          setState(() {
+                                            searchModel = val;
+                                            searched = searchModel.isNotEmpty;
+                                            keywordController.text = searchModel.keyword ?? '';
+                                            widget.onSearch?.call(searchModel);
+                                          });
+                                        })))))))),
+      ]);
+    });
+    Overlay.of(context).insert(entry);
   }
 }
 

@@ -66,9 +66,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get password => '密码';
 
   @override
-  String get proxySetting => '代理设置';
-
-  @override
   String get setAs => '设置为';
 
   @override
@@ -359,9 +356,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get replace => '替换';
 
   @override
-  String get clickEdit => '点击编辑';
-
-  @override
   String get refresh => '刷新';
 
   @override
@@ -437,7 +431,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteHeaderConfirm => '是否删除该请求头';
 
   @override
-  String get sequence => '时序';
+  String get sequence => '全部请求';
 
   @override
   String get domainList => '域名列表';
@@ -709,9 +703,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trustCa => '信任证书';
 
   @override
-  String get profileDownload => 'Profile Download';
-
-  @override
   String get exportCA => '导出根证书';
 
   @override
@@ -817,9 +808,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connect => '连接';
 
   @override
-  String get reconnect => '重新连接';
-
-  @override
   String remoteConnected(Object os) {
     return '已连接$os，流量将转发到$os';
   }
@@ -829,9 +817,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get connectSuccess => '连接成功';
-
-  @override
-  String get connectedRemote => '已连接远程';
 
   @override
   String get connected => '已连接';
@@ -959,12 +944,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get material3 => 'Material3是谷歌开源设计系统的最新版本';
 
   @override
-  String get iosVpnBackgroundAudio => '开启抓包后，退出到后台。为了维护主UI线程的网络通信，将启用静音音频播放以保持主线程运行。否则，它将只在后台运行30秒。您同意在启用抓包后在后台播放音频吗?';
-
-  @override
-  String get markRead => '标记已读';
-
-  @override
   String get autoRead => '自动已读';
 
   @override
@@ -1008,12 +987,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get qrCode => '二维码';
-
-  @override
-  String get jsonViewer => 'JSON 工具';
-
-  @override
-  String get xmlViewer => 'XML 查看器';
 
   @override
   String get textDiff => '文本对比';
@@ -1280,9 +1253,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpPort => '端口';
 
   @override
-  String get mcpAdvanced => '高级设置';
-
-  @override
   String get mcpConfig => 'MCP 配置';
 
   @override
@@ -1305,18 +1275,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpLearnMore => '了解有关 MCP 的更多信息';
-
-  @override
-  String get mcpSkills => '技能';
-
-  @override
-  String get mcpSkillsTitle => 'MCP 技能';
-
-  @override
-  String get mcpSkillsReadonly => '只读流量工具';
-
-  @override
-  String get mcpSkillsRules => '规则、重放与环境工具';
 
   @override
   String get mcpEndpoint => 'MCP 服务地址';
@@ -1357,27 +1315,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statusStopped => '已停止';
 
   @override
-  String get mcpClientLabel => 'AI 客户端';
-
-  @override
-  String get mcpTransportLabel => '传输方式';
-
-  @override
-  String get mcpCommandLabel => '接入命令';
-
-  @override
-  String get mcpClientsIntl => '国际';
-
-  @override
-  String get mcpClientsDomestic => '国内';
-
-  @override
-  String get mcpTransportStdio => 'stdio';
-
-  @override
-  String get mcpTransportHttp => 'HTTP';
-
-  @override
   String get mcpHintTerminal => '复制后在终端中运行即可。';
 
   @override
@@ -1402,9 +1339,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpStartChat => '开始对话';
 
   @override
-  String get mcpOpenTerminal => '打开终端执行';
-
-  @override
   String get mcpSetupDone => '已配置，重启 AI 客户端后生效。';
 
   @override
@@ -1426,9 +1360,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpStartFailed => 'MCP 服务启动失败';
-
-  @override
-  String get mcpPrivacyHint => '仅监听 127.0.0.1（本机），数据只有在 AI 客户端通过工具明确请求时才会离开本应用。';
 
   @override
   String get replayTasks => '重放任务';
@@ -1513,9 +1444,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pinToolsHint => '全部功能（点 + 固定到工具栏）';
 
   @override
-  String get searchHint => '搜索 URL / 域名 / 内容…';
-
-  @override
   String get image => '图片';
 
   @override
@@ -1579,9 +1507,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get password => '密碼';
-
-  @override
-  String get proxySetting => '代理設定';
 
   @override
   String get setAs => '設定為';
@@ -1868,9 +1793,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get replace => '替換';
 
   @override
-  String get clickEdit => '點選編輯';
-
-  @override
   String get refresh => '重新整理';
 
   @override
@@ -1946,7 +1868,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get deleteHeaderConfirm => '是否刪除該請求標頭';
 
   @override
-  String get sequence => '時序';
+  String get sequence => '全部請求';
 
   @override
   String get domainList => '網域名稱列表';
@@ -2206,9 +2128,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get trustCa => '信任憑證';
 
   @override
-  String get profileDownload => '已下載描述檔案';
-
-  @override
   String get exportCA => '匯出根憑證';
 
   @override
@@ -2313,9 +2232,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get connect => '連接';
 
   @override
-  String get reconnect => '重新連接';
-
-  @override
   String remoteConnected(Object os) {
     return '已連接$os，流量將轉發到$os';
   }
@@ -2325,9 +2241,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get connectSuccess => '連接成功';
-
-  @override
-  String get connectedRemote => '已連接遠端';
 
   @override
   String get connected => '已連接';
@@ -2784,9 +2697,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get pinToolsHint => '全部功能（點 + 固定到工具欄）';
-
-  @override
-  String get searchHint => '搜索 URL / 域名 / 內容…';
 
   @override
   String get image => '圖片';

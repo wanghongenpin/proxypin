@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -49,6 +50,9 @@ class Setting extends StatefulWidget {
 class _SettingState extends State<Setting> {
   late Configuration configuration;
 
+  /// 设置菜单控制器（自建以便在菜单内容里注册 Esc 关闭动作）
+  final MenuController _menuController = MenuController();
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -60,6 +64,7 @@ class _SettingState extends State<Setting> {
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
+      controller: _menuController,
       builder: (context, controller, child) {
         return IconButton(
             // 设计稿 .tbtn：32x32 点击盒
@@ -75,23 +80,44 @@ class _SettingState extends State<Setting> {
               }
             });
       },
-      // 旧版全部平铺（含流量控制 6 项）；底部保留「自定义快捷工具栏…」入口
+      // 旧版全部平铺（含流量控制 6 项）；底部保留「自定义快捷工具栏…」入口。
+      // 包一层 Actions 注册 DismissIntent：独立 MenuAnchor 的菜单面板有 Esc→DismissIntent 快捷键，
+      // 但 SDK 只为 MenuBar 内的 anchor 注册 DismissMenuAction，独立 anchor 缺了它导致 Esc 关不掉菜单。
       menuChildren: [
-        _ProxyMenu(proxyServer: widget.proxyServer),
-        item(localizations.domainFilter, onPressed: hostFilter),
-        item(localizations.hosts, onPressed: hosts),
-        item(localizations.requestBlock, onPressed: showRequestBlock),
-        item(localizations.requestRewrite, onPressed: requestRewrite),
-        item(localizations.requestMap, onPressed: requestMap),
-        item(localizations.requestCrypto, onPressed: showRequestCrypto),
-        item(localizations.script,
-            onPressed: () =>
-                MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
-        item(localizations.breakpoint, onPressed: requestBreakpoint),
-        item(localizations.weakNetwork, onPressed: showWeakNetwork),
-        item(localizations.externalProxy, onPressed: setExternalProxy),
-        item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
-        item(localizations.about, onPressed: showAbout),
+        Actions(
+            actions: {
+              DismissIntent: CallbackAction<DismissIntent>(onInvoke: (intent) {
+                _menuController.close();
+                return null;
+              })
+            },
+            // 自带 autofocus 焦点节点：菜单打开即获得 Esc 按键事件，不依赖 SDK 是否把焦点移进菜单
+            child: Focus(
+                autofocus: true,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+                    _menuController.close();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+              _ProxyMenu(proxyServer: widget.proxyServer),
+              item(localizations.domainFilter, onPressed: hostFilter),
+              item(localizations.hosts, onPressed: hosts),
+              item(localizations.requestBlock, onPressed: showRequestBlock),
+              item(localizations.requestRewrite, onPressed: requestRewrite),
+              item(localizations.requestMap, onPressed: requestMap),
+              item(localizations.requestCrypto, onPressed: showRequestCrypto),
+              item(localizations.script,
+                  onPressed: () =>
+                      MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
+              item(localizations.breakpoint, onPressed: requestBreakpoint),
+              item(localizations.weakNetwork, onPressed: showWeakNetwork),
+              item(localizations.externalProxy, onPressed: setExternalProxy),
+              item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
+              item(localizations.about, onPressed: showAbout),
+            ]))),
       ],
     );
   }

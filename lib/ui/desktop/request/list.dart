@@ -85,7 +85,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
 
   @override
   void dispose() {
-    RequestWidget.removeAutoReadByIds(container.map((request) => request.requestId));
+    RequestWidget.removeRowStatesByIds(container.map((request) => request.requestId));
     selectionController.clear();
     super.dispose();
   }
@@ -256,14 +256,14 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     container.removeWhere((element) => list.contains(element));
     domainListKey.currentState?.remove(list);
     requestSequenceKey.currentState?.remove(list);
-    RequestWidget.removeAutoReadByIds(list.map((request) => request.requestId));
+    RequestWidget.removeRowStatesByIds(list.map((request) => request.requestId));
   }
 
   ///移除
   void domainListRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     requestSequenceKey.currentState?.remove(list);
-    RequestWidget.removeAutoReadByIds(list.map((request) => request.requestId));
+    RequestWidget.removeRowStatesByIds(list.map((request) => request.requestId));
     selectionController.prune(container.map((request) => request.requestId));
   }
 
@@ -271,7 +271,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   void sequenceRemove(List<HttpRequest> list) {
     container.removeWhere((element) => list.contains(element));
     domainListKey.currentState?.remove(list);
-    RequestWidget.removeAutoReadByIds(list.map((request) => request.requestId));
+    RequestWidget.removeRowStatesByIds(list.map((request) => request.requestId));
     selectionController.prune(container.map((request) => request.requestId));
   }
 
@@ -287,7 +287,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
   ///清理
   void clean() {
     setState(() {
-      RequestWidget.removeAutoReadByIds(container.map((request) => request.requestId));
+      RequestWidget.removeRowStatesByIds(container.map((request) => request.requestId));
       container.clear();
       domainListKey.currentState?.clean();
       requestSequenceKey.currentState?.clean();
@@ -307,7 +307,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
     domainListKey.currentState?.clean();
     requestSequenceKey.currentState?.clean();
 
-    RequestWidget.removeAutoReadByIds(removeRange.map((request) => request.requestId));
+    RequestWidget.removeRowStatesByIds(removeRange.map((request) => request.requestId));
     selectionController.prune(container.map((request) => request.requestId));
   }
 
