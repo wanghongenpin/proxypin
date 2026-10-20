@@ -15,6 +15,7 @@
  */
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
@@ -272,10 +273,26 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
                 ])));
       }
     } else if (Platforms.isDesktop()) {
-      // 桌面子窗口：设计稿 .d-head 白底，tab 条包白色 Material（主窗口分支同理）
-      appBar = PreferredSize(
-          preferredSize: tabBar.preferredSize,
-          child: Material(color: Theme.of(context).colorScheme.surface, child: tabBar));
+      // 桌面子窗口：同主窗口详情，URL 标题栏 + tab 条；
+      // URL 栏同时把 tab 条压到 macOS 红绿灯（隐藏式标题栏，悬浮在左上约 72px）之下，
+      // 标题栏自身内容也要右移避开红绿灯
+      var request = widget.request.get();
+      if (request == null) {
+        appBar = PreferredSize(
+            preferredSize: tabBar.preferredSize,
+            child: Material(color: Theme.of(context).colorScheme.surface, child: tabBar));
+      } else {
+        appBar = PreferredSize(
+            preferredSize: const Size.fromHeight(kTextTabBarHeight + 44),
+            child: Material(
+                color: Theme.of(context).colorScheme.surface,
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Padding(
+                      padding: EdgeInsets.only(left: Platform.isMacOS ? 72 : 0),
+                      child: detailTitleBar(request)),
+                  tabBar,
+                ])));
+      }
     } else {
       appBar = tabBar;
     }
@@ -286,7 +303,8 @@ class NetworkTabState extends State<NetworkTabController> with TickerProviderSta
       backgroundColor: isDesktop ? Theme.of(context).colorScheme.surface : null,
       appBar: appBar,
       body: Padding(
-          padding: EdgeInsets.only(left: isDesktop ? 16 : 20, right: isDesktop ? 16 : 20, top: isDesktop ? 14 : 10),
+          padding: EdgeInsets.only(
+              left: isDesktop ? 16 : 20, right: isDesktop ? 16 : 20, top: isDesktop ? 14 : 10),
           child: isDesktop && widget.request.get() == null
               ? const SizedBox() // 未选中请求：空白，不渲染 tab 内容
               : TabBarView(
@@ -478,27 +496,46 @@ Color text3Color(ThemeData theme) =>
 Color rowHoverColor(ThemeData theme) =>
     theme.brightness == Brightness.light ? const Color(0xFFF7F8FA) : DarkPalette.hoverWeak;
 
-/// 分区小标签（请求头/请求 Cookies 等）：14px 灰色
-Widget sectionLabel(BuildContext context, String label) {
-  var theme = Theme.of(context);
-  return Padding(
-      padding: const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 2),
-      child: Text(label, style: TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3Color(theme))));
-}
-
 /// 设计稿 .kv 行之间的 #F2F3F5 细分隔线
 Widget kvDivider(BuildContext context) {
   return Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.35));
 }
 
-class RequestParams extends StatelessWidget {
+/// 可折叠分区小标题（Cookies/Query 参数共用）：文字 + 尾部 chevron，折叠时显示条数；整行 hover 效果
+Widget collapsibleSectionLabel(BuildContext context, String label, int count, bool expanded, VoidCallback onTap) {
+  var theme = Theme.of(context);
+  var text3 = text3Color(theme);
+  var style = TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3);
+  return InkWell(
+      onTap: onTap,
+      // 整行 hover 焦点效果：设计稿行 hover #F7F8FA
+      hoverColor: rowHoverColor(theme),
+      child: Padding(
+          padding: const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 4),
+          child: Row(children: [
+            Text(label, style: style),
+            const SizedBox(width: 2),
+            Icon(expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, size: 16, color: text3),
+            if (!expanded && count > 0) Text(' · $count', style: style),
+          ])));
+}
+
+class RequestParams extends StatefulWidget {
+  /// 展开状态跨请求保持（旧版行为）：默认折叠，点开一个详情的折叠/展开对后续详情生效
+  static bool initiallyExpanded = false;
+
   final ValueWrap<HttpRequest> request;
 
   const RequestParams(this.request, {super.key});
 
   @override
+  State<RequestParams> createState() => _RequestParamsState();
+}
+
+class _RequestParamsState extends State<RequestParams> {
+  @override
   Widget build(BuildContext context) {
-    var request = this.request.get();
+    var request = widget.request.get();
     if (request == null) {
       return const SizedBox();
     }
@@ -507,19 +544,24 @@ class RequestParams extends StatelessWidget {
       return const SizedBox();
     }
     var content = <Widget>[];
+    var count = 0;
     params.forEach((name, values) {
       for (var val in values) {
         if (content.isNotEmpty) {
           content.add(kvDivider(context));
         }
         content.add(overviewRow(context, name, val));
+        count++;
       }
     });
 
-    // 设计稿：扁平「Query 参数」分区（不再折叠）
+    var expanded = RequestParams.initiallyExpanded;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      sectionLabel(context, AppLocalizations.of(context)!.queryParams),
-      ...content,
+      // 与 Cookies 同款可折叠小标题：chevron + 折叠时显示条数
+      collapsibleSectionLabel(context, AppLocalizations.of(context)!.queryParams, count, expanded, () {
+        setState(() => RequestParams.initiallyExpanded = !expanded);
+      }),
+      if (expanded) ...content,
     ]);
   }
 }
@@ -626,6 +668,22 @@ String _kbText(int? size) {
   }
   var kb = size / 1024;
   return '${kb.toStringAsFixed(kb == kb.roundToDouble() ? 0 : 1)} KB';
+}
+
+/// 手机端详情 AppBar 标题（设计稿 .p-ptitle）：METHOD（语义色加粗）+ host/path，单行省略
+Widget mobileDetailTitle(BuildContext context, HttpRequest request) {
+  var theme = Theme.of(context);
+  // 收藏/历史从 JSON 恢复时 hostAndPort 不持久化（为 null），退回 remoteDomain() 解析 uri
+  var host = request.hostAndPort?.toString() ?? request.remoteDomain() ?? '';
+  return Text.rich(
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      TextSpan(children: [
+        TextSpan(
+            text: '${request.method.name} ',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: methodColor(request.method, theme))),
+        TextSpan(text: '$host${request.pathAndQuery}', style: const TextStyle(fontSize: 15)),
+      ]));
 }
 
 /// 卡片描边色：浅色在设计稿 --border 基础上降透明度弱化；暗黑直接用设计稿 --border（深底上对比已足够低）
@@ -829,28 +887,10 @@ class Cookies extends StatefulWidget {
 }
 
 class _CookiesState extends State<Cookies> {
-  /// 请求/响应 Cookies 分区默认展开，点击小标题折叠
-  bool _requestExpanded = true;
-  bool _responseExpanded = true;
-
-  /// 可折叠分区小标题（与请求头同款：文字 + 尾部 chevron，折叠时显示条数）
-  Widget _sectionLabel(BuildContext context, String label, int count, bool expanded, VoidCallback onTap) {
-    var theme = Theme.of(context);
-    var text3 = text3Color(theme);
-    var style = TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3);
-    return InkWell(
-        onTap: onTap,
-        // 整行 hover 焦点效果：设计稿行 hover #F7F8FA
-        hoverColor: rowHoverColor(theme),
-        child: Padding(
-            padding: const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 4),
-            child: Row(children: [
-              Text(label, style: style),
-              const SizedBox(width: 2),
-              Icon(expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, size: 16, color: text3),
-              if (!expanded && count > 0) Text(' · $count', style: style),
-            ])));
-  }
+  /// 请求/响应 Cookies 分区默认展开，点击小标题折叠；
+  /// 展开状态跨请求保持（同 RequestParams.initiallyExpanded / HeadersWidget._lastExpanded 手法）
+  static bool _requestExpanded = true;
+  static bool _responseExpanded = true;
 
   /// 请求 Cookie 个数：headers.cookies 是原始 Cookie 头行（通常 1 行含全部 cookie），
   /// 需按 ';' 拆开数键值对，否则折叠条数恒为行数（与展开后的行数对不上）
@@ -874,13 +914,13 @@ class _CookiesState extends State<Cookies> {
     var localizations = AppLocalizations.of(context)!;
     var content = ListView(children: [
       if (requestRows != null) ...[
-        _sectionLabel(context, localizations.requestCookies, _requestCookieCount(requestCookies), _requestExpanded,
-            () => setState(() => _requestExpanded = !_requestExpanded)),
+        collapsibleSectionLabel(context, localizations.requestCookies, _requestCookieCount(requestCookies),
+            _requestExpanded, () => setState(() => _requestExpanded = !_requestExpanded)),
         if (_requestExpanded) ...requestRows,
       ],
       if (responseRows != null) ...[
-        _sectionLabel(context, localizations.responseCookies, responseCookies?.length ?? 0, _responseExpanded,
-            () => setState(() => _responseExpanded = !_responseExpanded)),
+        collapsibleSectionLabel(context, localizations.responseCookies, responseCookies?.length ?? 0,
+            _responseExpanded, () => setState(() => _responseExpanded = !_responseExpanded)),
         if (_responseExpanded) ...responseRows,
       ],
     ]);

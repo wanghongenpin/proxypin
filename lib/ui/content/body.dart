@@ -34,6 +34,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/json/json_viewer.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
@@ -227,7 +228,8 @@ class HttpBodyState extends State<HttpBodyWidget> {
     if (widget.inNewWindow) {
       return Scaffold(
           appBar: AppBar(title: titleWidget(inNewWindow: true), toolbarHeight: Platform.isWindows ? 36 : null),
-          body: tabController);
+          // 与详情面板一致的 14px 水平内边距（panel.dart message() 内嵌时由外层给）
+          body: Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: tabController));
     }
     return tabController;
   }
@@ -292,12 +294,13 @@ class HttpBodyState extends State<HttpBodyWidget> {
     // Build common actions as widgets so we can either display them inline (desktop)
     // or move them into an overflow menu (mobile) to avoid hiding important buttons.
     // IconButton：获得 hover 光晕/水波纹/焦点环（原 InkWell 热区只有 19px，反馈几乎不可见）
+    // 图标统一用设计稿同套 stroke SVG（与 mini 按钮一致），避免 Material 字形活区大小不一
     final searchBtn = IconButton(
       key: searchIconKey,
       visualDensity: visualDensity,
       iconSize: 15,
       splashRadius: 14,
-      icon: Icon(Icons.search, color: iconColor),
+      icon: SvgIcon('search', size: 15, color: iconColor),
       tooltip: localizations.search,
       onPressed: () {
         if (searchController.isSearchOverlayVisible) {
@@ -315,7 +318,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
         : IconButton(
             visualDensity: visualDensity,
             iconSize: 15,
-            icon: Icon(Icons.copy, color: iconColor),
+            icon: SvgIcon('copy', size: 15, color: iconColor),
             tooltip: localizations.copy,
             onPressed: () async {
               var body = await bodyKey.currentState?.getBody();
@@ -329,7 +332,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final rewriteBtn = IconButton(
       visualDensity: visualDensity,
       iconSize: 15,
-      icon: Obx(() => Icon(Icons.edit_document,
+      icon: Obx(() => SvgIcon('pencil', size: 15,
           color: rewriteEnabled.value ? Colors.deepOrangeAccent : iconColor)),
       tooltip: localizations.requestRewrite,
       onPressed: showRequestRewrite,
@@ -338,7 +341,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final encodeBtn = IconButton(
         visualDensity: visualDensity,
         iconSize: 15,
-        icon: Icon(Icons.text_format, color: iconColor),
+        icon: SvgIcon('encode', size: 15, color: iconColor),
         tooltip: localizations.encode,
         onPressed: () async {
           var body = await bodyKey.currentState?.getBody();
@@ -350,7 +353,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final openNewBtn = IconButton(
         visualDensity: visualDensity,
         iconSize: 15,
-        icon: Icon(Icons.open_in_new, color: iconColor),
+        icon: SvgIcon('arrow_out', size: 15, color: iconColor),
         tooltip: localizations.newWindow,
         onPressed: () => openNew());
 
@@ -384,7 +387,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
         overflowItems.add(PopupMenuItem(value: 'new_window', child: Text(localizations.newWindow)));
       }
 
-      return Row(
+      final row = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('$type Body', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
@@ -410,6 +413,14 @@ class HttpBodyState extends State<HttpBodyWidget> {
             ),
         ],
       );
+      // 格式分段第二行（改版把分段并入标题行后加密分支丢了切换入口，且一行放不下）
+      if (tabs != null && tabs.list.length > 1) {
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          row,
+          Row(children: _fmtChips(context, tabs)),
+        ]);
+      }
+      return row;
     }
 
     // 设计稿 .d-sec + .fmt：11px 灰色分区标签（请求体/响应体）+ 格式分段胶囊 + 紧凑操作图标
@@ -418,26 +429,39 @@ class HttpBodyState extends State<HttpBodyWidget> {
     // 标签不再带「· JSON」类型后缀：格式分段已按类型默认选中
     var label = widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody;
 
-    final list = <Widget>[
-      Text(label, style: TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3)),
-      const SizedBox(width: 12),
-      ..._fmtChips(context, tabs),
-      const SizedBox(width: 8),
+    final labelWidget = Text(label, style: TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3));
+
+    final actions = <Widget>[
       searchBtn,
       const SizedBox(width: 2),
       copyBtn,
     ];
-
     if (!widget.hideRequestRewrite) {
-      list.add(rewriteBtn);
+      actions.add(rewriteBtn);
     }
-    list.add(encodeBtn);
+    actions.add(encodeBtn);
     if (!inNewWindow) {
-      list.add(openNewBtn);
+      actions.add(openNewBtn);
     }
     if (cryptoToggle != null) {
-      list.add(cryptoToggle);
+      actions.add(cryptoToggle);
     }
+
+    // 手机端两行布局（旧版行为）：第一行 标签+操作图标，第二行 格式分段——合并一行手机上放不下
+    if (isMobile) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [labelWidget, const SizedBox(width: 8), ...actions]),
+        if (tabs != null && tabs.list.length > 1) Row(children: _fmtChips(context, tabs)),
+      ]);
+    }
+
+    final list = <Widget>[
+      labelWidget,
+      const SizedBox(width: 12),
+      ..._fmtChips(context, tabs),
+      const SizedBox(width: 8),
+      ...actions,
+    ];
 
     return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -447,9 +471,9 @@ class HttpBodyState extends State<HttpBodyWidget> {
   ///下载图片
   Widget downloadImageButton() {
     return IconButton(
-        iconSize: 19,
-        visualDensity: VisualDensity.comfortable,
-        icon: Icon(Icons.download, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        iconSize: 15,
+        visualDensity: VisualDensity.compact,
+        icon: SvgIcon('download', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         tooltip: localizations.saveImage,
         onPressed: () async {
           var body = bodyKey.currentState?.message?.body;
@@ -754,7 +778,7 @@ class _BodyState extends State<_Body> {
               Expanded(child: Text("Data")),
               SizedBox(width: 130, child: Text("Time")),
             ])),
-            Divider(height: 5, thickness: 1, color: Colors.grey[300]),
+            Divider(height: 5, thickness: 1, color: Theme.of(context).dividerColor),
             ...list ?? []
           ],
         ),

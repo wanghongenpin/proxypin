@@ -20,6 +20,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/search/highlight_text.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 
@@ -52,8 +53,17 @@ class HeadersWidget extends StatefulWidget {
 }
 
 class _HeadersWidgetState extends State<HeadersWidget> {
+  /// 请求头/响应头上次展开状态（按 title 区分），跨详情保持（旧版行为）
+  static final Map<String, bool> _lastExpanded = {};
+
   /// 头部区分区默认展开，可点击标签行折叠
-  bool _expanded = true;
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = _lastExpanded[widget.title] ?? true;
+  }
 
   Widget _buildCopyButton(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
@@ -69,7 +79,7 @@ class _HeadersWidgetState extends State<HeadersWidget> {
               if (!context.mounted) return;
               FlutterToastr.show(localizations.copied, context);
             },
-      icon: Icon(Icons.copy, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      icon: SvgIcon('copy', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 
@@ -88,7 +98,8 @@ class _HeadersWidgetState extends State<HeadersWidget> {
       iconSize: 15,
       tooltip: isText ? 'Headers: Text' : 'Headers: Table',
       onPressed: () => setMode(!isText),
-      icon: Icon(isText ? Icons.text_snippet : Icons.table_rows, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      // 文本模式=纯行 list，表格模式=带行点的 lines，与工具栏同套 stroke SVG
+      icon: SvgIcon(isText ? 'list' : 'lines', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 
@@ -106,7 +117,10 @@ class _HeadersWidgetState extends State<HeadersWidget> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       InkWell(
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: () => setState(() {
+            _expanded = !_expanded;
+            _lastExpanded[widget.title] = _expanded;
+          }),
           // 整行 hover 焦点效果：设计稿行 hover，浅色 #F7F8FA，暗黑 --hover-weak
           hoverColor: theme.brightness == Brightness.light ? const Color(0xFFF7F8FA) : DarkPalette.hoverWeak,
           child: Padding(
