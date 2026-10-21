@@ -105,7 +105,7 @@ class _ToolbarState extends State<Toolbar> {
     // 设计稿 .toolbar：间距 6，图标 17px；顺序 代理/清空 | HTTPS | 快捷区 ⋯ / 手机 / 设置，右侧 弱网徽章 + 环境切换
     var iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(children: [
-      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
+      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 90 : 20)),
       SocketLaunch(proxyServer: widget.proxyServer, startup: widget.proxyServer.configuration.startup),
       const SizedBox(width: 6),
       // 设计稿 .tbtn：32x32 点击盒（IconButton 默认 48 会把图标撑得太散）
