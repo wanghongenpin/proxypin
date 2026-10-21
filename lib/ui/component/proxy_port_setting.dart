@@ -9,7 +9,10 @@ class PortWidget extends StatefulWidget {
   final TextStyle? textStyle;
   final String? title;
 
-  const PortWidget({super.key, required this.proxyServer, this.textStyle, this.title});
+  /// 前导图标（手机端设置页传 22px 语义色淡色块；桌面端不传保持原样）
+  final Widget? leading;
+
+  const PortWidget({super.key, required this.proxyServer, this.textStyle, this.title, this.leading});
 
   @override
   State<StatefulWidget> createState() {
@@ -58,8 +61,17 @@ class _PortState extends State<PortWidget> {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      const Padding(padding: EdgeInsets.only(left: 15)),
+      if (widget.leading != null) ...[
+        // 对齐 menuTile 的 ListTile 节奏：14 内边距 + 28 图标 + 16 标题间隔（标题 x=58；
+        // 本 SDK 的 ListTile 前导槽即图标自然宽，无 minLeadingWidth 补位）
+        const Padding(padding: EdgeInsets.only(left: 14)),
+        widget.leading!,
+        const SizedBox(width: 16),
+      ] else
+        const Padding(padding: EdgeInsets.only(left: 15)),
       Text(widget.title ?? localizations.port, style: widget.textStyle),
+      // 手机端（带 leading）：文案在左、输入框顶到右缘，与卡片内其他行尾控件对齐；桌面端保持紧跟文案
+      if (widget.leading != null) const Spacer(),
       SizedBox(
           width: 80,
           child: TextFormField(
@@ -73,7 +85,8 @@ class _PortState extends State<PortWidget> {
               FilteringTextInputFormatter.allow(RegExp("[0-9]"))
             ],
             decoration: const InputDecoration(),
-          ))
+          )),
+      if (widget.leading != null) const Padding(padding: EdgeInsets.only(right: 14)),
     ]);
   }
 }

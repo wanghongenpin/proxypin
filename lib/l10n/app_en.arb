@@ -317,6 +317,7 @@
   "requestBlock": "Request Block",
   "other": "Other",
   "certHashName": "CA Hash Name",
+  "certHashShort": "CA Hash",
   "regExp": "RegExp",
   "systemCertName": "System Certificate Name",
   "qrCode": "QR Code",
@@ -466,7 +467,6 @@
   "pause": "Pause",
   "resume": "Resume",
   "overview": "Overview",
-  "rules": "Rules",
   "network": "Network",
   "trafficControl": "Traffic Control",
   "rulesPageHint": "Click a row to open its window",
@@ -481,6 +481,22 @@
   },
   "statusEnabledScripts": "Enabled · {count} scripts",
   "@statusEnabledScripts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rulesCount": "{count} rules",
+  "@rulesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scriptsCount": "{count} scripts",
+  "@scriptsCount": {
     "placeholders": {
       "count": {
         "type": "int"

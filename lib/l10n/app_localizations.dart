@@ -2014,6 +2014,12 @@ abstract class AppLocalizations {
   /// **'CA Hash Name'**
   String get certHashName;
 
+  /// No description provided for @certHashShort.
+  ///
+  /// In en, this message translates to:
+  /// **'CA Hash'**
+  String get certHashShort;
+
   /// No description provided for @regExp.
   ///
   /// In en, this message translates to:
@@ -2806,12 +2812,6 @@ abstract class AppLocalizations {
   /// **'Overview'**
   String get overview;
 
-  /// No description provided for @rules.
-  ///
-  /// In en, this message translates to:
-  /// **'Rules'**
-  String get rules;
-
   /// No description provided for @network.
   ///
   /// In en, this message translates to:
@@ -2847,6 +2847,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enabled · {count} scripts'**
   String statusEnabledScripts(int count);
+
+  /// No description provided for @rulesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} rules'**
+  String rulesCount(int count);
+
+  /// No description provided for @scriptsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scripts'**
+  String scriptsCount(int count);
 
   /// No description provided for @requestBlockDesc.
   ///

@@ -194,7 +194,7 @@ class RequestRowState extends State<RequestRow> {
                   proxyServer: widget.proxyServer,
                   httpRequest: request,
                   httpResponse: response,
-                  title: Text(localizations.captureDetail, style: const TextStyle(fontSize: 16)));
+                  title: mobileDetailTitle(context, request));
             }));
           },
         ));

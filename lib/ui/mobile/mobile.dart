@@ -17,7 +17,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -37,6 +36,7 @@ import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
@@ -45,7 +45,6 @@ import 'package:proxypin/ui/launch/launch.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
 import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
 import 'package:proxypin/ui/mobile/menu/menu.dart';
-import 'package:proxypin/ui/mobile/menu/rules.dart';
 import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
@@ -203,7 +202,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   int exitTime = 0;
 
   var requestPageNavigatorKey = GlobalKey<NavigatorState>();
-  var rulesNavigatorKey = GlobalKey<NavigatorState>();
+  var configNavigatorKey = GlobalKey<NavigatorState>();
   var toolboxNavigatorKey = GlobalKey<NavigatorState>();
   var settingNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -213,7 +212,6 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
       NavigatorPage(
           navigatorKey: requestPageNavigatorKey,
           child: RequestPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
-      NavigatorPage(navigatorKey: rulesNavigatorKey, child: const MobileRulesPage()),
       NavigatorPage(
           navigatorKey: toolboxNavigatorKey,
           child: Scaffold(
@@ -224,6 +222,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
                       centerTitle: true)),
               body: Toolbox(proxyServer: proxyServer))),
+      NavigatorPage(navigatorKey: configNavigatorKey, child: ConfigPage(proxyServer: proxyServer)),
       NavigatorPage(
           navigatorKey: settingNavigatorKey,
           child: SettingPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
@@ -259,47 +258,55 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
         },
         child: ValueListenableBuilder<int>(
             valueListenable: _selectIndex,
-            builder: (context, index, child) => Scaffold(
-                body: IndexedStack(index: index, children: navigationView),
-                bottomNavigationBar: widget.appConfiguration.bottomNavigation
-                    ? Container(
-                        constraints: const BoxConstraints(maxHeight: 85),
-                        // padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                        child: ClipRRect(
-                            // borderRadius: BorderRadius.circular(16),
-                            child: Theme(
-                          data: Theme.of(context).copyWith(splashColor: Colors.transparent),
-                          child: BottomNavigationBar(
-                            type: BottomNavigationBarType.fixed,
-                            iconSize: 23,
-                            showSelectedLabels: false,
-                            showUnselectedLabels: false,
-                            selectedFontSize: 2,
-                            unselectedFontSize: 2,
-                            elevation: 0,
-                            items: [
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.requests,
-                                  icon: const Icon(Icons.workspaces_outlined),
-                                  label: localizations.requests),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.rules,
-                                  icon: const Icon(Icons.rule_outlined),
-                                  label: localizations.rules),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.toolbox,
-                                  icon: const Icon(Icons.hardware_outlined),
-                                  label: localizations.toolbox),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.setting,
-                                  icon: const Icon(Icons.settings_outlined),
-                                  label: localizations.setting),
-                            ],
-                            currentIndex: _selectIndex.value,
-                            onTap: (index) => _selectIndex.value = index,
-                          ),
-                        )))
-                    : null)));
+            builder: (context, index, child) {
+              var theme = Theme.of(context);
+              return Scaffold(
+                  body: IndexedStack(index: index, children: navigationView),
+                  // 实心底导航（放弃毛玻璃：真机上模糊效果不明显，且 extendBody 会引入一系列页尾遮挡问题）
+                  bottomNavigationBar: widget.appConfiguration.bottomNavigation
+                      ? Container(
+                          decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              border: Border(
+                                  top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.6), width: 0.5))),
+                          child: SafeArea(
+                              top: false,
+                              child: Theme(
+                                data: theme.copyWith(splashColor: Colors.transparent),
+                                child: BottomNavigationBar(
+                                  type: BottomNavigationBarType.fixed,
+                                  backgroundColor: Colors.transparent,
+                                  iconSize: 20,
+                                  // 设计稿 .p-bn：图标 19 + 9px 文字标签
+                                  showSelectedLabels: true,
+                                  showUnselectedLabels: true,
+                                  selectedFontSize: 10,
+                                  unselectedFontSize: 10,
+                                  elevation: 0,
+                                  items: [
+                                    // 设计稿线条 SVG 图标：list / wrench / sliders / gear（工具箱第 2、配置第 3）
+                                    // 与桌面 rail 首项同款标签（设计稿底导航「请求」）
+                                    _navItem(context, 'list', localizations.request, index == 0),
+                                    _navItem(context, 'wrench', localizations.toolbox, index == 1),
+                                    _navItem(context, 'sliders', localizations.config, index == 2),
+                                    _navItem(context, 'gear', localizations.setting, index == 3),
+                                  ],
+                                  currentIndex: _selectIndex.value,
+                                  onTap: (index) => _selectIndex.value = index,
+                                ),
+                              )))
+                      : null);
+            }));
+  }
+
+  /// 底导航项：设计稿线条 SVG 图标，选中主色 / 未选中灰
+  BottomNavigationBarItem _navItem(BuildContext context, String icon, String label, bool selected) {
+    var theme = Theme.of(context);
+    return BottomNavigationBarItem(
+        tooltip: label,
+        icon: SvgIcon(icon,
+            size: 20, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+        label: label);
   }
 
   @override
@@ -446,7 +453,6 @@ class RequestPageState extends State<RequestPage> {
         drawer: widget.appConfiguration.bottomNavigation
             ? null
             : DrawerWidget(proxyServer: proxyServer, container: MobileApp.container),
-        floatingActionButton: _launchActionButton(),
         body: ValueListenableBuilder(
             valueListenable: remoteDevice,
             builder: (context, value, _) {
@@ -462,19 +468,29 @@ class RequestPageState extends State<RequestPage> {
             }),
       ),
       PictureInPictureIcon(proxyServer),
+      // FAB 用 Stack 定位在右下（内层 Scaffold 的 floatingActionButton 会与底导航布局冲突）
+      Positioned(right: 16, bottom: 12, child: _launchActionButton()),
     ]);
   }
 
+  /// 设计稿：运行中 = 绿底白 ⏹，已停止 = 灰底白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
   Widget _launchActionButton() {
-    var theme = Theme.of(context);
-    return Theme(
-        data: ThemeData.from(colorScheme: theme.colorScheme, textTheme: theme.textTheme, useMaterial3: true),
-        child: FloatingActionButton(
-          onPressed: null,
-          backgroundColor: theme.colorScheme.primaryContainer,
-          child: SocketLaunch(
-              proxyServer: proxyServer,
-              size: 36,
+    return ValueListenableBuilder<ValueWrap<bool>>(
+        valueListenable: SocketLaunch.startStatus,
+        builder: (context, status, _) {
+          var running = status.get() == true;
+          var theme = Theme.of(context);
+          // 46px 正圆右下悬浮（设计稿 .p-fab）；配色用户拍板：运行=绿 #1F8B4C / 停止=主题主色，图标恒白
+          return SizedBox(
+            width: 46,
+            height: 46,
+            child: FloatingActionButton(
+              onPressed: null,
+              shape: const CircleBorder(),
+              backgroundColor: running ? okColor(theme) : theme.colorScheme.primary,
+              child: SocketLaunch(
+                proxyServer: proxyServer,
+                size: 22,
               startup: proxyServer.configuration.startup,
               serverLaunch: false,
               onStart: () async {
@@ -492,7 +508,9 @@ class RequestPageState extends State<RequestPage> {
                 Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
               },
               onStop: () => Vpn.stopVpn()),
-        ));
+            ),
+          );
+        });
   }
 
   /// 远程连接

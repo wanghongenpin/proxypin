@@ -986,6 +986,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get certHashName => 'CA Hash Name';
 
   @override
+  String get certHashShort => 'CA Hash';
+
+  @override
   String get regExp => 'RegExp';
 
   @override
@@ -1395,9 +1398,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get overview => 'Tổng quan';
 
   @override
-  String get rules => 'Rules';
-
-  @override
   String get network => 'Network';
 
   @override
@@ -1417,6 +1417,16 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String statusEnabledScripts(int count) {
     return 'Enabled · $count scripts';
+  }
+
+  @override
+  String rulesCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String scriptsCount(int count) {
+    return '$count scripts';
   }
 
   @override

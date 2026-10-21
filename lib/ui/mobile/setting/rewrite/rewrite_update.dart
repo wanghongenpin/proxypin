@@ -286,7 +286,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
               const SizedBox(height: 5),
               Container(
                   height: MediaQuery.of(context).size.height * 0.45,
-                  decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                  decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
                   child: CodeForge(
                     controller: _codeDataController,
                     language: isJsonText() ? langJson : null,

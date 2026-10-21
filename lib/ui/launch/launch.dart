@@ -216,7 +216,6 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
   @override
   Widget build(BuildContext context) {
-    Color primaryColor = Theme.of(context).colorScheme.primary;
     if (Platforms.isDesktop()) {
       return Tooltip(
           // 设计稿 title：状态 · 端口 · 操作提示（端口不进胶囊文案，避免启停时宽度变化推动右侧图标）
@@ -224,37 +223,40 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
               '${started ? localizations.statusRunning : localizations.statusStopped} · :${widget.proxyServer.port} · ${started ? localizations.stop : localizations.start}',
           child: InkWell(borderRadius: BorderRadius.circular(8), onTap: onToggle, child: capsule()));
     }
+    // 移动端嵌在 FAB 里：图标恒白，状态色由 FAB 底色表达（运行绿 / 停止灰）
     return IconButton(
         tooltip: started ? localizations.stop : localizations.start,
         icon: Icon(started ? Icons.stop : Icons.play_arrow_sharp,
-            color: started ? Colors.red : primaryColor, size: widget.size.toDouble()),
+            color: Colors.white, size: widget.size.toDouble()),
         onPressed: onToggle);
+  }
+
+  /// 更新启动状态并广播（FAB 底色、桌面状态栏等监听 startStatus）
+  void _updateStarted(bool value) {
+    setState(() {
+      started = value;
+    });
+    SocketLaunch.startStatus.value = ValueWrap.of(value);
   }
 
   Future<void> onToggle() async {
     if (started) {
       if (!widget.serverLaunch) {
-        setState(() {
-          widget.onStop?.call();
-          started = !started;
-        });
+        widget.onStop?.call();
+        _updateStarted(false);
         return;
       }
 
       widget.proxyServer.stop().then((value) {
         widget.onStop?.call();
         if (mounted) {
-          setState(() {
-            started = !started;
-          });
+          _updateStarted(false);
         }
       }).catchError((e) {
         logger.e("stop proxy server failed", error: e);
         if (mounted) {
           FlutterToastr.show(localizations.fail, context, duration: 3);
-          setState(() {
-            started = false;
-          });
+          _updateStarted(false);
         }
       });
     } else {
@@ -296,17 +298,13 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     try {
       if (!widget.serverLaunch) {
         await widget.onStart?.call();
-        setState(() {
-          started = true;
-        });
+        _updateStarted(true);
         return;
       }
 
       widget.proxyServer.start().then((value) {
         if (mounted) {
-          setState(() {
-            started = true;
-          });
+          _updateStarted(true);
         }
         widget.onStart?.call();
       }).catchError((e) {

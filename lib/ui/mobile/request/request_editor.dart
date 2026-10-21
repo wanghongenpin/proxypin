@@ -626,7 +626,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
                 ),
               )
             : Container(
-                decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
                 child: CodeForge(
                   // CodeForge 把 language 当作 late final 在 initState 里固定，
                   // 切换数据类型/换行后必须靠新的 key 重建组件才能生效；

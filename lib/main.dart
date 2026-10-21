@@ -167,7 +167,9 @@ class FluentApp extends StatelessWidget {
         ThemeData(brightness: brightness, useMaterial3: appConfiguration.useMaterial3, colorScheme: colorScheme);
     if (!isDark) {
       themeData = themeData.copyWith(
-          scaffoldBackgroundColor: const Color(0xFFF5F6F8), dividerColor: const Color(0xFFE4E6EB));
+          // 手机端用户拍板全纯白；桌面端保留设计稿 #F5F6F8 窗口灰底
+          scaffoldBackgroundColor: Platforms.isMobile() ? Colors.white : const Color(0xFFF5F6F8),
+          dividerColor: const Color(0xFFE4E6EB));
     } else {
       themeData = themeData.copyWith(scaffoldBackgroundColor: DarkPalette.bg, dividerColor: DarkPalette.border);
     }

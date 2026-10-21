@@ -230,7 +230,7 @@ class _XmlViewerPageState extends State<XmlViewerPage> {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Container(
-        decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+        decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
         child: CodeForge(
           // CodeForge 的 lineWrap 是 late final，切换换行靠新 key 重建；
           // controller 在 State 里复用，文本不会丢。

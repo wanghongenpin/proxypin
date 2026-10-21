@@ -980,6 +980,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get certHashName => '证书Hash名称';
 
   @override
+  String get certHashShort => '证书Hash';
+
+  @override
   String get regExp => '正则表达式';
 
   @override
@@ -1386,9 +1389,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get overview => '概览';
 
   @override
-  String get rules => '规则';
-
-  @override
   String get network => '网络';
 
   @override
@@ -1408,6 +1408,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String statusEnabledScripts(int count) {
     return '启用中 · $count 个脚本';
+  }
+
+  @override
+  String rulesCount(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String scriptsCount(int count) {
+    return '$count 个脚本';
   }
 
   @override
@@ -2404,6 +2414,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get certHashName => '憑證Hash名稱';
 
   @override
+  String get certHashShort => '憑證Hash';
+
+  @override
   String get regExp => '正規表示式';
 
   @override
@@ -2617,6 +2630,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get weakNetworkRules => 'URL 規則';
 
   @override
+  String get statusRunning => '執行中';
+
+  @override
   String get replayTasks => '重放任務';
 
   @override
@@ -2641,9 +2657,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get overview => '概覽';
 
   @override
-  String get rules => '規則';
-
-  @override
   String get network => '網絡';
 
   @override
@@ -2663,6 +2676,16 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String statusEnabledScripts(int count) {
     return '啟用中 · $count 個腳本';
+  }
+
+  @override
+  String rulesCount(int count) {
+    return '$count 條規則';
+  }
+
+  @override
+  String scriptsCount(int count) {
+    return '$count 個腳本';
   }
 
   @override
