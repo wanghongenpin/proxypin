@@ -115,6 +115,12 @@ class DesktopMultiWindow {
           return windowManager.close();
         case 'window_center':
           return windowManager.center();
+        case 'window_focus':
+          // 最小化（含 macOS 缩到 Dock）先还原，再置顶聚焦
+          if (await windowManager.isMinimized()) {
+            await windowManager.restore();
+          }
+          return windowManager.focus();
         case 'window_setTitle':
           return windowManager.setTitle(call.arguments as String);
         case 'window_setTitleBarStyle':
