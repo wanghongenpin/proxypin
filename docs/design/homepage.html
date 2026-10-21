@@ -319,6 +319,34 @@
   .p-msg .tm{font-size:8.5px;color:var(--text-3);flex-shrink:0;margin-top:2px;}
   .tb-sep{height:1px;background:#F0F1F3;margin:10px 0 0;}
 
+  /* 手机端 · 配置/设置卡片 & 工具箱宫格 */
+  .p-apptitle{flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--text-1);}
+  .p-mcard{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:0 12px 10px;overflow:hidden;}
+  .p-mrow{display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:12px;color:var(--text-1);position:relative;}
+  /* 分隔线缩进对齐标题文字（带图标块行 43，无图标行 12） */
+  .p-mrow:not(:last-child)::after{content:'';position:absolute;left:43px;right:0;bottom:0;height:1px;background:#F5F6F8;}
+  .p-mrow.noicon:not(:last-child)::after{left:12px;}
+  .p-mrow .mic{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .p-mrow .mic svg{width:13px;height:13px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .p-mrow .micg{font-size:8.5px;font-weight:700;font-family:"SF Mono",Menlo,monospace;}
+  .p-mrow .go{margin-left:auto;color:var(--text-3);font-size:12px;}
+  .p-mrow .on{margin-left:auto;font-size:10px;color:var(--ok);}
+  .p-mrow .val{margin-left:auto;font-size:10.5px;color:var(--text-3);}
+  .p-mrow .on+.go,.p-mrow .val+.go{margin-left:7px;}
+  .p-sw{margin-left:auto;width:32px;height:19px;border-radius:10px;background:var(--ok);position:relative;flex-shrink:0;}
+  .p-sw::after{content:'';position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .p-sw.off{background:#D3D6DB;}
+  .p-sw.off::after{right:auto;left:2px;}
+  .p-sec2{font-size:10.5px;color:var(--text-3);padding:8px 14px 5px;font-weight:500;}
+  /* 工具箱：分组白卡 + 中性灰圆角图标块（与配置/设置页单色描边图标同一视觉语言） */
+  .p-tbcard{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:0 12px 2px;
+            padding:10px 4px 8px;display:flex;flex-wrap:wrap;}
+  .p-tbt{width:25%;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 0;
+         font-size:10px;color:var(--text-1);}
+  .p-tbt .tic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+  .p-tbt .tic svg{width:19px;height:19px;stroke:var(--text-2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .p-tbt .glyph{font-size:15px;font-weight:700;color:var(--text-2);font-family:"SF Mono",Menlo,monospace;}
+
   /* ===== 标注 ===== */
   .notes{width:1280px;color:#C9CDD3;font-size:13px;line-height:1.9;background:#3A3D42;border-radius:10px;padding:20px 28px;}
   .notes b{color:#fff;}
@@ -752,6 +780,119 @@
   <span class="tag">4</span>域名分组列表、App 图标、Method / 状态码语义色、详情页（General / 请求 / 响应 / Cookies）全部与桌面同一视觉规范。<br>
   <span class="tag">5</span><b>请求详情页</b>：push 全屏路由（无底部导航），AppBar = 返回 + Method/URL + 收藏 / 重发 / ⋮（复制 cURL·Python / 编辑 / 导出 / 删除），Tab = General / 请求 / 响应 / Cookies，与桌面右侧面板同一结构与视觉规范。<br>
   <span class="tag">6</span>手机端屏幕窄，不做顶部快捷图标区；高频功能靠请求长按菜单触达。
+</div>
+
+<!-- ===== 手机端 · 主页面：配置 / 工具箱 / 设置 ===== -->
+<div class="notes" style="width:1280px">
+  <b>手机端 · 主页面（底部导航 配置 / 工具箱 / 设置，严格对齐 bottom_navigation.dart / toolbox.dart 现有入口）</b>
+  <div class="phones-row" style="gap:24px">
+
+    <!-- 配置页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar"><div class="p-apptitle">配置</div></div>
+        <div class="p-body" style="padding:10px 0">
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(168,148,79,.1)"><svg viewBox="0 0 24 24" style="stroke:#A8944F"><path d="M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 3 1.2-6.1L3 9.6l6.3-.8z"/></svg></span>收藏<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(90,135,174,.1)"><svg viewBox="0 0 24 24" style="stroke:#5A87AE"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>历史<span class="go">›</span></div>
+          </div>
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(84,163,150,.1)"><svg viewBox="0 0 24 24" style="stroke:#54A396"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Hosts<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(175,96,82,.1)"><svg viewBox="0 0 24 24" style="stroke:#AF6052"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></span>请求屏蔽<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(168,134,62,.1)"><svg viewBox="0 0 24 24" style="stroke:#A8863E"><path d="M14 3l7 7-9 9H5v-7z"/><path d="M12 5l7 7"/></svg></span>请求重写<span class="on">2 条</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(87,145,111,.1)"><svg viewBox="0 0 24 24" style="stroke:#57916F"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg></span>请求映射<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(138,109,184,.1)"><svg viewBox="0 0 24 24" style="stroke:#8A6DB8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>请求加密<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(128,128,198,.1)"><svg viewBox="0 0 24 24" style="stroke:#8080C6"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></span>脚本<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(175,108,148,.1)"><svg viewBox="0 0 24 24" style="stroke:#AF6C94"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>断点<span class="on">1 条</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(206,131,89,.1)"><svg viewBox="0 0 24 24" style="stroke:#CE8359"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></span>弱网<span class="on">1 条</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(113,133,214,.09)"><svg viewBox="0 0 24 24" style="stroke:#7185D6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13.5 13.5 0 0 1 0 18M12 3a13.5 13.5 0 0 0 0 18"/></svg></span>环境变量<span class="val">开发环境</span><span class="go">›</span></div>
+          </div>
+        </div>
+        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">配置 · 收藏/历史一卡 + 流量控制 9 项一卡（行尾仅生效时显示绿「N 条」）</div>
+    </div>
+
+    <!-- 工具箱页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar"><div class="p-apptitle">工具箱</div></div>
+        <div class="p-body" style="padding:8px 0">
+          <div class="p-sec2">请求</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(113,133,214,.09)"><svg viewBox="0 0 24 24" style="stroke:#7185D6"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></div>HTTP</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(138,109,184,.09)"><svg viewBox="0 0 24 24" style="stroke:#8A6DB8"><circle cx="12" cy="12" r="1.8"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg></div>WebSocket</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(168,134,62,.1)"><svg viewBox="0 0 24 24" style="stroke:#A8863E"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg></div>JavaScript</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(90,135,174,.1)"><svg viewBox="0 0 24 24" style="stroke:#5A87AE"><circle cx="12" cy="13" r="8"/><path d="M12 9.5V13l2.5 2M9 2.5h6"/></svg></div>重发任务</div>
+          </div>
+          <div class="p-sec2">视图</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(87,145,111,.1)"><svg viewBox="0 0 24 24" style="stroke:#57916F"><path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/></svg></div>JSON</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(206,131,89,.1)"><svg viewBox="0 0 24 24" style="stroke:#CE8359"><path d="M8 5l-5 7 5 7M16 5l5 7-5 7"/></svg></div>XML</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(128,128,198,.09)"><svg viewBox="0 0 24 24" style="stroke:#8080C6"><rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/></svg></div>文本对比</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(100,116,139,.09)"><svg viewBox="0 0 24 24" style="stroke:#64748B"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>文本编辑</div>
+          </div>
+          <div class="p-sec2">编码</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(84,163,150,.09)"><svg viewBox="0 0 24 24" style="stroke:#54A396"><path d="M10 14a5 5 0 0 0 7 0l2.5-2.5a5 5 0 0 0-7-7L11 6M14 10a5 5 0 0 0-7 0l-2.5 2.5a5 5 0 0 0 7 7L13 18"/></svg></div>URL</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(175,108,148,.09)"><span class="glyph" style="color:#AF6C94">B</span></div>Base64</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(150,121,217,.09)"><span class="glyph" style="color:#9679D9;text-decoration:underline">U</span></div>Unicode</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(138,109,59,.1)"><svg viewBox="0 0 24 24" style="stroke:#8A6D3B"><path d="M9 3L7 21M17 3l-2 18M4 8h17M3 16h17"/></svg></div>MD5</div>
+          </div>
+          <div class="p-sec2">加密</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(175,96,82,.09)"><svg viewBox="0 0 24 24" style="stroke:#AF6052"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg></div>AES</div>
+          </div>
+          <div class="p-sec2">其他</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(85,160,160,.09)"><svg viewBox="0 0 24 24" style="stroke:#55A0A0"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>时间戳</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(168,148,79,.1)"><svg viewBox="0 0 24 24" style="stroke:#A8944F"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2.5 2.5M14 9l2.5 2.5"/></svg></div>证书 Hash</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(130,132,210,.09)"><svg viewBox="0 0 24 24" style="stroke:#8284D2"><path d="M12 3v18M4.5 7l15 10M19.5 7l-15 10"/></svg></div>正则</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(58,61,66,.08)"><svg viewBox="0 0 24 24" style="stroke:#3A3D42"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20v.01M20 14v.01"/></svg></div>二维码</div>
+          </div>
+        </div>
+        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">工具箱 · 分组白卡 + 彩色淡色块图标（与配置/设置页同一色彩体系）</div>
+    </div>
+
+    <!-- 设置页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar"><div class="p-apptitle">设置</div></div>
+        <div class="p-body" style="padding:10px 0">
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(87,145,111,.1)"><svg viewBox="0 0 24 24" style="stroke:#57916F"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>HTTPS 抓包<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(206,131,89,.1)"><svg viewBox="0 0 24 24" style="stroke:#CE8359"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg></span>域名过滤<span class="go">›</span></div>
+          </div>
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(113,133,214,.09)"><svg viewBox="0 0 24 24" style="stroke:#7185D6"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span>代理端口<span class="val">9099</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(100,116,139,.09)"><span class="micg" style="color:#64748B">S5</span></span>SOCKS5<span class="p-sw off"></span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(90,135,174,.1)"><span class="micg" style="color:#5A87AE">H2</span></span>启用 HTTP/2<span class="p-sw"></span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(84,163,150,.1)"><svg viewBox="0 0 24 24" style="stroke:#54A396"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>外部代理<span class="val">未设置</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(100,116,139,.09)"><svg viewBox="0 0 24 24" style="stroke:#64748B"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span>代理忽略域名<span class="go">›</span></div>
+          </div>
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(138,109,184,.1)"><svg viewBox="0 0 24 24" style="stroke:#8A6DB8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span>MCP 服务<span class="on">运行中</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(128,128,198,.1)"><svg viewBox="0 0 24 24" style="stroke:#8080C6"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg></span>偏好设置<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(90,135,174,.1)"><svg viewBox="0 0 24 24" style="stroke:#5A87AE"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg></span>关于<span class="go">›</span></div>
+          </div>
+        </div>
+        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">设置 · HTTPS/过滤 + 代理 + MCP/偏好/关于；忽略域名改为独立编辑页</div>
+    </div>
+  </div>
+  <br>
+  <span class="tag">1</span><b>配置页</b>：收藏 / 历史放配置页首卡（与现实现一致，首页 ⋮ 不再重复入口）；Hosts + 流量控制 8 项一卡。行尾状态采用最简口径（用户拍板，避免密集）：<b>仅生效时显示绿「N 条」（启用规则数），其余情况（无规则 / 未开启）一律不显示</b>（规则型：屏蔽 / 重写 / 映射 / 加密 / 脚本 / 断点，manager 均有全局 enabled + 规则 enabled；条数 = 启用的规则数，绿色即表生效，不再写「启用中」）；环境变量显示当前环境名（灰色取值，非状态）；收藏 / 历史为数据页不显示状态。<br>
+  <span class="tag">2</span><b>工具箱页</b>：与桌面同一分组（请求 / 视图 / 编码 / 加密 / 其他），每组一张白卡（#E4E6EB 发丝边、10 圆角），卡内 4 列宫格；工具图标为 <b>38px 彩色淡色块（8–10% 淡底 + 降饱和彩色描边图标）</b>；Base64 / Unicode 沿用 B / U 字符图标（对齐 Icons.format_bold / format_underline）；点击 push 全屏子页。<br>
+  <span class="tag">3</span><b>设置页</b>：HTTPS 抓包 / 域名过滤一卡；代理（端口 / SOCKS5 / HTTP2 / 外部代理 / 忽略域名）一卡（手机端无系统代理）；MCP / 偏好 / 关于一卡，MCP 行尾显示运行状态。<br>
+  <span class="tag">4</span><b>代理忽略域名</b>由卡内嵌输入框改为独立编辑页：手机端卡内输入体验差，且与其它入口行形态统一。<br>
+  <span class="tag">5</span><b>卡片规范</b>：白底、#E4E6EB 发丝边、10px 圆角；入口行 = <b>22px 彩色淡色块图标</b> + 标题 + 灰色 ›；开关行（SOCKS5 / HTTP2）无象形图标，用 <b>S5 / H2 字符色块</b>（同 Base64/Unicode 的 B/U 手法），全行图标对齐；底导航当前项主色高亮。<br>
+  <span class="tag">6</span><b>色彩体系（用户拍板：其他页加色彩，工具箱不突兀）</b>：菜单/工具图标统一「淡色底 + 彩色描边」，不用 iOS 实心色块（太消费级）；<b>每功能固定一个语义色，全端一致</b>（如 重写 = 琥珀、脚本 = 靛蓝、弱网 = 橙、屏蔽 = 红、加密 = 紫），颜色即功能 ID；色板在设计 token 基础上降饱和，淡底 8–10%；配置/设置行内块 22px，工具箱宫格块 38px，同一套色值。
 </div>
 
 <!-- ===== 手机端 · 请求详情各 Tab ===== -->
