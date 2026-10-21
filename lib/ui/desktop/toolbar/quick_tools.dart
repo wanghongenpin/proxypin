@@ -392,21 +392,11 @@ class CustomizeToolbarDialog extends StatelessWidget {
                               if (pinnedTools.isEmpty)
                                 const SizedBox(height: 4)
                               else
-                                ReorderableListView(
-                                    shrinkWrap: true,
-                                    buildDefaultDragHandles: false,
-                                    padding: EdgeInsets.zero,
-                                    onReorderItem: (oldIndex, newIndex) {
-                                      var list = List<String>.of(appConfiguration.toolbarPins.value);
-                                      var id = list.removeAt(oldIndex);
-                                      list.insert(newIndex, id);
-                                      appConfiguration.toolbarPins.value = list;
-                                      appConfiguration.flushConfig();
-                                    },
-                                    children: [
-                                      for (var i = 0; i < pinnedTools.length; i++)
-                                        _pinnedChip(context, pinnedTools[i], i)
-                                    ]),
+                                // 设计稿 .cz-chips：横排流式 chip；ReorderableListView 只支持竖排，
+                                // 固定项数量少（≤11），用 Draggable + DragTarget 手写换位即可
+                                Wrap(spacing: 8, runSpacing: 8, children: [
+                                  for (var tool in pinnedTools) _pinnedChip(context, tool)
+                                ]),
                               const SizedBox(height: 14),
                               Text(localizations.pinToolsHint,
                                   style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
@@ -420,37 +410,60 @@ class CustomizeToolbarDialog extends StatelessWidget {
             }));
   }
 
-  Widget _pinnedChip(BuildContext context, QuickTool tool, int index) {
+  /// 已固定 chip：整体按住即拖（桌面端鼠标直接拖，无需长按），拖到另一个 chip 上落到其位置
+  Widget _pinnedChip(BuildContext context, QuickTool tool) {
+    return DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          if (details.data != tool.id) {
+            _reorderPin(details.data, tool.id);
+          }
+        },
+        builder: (context, candidateData, rejectedData) {
+          // 拖拽物悬停（非自身）时加粗高亮描边，提示落点
+          var dropHighlight = candidateData.isNotEmpty && candidateData.first != tool.id;
+          return Draggable<String>(
+              data: tool.id,
+              feedback: Material(color: Colors.transparent, child: _chip(context, tool, dragging: true)),
+              childWhenDragging: Opacity(opacity: 0.35, child: _chip(context, tool)),
+              child: MouseRegion(
+                  cursor: SystemMouseCursors.grab, child: _chip(context, tool, dropHighlight: dropHighlight)));
+        });
+  }
+
+  /// 把 draggedId 移动到 targetId 的位置（其余顺延）
+  void _reorderPin(String draggedId, String targetId) {
+    var list = List<String>.of(appConfiguration.toolbarPins.value);
+    var oldIndex = list.indexOf(draggedId);
+    var targetIndex = list.indexOf(targetId);
+    if (oldIndex < 0 || targetIndex < 0) return;
+    list.removeAt(oldIndex);
+    list.insert(targetIndex, draggedId);
+    appConfiguration.toolbarPins.value = list;
+    appConfiguration.flushConfig();
+  }
+
+  /// 设计稿 .cz-chip：高 32、圆角 8、主色软底 + 主色描边，内容 ≡ 名称 ×
+  Widget _chip(BuildContext context, QuickTool tool, {bool dropHighlight = false, bool dragging = false}) {
     var theme = Theme.of(context);
-    var localizations = AppLocalizations.of(context)!;
-    return Align(
-        key: ValueKey(tool.id),
-        alignment: Alignment.centerLeft,
-        child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.35))),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              ReorderableDragStartListener(
-                  index: index,
-                  child: Padding(
-                      padding: const EdgeInsets.only(left: 8, top: 7, bottom: 7),
-                      child:
-                          Icon(Icons.drag_indicator, size: 16, color: theme.colorScheme.onSurfaceVariant))),
-              const SizedBox(width: 6),
-              SvgIcon(tool.icon, size: 15, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
-              Padding(
-                  padding: const EdgeInsets.only(right: 6, top: 7, bottom: 7),
-                  child: Text(tool.name(localizations), style: const TextStyle(fontSize: 12.5))),
-              InkWell(
-                  onTap: () => toggleToolbarPin(appConfiguration, tool.id),
-                  child: Padding(
-                      padding: const EdgeInsets.only(left: 2, right: 6, top: 7, bottom: 7),
-                      child: Icon(Icons.close, size: 15, color: theme.colorScheme.onSurfaceVariant))),
-            ])));
+    return Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: dragging ? 0.14 : 0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: dropHighlight ? 0.9 : 0.35),
+                width: dropHighlight ? 1.5 : 1)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.drag_indicator, size: 15, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(tool.name(AppLocalizations.of(context)!), style: const TextStyle(fontSize: 12.5)),
+          InkWell(
+              onTap: () => toggleToolbarPin(appConfiguration, tool.id),
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: Icon(Icons.close, size: 15, color: theme.colorScheme.onSurfaceVariant))),
+        ]));
   }
 
   Widget _toolGridItem(BuildContext context, QuickTool tool, bool pinned) {

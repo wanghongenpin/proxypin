@@ -57,15 +57,16 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
           ];
 
           return Container(
-            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 64 : 76,
+            // 设计稿 64，实际观感偏宽收窄到 60；非中文标签长，76 → 72
+            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 60 : 72,
             decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 border: Border(right: BorderSide(color: chromeBorderColor(Theme.of(context)), width: 1))),
             child: Column(children: <Widget>[
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               for (var i = 0; i < items.length; i++)
                 Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: _RailItem(
                         icon: items[i].icon,
                         label: items[i].label,
@@ -75,6 +76,7 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
               _RailItem(
                   icon: 'gear',
                   label: localizations.preferenceShort,
+                  compact: true,
                   onTap: () {
                     showDialog(
                         context: context,
@@ -82,10 +84,11 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
                   }),
               const SizedBox(height: 2),
               Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: _RailItem(
                       icon: 'chat',
                       label: localizations.feedback,
+                      compact: true,
                       onTap: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin/issues")))),
             ]),
           );
@@ -93,14 +96,18 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
   }
 }
 
-/// 设计稿 .ritem 基础上整体放大：56x52 圆角 9，图标 21px + 标签 11px，选中 primary-soft 底 + primary 字
+/// 设计稿 .ritem（52x48 / 图标 19 / 标签 10）基础上略放大：56x52 圆角 9，图标 20px + 标签 10.5px，选中 primary-soft 底 + primary 字
 class _RailItem extends StatelessWidget {
   final String icon;
   final String label;
   final bool active;
+
+  /// 次级入口（底部 偏好/反馈）：纯图标无文案，弱化视觉层级（文案靠 tooltip）
+  final bool compact;
   final VoidCallback onTap;
 
-  const _RailItem({required this.icon, required this.label, this.active = false, required this.onTap});
+  const _RailItem(
+      {required this.icon, required this.label, this.active = false, this.compact = false, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -116,21 +123,23 @@ class _RailItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(9),
             onTap: onTap,
             child: Container(
-                width: 56,
-                height: 52,
+                width: compact ? 36 : 56,
+                height: compact ? 36 : 52,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(9),
                     color: active ? primarySoftBg(theme) : null),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  SvgIcon(icon, size: 21, color: color),
-                  const SizedBox(height: 4),
-                  Text(label,
-                      maxLines: 1,
-                      style: TextStyle(
-                          fontSize: 11,
-                          height: 1.1,
-                          color: color,
-                          fontWeight: active ? FontWeight.w500 : FontWeight.w400)),
-                ]))));
+                child: compact
+                    ? Center(child: SvgIcon(icon, size: 18, color: color))
+                    : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        SvgIcon(icon, size: 20, color: color),
+                        const SizedBox(height: 4),
+                        Text(label,
+                            maxLines: 1,
+                            style: TextStyle(
+                                fontSize: 10.5,
+                                height: 1.1,
+                                color: color,
+                                fontWeight: active ? FontWeight.w500 : FontWeight.w400)),
+                      ]))));
   }
 }

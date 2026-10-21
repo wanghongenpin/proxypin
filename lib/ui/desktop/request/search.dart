@@ -49,21 +49,18 @@ class SearchState extends State<Search> {
     bool dark = theme.brightness == Brightness.dark;
     // 主题适配：亮色沿用旧版 hoverColor 底；暗黑用设计稿 --hover；描边取主题 dividerColor（已注入设计稿 --border）
     var fillColor = dark ? DarkPalette.hover : theme.hoverColor;
-    return Padding(
-        padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom: 8),
-        // Material：给内部 IconButton/PopupMenuButton 提供画水波纹的祖先（Container+BoxDecoration 画不出 ink 效果）
-        child: Material(
-          color: fillColor,
-          borderRadius: BorderRadius.circular(20),
-          clipBehavior: Clip.antiAlias,
-          elevation: dark ? 2 : 0.8,
-          shadowColor: theme.shadowColor.withValues(alpha: dark ? 0.4 : 0.15),
-          child: SizedBox(
+    return Material(
+        color: fillColor,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        elevation: dark ? 2 : 0.8,
+        shadowColor: theme.shadowColor.withValues(alpha: dark ? 0.4 : 0.15),
+        child: SizedBox(
           height: 32,
           child: TextField(
-            cursorHeight: 16,
+            cursorHeight: 18,
             controller: keywordController,
-            style: const TextStyle(fontSize: 13),
+            style: const TextStyle(fontSize: 14),
             onChanged: (val) async {
               searchModel.keyword = val;
               if (!changing) {
@@ -80,20 +77,19 @@ class SearchState extends State<Search> {
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.all(0),
               enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: theme.dividerColor, width: 0.5),
+                  borderSide: BorderSide(color: theme.dividerColor, width: 1.5),
                   borderRadius: BorderRadius.circular(15)),
               focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5), width: 0.8),
+                  borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5), width: 1.8),
                   borderRadius: BorderRadius.circular(15)),
               prefixIcon: IconButton(
-                  icon: Icon(Icons.search,
-                      size: 20, color: searched ? okColor(theme) : theme.colorScheme.primary),
+                  icon: Icon(Icons.search, size: 20, color: searched ? okColor(theme) : theme.colorScheme.primary),
                   splashRadius: 16,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 38, minHeight: 32),
                   onPressed: () => searchDialog()),
               hintText: 'Search',
-              hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+              hintStyle: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
               suffixIcon: ContentTypeSelect(onSelected: (contentType) {
                 setState(() {
                   searchModel.responseContentTypes = contentType == null ? {} : {contentType};
@@ -103,7 +99,6 @@ class SearchState extends State<Search> {
                 widget.onSearch?.call(searchModel);
               }),
             ),
-          ),
           ),
         ));
   }

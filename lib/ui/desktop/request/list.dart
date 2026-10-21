@@ -128,7 +128,7 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                     actions: [popupMenus()],
                   ),
                   body: Padding(
-                      padding: const EdgeInsets.only(right: 5),
+                      padding: const EdgeInsets.only(right: 2),
                       child: Column(children: [
                         Obx(() => selectionController.selectionMode.value
                             ? SelectionActionBar(

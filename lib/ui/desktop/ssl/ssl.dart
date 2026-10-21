@@ -60,12 +60,10 @@ class _SslState extends State<SslWidget> {
               onPressed: () => showDialog(context: context, builder: (context) => PCCert())),
           item("${localizations.installRootCa} iOS", onPressed: () async => iosCer(await localIp())),
           item("${localizations.installRootCa} Android", onPressed: () async => androidCer(await localIp())),
+          item(localizations.clientCertificate, onPressed: () => showClientCertDialog(context)),
           const Divider(thickness: 0.3, height: 3),
           exportMenu(),
-          const Divider(thickness: 0.3, height: 3),
           importMenu(),
-          const Divider(thickness: 0.3, height: 3),
-          item(localizations.clientCertificate, onPressed: () => showClientCertDialog(context)),
           const Divider(thickness: 0.3, height: 3),
           item(localizations.generateCA, onPressed: () async {
             showConfirmDialog(context, title: localizations.generateCA, content: localizations.generateCADescribe,
@@ -74,7 +72,6 @@ class _SslState extends State<SslWidget> {
               if (context.mounted) FlutterToastr.show(localizations.success, context);
             });
           }),
-          const Divider(thickness: 0.3, height: 3),
           item(localizations.resetDefaultCA, onPressed: () async {
             showConfirmDialog(context,
                 title: localizations.resetDefaultCA,
