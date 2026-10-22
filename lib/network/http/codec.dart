@@ -105,7 +105,12 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T>, CloseDel
 
   @override
   DecoderResult<T> decode(ChannelContext channelContext, ByteBuf data) {
-    var protocol = channelContext.clientChannel?.selectedProtocol;
+    // 按通道角色取协议：请求解码看客户端连接，响应解码看上游连接。
+    // 不能用客户端协议解码上游字节——客户端协商 h2 不代表上游也是 h2
+    // （h1-only 服务器/中间盒会回 HTTP/1.1，按 h2 帧解析会越界崩溃）。
+    var protocol = this is HttpRequestCodec
+        ? channelContext.clientChannel?.selectedProtocol
+        : channelContext.serverChannel?.selectedProtocol;
 
     if (this is HttpRequestCodec &&
         _state == State.readInitial &&
@@ -117,7 +122,17 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T>, CloseDel
       channelContext.isHttp2PriorKnowledge = true;
     }
 
-    if (channelContext.isHttp2PriorKnowledge || protocol == HttpConstants.h2 || protocol == HttpConstants.h2_14) {
+    // 外部代理串联时，上游代理对 CONNECT 的应答（"HTTP/1.1 200 Connection established"）
+    // 始终是 HTTP/1.1——即使客户端已协商 h2（此刻与真实服务器的 TLS 尚未建立）。
+    // 若按客户端协议走 h2 解码，会把响应文本当作帧头解析（如 'P'=80 被当成帧类型）而越界崩溃。
+    bool connectResponsePending = this is HttpResponseCodec && pendingConnectResponse;
+
+    // h2 -> h1 协议转换期间，上游字节一律是 HTTP/1.1（h2c prior-knowledge 不进入转换）。
+    bool translation = this is HttpResponseCodec && channelContext.isHttp2Translation;
+
+    if (!connectResponsePending &&
+        !translation &&
+        (channelContext.isHttp2PriorKnowledge || protocol == HttpConstants.h2 || protocol == HttpConstants.h2_14)) {
       return getH2Codec().decode(channelContext, data);
     }
 
@@ -204,15 +219,39 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T>, CloseDel
 
   void initialLine(BytesBuilder buffer, T message);
 
+  /// h2 -> h1 转换编码请求时，请求行版本要写成 HTTP/1.1，但不改动消息对象
+  /// （抓包侧仍保留客户端真实的 HTTP/2 协议证据）。
+  String? _encodeProtocolVersionOverride;
+
+  String protocolVersionOf(T message) => _encodeProtocolVersionOverride ?? message.protocolVersion;
+
   @override
   List<int> encode(ChannelContext channelContext, T message) {
-    if (message.protocolVersion == "HTTP/2") {
+    // h2 -> h1 协议转换：客户端 ALPN 协商了 h2，但上游 TLS 未选择 h2。
+    // 请求按 HTTP/1.1 编码发往上游。
+    final bool translateH2ToH1 =
+        this is HttpRequestCodec && message.protocolVersion == "HTTP/2" && channelContext.isHttp2Translation;
+    // h1 -> h2：上游的 HTTP/1.1 响应按 h2 帧写回客户端（streamId 由响应处理器挂上）。
+    final bool translateH1ToH2 = this is HttpResponseCodec &&
+        message.protocolVersion != "HTTP/2" &&
+        message.streamId != null &&
+        channelContext.isHttp2Translation;
+
+    if (message.protocolVersion == "HTTP/2" && !translateH2ToH1) {
+      return getH2Codec().encode(channelContext, message);
+    }
+    if (translateH1ToH2) {
       return getH2Codec().encode(channelContext, message);
     }
 
     BytesBuilder builder = BytesBuilder();
     //请求行
-    initialLine(builder, message);
+    if (translateH2ToH1) _encodeProtocolVersionOverride = HttpMessage.http1Version;
+    try {
+      initialLine(builder, message);
+    } finally {
+      _encodeProtocolVersionOverride = null;
+    }
 
     List<int>? body = message.body;
 
@@ -230,6 +269,23 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T>, CloseDel
       message.headers.contentLength = body.length;
     } else if (body != null && message.contentLength != 0) {
       message.headers.remove(HttpHeaders.CONTENT_LENGTH);
+    }
+
+    // h2 请求没有 Host 头（主机在 :authority 里），HTTP/1.1 上游要求 Host。
+    // 直接写入字节流，不改动消息对象（保持抓包数据原样）。
+    if (translateH2ToH1 && message is HttpRequest && message.headers.host == null) {
+      var hostAndPort = (message as HttpRequest).hostAndPort;
+      if (hostAndPort != null) {
+        var defaultPort = hostAndPort.scheme == HostAndPort.httpScheme ? 80 : 443;
+        var authority = hostAndPort.port == defaultPort ? hostAndPort.host : '${hostAndPort.host}:${hostAndPort.port}';
+        builder
+          ..add(HttpHeaders.HOST.codeUnits)
+          ..addByte(HttpConstants.colon)
+          ..addByte(HttpConstants.sp)
+          ..add(authority.codeUnits)
+          ..addByte(HttpConstants.cr)
+          ..addByte(HttpConstants.lf);
+      }
     }
 
     message.headers.forEach((key, values) {
@@ -298,7 +354,7 @@ class HttpRequestCodec extends HttpCodec<HttpRequest> {
       ..addByte(HttpConstants.sp)
       ..add(uri.codeUnits)
       ..addByte(HttpConstants.sp)
-      ..add(message.protocolVersion.codeUnits)
+      ..add(protocolVersionOf(message).codeUnits)
       ..addByte(HttpConstants.cr)
       ..addByte(HttpConstants.lf);
   }
@@ -315,7 +371,7 @@ class HttpResponseCodec extends HttpCodec<HttpResponse> {
   @override
   void initialLine(BytesBuilder buffer, HttpResponse message) {
     //状态行
-    buffer.add(message.protocolVersion.codeUnits);
+    buffer.add(protocolVersionOf(message).codeUnits);
     buffer.addByte(HttpConstants.sp);
     buffer.add(message.status.code.toString().codeUnits);
     buffer.addByte(HttpConstants.sp);

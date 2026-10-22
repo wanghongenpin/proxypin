@@ -6,6 +6,7 @@ import 'package:proxypin/native/process_info.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
+import 'package:proxypin/network/http/h2/frame.dart';
 import 'package:proxypin/network/mqtt/mqtt_relay_handler.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/handle/websocket_handle.dart';
@@ -129,7 +130,15 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
         buffer.clearRead();
 
         if (remoteChannel != null) {
-          await remoteChannel.writeBytes(decodeResult.forward!);
+          var forwardBytes = decodeResult.forward!;
+          // h2 -> h1 协议转换：客户端原始 h2 帧只透传 DATA 载荷给 h1 上游，
+          // 连接前言/SETTINGS/PING/WINDOW_UPDATE 等控制帧没有 h1 对应物，剥离丢弃。
+          if (identical(channel, channelContext.clientChannel) && channelContext.isHttp2Translation) {
+            forwardBytes = channelContext.h2ToH1FrameStripper.strip(forwardBytes);
+          }
+          if (forwardBytes.isNotEmpty) {
+            await remoteChannel.writeBytes(forwardBytes);
+          }
         } else if (channelContext.isHttp2PriorKnowledge && identical(channel, channelContext.clientChannel)) {
           channelContext.bufferHttp2Frames(decodeResult.forward!);
           await channelContext.sendInitialHttp2Settings();
@@ -290,15 +299,26 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   /// SSE 处理 (text/event-stream)
   void onSseHandle(ChannelContext channelContext, Channel channel, HttpResponse response, List<int>? initialBody) {
     Channel remoteChannel = channelContext.getAttribute(channel.id);
-    channelContext.currentRequest?.response = response;
-    response.request ??= channelContext.currentRequest;
+
+    // h2 -> h1 协议转换：响应关联到串行化槽位请求（currentRequest 可能错配），
+    // 响应按 h2 HEADERS（END_STREAM=0）编码，后续事件流由 SseChannelHandler 包成 DATA 帧。
+    final translation = channelContext.isHttp2Translation;
+    final pending = translation ? channelContext.pendingTranslatedRequest : null;
+    final request = pending ?? response.request ?? channelContext.currentRequest;
+    request?.response = response;
+    response.request = request;
+    if (pending != null) {
+      response.streamId = pending.streamId;
+      response.requestId = pending.requestId;
+      response.streamingBody = true; // h2 编码只写 HEADERS，不结束流
+    }
     channelContext.listener?.onResponse(channelContext, response);
 
     remoteChannel.write(channelContext, response);
 
     // Switch to raw streaming: server->client uses SseChannelHandler; client->server just relays
     var rawCodec = RawCodec();
-    channel.dispatcher.channelHandle(rawCodec, SseChannelHandler(remoteChannel, response));
+    channel.dispatcher.channelHandle(rawCodec, SseChannelHandler(remoteChannel, response, wrapHttp2Data: translation));
     remoteChannel.dispatcher.channelHandle(rawCodec, RelayHandler(channel));
 
     // Flush any initial body bytes that were already read alongside the
@@ -328,6 +348,24 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     // 无法透传，直接丢弃并关闭连接，避免对 null 强制解包导致崩溃。
     if (remoteChannel == null) {
       logger.w("[$channel] not supported parse and remoteChannel is null, close channel");
+      channel.close();
+      return;
+    }
+
+    // h2 -> h1 协议转换下不能把 h1 原始字节透传给 h2 客户端（如 flv、超限的
+    // close 定界响应）：RST 掉对应 stream 并关闭已被污染的上游连接，避免协议错乱。
+    if (decodeResult.data is HttpResponse && channelContext.isHttp2Translation) {
+      var response = decodeResult.data as HttpResponse;
+      logger.w("[$channel] h2->h1 translation cannot relay ${response.headers.contentType}, reset stream");
+      response.request = channelContext.pendingTranslatedRequest ?? response.request ?? channelContext.currentRequest;
+      channelContext.listener?.onResponse(channelContext, response);
+      var streamId = channelContext.pendingTranslatedRequest?.streamId;
+      if (streamId != null) {
+        // RST_STREAM CANCEL(0x8)
+        channelContext.clientChannel?.writeBytes(FrameHeader(4, FrameType.rstStream, 0, streamId).encode()
+          ..addAll([0, 0, 0, 8]));
+      }
+      channelContext.completeTranslatedResponse();
       channel.close();
       return;
     }

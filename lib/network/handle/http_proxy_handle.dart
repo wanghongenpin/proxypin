@@ -232,8 +232,10 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
       } else {
         if (clientChannel.isSsl) {
           await HttpClients.connectRequest(channelContext, hostAndPort, proxyChannel, proxyInfo: proxyInfo);
+          // h2 客户端也带上 http/1.1 兜底：h1-only 上游能显式选择，
+          // 避免严苛 ALPN 配置的服务器直接 handshake 失败（差异由转换层桥接）
           await proxyChannel.secureSocket(channelContext,
-              host: hostAndPort.host, supportedProtocols: httpRequest.protocolVersion == "HTTP/2" ? ["h2"] : null);
+              host: hostAndPort.host, supportedProtocols: httpRequest.protocolVersion == "HTTP/2" ? ["h2", "http/1.1"] : null);
         }
       }
 
@@ -253,11 +255,12 @@ class HttpProxyChannelHandler extends ChannelHandler<HttpRequest> {
 
     final proxyChannel = await connectRemote(channelContext, clientChannel, remoteAddress);
     if (clientChannel.isSsl) {
-      await proxyChannel.secureSocket(channelContext,
-          host: hostAndPort.host,
-          supportedProtocols: channelContext.clientChannel?.selectedProtocol == null
-              ? null
-              : [channelContext.clientChannel!.selectedProtocol!]);
+      final clientProtocol = channelContext.clientChannel?.selectedProtocol;
+      // h2 客户端带上 http/1.1 兜底，让 h1-only 上游显式选择而不是沉默
+      final supportedProtocols = clientProtocol == null
+          ? null
+          : (clientProtocol == 'h2' || clientProtocol == 'h2-14' ? ['h2', 'http/1.1'] : [clientProtocol]);
+      await proxyChannel.secureSocket(channelContext, host: hostAndPort.host, supportedProtocols: supportedProtocols);
     }
 
     //https代理新建连接请求
@@ -288,6 +291,27 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
 
   @override
   Future<void> channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
+    // h2 -> h1 协议转换：响应关联以串行化槽位为准（_fillMessageMeta 用的
+    // currentRequest 在并发 h2 stream 下可能已被覆盖而错配），并挂上原
+    // h2 streamId 供编码回客户端。
+    final pendingTranslated = channelContext.isHttp2Translation ? channelContext.pendingTranslatedRequest : null;
+    if (pendingTranslated != null) {
+      msg.request = pendingTranslated;
+      msg.streamId = pendingTranslated.streamId;
+      msg.requestId = pendingTranslated.requestId;
+    }
+
+    try {
+      return await _channelRead(channelContext, channel, msg);
+    } finally {
+      // 1xx（如 100 Continue）之后还有最终响应，不能释放屏障
+      if (pendingTranslated != null && (msg.status.code < 100 || msg.status.code >= 200)) {
+        channelContext.completeTranslatedResponse();
+      }
+    }
+  }
+
+  Future<void> _channelRead(ChannelContext channelContext, Channel channel, HttpResponse msg) async {
     var request = msg.request ?? channelContext.currentRequest;
     request?.response = msg;
 
@@ -327,11 +351,24 @@ class HttpResponseProxyHandler extends ChannelHandler<HttpResponse> {
 
   @override
   void channelInactive(ChannelContext channelContext, Channel channel) {
+    // 上游关闭：释放协议转换屏障（如 SSE 长流结束、connection: close）
+    channelContext.completeTranslatedResponse();
+    if (channelContext.isHttp2Translation || channelContext.wasHttp2Translation) {
+      // h2 -> h1 转换：上游 h1 连接关闭（connection: close 很常见）不影响仍健康的
+      // h2 客户端连接。清理上游连接与通道映射，下一个 stream 会重建连接。
+      if (identical(channelContext.serverChannel, channel)) {
+        channelContext.putAttribute(channelContext.clientChannel!.id, null);
+        channelContext.putAttribute(channel.id, null);
+        channelContext.serverChannel = null;
+      }
+      return;
+    }
     clientChannel.close();
   }
 
   @override
   void exceptionCaught(ChannelContext channelContext, Channel channel, error, {StackTrace? trace}) {
+    channelContext.completeTranslatedResponse();
     super.exceptionCaught(channelContext, channel, error, trace: trace);
     for (var interceptor in interceptors) {
       interceptor.onError(channelContext.currentRequest, error, trace);

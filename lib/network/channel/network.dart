@@ -234,6 +234,10 @@ class Server extends Network {
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : ['http/1.1'];
+        // 与转发路径一致：含 h2 时带上 http/1.1 兜底，让 h1-only 上游显式选择
+        if (supportProtocols?.contains('h2') == true && supportProtocols?.contains('http/1.1') == false) {
+          supportProtocols = [...supportProtocols!, 'http/1.1'];
+        }
         if (supportProtocols?.isEmpty == true) supportProtocols = null;
         await remoteChannel.startSecureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
@@ -243,13 +247,22 @@ class Server extends Network {
       var selectedProtocol = remoteChannel?.selectedProtocol;
 
       final offeredProtocols = TLS.supportProtocols(data);
-      List<String>? supportedProtocols = selectedProtocol != null
-          ? [selectedProtocol]
-          : (offeredProtocols?.isNotEmpty == true
-              ? (configuration.enabledHttp2
-                  ? offeredProtocols
-                  : offeredProtocols!.where((protocol) => protocol != 'h2').toList())
-              : ['http/1.1']);
+      List<String>? supportedProtocols;
+      if (selectedProtocol != null) {
+        supportedProtocols = [selectedProtocol];
+      } else if (remoteChannel != null && remoteChannel.isSsl) {
+        // 上游已完成握手但未选择 ALPN（h1-only 服务器/中间盒）：
+        // 优先让客户端也走 HTTP/1.1，端到端协议一致，避免协议转换；
+        // 客户端只提供 h2 时原样提供，由 h2<->h1 转换层桥接。
+        final nonH2 = offeredProtocols?.where((p) => p != 'h2' && p != 'h2-14').toList();
+        supportedProtocols = (nonH2?.isNotEmpty == true) ? nonH2 : offeredProtocols;
+      } else {
+        supportedProtocols = offeredProtocols?.isNotEmpty == true
+            ? (configuration.enabledHttp2
+                ? offeredProtocols
+                : offeredProtocols!.where((protocol) => protocol != 'h2').toList())
+            : ['http/1.1'];
+      }
       if (supportedProtocols?.isEmpty == true) supportedProtocols = null;
 
       if (supportedProtocols != null) certificate.setAlpnProtocols(supportedProtocols, true);
