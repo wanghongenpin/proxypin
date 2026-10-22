@@ -290,6 +290,16 @@ class _SettingPage extends StatelessWidget {
                         })),
                 Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(
+                    title: const Text("eMudhra"),
+                    trailing: SwitchWidget(
+                        value: configuration.enableEmudhra,
+                        scale: 0.8,
+                        onChanged: (value) {
+                          configuration.enableEmudhra = value;
+                          proxyServer.configuration.flushConfig();
+                        })),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                ListTile(
                     title: Text(localizations.externalProxy),
                     trailing: const Icon(Icons.keyboard_arrow_right),
                     onTap: () {

@@ -277,6 +277,21 @@ class _ProxyMenuState extends State<_ProxyMenu> {
           SizedBox(width: 10)
         ]),
         const Divider(thickness: 0.3, height: 8),
+        Row(children: [
+          Expanded(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 15),
+                  child: const Text("eMudhra", style: TextStyle(fontSize: 14)))),
+          SwitchWidget(
+              value: configuration.enableEmudhra,
+              scale: 0.75,
+              onChanged: (val) {
+                configuration.enableEmudhra = val;
+                changed = true;
+              }),
+          SizedBox(width: 10)
+        ]),
+        const Divider(thickness: 0.3, height: 8),
         const SizedBox(height: 3),
         Padding(
             padding: const EdgeInsets.only(left: 15),

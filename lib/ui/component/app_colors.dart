@@ -42,6 +42,7 @@ class AppColors {
   static const proxyPort = Color(0xFF7185D6); // 代理端口 · 蓝紫
   static const socks5 = Color(0xFF64748B); // SOCKS5 · 石板灰（S5 字符块）
   static const http2 = Color(0xFF5A87AE); // HTTP/2 · 钢蓝（H2 字符块）
+  static const emudhra = Color(0xFFAF6052); // eMudhra · 红（CA 字符块）
   static const proxyIgnoreDomain = Color(0xFF64748B); // 代理忽略域名 · 石板灰
   static const externalProxy = Color(0xFF54A396); // 外部代理 · 青绿
   static const mcp = Color(0xFF8A6DB8); // MCP 服务 · 紫

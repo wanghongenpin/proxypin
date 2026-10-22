@@ -134,18 +134,19 @@ class X509Utils {
   ///
   /// Generates a self signed certificate
   ///
-  /// * [privateKey] = The private key used for signing
+  /// * [privateKey] = The private key used for signing, RSA or EC private key
   /// * [csr] = The CSR containing the DN and public key
   /// * [days] = The validity in days
   /// * [sans] = Subject alternative names to place within the certificate
   /// * [extKeyUsage] = The extended key usage definition
   /// * [serialNumber] = The serialnumber. If not set the default will be 1.
   /// * [issuer] = The issuer. If null, the issuer will be the subject of the given csr.
+  /// * [signatureAlgorithm] = The signature algorithm OID. If null, the signature algorithm of [caRoot] is used.
   ///
   static String generateSelfSignedCertificate(
     X509CertificateData caRoot,
     RSAPublicKey publicKey,
-    RSAPrivateKey privateKey,
+    AsymmetricKey privateKey,
     int days, {
     List<String>? sans,
     String serialNumber = '1',
@@ -157,6 +158,7 @@ class X509Utils {
     BasicConstraints? basicConstraints,
     DateTime? notBefore,
     DateTime? notAfter,
+    String? signatureAlgorithm,
   }) {
     var data = ASN1Sequence();
 
@@ -169,8 +171,9 @@ class X509Utils {
     data.add(ASN1Integer(BigInt.parse(serialNumber)));
 
     // Add protocol
+    var signatureAlgorithmOi = signatureAlgorithm ?? caRoot.signatureAlgorithm;
     var blockProtocol = ASN1Sequence();
-    blockProtocol.add(ASN1ObjectIdentifier.fromIdentifierString(caRoot.signatureAlgorithm));
+    blockProtocol.add(ASN1ObjectIdentifier.fromIdentifierString(signatureAlgorithmOi));
     blockProtocol.add(ASN1Null());
     data.add(blockProtocol);
 
@@ -274,7 +277,7 @@ class X509Utils {
     var outer = ASN1Sequence();
     outer.add(data);
     outer.add(blockProtocol);
-    var encode = _rsaSign(data.encode(), privateKey, _getDigestFromOi(caRoot.signatureAlgorithm));
+    var encode = _sign(data.encode(), privateKey, _getDigestFromOi(signatureAlgorithmOi));
     outer.add(ASN1BitString(stringValues: encode));
 
     var chunks = Strings.chunk(base64Encode(outer.encode()), 64);
@@ -855,9 +858,23 @@ class X509Utils {
     return ASN1Set(elements: [innerSequence]);
   }
 
-  static Uint8List _rsaSign(Uint8List inBytes, RSAPrivateKey privateKey, String signingAlgorithm) {
+  /// 使用 RSA 或 EC 私钥对 [inBytes] 签名, 返回签名原始字节
+  ///
+  /// RSA 返回 PKCS#1 签名; EC 使用确定性 ECDSA(RFC 6979), 返回 DER 编码的 SEQUENCE { INTEGER r, INTEGER s }
+  static Uint8List _sign(Uint8List inBytes, AsymmetricKey privateKey, String signingAlgorithm) {
+    if (privateKey is ECPrivateKey) {
+      var signer = Signer('$signingAlgorithm/DET-ECDSA');
+      signer.init(true, PrivateKeyParameter<ECPrivateKey>(privateKey));
+      var signature = signer.generateSignature(inBytes) as ECSignature;
+
+      var sequence = ASN1Sequence();
+      sequence.add(ASN1Integer(signature.r));
+      sequence.add(ASN1Integer(signature.s));
+      return sequence.encode();
+    }
+
     var signer = Signer('$signingAlgorithm/RSA');
-    signer.init(true, PrivateKeyParameter<RSAPrivateKey>(privateKey));
+    signer.init(true, PrivateKeyParameter<RSAPrivateKey>(privateKey as RSAPrivateKey));
 
     var signature = signer.generateSignature(inBytes) as RSASignature;
 
@@ -888,18 +905,22 @@ class X509Utils {
   static String _getDigestFromOi(String oi) {
     switch (oi) {
       case 'ecdsaWithSHA1':
+      case '1.2.840.10045.4.3.1':
       case 'sha1WithRSAEncryption':
         return 'SHA-1';
       case 'ecdsaWithSHA224':
       case 'sha224WithRSAEncryption':
         return 'SHA-224';
       case 'ecdsaWithSHA256':
+      case '1.2.840.10045.4.3.2':
       case 'sha256WithRSAEncryption':
         return 'SHA-256';
       case 'ecdsaWithSHA384':
+      case '1.2.840.10045.4.3.3':
       case 'sha384WithRSAEncryption':
         return 'SHA-384';
       case 'ecdsaWithSHA512':
+      case '1.2.840.10045.4.3.4':
       case 'sha512WithRSAEncryption':
         return 'SHA-512';
       default:

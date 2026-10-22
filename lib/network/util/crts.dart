@@ -28,9 +28,10 @@ import 'package:proxypin/network/util/random.dart';
 import 'package:proxypin/utils/lang.dart';
 
 import 'cache.dart';
-import 'cert/basic_constraints.dart';
-import 'cert/cert_data.dart';
-import 'cert/extension.dart';
+import 'package:proxypin/network/util/cert/basic_constraints.dart';
+import 'package:proxypin/network/util/cert/cert_data.dart';
+import 'package:proxypin/network/util/cert/emudhra.dart';
+import 'package:proxypin/network/util/cert/extension.dart';
 import 'cert/key_usage.dart';
 import 'crypto.dart';
 import 'file_read.dart';
@@ -42,6 +43,10 @@ Future<void> main() async {
 enum StartState { uninitialized, initializing, initialized }
 
 class CertificateManager {
+  /// 是否使用已泄露的 eMudhra 中间 CA 链签发 MITM 叶子证书
+  /// 由 [Configuration.enableEmudhra] 同步, 详见 [EmudhraChain]
+  static bool enableEmudhra = false;
+
   /// 证书缓存
   static final ExpiringCache<String, SecurityContext> _certificateMap =
       ExpiringCache<String, SecurityContext>(const Duration(minutes: 30));
@@ -128,10 +133,12 @@ class CertificateManager {
   /// 生成域名叶子证书的 [SecurityContext] 并写入缓存
   static SecurityContext _createSecurityContext(String host, {X509CertificateData? remoteCert}) {
     String cer = generate(_caCert!, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host, remoteCert: remoteCert);
+    //emudhra 模式下, 叶子证书之后追加中间证书与交叉签名根证书, 供客户端构建信任链
+    var chainPem = enableEmudhra ? EmudhraChain.fullChain(cer) : cer;
     var rsaPrivateKey = _serverKeyPair.privateKey as RSAPrivateKey;
 
     var securityContext = SecurityContext(withTrustedRoots: true)
-      ..useCertificateChainBytes(cer.codeUnits)
+      ..useCertificateChainBytes(chainPem.codeUnits)
       ..allowLegacyUnsafeRenegotiation = true
       ..usePrivateKeyBytes(CryptoUtils.encodeRSAPrivateKeyToPemPkcs1(rsaPrivateKey).codeUnits);
 
@@ -171,6 +178,24 @@ class CertificateManager {
       sans = _remoteSans(remoteCert) ?? sans;
       notBefore = remoteCert.validity.notBefore;
       notAfter = remoteCert.validity.notAfter;
+    }
+
+    //emudhra 模式: 使用已泄露的 eMudhra 中间 CA 私钥(ECDSA)签发叶子证书,
+    //issuer 使用中间 CA subject DN 的原始字节
+    if (enableEmudhra) {
+      return X509Utils.generateSelfSignedCertificate(
+        EmudhraChain.intermediateCert,
+        serverPubKey,
+        EmudhraChain.privateKey,
+        36,
+        sans: sans,
+        serialNumber: Random().nextInt(1000000).toString(),
+        subject: x509Subject,
+        issuerRawBytes: EmudhraChain.issuerDnBytes,
+        signatureAlgorithm: EmudhraChain.signatureAlgorithmOid,
+        notBefore: notBefore,
+        notAfter: notAfter,
+      );
     }
 
     return X509Utils.generateSelfSignedCertificate(caRoot, serverPubKey, caPriKey, 36,

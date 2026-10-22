@@ -436,6 +436,18 @@ class _SettingPageState extends State<SettingPage> {
                       proxyServer.configuration.flushConfig();
                     })),
             menuDivider(context),
+            ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                leading: glyphTile(context, 'CA', AppColors.emudhra),
+                title: const Text("eMudhra", style: titleStyle),
+                trailing: SwitchWidget(
+                    value: configuration.enableEmudhra,
+                    scale: 0.8,
+                    onChanged: (value) {
+                      configuration.enableEmudhra = value;
+                      proxyServer.configuration.flushConfig();
+                    })),
+            menuDivider(context),
             menuTile(context, 'arrow_out', localizations.externalProxy, () async {
               showDialog(context: context, builder: (_) => ExternalProxyDialog(configuration: proxyServer.configuration));
             }, iconColor: AppColors.externalProxy),

@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -57,6 +58,19 @@ class Configuration {
 
   bool enabledHttp2 = false; // 是否启用http2
 
+  bool _enableEmudhra = false;
+
+  /// 是否使用已泄露的 eMudhra 中间 CA 链签发 HTTPS 拦截证书,
+  /// 开启后信任 eMudhra/emSign 根证书的系统无需安装自定义 CA, 见 [EmudhraChain]
+  bool get enableEmudhra => _enableEmudhra;
+
+  set enableEmudhra(bool value) {
+    _enableEmudhra = value;
+    //同步证书管理器并清空已生成的域名证书缓存
+    CertificateManager.enableEmudhra = value;
+    CertificateManager.cleanCache();
+  }
+
   //历史记录缓存时间
   int historyCacheTime = 0;
 
@@ -89,6 +103,7 @@ class Configuration {
     enableSystemProxy = config['enableSystemProxy'] ?? (config['enableDesktop'] ?? true);
     enableSocks5 = config['enableSocks5'] ?? true;
     enabledHttp2 = config['enabledHttp2'] ?? false;
+    enableEmudhra = config['enableEmudhra'] ?? false;
 
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
     historyCacheTime = config['historyCacheTime'] ?? 0;
@@ -150,6 +165,7 @@ class Configuration {
       'appBlacklist': appBlacklist,
       'historyCacheTime': historyCacheTime,
       'enabledHttp2': enabledHttp2,
+      'enableEmudhra': _enableEmudhra,
       'whitelist': HostFilter.whitelist.toJson(),
       'blacklist': HostFilter.blacklist.toJson(),
     };
