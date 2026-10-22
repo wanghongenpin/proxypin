@@ -46,6 +46,7 @@ import 'package:proxypin/ui/mobile/setting/request_crypto.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
+import 'package:proxypin/network/util/cert/emudhra.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../component/proxy_port_setting.dart';
@@ -292,12 +293,34 @@ class _SettingPage extends StatelessWidget {
                 ListTile(
                     title: const Text("eMudhra"),
                     trailing: SwitchWidget(
-                        value: configuration.enableEmudhra,
+                        value: configuration.emudhraChain != EmudhraChains.off,
                         scale: 0.8,
                         onChanged: (value) {
-                          configuration.enableEmudhra = value;
+                          setState(() {
+                            configuration.emudhraChain = value ? EmudhraChains.auto : EmudhraChains.off;
+                          });
                           proxyServer.configuration.flushConfig();
                         })),
+                if (configuration.emudhraChain != EmudhraChains.off)
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 22),
+                    dense: true,
+                    title: Text(EmudhraChains.labelOf(configuration.emudhraChain),
+                        style: TextStyle(fontSize: 13, color: Theme.of(context).hintColor)),
+                    trailing: PopupMenuButton<String>(
+                        initialValue: configuration.emudhraChain,
+                        tooltip: "eMudhra chain",
+                        onSelected: (value) {
+                          setState(() {
+                            configuration.emudhraChain = value;
+                          });
+                          proxyServer.configuration.flushConfig();
+                        },
+                        itemBuilder: (context) => [
+                              const PopupMenuItem(value: EmudhraChains.auto, child: Text("Auto")),
+                              ...EmudhraChains.all
+                                  .map((chain) => PopupMenuItem(value: chain.id, child: Text(chain.label)))
+                            ])),
                 Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(
                     title: Text(localizations.externalProxy),

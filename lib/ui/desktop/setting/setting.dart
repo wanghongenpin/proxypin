@@ -21,6 +21,7 @@ import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/network_condition_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
+import 'package:proxypin/network/util/cert/emudhra.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
@@ -283,14 +284,39 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                   padding: const EdgeInsets.only(left: 15),
                   child: const Text("eMudhra", style: TextStyle(fontSize: 14)))),
           SwitchWidget(
-              value: configuration.enableEmudhra,
+              value: configuration.emudhraChain != EmudhraChains.off,
               scale: 0.75,
               onChanged: (val) {
-                configuration.enableEmudhra = val;
+                configuration.emudhraChain = val ? EmudhraChains.auto : EmudhraChains.off;
                 changed = true;
               }),
           SizedBox(width: 10)
         ]),
+        //证书链路选择: 开启后可选固定链路或自动验证
+        if (configuration.emudhraChain != EmudhraChains.off)
+          Row(children: [
+            Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.only(left: 15),
+                    child: Text(EmudhraChains.labelOf(configuration.emudhraChain),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)))),
+            PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                initialValue: configuration.emudhraChain,
+                tooltip: "eMudhra chain",
+                onSelected: (value) {
+                  setState(() {
+                    configuration.emudhraChain = value;
+                    changed = true;
+                  });
+                },
+                itemBuilder: (context) => [
+                      const PopupMenuItem(value: EmudhraChains.auto, height: 36, child: Text("Auto")),
+                      ...EmudhraChains.all
+                          .map((chain) => PopupMenuItem(value: chain.id, height: 36, child: Text(chain.label)))
+                    ]),
+            SizedBox(width: 10)
+          ]),
         const Divider(thickness: 0.3, height: 8),
         const SizedBox(height: 3),
         Padding(

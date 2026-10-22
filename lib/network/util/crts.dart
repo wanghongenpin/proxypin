@@ -43,9 +43,56 @@ Future<void> main() async {
 enum StartState { uninitialized, initializing, initialized }
 
 class CertificateManager {
-  /// 是否使用已泄露的 eMudhra 中间 CA 链签发 MITM 叶子证书
-  /// 由 [Configuration.enableEmudhra] 同步, 详见 [EmudhraChain]
-  static bool enableEmudhra = false;
+  /// 选用的 eMudhra 链路 id, [EmudhraChains.off] 表示关闭, [EmudhraChains.auto] 表示自动链路验证
+  /// 由 [Configuration.emudhraChain] 同步, 详见 [EmudhraChains]
+  static String emudhraChain = EmudhraChains.off;
+
+  /// auto 模式: 当前探测的候选链路下标
+  static int _autoIndex = 0;
+
+  /// auto 模式: 已通过客户端验证而锁定的链路 id
+  static String? _autoVerifiedChainId;
+
+  /// 当前生效的 eMudhra 链路, 未启用返回 null
+  ///
+  /// auto 模式优先返回已锁定的链路, 否则按 [EmudhraChains.all] 顺序取当前候选
+  static EmudhraChain? get currentEmudhra {
+    if (emudhraChain == EmudhraChains.auto) {
+      if (_autoVerifiedChainId != null) {
+        return EmudhraChains.byId(_autoVerifiedChainId);
+      }
+      return EmudhraChains.all[_autoIndex % EmudhraChains.all.length];
+    }
+    return EmudhraChains.byId(emudhraChain);
+  }
+
+  /// 自动链路验证: 客户端 TLS 握手失败(拒绝当前链路证书)时轮换到下一条候选链路
+  ///
+  /// 返回 true 表示发生了轮换, 客户端重连后即使用新链路; 固定链路模式下不做处理
+  static bool rotateEmudhraChain() {
+    if (emudhraChain != EmudhraChains.auto) {
+      return false;
+    }
+    var previous = currentEmudhra;
+    _autoIndex++;
+    _autoVerifiedChainId = null;
+    var next = currentEmudhra;
+    cleanCache();
+    logger.i('emudhra auto chain rejected: ${previous?.label}, trying next: ${next?.label}');
+    return true;
+  }
+
+  /// 自动链路验证: 客户端 TLS 握手成功后锁定当前链路
+  static void verifyEmudhraChain() {
+    if (emudhraChain != EmudhraChains.auto) {
+      return;
+    }
+    var chain = currentEmudhra;
+    if (chain != null && _autoVerifiedChainId != chain.id) {
+      _autoVerifiedChainId = chain.id;
+      logger.i('emudhra auto chain verified: ${chain.label}');
+    }
+  }
 
   /// 证书缓存
   static final ExpiringCache<String, SecurityContext> _certificateMap =
@@ -133,8 +180,8 @@ class CertificateManager {
   /// 生成域名叶子证书的 [SecurityContext] 并写入缓存
   static SecurityContext _createSecurityContext(String host, {X509CertificateData? remoteCert}) {
     String cer = generate(_caCert!, _serverKeyPair.publicKey as RSAPublicKey, _caPriKey, host, remoteCert: remoteCert);
-    //emudhra 模式下, 叶子证书之后追加中间证书与交叉签名根证书, 供客户端构建信任链
-    var chainPem = enableEmudhra ? EmudhraChain.fullChain(cer) : cer;
+    //emudhra 模式下, 叶子证书之后追加所选链路的中间证书与根证书, 供客户端构建信任链
+    var chainPem = currentEmudhra?.fullChain(cer) ?? cer;
     var rsaPrivateKey = _serverKeyPair.privateKey as RSAPrivateKey;
 
     var securityContext = SecurityContext(withTrustedRoots: true)
@@ -180,18 +227,19 @@ class CertificateManager {
       notAfter = remoteCert.validity.notAfter;
     }
 
-    //emudhra 模式: 使用已泄露的 eMudhra 中间 CA 私钥(ECDSA)签发叶子证书,
+    //emudhra 模式: 使用所选链路已泄露的中间 CA 私钥(ECDSA)签发叶子证书,
     //issuer 使用中间 CA subject DN 的原始字节
-    if (enableEmudhra) {
+    var emudhra = currentEmudhra;
+    if (emudhra != null) {
       return X509Utils.generateSelfSignedCertificate(
-        EmudhraChain.intermediateCert,
+        emudhra.issuerCert,
         serverPubKey,
-        EmudhraChain.privateKey,
+        emudhra.privateKey,
         36,
         sans: sans,
         serialNumber: Random().nextInt(1000000).toString(),
         subject: x509Subject,
-        issuerRawBytes: EmudhraChain.issuerDnBytes,
+        issuerRawBytes: emudhra.issuerDnBytes,
         signatureAlgorithm: EmudhraChain.signatureAlgorithmOid,
         notBefore: notBefore,
         notAfter: notAfter,
