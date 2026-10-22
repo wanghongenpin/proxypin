@@ -170,7 +170,7 @@ extension WindowControllerCompat on WindowController {
         await invokeMethod(method, arguments);
         return;
       } on WindowChannelException catch (e) {
-        if (e.code != 'CHANNEL_UNREGISTERED' || i == 99) {
+        if (e.code != 'CHANNEL_UNREGISTERED' || i == 19) {
           rethrow;
         }
         await Future.delayed(const Duration(milliseconds: 100));

@@ -260,8 +260,8 @@ class MultiWindow {
     }
   }
 
-  /// 查找已存在的单例子窗口并前置。原生窗口注册表（desktop_multi_window 维护，窗口销毁即移除）
-  /// 始终准确；查询/前置任何一步异常都返回 null，调用方回落到新建窗口
+  /// 查找已存在的单例子窗口并前置。窗口销毁后原生注册表可能短暂残留已注销 channel 的条目，
+  /// 残留条目 focus 失败时跳过继续扫描；整体查询异常返回 null，调用方回落到新建窗口
   static Future<WindowController?> _focusSingletonWindow(String widgetName) async {
     try {
       for (var window in await WindowController.getAll()) {
@@ -275,8 +275,15 @@ class MultiWindow {
           continue; // 主窗口等无 JSON 参数的窗口
         }
         if (name != widgetName) continue;
-        await DesktopMultiWindow.invokeMethod(window.windowId, 'window_focus');
-        return window;
+        try {
+          await DesktopMultiWindow.invokeMethod(window.windowId, 'window_focus');
+          return window;
+        } catch (e) {
+          // 窗口刚销毁、原生注册表残留（channel 已注销）：跳过继续扫描，
+          // 否则异常中断循环会导致已存在的单例窗口被重复创建
+          logger.d('skip focusing stale window ${window.windowId} (likely closed): $e');
+          continue;
+        }
       }
     } catch (e) {
       logger.w('focus singleton window $widgetName failed, fallback to create new: $e');

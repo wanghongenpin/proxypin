@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
@@ -96,47 +97,51 @@ class _RequestMapPageState extends State<RequestMapPage> {
             child: futureWidget(
                 RequestMapManager.instance,
                 loading: true,
-                (data) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Row(children: [
-                            SizedBox(
-                                width: 350,
-                                child: ListTile(
-                                    title: Text("${localizations.enable} ${localizations.requestMap}"),
-                                    subtitle:
-                                        Text(localizations.requestMapDescribe, style: const TextStyle(fontSize: 12)),
-                                    trailing: SwitchWidget(
-                                        value: data.enabled,
-                                        scale: 0.8,
-                                        onChanged: (value) {
-                                          data.enabled = value;
-                                          _refreshConfig();
-                                        }))),
-                            Expanded(
-                                child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                const SizedBox(width: 10),
-                                TextButton.icon(
-                                    icon: const Icon(Icons.add, size: 18),
-                                    onPressed: showEdit,
-                                    label: Text(localizations.add)),
-                                const SizedBox(width: 10),
-                                TextButton.icon(
-                                  icon: const Icon(Icons.input_rounded, size: 18),
-                                  onPressed: import,
-                                  label: Text(localizations.import),
-                                ),
-                                const SizedBox(width: 10),
-                              ],
-                            )),
-                            const SizedBox(width: 15)
-                          ]),
-                          const SizedBox(height: 5),
-                          RequestMapList(list: data.rules, windowId: widget.windowId),
-                        ]))));
+                (data) => LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                              Row(children: [
+                                SizedBox(
+                                    width: 350,
+                                    child: ListTile(
+                                        title: Text("${localizations.enable} ${localizations.requestMap}"),
+                                        subtitle: Text(localizations.requestMapDescribe,
+                                            style: const TextStyle(fontSize: 12)),
+                                        trailing: SwitchWidget(
+                                            value: data.enabled,
+                                            scale: 0.8,
+                                            onChanged: (value) {
+                                              data.enabled = value;
+                                              _refreshConfig();
+                                            }))),
+                                Expanded(
+                                    child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const SizedBox(width: 10),
+                                    TextButton.icon(
+                                        icon: const Icon(Icons.add, size: 18),
+                                        onPressed: showEdit,
+                                        label: Text(localizations.add)),
+                                    const SizedBox(width: 10),
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.input_rounded, size: 18),
+                                      onPressed: import,
+                                      label: Text(localizations.import),
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ],
+                                )),
+                                const SizedBox(width: 15)
+                              ]),
+                              const SizedBox(height: 5),
+                              SizedBox(
+                                  height: max(300, constraints.maxHeight - 85),
+                                  child: RequestMapList(list: data.rules, windowId: widget.windowId)),
+                            ]))))));
   }
 
   //导入js
@@ -229,7 +234,6 @@ class _RequestMapListState extends State<RequestMapList> {
             },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
-                height: 530,
                 decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
