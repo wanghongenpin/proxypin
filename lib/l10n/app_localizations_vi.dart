@@ -21,6 +21,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get requests => 'Bắt gói';
 
   @override
+  String get navRequests => 'Yêu cầu';
+
+  @override
   String get favorites => 'Yêu thích';
 
   @override

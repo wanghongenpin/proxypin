@@ -21,6 +21,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get requests => 'Tangkap';
 
   @override
+  String get navRequests => 'Permintaan';
+
+  @override
   String get favorites => 'Favorit';
 
   @override

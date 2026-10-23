@@ -9,7 +9,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get breakpoint => 'Punto de interrupción';
+  String get breakpoint => 'Puntos de interrupción';
 
   @override
   String get breakpointRule => 'Regla de punto de interrupción';
@@ -19,6 +19,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get requests => 'Captura';
+
+  @override
+  String get navRequests => 'Solicitudes';
 
   @override
   String get favorites => 'Favoritos';
@@ -45,7 +48,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get filter => 'Filtro de proxy';
 
   @override
-  String get script => 'Script';
+  String get script => 'Scripts';
 
   @override
   String get share => 'Compartir';

@@ -187,6 +187,7 @@
   "requestRewriteRule": "Aturan penulisan ulang",
   "requestRewriteDeleteConfirm": "Hapus {size} aturan?",
   "requests": "Tangkap",
+  "navRequests": "Permintaan",
   "reset": "Atur ulang",
   "resetDefaultCA": "Reset sertifikat root default",
   "resetDefaultCADescribe": "Yakin ingin mereset sertifikat root default?",

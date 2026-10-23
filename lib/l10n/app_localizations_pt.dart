@@ -9,7 +9,7 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
-  String get breakpoint => 'Breakpoint';
+  String get breakpoint => 'Breakpoints';
 
   @override
   String get breakpointRule => 'Breakpoint Rule';
@@ -19,6 +19,9 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get requests => 'Requests';
+
+  @override
+  String get navRequests => 'Requests';
 
   @override
   String get favorites => 'Favorites';
@@ -45,7 +48,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get filter => 'Proxy Filter';
 
   @override
-  String get script => 'Script';
+  String get script => 'Scripts';
 
   @override
   String get share => 'Share';
@@ -81,7 +84,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get download => 'Download';
 
   @override
-  String get config => 'Configuration';
+  String get config => 'Config';
 
   @override
   String get version => 'Version';
@@ -924,7 +927,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get proxyIgnoreDomain => 'Proxy ignores domain';
+  String get proxyIgnoreDomain => 'Proxy Bypass';
 
   @override
   String get domainWhitelistDescribe =>
@@ -1480,7 +1483,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
 
   @override
-  String get breakpoint => 'Ponto de interrupção';
+  String get breakpoint => 'Pontos de interrupção';
 
   @override
   String get breakpointRule => 'Regra de ponto de interrupção';
@@ -1490,6 +1493,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get requests => 'Capturas';
+
+  @override
+  String get navRequests => 'Requisições';
 
   @override
   String get favorites => 'Favoritos';
@@ -1513,7 +1519,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get filter => 'Filtro de proxy';
 
   @override
-  String get script => 'Script';
+  String get script => 'Scripts';
 
   @override
   String get share => 'Compartilhar';
@@ -1564,7 +1570,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get httpsProxy => 'Proxy HTTPS';
 
   @override
-  String get setting => 'Configurações';
+  String get setting => 'Ajustes';
 
   @override
   String get mobileConnect => 'Conexão móvel';

@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get breakpoint => 'Breakpoint';
+  String get breakpoint => 'Breakpoints';
 
   @override
   String get breakpointRule => 'Breakpoint Rule';
@@ -19,6 +19,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requests => 'Requests';
+
+  @override
+  String get navRequests => 'Requests';
 
   @override
   String get favorites => 'Favorites';
@@ -45,7 +48,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filter => 'Proxy Filter';
 
   @override
-  String get script => 'Script';
+  String get script => 'Scripts';
 
   @override
   String get share => 'Share';
@@ -81,7 +84,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get download => 'Download';
 
   @override
-  String get config => 'Configuration';
+  String get config => 'Config';
 
   @override
   String get version => 'Version';
@@ -924,7 +927,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reset => 'Reset';
 
   @override
-  String get proxyIgnoreDomain => 'Proxy ignores domain';
+  String get proxyIgnoreDomain => 'Proxy Bypass';
 
   @override
   String get domainWhitelistDescribe =>

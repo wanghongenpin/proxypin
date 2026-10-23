@@ -3,6 +3,7 @@
   "breakpointRule": "断点规则",
   "name": "名称",
   "requests": "抓包",
+  "navRequests": "请求",
   "favorites": "收藏",
   "history": "历史",
   "toolbox": "工具箱",

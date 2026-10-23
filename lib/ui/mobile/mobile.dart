@@ -286,7 +286,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
                                   items: [
                                     // 设计稿线条 SVG 图标：list / wrench / sliders / gear（工具箱第 2、配置第 3）
                                     // 与桌面 rail 首项同款标签（设计稿底导航「请求」）
-                                    _navItem(context, 'list', localizations.request, index == 0),
+                                    _navItem(context, 'list', localizations.navRequests, index == 0),
                                     _navItem(context, 'wrench', localizations.toolbox, index == 1),
                                     _navItem(context, 'sliders', localizations.config, index == 2),
                                     _navItem(context, 'gear', localizations.setting, index == 3),

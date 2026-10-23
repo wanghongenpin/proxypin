@@ -21,6 +21,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get requests => 'จับแพ็กเก็ต';
 
   @override
+  String get navRequests => 'คำขอ';
+
+  @override
   String get favorites => 'รายการโปรด';
 
   @override
@@ -81,7 +84,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get download => 'ดาวน์โหลด';
 
   @override
-  String get config => 'การตั้งค่า';
+  String get config => 'การกำหนดค่า';
 
   @override
   String get version => 'Version';

@@ -109,7 +109,7 @@ abstract class AppLocalizations {
   /// No description provided for @breakpoint.
   ///
   /// In en, this message translates to:
-  /// **'Breakpoint'**
+  /// **'Breakpoints'**
   String get breakpoint;
 
   /// No description provided for @breakpointRule.
@@ -129,6 +129,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Requests'**
   String get requests;
+
+  /// No description provided for @navRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests'**
+  String get navRequests;
 
   /// No description provided for @favorites.
   ///
@@ -181,7 +187,7 @@ abstract class AppLocalizations {
   /// No description provided for @script.
   ///
   /// In en, this message translates to:
-  /// **'Script'**
+  /// **'Scripts'**
   String get script;
 
   /// No description provided for @share.
@@ -253,7 +259,7 @@ abstract class AppLocalizations {
   /// No description provided for @config.
   ///
   /// In en, this message translates to:
-  /// **'Configuration'**
+  /// **'Config'**
   String get config;
 
   /// No description provided for @version.
@@ -1885,7 +1891,7 @@ abstract class AppLocalizations {
   /// No description provided for @proxyIgnoreDomain.
   ///
   /// In en, this message translates to:
-  /// **'Proxy ignores domain'**
+  /// **'Proxy Bypass'**
   String get proxyIgnoreDomain;
 
   /// No description provided for @domainWhitelistDescribe.

@@ -21,6 +21,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requests => '抓包';
 
   @override
+  String get navRequests => '请求';
+
+  @override
   String get favorites => '收藏';
 
   @override
@@ -1477,6 +1480,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get requests => '抓包';
 
   @override
+  String get navRequests => '請求';
+
+  @override
   String get favorites => '收藏';
 
   @override
@@ -1534,7 +1540,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get download => '下載';
 
   @override
-  String get config => '設定';
+  String get config => '配置';
 
   @override
   String get version => '版本';

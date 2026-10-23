@@ -187,6 +187,7 @@
   "requestRewriteRule": "Quy tắc viết lại yêu cầu",
   "requestRewriteDeleteConfirm": "Xóa {size} quy tắc?",
   "requests": "Bắt gói",
+  "navRequests": "Yêu cầu",
   "reset": "Đặt lại",
   "resetDefaultCA": "Đặt lại chứng chỉ gốc mặc định",
   "resetDefaultCADescribe": "Bạn có chắc muốn đặt lại chứng chỉ gốc mặc định không?",
