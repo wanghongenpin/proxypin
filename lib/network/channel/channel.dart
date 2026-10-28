@@ -80,7 +80,7 @@ class Channel {
 
   void serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
     _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
+    _socket.done.then((value) => isOpen = false, onError: (_) => isOpen = false);
     dispatcher.listen(this, channelContext);
   }
 
@@ -92,7 +92,8 @@ class Channel {
         host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
 
     _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
+    //done 以错误完成时（如 Broken pipe）也要置位关闭；不挂 onError 这条派生 Future 会冒到 VM 顶层
+    _socket.done.then((value) => isOpen = false, onError: (_) => isOpen = false);
     dispatcher.listen(this, channelContext);
 
     return secureSocket;
@@ -105,7 +106,8 @@ class Channel {
         host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
 
     _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
+    //done 以错误完成时（如 Broken pipe）也要置位关闭；不挂 onError 这条派生 Future 会冒到 VM 顶层
+    _socket.done.then((value) => isOpen = false, onError: (_) => isOpen = false);
     return secureSocket;
   }
 

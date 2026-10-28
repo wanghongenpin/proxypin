@@ -143,7 +143,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
           channelContext.bufferHttp2Frames(decodeResult.forward!);
           await channelContext.sendInitialHttp2Settings();
         } else {
-          logger.w("[$channel] forward remoteChannel is null");
+          logger.d("[$channel] forward remoteChannel is null");
         }
 
         if (decodeResult.data == null) {

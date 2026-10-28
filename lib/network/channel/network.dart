@@ -89,7 +89,7 @@ class Server extends Network {
       var channel = Channel(socket);
       _connections.add(channel);
 
-      socket.done.whenComplete(() => _connections.remove(channel));
+      socket.done.whenComplete(() => _connections.remove(channel)).onError((_, __) {});
 
       ChannelContext channelContext = ChannelContext();
       channelContext.clientChannel = channel;
