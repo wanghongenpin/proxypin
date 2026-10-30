@@ -18,6 +18,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/util/cert/emudhra.dart';
+import 'package:proxypin/network/util/crts.dart';
 import 'package:proxypin/network/util/file_read.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/util/logger.dart';
@@ -57,6 +59,19 @@ class Configuration {
 
   bool enabledHttp2 = false; // 是否启用http2
 
+  String _emudhraChain = EmudhraChains.off;
+
+  /// 选用的 eMudhra 链路 id, [EmudhraChains.off] 表示关闭, 其余取值见 [EmudhraChains.all],
+  /// 开启后信任对应根证书的系统无需安装自定义 CA
+  String get emudhraChain => _emudhraChain;
+
+  set emudhraChain(String value) {
+    _emudhraChain = value;
+    //同步证书管理器并清空已生成的域名证书缓存
+    CertificateManager.emudhraChain = value;
+    CertificateManager.cleanCache();
+  }
+
   //历史记录缓存时间
   int historyCacheTime = 0;
 
@@ -89,6 +104,9 @@ class Configuration {
     enableSystemProxy = config['enableSystemProxy'] ?? (config['enableDesktop'] ?? true);
     enableSocks5 = config['enableSocks5'] ?? true;
     enabledHttp2 = config['enabledHttp2'] ?? false;
+    //旧版本布尔开关迁移: enableEmudhra=true 时默认使用第一条链路
+    emudhraChain = config['emudhraChain'] ??
+        (config['enableEmudhra'] == true ? EmudhraChains.defaultChainId : EmudhraChains.off);
 
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
     historyCacheTime = config['historyCacheTime'] ?? 0;
@@ -150,6 +168,7 @@ class Configuration {
       'appBlacklist': appBlacklist,
       'historyCacheTime': historyCacheTime,
       'enabledHttp2': enabledHttp2,
+      'emudhraChain': _emudhraChain,
       'whitelist': HostFilter.whitelist.toJson(),
       'blacklist': HostFilter.blacklist.toJson(),
     };
