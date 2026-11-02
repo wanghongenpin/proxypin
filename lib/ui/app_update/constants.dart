@@ -2,10 +2,9 @@ import 'dart:io';
 
 abstract class Constants {
   static const githubUrl = "https://github.com/wanghongenpin/proxypin";
-  static const githubReleasesApiUrl =
-      "https://api.github.com/repos/wanghongenpin/proxypin/releases";
-  static const githubLatestReleaseUrl =
-      "https://github.com/wanghongenpin/proxypin/releases/latest";
+  static const githubReleasesApiUrl = "https://api.github.com/repos/wanghongenpin/proxypin/releases";
+  static const githubLatestReleaseUrl = "https://github.com/wanghongenpin/proxypin/releases/latest";
+  static const githubReleasesFeedUrl = "https://github.com/wanghongenpin/proxypin/releases.atom";
 
   static const String ignoreReleaseVersionKey = "ignored_release_version";
 
