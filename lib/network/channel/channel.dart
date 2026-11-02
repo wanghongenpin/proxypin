@@ -20,6 +20,7 @@ import 'dart:math';
 
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/components/manager/client_cert_manager.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/util/socket_address.dart';
 
@@ -79,18 +80,20 @@ class Channel {
 
   void serverSecureSocket(SecureSocket secureSocket, ChannelContext channelContext) {
     _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
+    _socket.done.then((value) => isOpen = false, onError: (_) => isOpen = false);
     dispatcher.listen(this, channelContext);
   }
 
   //向远程发起ssl连接
   Future<SecureSocket> secureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
+    SecurityContext? context = await ClientCertManager.securityContextForHost(host);
     SecureSocket secureSocket = await SecureSocket.secure(socket,
-        host: host, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+        host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
 
     _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
+    //done 以错误完成时（如 Broken pipe）也要置位关闭；不挂 onError 这条派生 Future 会冒到 VM 顶层
+    _socket.done.then((value) => isOpen = false, onError: (_) => isOpen = false);
     dispatcher.listen(this, channelContext);
 
     return secureSocket;
@@ -98,11 +101,13 @@ class Channel {
 
   Future<SecureSocket> startSecureSocket(ChannelContext channelContext,
       {String? host, List<String>? supportedProtocols}) async {
+    SecurityContext? context = await ClientCertManager.securityContextForHost(host);
     SecureSocket secureSocket = await SecureSocket.secure(socket,
-        host: host, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+        host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
 
     _socket = secureSocket;
-    _socket.done.then((value) => isOpen = false);
+    //done 以错误完成时（如 Broken pipe）也要置位关闭；不挂 onError 这条派生 Future 会冒到 VM 顶层
+    _socket.done.then((value) => isOpen = false, onError: (_) => isOpen = false);
     return secureSocket;
   }
 

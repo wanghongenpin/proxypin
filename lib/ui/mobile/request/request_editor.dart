@@ -19,19 +19,27 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/host_port.dart';
+import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/http/http_client.dart';
-import 'package:proxypin/ui/component/search/finder.dart';
+import 'package:proxypin/ui/component/env_var_highlight.dart';
+import 'package:proxypin/ui/component/form_body_editor.dart';
 import 'package:proxypin/ui/component/state_component.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/curl.dart';
+import 'package:proxypin/utils/highlight_languages.dart';
+import 'package:proxypin/utils/form_url.dart';
+import 'package:proxypin/utils/multipart.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/xml_formatter.dart';
 
@@ -239,15 +247,17 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
   ///发送请求
   Future<void> sendRequest() async {
     var currentState = requestLineKey.currentState!;
+    // 先取 body：multipart 构建时会把带 boundary 的 Content-Type 写回 header 行
+    var bodyBytes = requestKey.currentState?.getBodyBytes();
     var headers = requestKey.currentState?.getHeaders();
-    var requestBody = requestKey.currentState?.getBody();
-    String url = currentState.requestUrl.text;
+    String url = _renderEnv(currentState.requestUrl.text);
+    _renderHeadersInPlace(headers);
 
     HttpRequest request = HttpRequest(currentState.requestMethod, Uri.parse(url).toString(),
         protocolVersion: this.request?.protocolVersion ?? "HTTP/1.1");
 
     request.headers.addAll(headers);
-    request.body = requestBody == null ? null : utf8.encode(requestBody);
+    request.body = bodyBytes;
 
     var proxyInfo = widget.proxyServer?.isRunning == true ? ProxyInfo.of("127.0.0.1", widget.proxyServer?.port) : null;
 
@@ -273,27 +283,41 @@ class RequestEditorState extends State<MobileRequestEditor> with SingleTickerPro
     executed = true;
     if (widget.source == RequestEditorSource.breakpointRequest) {
       var currentState = requestLineKey.currentState!;
+      var bodyBytes = requestKey.currentState?.getBodyBytes();
       var headers = requestKey.currentState?.getHeaders();
-      var requestBody = requestKey.currentState?.getBody();
-      String url = currentState.requestUrl.text;
+      String url = _renderEnv(currentState.requestUrl.text);
+      _renderHeadersInPlace(headers);
 
       HttpRequest newRequest = request!.copy(uri: url);
       newRequest.method = currentState.requestMethod;
       newRequest.headers.clear();
       newRequest.headers.addAll(headers);
-      newRequest.body = requestBody == null ? null : utf8.encode(requestBody);
+      newRequest.body = bodyBytes;
       widget.onExecuteRequest?.call(newRequest);
     } else if (widget.source == RequestEditorSource.breakpointResponse) {
+      var bodyBytes = responseKey.currentState?.getBodyBytes();
       var headers = responseKey.currentState?.getHeaders();
-      var responseBody = responseKey.currentState?.getBody();
+      _renderHeadersInPlace(headers);
 
       if (response == null) return;
       HttpResponse newResponse = response!.copy();
       newResponse.headers.clear();
       newResponse.headers.addAll(headers);
-      newResponse.body = responseBody == null ? null : utf8.encode(responseBody);
+      newResponse.body = bodyBytes;
       widget.onExecuteResponse?.call(newResponse);
     }
+  }
+
+  /// 用当前激活的环境变量渲染 `{{name}}`。EnvironmentManager 未加载或未启用时返回原值。
+  static String _renderEnv(String input) => EnvironmentManager.tryRender(input) ?? input;
+
+  /// 就地渲染 headers 每一项的 value。
+  static void _renderHeadersInPlace(HttpHeaders? headers) {
+    headers?.forEach((_, values) {
+      for (int i = 0; i < values.length; i++) {
+        values[i] = _renderEnv(values[i]);
+      }
+    });
   }
 }
 
@@ -375,6 +399,11 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
   HttpMessage? message;
   CodeController? body;
 
+  /// FORM-DATA / FORM-URL 表单数据与 multipart boundary
+  FormBody formData = FormBody();
+  String _boundary = Multipart.newBoundary();
+  final formEditorKey = GlobalKey<FormBodyEditorState>();
+
   /// 内层 Tab 控制器：Params(请求才有) / Headers / Body
   TabController? _innerTab;
 
@@ -390,9 +419,23 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
   /// 是否显示 URL Params 子 tab：仅请求消息且外层传了 query notifier 时
   bool get _hasParamsTab => widget.urlQueryNotifier != null;
 
-  String? getBody() {
-    if (_bodyLanguage == _BodyLanguage.none) return null;
-    return body?.text;
+  /// 可直接发送的 body 字节；NONE 返回 null。
+  /// multipart 文本值在此渲染环境变量，同时把带 boundary 的 Content-Type 写回 header 行；
+  /// 其余类型也在此渲染环境变量，调用方不再转换 body。
+  List<int>? getBodyBytes() {
+    switch (_bodyLanguage) {
+      case _BodyLanguage.none:
+        return null;
+      case _BodyLanguage.formUrl:
+        return FormUrl.buildBytes(formData);
+      case _BodyLanguage.formData:
+        headerKey.currentState
+            ?.setParam('Content-Type', 'multipart/form-data; boundary=$_boundary');
+        return Multipart.buildBytes(formData, boundary: _boundary);
+      default:
+        final text = body?.text ?? '';
+        return utf8.encode(EnvironmentManager.tryRender(text) ?? text);
+    }
   }
 
   @override
@@ -401,6 +444,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
     message = widget.message;
     body = CodeController()..text = widget.message?.bodyAsString ?? '';
     _bodyLanguage = _resolveLanguage(widget.message);
+    _loadFormData(widget.message);
     _innerTab = TabController(length: _hasParamsTab ? 3 : 2, vsync: this, initialIndex: _hasParamsTab ? 1 : 0);
     if (widget.message?.headers == null && !widget.readOnly) {
       initHeader["User-Agent"] = ["ProxyPin/${AppConfiguration.version}"];
@@ -420,8 +464,28 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
     this.message = message;
     body?.text = message?.bodyAsString ?? '';
     _bodyLanguage = _resolveLanguage(message);
+    _loadFormData(message);
     headerKey.currentState?.refreshParam(message?.headers.getHeaders());
     setState(() {});
+  }
+
+  /// form-url / multipart 请求：解析已有 body 回填表单（multipart 保留原 boundary）；否则重置
+  void _loadFormData(HttpMessage? msg) {
+    final ct = msg?.headers.contentType.toLowerCase() ?? '';
+    final msgBody = msg?.body;
+    if (msgBody != null && msgBody.isNotEmpty) {
+      if (ct.contains('multipart/form-data')) {
+        formData = Multipart.parse(msgBody, ct);
+        _boundary = Multipart.boundaryFromContentType(ct) ?? Multipart.newBoundary();
+        return;
+      }
+      if (ct.contains('application/x-www-form-urlencoded')) {
+        formData = FormUrl.parse(msgBody);
+        return;
+      }
+    }
+    formData = FormBody();
+    _boundary = Multipart.newBoundary();
   }
 
   HttpHeaders? getHeaders() {
@@ -524,12 +588,32 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
       return KeepAliveWrapper(child: SingleChildScrollView(child: HttpBodyWidget(httpMessage: message)));
     }
 
+    if (_bodyLanguage == _BodyLanguage.formData || _bodyLanguage == _BodyLanguage.formUrl) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _bodyToolbar(),
+        const SizedBox(height: 4),
+        Expanded(child: FormBodyEditor(
+          key: formEditorKey,
+          form: formData,
+          allowFiles: _bodyLanguage == _BodyLanguage.formData,
+        )),
+      ]);
+    }
+
     final isCN = localizations.localeName == 'zh';
     final isNone = _bodyLanguage == _BodyLanguage.none;
+    final ct = _bodyLanguageToContentType[_bodyLanguage];
+    final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
+    body?.language = language;
+    final isDark = ThemeCompat.brightnessOf(context) == Brightness.dark;
+    final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
     final pageBg = Theme.of(context).colorScheme.surface;
-    final editorTheme = <String, TextStyle>{
-      'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-    };
+    final editorTheme = isDark
+        ? {
+            ...baseTheme,
+            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
+          }
+        : baseTheme;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _bodyToolbar(),
@@ -543,7 +627,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
                 ),
               )
             : Container(
-                decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
                 child: CodeTheme(
                   data: CodeThemeData(styles: editorTheme),
                   child: CodeField(
@@ -551,7 +635,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
                     controller: body!,
                     wrap: _bodyWrap,
                     cursorColor: Theme.of(context).colorScheme.primary,
-                    textStyle: const TextStyle(fontSize: 14.2),
+                    textStyle: const TextStyle(fontSize: 13),
                   ),
                 ),
               ),
@@ -562,6 +646,12 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
   Widget _bodyToolbar() {
     final isCN = localizations.localeName == 'zh';
     final color = Theme.of(context).colorScheme.primary;
+    // 窄屏（小屏手机）按钮只显示图标，避免工具栏溢出
+    final narrow = MediaQuery.of(context).size.width < 380;
+    // NONE 无 body；FORM-DATA/FORM-URL 由表单构建器管理，纯文本工具均不适用
+    final textToolsDisabled = _bodyLanguage == _BodyLanguage.none ||
+        _bodyLanguage == _BodyLanguage.formData ||
+        _bodyLanguage == _BodyLanguage.formUrl;
 
     return SizedBox(
         height: 36,
@@ -586,35 +676,72 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
               },
             ),
           ),
-          const Spacer(),
-          IconButton(
-            tooltip: localizations.wordWrap,
-            iconSize: 18,
-            visualDensity: VisualDensity.compact,
-            icon: Icon(Icons.wrap_text, color: _bodyWrap ? color : null),
-            onPressed: _bodyLanguage == _BodyLanguage.none ? null : () => setState(() => _bodyWrap = !_bodyWrap),
-          ),
-          IconButton(
-            tooltip: localizations.format,
-            iconSize: 18,
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.auto_fix_high),
-            onPressed: _bodyLanguage == _BodyLanguage.none ? null : _beautifyBody,
-          ),
-          IconButton(
-            tooltip: localizations.copy,
-            iconSize: 18,
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.copy),
-            onPressed: _bodyLanguage == _BodyLanguage.none
-                ? null
-                : () {
-                    final text = body?.text ?? '';
-                    if (text.isEmpty) return;
-                    Clipboard.setData(ClipboardData(text: text));
-                    FlutterToastr.show(localizations.copied, context);
-                  },
-          ),
+          // FORM-DATA/FORM-URL：添加入口放工具栏（添加文本；multipart 另有选择文件）
+          if (_bodyLanguage == _BodyLanguage.formData || _bodyLanguage == _BodyLanguage.formUrl) ...[
+            const Spacer(),
+            // 中文"添加文本"不空格，英文"Add Text"需空格
+            () {
+              final addTextLabel = isCN ? '${localizations.add}${localizations.text}'
+                  : '${localizations.add} ${localizations.text}';
+              return narrow
+                  ? IconButton(
+                      onPressed: () => formEditorKey.currentState?.addTextField(),
+                      tooltip: addTextLabel,
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.text_fields),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => formEditorKey.currentState?.addTextField(),
+                      icon: const Icon(Icons.text_fields, size: 16),
+                      label: Text(addTextLabel, style: const TextStyle(fontSize: 12.5)),
+                    );
+            }(),
+            if (_bodyLanguage == _BodyLanguage.formData)
+              narrow
+                  ? IconButton(
+                      onPressed: () => formEditorKey.currentState?.addFiles(),
+                      tooltip: localizations.selectFile,
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.upload_file),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => formEditorKey.currentState?.addFiles(),
+                      icon: const Icon(Icons.upload_file, size: 16),
+                      label: Text(localizations.selectFile, style: const TextStyle(fontSize: 12.5)),
+                    ),
+          ],
+          // 其他文本类型：换行/美化/复制
+          if (!textToolsDisabled) ...[
+            const Spacer(),
+            IconButton(
+              tooltip: localizations.wordWrap,
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              icon: Icon(Icons.wrap_text, color: _bodyWrap ? color : null),
+              onPressed: () => setState(() => _bodyWrap = !_bodyWrap),
+            ),
+            IconButton(
+              tooltip: localizations.format,
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.auto_fix_high),
+              onPressed: _beautifyBody,
+            ),
+            IconButton(
+              tooltip: localizations.copy,
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.copy),
+              onPressed: () {
+                final text = body?.text ?? '';
+                if (text.isEmpty) return;
+                Clipboard.setData(ClipboardData(text: text));
+                FlutterToastr.show(localizations.copied, context);
+              },
+            ),
+          ],
         ]));
   }
 
@@ -626,6 +753,12 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
     if (lang == _BodyLanguage.raw) return;
     final headerState = headerKey.currentState;
     if (headerState == null) return;
+
+    // FORM-DATA 需要带上 boundary 才是合法的 Content-Type
+    if (lang == _BodyLanguage.formData) {
+      headerState.setParam('Content-Type', 'multipart/form-data; boundary=$_boundary');
+      return;
+    }
 
     if (lang == _BodyLanguage.none) {
       headerState.removeParam('Content-Type');
@@ -674,7 +807,7 @@ class _RequestLine extends StatefulWidget {
 }
 
 class _RequestLineState extends State<_RequestLine> {
-  TextEditingController requestUrl = TextEditingController(text: "");
+  EnvHighlightTextEditingController requestUrl = EnvHighlightTextEditingController(text: "");
   HttpMethod requestMethod = HttpMethod.get;
 
   @override
@@ -1171,7 +1304,8 @@ class KeyValState extends State<KeyValWidget> with AutomaticKeepAliveClientMixin
       const SizedBox(width: 8),
       Expanded(
         flex: 6,
-        child: Text(keyVal.value, style: const TextStyle(fontSize: 13), maxLines: 5, overflow: TextOverflow.ellipsis),
+        child: buildEnvHighlightText(context, keyVal.value,
+            style: const TextStyle(fontSize: 13), maxLines: 5, overflow: TextOverflow.ellipsis),
       ),
     ]);
   }

@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/utils/replay_task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 ///高级重放
 /// @author wang
 class MobileCustomRepeat extends StatefulWidget {
-  final Function onRepeat;
+  final void Function(ReplayTaskConfig config) onScheduled;
   final SharedPreferences prefs;
 
-  const MobileCustomRepeat({super.key, required this.onRepeat, required this.prefs});
+  const MobileCustomRepeat({super.key, required this.onScheduled, required this.prefs});
 
   @override
   State<StatefulWidget> createState() => _CustomRepeatState();
@@ -113,7 +112,15 @@ class _CustomRepeatState extends State<MobileCustomRepeat> {
                   delayValue += schedule.difference(now).inMilliseconds;
                 }
 
-                Future.delayed(Duration(milliseconds: delayValue), () => submitTask(int.parse(count.text)));
+                //提交重放任务
+                widget.onScheduled(ReplayTaskConfig(
+                  count: int.parse(count.text),
+                  initialDelay: delayValue,
+                  fixed: fixed,
+                  interval: int.parse(interval.text),
+                  minInterval: int.parse(minInterval.text),
+                  maxInterval: int.parse(maxInterval.text),
+                ));
                 Navigator.of(context).pop();
               },
             )
@@ -182,28 +189,6 @@ class _CustomRepeatState extends State<MobileCustomRepeat> {
   }
 
   String _two(int v) => v.toString().padLeft(2, '0');
-
-  //定时重放
-  void submitTask(int counter) {
-    if (counter <= 0) {
-      return;
-    }
-    widget.onRepeat.call();
-
-    int intervalValue = int.parse(interval.text);
-    //随机
-    if (!fixed) {
-      int min = int.parse(minInterval.text);
-      int max = int.parse(maxInterval.text);
-      intervalValue = Random().nextInt(max - min) + min;
-    }
-
-    Future.delayed(Duration(milliseconds: intervalValue), () {
-      if (counter - 1 > 0) {
-        submitTask(counter - 1);
-      }
-    });
-  }
 
   //间隔widget
   Widget intervalWidget() {

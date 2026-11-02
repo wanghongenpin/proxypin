@@ -21,6 +21,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requests => '抓包';
 
   @override
+  String get navRequests => '请求';
+
+  @override
   String get favorites => '收藏';
 
   @override
@@ -31,6 +34,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get preference => '偏好设置';
+
+  @override
+  String get preferenceShort => '偏好';
 
   @override
   String get feedback => '反馈';
@@ -61,9 +67,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get password => '密码';
-
-  @override
-  String get proxySetting => '代理设置';
 
   @override
   String get setAs => '设置为';
@@ -273,6 +276,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestMethod => '请求方法';
 
   @override
+  String get protocol => '协议';
+
+  @override
+  String get size => '大小';
+
+  @override
+  String get remoteAddress => '远程地址';
+
+  @override
+  String get requestTime => '请求时间';
+
+  @override
+  String get app => '应用';
+
+  @override
+  String get requestUrl => '请求 URL';
+
+  @override
   String get param => '参数';
 
   @override
@@ -336,9 +357,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get replace => '替换';
-
-  @override
-  String get clickEdit => '点击编辑';
 
   @override
   String get refresh => '刷新';
@@ -616,6 +634,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get requestBody => '请求体';
 
   @override
+  String get queryParams => '查询参数';
+
+  @override
+  String get path => '路径';
+
+  @override
+  String get requestCookies => '请求 Cookies';
+
+  @override
+  String get responseCookies => '响应 Cookies';
+
+  @override
   String get responseBody => '响应体';
 
   @override
@@ -661,10 +691,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importCaP12 => '导入根证书 (.p12)';
 
   @override
-  String get trustCa => '信任证书';
+  String get clientCertificate => '客户端证书 (mTLS)';
 
   @override
-  String get profileDownload => 'Profile Download';
+  String get importClientCert => '导入客户端证书 (.p12)';
+
+  @override
+  String get expires => '有效期至';
+
+  @override
+  String get expired => '已过期';
+
+  @override
+  String get trustCa => '信任证书';
 
   @override
   String get exportCA => '导出根证书';
@@ -772,9 +811,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connect => '连接';
 
   @override
-  String get reconnect => '重新连接';
-
-  @override
   String remoteConnected(Object os) {
     return '已连接$os，流量将转发到$os';
   }
@@ -784,9 +820,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get connectSuccess => '连接成功';
-
-  @override
-  String get connectedRemote => '已连接远程';
 
   @override
   String get connected => '已连接';
@@ -914,12 +947,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get material3 => 'Material3是谷歌开源设计系统的最新版本';
 
   @override
-  String get iosVpnBackgroundAudio => '开启抓包后，退出到后台。为了维护主UI线程的网络通信，将启用静音音频播放以保持主线程运行。否则，它将只在后台运行30秒。您同意在启用抓包后在后台播放音频吗?';
-
-  @override
-  String get markRead => '标记已读';
-
-  @override
   String get autoRead => '自动已读';
 
   @override
@@ -956,6 +983,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get certHashName => '证书Hash名称';
 
   @override
+  String get certHashShort => '证书Hash';
+
+  @override
   String get regExp => '正则表达式';
 
   @override
@@ -963,12 +993,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get qrCode => '二维码';
-
-  @override
-  String get jsonViewer => 'JSON 工具';
-
-  @override
-  String get xmlViewer => 'XML 查看器';
 
   @override
   String get textDiff => '文本对比';
@@ -1235,9 +1259,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpPort => '端口';
 
   @override
-  String get mcpAdvanced => '高级设置';
-
-  @override
   String get mcpConfig => 'MCP 配置';
 
   @override
@@ -1260,18 +1281,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpLearnMore => '了解有关 MCP 的更多信息';
-
-  @override
-  String get mcpSkills => '技能';
-
-  @override
-  String get mcpSkillsTitle => 'MCP 技能';
-
-  @override
-  String get mcpSkillsReadonly => '只读流量工具';
-
-  @override
-  String get mcpSkillsRules => '规则、重放与环境工具';
 
   @override
   String get mcpEndpoint => 'MCP 服务地址';
@@ -1306,31 +1315,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpRegenerateToken => '重置令牌';
 
   @override
-  String get mcpStatusRunning => '运行中';
+  String get statusRunning => '运行中';
 
   @override
-  String get mcpStatusStopped => '已停止';
-
-  @override
-  String get mcpClientLabel => 'AI 客户端';
-
-  @override
-  String get mcpTransportLabel => '传输方式';
-
-  @override
-  String get mcpCommandLabel => '接入命令';
-
-  @override
-  String get mcpClientsIntl => '国际';
-
-  @override
-  String get mcpClientsDomestic => '国内';
-
-  @override
-  String get mcpTransportStdio => 'stdio';
-
-  @override
-  String get mcpTransportHttp => 'HTTP';
+  String get statusStopped => '已停止';
 
   @override
   String get mcpHintTerminal => '复制后在终端中运行即可。';
@@ -1357,9 +1345,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpStartChat => '开始对话';
 
   @override
-  String get mcpOpenTerminal => '打开终端执行';
-
-  @override
   String get mcpSetupDone => '已配置，重启 AI 客户端后生效。';
 
   @override
@@ -1383,7 +1368,99 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpStartFailed => 'MCP 服务启动失败';
 
   @override
-  String get mcpPrivacyHint => '仅监听 127.0.0.1（本机），数据只有在 AI 客户端通过工具明确请求时才会离开本应用。';
+  String get replayTasks => '重放任务';
+
+  @override
+  String get clearFinished => '清除已完成';
+
+  @override
+  String get statusWaiting => '等待中';
+
+  @override
+  String get statusCancelled => '已取消';
+
+  @override
+  String get statusPaused => '已暂停';
+
+  @override
+  String get pause => '暂停';
+
+  @override
+  String get resume => '继续';
+
+  @override
+  String get overview => '概览';
+
+  @override
+  String get network => '网络';
+
+  @override
+  String get trafficControl => '流量控制';
+
+  @override
+  String get rulesPageHint => '点击行打开对应窗口';
+
+  @override
+  String get notEnabled => '未开启';
+
+  @override
+  String statusEnabledRules(int count) {
+    return '启用中 · $count 条规则';
+  }
+
+  @override
+  String statusEnabledScripts(int count) {
+    return '启用中 · $count 个脚本';
+  }
+
+  @override
+  String rulesCount(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String scriptsCount(int count) {
+    return '$count 个脚本';
+  }
+
+  @override
+  String get requestBlockDesc => '按规则拦截请求，直接断开或返回错误';
+
+  @override
+  String get requestRewriteDesc => '按规则修改请求 / 响应的行、头、体';
+
+  @override
+  String get requestMapDesc => '映射到本地文件或远程地址';
+
+  @override
+  String get requestCryptoDesc => '加解密请求 / 响应体，便于查看明文';
+
+  @override
+  String get scriptDesc => '用 JavaScript 编程化处理请求与响应';
+
+  @override
+  String get breakpointDesc => '拦截请求 / 响应，修改后再放行';
+
+  @override
+  String get allFunctions => '全部功能';
+
+  @override
+  String get customizeToolbar => '自定义快捷工具栏';
+
+  @override
+  String get restoreDefaults => '恢复默认';
+
+  @override
+  String get pinnedDragSort => '已固定（拖拽排序）';
+
+  @override
+  String get pinToolsHint => '全部功能（点 + 固定到工具栏）';
+
+  @override
+  String get image => '图片';
+
+  @override
+  String get filtered => '过滤';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1401,6 +1478,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get requests => '抓包';
+
+  @override
+  String get navRequests => '請求';
 
   @override
   String get favorites => '收藏';
@@ -1445,9 +1525,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get password => '密碼';
 
   @override
-  String get proxySetting => '代理設定';
-
-  @override
   String get setAs => '設定為';
 
   @override
@@ -1463,7 +1540,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get download => '下載';
 
   @override
-  String get config => '設定';
+  String get config => '配置';
 
   @override
   String get version => '版本';
@@ -1652,6 +1729,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get requestMethod => '請求方法';
 
   @override
+  String get protocol => '協議';
+
+  @override
+  String get size => '大小';
+
+  @override
+  String get remoteAddress => '遠程地址';
+
+  @override
+  String get requestTime => '請求時間';
+
+  @override
+  String get app => '應用';
+
+  @override
+  String get requestUrl => '請求 URL';
+
+  @override
   String get param => '參數';
 
   @override
@@ -1712,9 +1807,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get replace => '替換';
-
-  @override
-  String get clickEdit => '點選編輯';
 
   @override
   String get refresh => '重新整理';
@@ -1992,6 +2084,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get requestBody => '請求體';
 
   @override
+  String get queryParams => '查詢參數';
+
+  @override
+  String get path => '路徑';
+
+  @override
+  String get requestCookies => '請求 Cookies';
+
+  @override
+  String get responseCookies => '回應 Cookies';
+
+  @override
   String get responseBody => '回應體';
 
   @override
@@ -2038,9 +2142,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get trustCa => '信任憑證';
-
-  @override
-  String get profileDownload => '已下載描述檔案';
 
   @override
   String get exportCA => '匯出根憑證';
@@ -2147,9 +2248,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get connect => '連接';
 
   @override
-  String get reconnect => '重新連接';
-
-  @override
   String remoteConnected(Object os) {
     return '已連接$os，流量將轉發到$os';
   }
@@ -2159,9 +2257,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get connectSuccess => '連接成功';
-
-  @override
-  String get connectedRemote => '已連接遠端';
 
   @override
   String get connected => '已連接';
@@ -2323,6 +2418,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get certHashName => '憑證Hash名稱';
+
+  @override
+  String get certHashShort => '憑證Hash';
 
   @override
   String get regExp => '正規表示式';
@@ -2536,4 +2634,102 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get weakNetworkRules => 'URL 規則';
+
+  @override
+  String get statusRunning => '執行中';
+
+  @override
+  String get replayTasks => '重放任務';
+
+  @override
+  String get clearFinished => '清除已完成';
+
+  @override
+  String get statusWaiting => '等待中';
+
+  @override
+  String get statusCancelled => '已取消';
+
+  @override
+  String get statusPaused => '已暫停';
+
+  @override
+  String get pause => '暫停';
+
+  @override
+  String get resume => '繼續';
+
+  @override
+  String get overview => '概覽';
+
+  @override
+  String get network => '網絡';
+
+  @override
+  String get trafficControl => '流量控制';
+
+  @override
+  String get rulesPageHint => '點擊行開啟對應視窗';
+
+  @override
+  String get notEnabled => '未開啟';
+
+  @override
+  String statusEnabledRules(int count) {
+    return '啟用中 · $count 條規則';
+  }
+
+  @override
+  String statusEnabledScripts(int count) {
+    return '啟用中 · $count 個腳本';
+  }
+
+  @override
+  String rulesCount(int count) {
+    return '$count 條規則';
+  }
+
+  @override
+  String scriptsCount(int count) {
+    return '$count 個腳本';
+  }
+
+  @override
+  String get requestBlockDesc => '按規則攔截請求，直接斷開或返回錯誤';
+
+  @override
+  String get requestRewriteDesc => '按規則修改請求 / 響應的行、頭、體';
+
+  @override
+  String get requestMapDesc => '映射到本地檔案或遠端地址';
+
+  @override
+  String get requestCryptoDesc => '加解密請求 / 響應體，便於查看明文';
+
+  @override
+  String get scriptDesc => '用 JavaScript 編程化處理請求與響應';
+
+  @override
+  String get breakpointDesc => '攔截請求 / 響應，修改後再放行';
+
+  @override
+  String get allFunctions => '全部功能';
+
+  @override
+  String get customizeToolbar => '自訂快捷工具欄';
+
+  @override
+  String get restoreDefaults => '恢復默認';
+
+  @override
+  String get pinnedDragSort => '已固定（拖曳排序）';
+
+  @override
+  String get pinToolsHint => '全部功能（點 + 固定到工具欄）';
+
+  @override
+  String get image => '圖片';
+
+  @override
+  String get filtered => '過濾';
 }

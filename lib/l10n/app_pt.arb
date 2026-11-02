@@ -1,6 +1,14 @@
 {
   "@@locale": "pt",
   "language": "Português",
-  "_comment": "Minimal fallback for pt-BR; runtime advertises pt-BR only. Do not remove this file or gen-l10n will error."
+  "_comment": "Minimal fallback for pt-BR; runtime advertises pt-BR only. Do not remove this file or gen-l10n will error.",
+  "replayTasks": "Tarefas de repetição",
+  "clearFinished": "Limpar concluídas",
+  "statusWaiting": "Aguardando",
+  "statusCancelled": "Cancelado",
+  "statusPaused": "Pausado",
+  "pause": "Pausar",
+  "resume": "Retomar",
+  "overview": "Visão geral"
 }
 

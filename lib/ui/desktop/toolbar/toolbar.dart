@@ -18,9 +18,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/toolbar/phone_connect.dart';
 import 'package:proxypin/ui/desktop/toolbar/environment_switcher.dart';
+import 'package:proxypin/ui/desktop/toolbar/quick_tools.dart';
 import 'package:proxypin/ui/desktop/toolbar/weak_network_indicator.dart';
 import 'package:proxypin/ui/desktop/setting/setting.dart';
 import 'package:proxypin/ui/desktop/ssl/ssl.dart';
@@ -99,28 +101,51 @@ class _ToolbarState extends State<Toolbar> {
 
   @override
   Widget build(BuildContext context) {
+    // 设计稿 .toolbar：间距 6，图标 17px；顺序 代理/清空 | HTTPS | 快捷区 ⋯ / 手机 / 设置，右侧 弱网徽章 + 环境切换
+    var iconColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(children: [
-      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 83 : 20)),
+      Padding(padding: EdgeInsets.only(left: Platform.isMacOS ? 90 : 20)),
       SocketLaunch(proxyServer: widget.proxyServer, startup: widget.proxyServer.configuration.startup),
-      const Padding(padding: EdgeInsets.only(left: 18)),
-      IconButton(tooltip: localizations.clear, icon: const Icon(Icons.delete_outline, size: 21), onPressed: _onClear),
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
+      // 设计稿 .tbtn：32x32 点击盒（IconButton 默认 48 会把图标撑得太散）
+      IconButton(
+          tooltip: localizations.clear,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
+          icon: SvgIcon('trash', size: 17, color: iconColor),
+          onPressed: _onClear),
+      _sep(),
       SslWidget(proxyServer: widget.proxyServer), // SSL配置
-      const Padding(padding: EdgeInsets.only(left: 18)),
-      Setting(proxyServer: widget.proxyServer), // 设置
-      const WeakNetworkIndicator(), // 网络限制启用时显示，未启用时隐藏
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
+      _sep(),
+      QuickToolbar(proxyServer: widget.proxyServer), // 快捷工具栏
+      const SizedBox(width: 6),
       IconButton(
           tooltip: localizations.mobileConnect,
-          icon: const Icon(Icons.phone_iphone_outlined, size: 21),
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
+          icon: SvgIcon('phone', size: 17, color: iconColor),
           onPressed: () async {
             final ips = await localIps(readCache: false);
             phoneConnect(ips, widget.proxyServer.port);
           }),
-      const Padding(padding: EdgeInsets.only(left: 18)),
+      const SizedBox(width: 6),
+      Setting(proxyServer: widget.proxyServer), // 设置
+      const Spacer(),
+      const WeakNetworkIndicator(), // 网络限制启用时显示徽章，未启用时隐藏
+      const SizedBox(width: 6),
       const EnvironmentSwitcher(), // 环境变量切换器
       const Padding(padding: EdgeInsets.only(left: 10)),
     ]);
+  }
+
+  /// 设计稿 .tsep / .qt-div：1x20 分隔线
+  Widget _sep() {
+    return Container(
+        width: 1,
+        height: 20,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        color: chromeBorderColor(Theme.of(context)));
   }
 
   void phoneConnect(List<String> hosts, int port) {

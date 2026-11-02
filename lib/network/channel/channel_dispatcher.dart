@@ -6,6 +6,8 @@ import 'package:proxypin/native/process_info.dart';
 import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
+import 'package:proxypin/network/http/h2/frame.dart';
+import 'package:proxypin/network/mqtt/mqtt_relay_handler.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/handle/websocket_handle.dart';
 import 'package:proxypin/network/http/codec.dart';
@@ -110,7 +112,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       Channel? remoteChannel = channelContext.getAttribute(channel.id);
 
       //大body 不解析直接转发
-      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler && remoteChannel != null) {
+      if (buffer.length > Codec.maxBodyLength && handler is! RelayHandler && handler is! MqttRelayHandler && remoteChannel != null) {
         logger.w("[$channel] forward large body");
         relay(channelContext, channel, remoteChannel);
         return;
@@ -128,12 +130,20 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
         buffer.clearRead();
 
         if (remoteChannel != null) {
-          await remoteChannel.writeBytes(decodeResult.forward!);
+          var forwardBytes = decodeResult.forward!;
+          // h2 -> h1 协议转换：客户端原始 h2 帧只透传 DATA 载荷给 h1 上游，
+          // 连接前言/SETTINGS/PING/WINDOW_UPDATE 等控制帧没有 h1 对应物，剥离丢弃。
+          if (identical(channel, channelContext.clientChannel) && channelContext.isHttp2Translation) {
+            forwardBytes = channelContext.h2ToH1FrameStripper.strip(forwardBytes);
+          }
+          if (forwardBytes.isNotEmpty) {
+            await remoteChannel.writeBytes(forwardBytes);
+          }
         } else if (channelContext.isHttp2PriorKnowledge && identical(channel, channelContext.clientChannel)) {
           channelContext.bufferHttp2Frames(decodeResult.forward!);
           await channelContext.sendInitialHttp2Settings();
         } else {
-          logger.w("[$channel] forward remoteChannel is null");
+          logger.d("[$channel] forward remoteChannel is null");
         }
 
         if (decodeResult.data == null) {
@@ -149,11 +159,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       buffer.clearRead();
 
       var data = decodeResult.data;
-      if (data is HttpMessage) {
-        data.packageSize ??= length;
-        data.remoteHost = channel.remoteSocketAddress.host;
-        data.remotePort = channel.remoteSocketAddress.port;
-      }
+      _fillMessageMeta(channelContext, channel, data, length);
 
       if (data is HttpRequest) {
         if (data.protocolVersion == 'HTTP/2') {
@@ -173,11 +179,6 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
           return;
         }
         await prepareRequest(channelContext, channel, data);
-      }
-
-      if (data is HttpResponse) {
-        data.request ??= channelContext.currentRequest;
-        data.requestId = data.request?.requestId ?? data.requestId;
       }
 
       //websocket协议
@@ -227,6 +228,19 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     }
     await _fixAndroidVpnPort(channelContext, channel, data);
     data.processInfo ??= await ProcessInfoUtils.getProcessByPort(channel.remoteSocketAddress, data.remoteDomain()!);
+  }
+
+  /// 填充 HTTP 消息的通用元数据：包大小、远端地址，以及响应与请求的关联。
+  /// 正常解码完成路径与 close 定界收尾路径共用，避免两处重复。
+  void _fillMessageMeta(ChannelContext channelContext, Channel channel, Object? data, int length) {
+    if (data is! HttpMessage) return;
+    data.packageSize ??= length;
+    data.remoteHost = channel.remoteSocketAddress.host;
+    data.remotePort = channel.remoteSocketAddress.port;
+    if (data is HttpResponse) {
+      data.request ??= channelContext.currentRequest;
+      data.requestId = data.request?.requestId ?? data.requestId;
+    }
   }
 
   /// 修正 Android VPN 透明代理明文 HTTP 请求的目标端口。
@@ -285,15 +299,26 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   /// SSE 处理 (text/event-stream)
   void onSseHandle(ChannelContext channelContext, Channel channel, HttpResponse response, List<int>? initialBody) {
     Channel remoteChannel = channelContext.getAttribute(channel.id);
-    channelContext.currentRequest?.response = response;
-    response.request ??= channelContext.currentRequest;
+
+    // h2 -> h1 协议转换：响应关联到串行化槽位请求（currentRequest 可能错配），
+    // 响应按 h2 HEADERS（END_STREAM=0）编码，后续事件流由 SseChannelHandler 包成 DATA 帧。
+    final translation = channelContext.isHttp2Translation;
+    final pending = translation ? channelContext.pendingTranslatedRequest : null;
+    final request = pending ?? response.request ?? channelContext.currentRequest;
+    request?.response = response;
+    response.request = request;
+    if (pending != null) {
+      response.streamId = pending.streamId;
+      response.requestId = pending.requestId;
+      response.streamingBody = true; // h2 编码只写 HEADERS，不结束流
+    }
     channelContext.listener?.onResponse(channelContext, response);
 
     remoteChannel.write(channelContext, response);
 
     // Switch to raw streaming: server->client uses SseChannelHandler; client->server just relays
     var rawCodec = RawCodec();
-    channel.dispatcher.channelHandle(rawCodec, SseChannelHandler(remoteChannel, response));
+    channel.dispatcher.channelHandle(rawCodec, SseChannelHandler(remoteChannel, response, wrapHttp2Data: translation));
     remoteChannel.dispatcher.channelHandle(rawCodec, RelayHandler(channel));
 
     // Flush any initial body bytes that were already read alongside the
@@ -327,6 +352,24 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       return;
     }
 
+    // h2 -> h1 协议转换下不能把 h1 原始字节透传给 h2 客户端（如 flv、超限的
+    // close 定界响应）：RST 掉对应 stream 并关闭已被污染的上游连接，避免协议错乱。
+    if (decodeResult.data is HttpResponse && channelContext.isHttp2Translation) {
+      var response = decodeResult.data as HttpResponse;
+      logger.w("[$channel] h2->h1 translation cannot relay ${response.headers.contentType}, reset stream");
+      response.request = channelContext.pendingTranslatedRequest ?? response.request ?? channelContext.currentRequest;
+      channelContext.listener?.onResponse(channelContext, response);
+      var streamId = channelContext.pendingTranslatedRequest?.streamId;
+      if (streamId != null) {
+        // RST_STREAM CANCEL(0x8)
+        channelContext.clientChannel?.writeBytes(FrameHeader(4, FrameType.rstStream, 0, streamId).encode()
+          ..addAll([0, 0, 0, 8]));
+      }
+      channelContext.completeTranslatedResponse();
+      channel.close();
+      return;
+    }
+
     // Fallback: generic relay for unsupported body types.
     // `forward` is a view into the same buffer (decoder only advanced the
     // reader index), and `relay` flushes the raw buffer via `.bytes`, so it
@@ -355,6 +398,23 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     while (_pendingReads.isNotEmpty) {
       await Future.wait(_pendingReads.map((c) => c.future).toList());
     }
+
+    // 上游关闭：冲刷被缓冲的 close 定界响应（无 Content-Length / 无 chunked），
+    // 使其照常进入响应拦截器链，而不是被 raw relay 绕过（issue #956）。
+    if (identical(channel, channelContext.serverChannel) && decoder is CloseDelimitedBodyFinalizer) {
+      var finalized = (decoder as CloseDelimitedBodyFinalizer).finishCloseDelimitedBody();
+      var data = finalized?.data;
+      if (data is HttpResponse) {
+        _fillMessageMeta(channelContext, channel, data, buffer.length);
+        buffer.clear();
+        try {
+          await handler.channelRead(channelContext, channel, data);
+        } catch (error, trace) {
+          onError(channelContext, channel, error, trace: trace);
+        }
+      }
+    }
+
     channel.isOpen = false;
     handler.channelInactive(channelContext, channel);
   }

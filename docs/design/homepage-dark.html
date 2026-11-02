@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ProxyPin 首页 UI 设计稿 · 暗黑模式</title>
+<style>
+  :root{
+    --primary:#5D7CFA;
+    --primary-soft:rgba(93,124,250,.16);
+    --bg:#1B1D22;
+    --panel:#24262C;
+    --border:#36393F;
+    --divider:#2D3036;
+    --hover:#31343B;
+    --hover-weak:#2A2D33;
+    --subtle:#202228;
+    --cnt-bg:#3A3D44;
+    --text-1:#E6E8EC;
+    --text-2:#A7ACB4;
+    --text-3:#6F747D;
+    --badge-bg:rgba(232,163,61,.16);
+    --proxy-bg:rgba(63,185,106,.13);
+    --warn:#E8A33D;
+    --get:#3FB96A;   --post:#E8A33D;  --put:#4C9BE8;
+    --delete:#E35B48;--ws:#9B72E0;
+    --ok:#3FB96A;   --err:#E35B48;
+    --radius:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,"PingFang SC","Segoe UI",Roboto,sans-serif;}
+  body{background:#131418;display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:32px;}
+  h1{color:#fff;font-size:18px;font-weight:600;letter-spacing:.5px;}
+  .subtitle{color:#9AA0A6;font-size:13px;}
+
+  /* ===== 窗口 ===== */
+  .window{width:1280px;height:800px;background:var(--bg);border-radius:12px;overflow:hidden;
+          box-shadow:0 24px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;}
+
+  /* 顶部工具栏 */
+  .toolbar{height:52px;background:var(--panel);border-bottom:1px solid var(--border);
+           display:flex;align-items:center;padding:0 14px 0 92px;gap:6px;position:relative;}
+  .traffic{position:absolute;left:16px;display:flex;gap:8px;}
+  .dot{width:12px;height:12px;border-radius:50%;}
+  .d1{background:#FF5F57}.d2{background:#FEBC2E}.d3{background:#28C840}
+
+  .tbtn{height:32px;min-width:32px;padding:0 8px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+        color:var(--text-2);font-size:13px;gap:6px;cursor:default;}
+  .tbtn:hover{background:var(--hover);color:var(--text-1);}
+  .tbtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .tbtn.primary{background:var(--primary);color:#fff;font-weight:500;}
+  .tbtn.primary:hover{background:#3B5DE7;color:#fff;}
+  .tsep{width:1px;height:20px;background:var(--border);margin:0 6px;}
+
+  .badge{padding:2px 8px;border-radius:10px;background:var(--badge-bg);color:var(--warn);font-size:11px;font-weight:500;}
+  .env-switch{margin-left:auto;display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:1px solid var(--border);
+              border-radius:7px;font-size:12px;color:var(--text-2);background:var(--panel);}
+  .proxy-state{display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:8px;
+              font-size:12px;color:var(--text-1);background:var(--proxy-bg);border:1px solid rgba(63,185,106,.45);flex-shrink:0;}
+  .proxy-state svg{width:14px;height:14px;stroke:var(--ok);fill:none;stroke-width:1.8;stroke-linecap:round;}
+  .proxy-state .dotg{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+  .env-switch .dotg{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+
+  /* 主体 */
+  .main{flex:1;display:flex;min-height:0;}
+
+  /* 左侧导航 */
+  .rail{width:64px;background:var(--panel);border-right:1px solid var(--border);
+        display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:2px;}
+  .ritem{width:52px;height:48px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         gap:3px;color:var(--text-3);font-size:10px;}
+  .ritem svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .ritem.active{background:var(--primary-soft);color:var(--primary);font-weight:500;}
+  .rail .spacer{flex:1;}
+
+  /* 中间请求列表 */
+  .list-pane{width:520px;min-width:520px;background:var(--panel);border-right:1px solid var(--border);
+             display:flex;flex-direction:column;position:relative;}
+  .view-tabs{display:flex;align-items:center;gap:2px;}
+  .vtab{height:30px;padding:0 12px;display:flex;align-items:center;font-size:12.5px;color:var(--text-2);
+        border-bottom:2px solid transparent;}
+  .vtab.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+  .head-more{margin-left:auto;}
+  /* 右键菜单浮层 */
+  .ctx-menu{position:absolute;left:120px;top:170px;width:200px;background:var(--panel);border:1px solid var(--border);
+            border-radius:9px;box-shadow:0 10px 36px rgba(0,0,0,.5);padding:5px;z-index:10;font-size:12.5px;}
+  .ctx-menu .ci{display:flex;align-items:center;padding:6px 10px;border-radius:6px;color:var(--text-1);}
+  .ctx-menu .ci:hover{background:var(--hover);}
+  .ctx-menu .ci .arrow{margin-left:auto;color:var(--text-3);font-size:10px;}
+  .ctx-menu .csep{height:1px;background:var(--hover);margin:4px 8px;}
+  .ctx-menu .ci.danger{color:var(--err);}
+  .ctx-tag{position:absolute;left:330px;top:150px;background:var(--primary);color:#fff;font-size:11px;
+           padding:3px 9px;border-radius:11px;z-index:11;}
+  .list-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+  .search{height:30px;border-radius:7px;background:var(--bg);display:flex;align-items:center;gap:7px;padding:0 10px;
+          color:var(--text-3);font-size:12.5px;}
+  .search svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;}
+  .filters{display:flex;gap:6px;}
+  .chip{height:24px;padding:0 10px;border-radius:12px;border:1px solid var(--border);font-size:11.5px;color:var(--text-2);
+        display:flex;align-items:center;}
+  .chip.on{background:var(--primary-soft);border-color:transparent;color:var(--primary);font-weight:500;}
+
+  .col-head{display:flex;padding:7px 12px;font-size:11px;color:var(--text-3);border-bottom:1px solid var(--border);
+            text-transform:uppercase;letter-spacing:.4px;}
+  .rows{flex:1;overflow:hidden;}
+  .row{display:flex;align-items:center;padding:0 12px;height:38px;font-size:12.5px;border-bottom:1px solid var(--divider);cursor:default;}
+  .row.child{padding-left:26px;height:34px;}
+  /* 域名组头 */
+  .group{display:flex;align-items:center;height:36px;padding:0 12px;gap:6px;background:var(--subtle);
+         border-bottom:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--text-1);}
+  .group .arrow{width:14px;color:var(--text-3);font-size:10px;flex-shrink:0;}
+  .group .hname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .group .cnt{margin-left:auto;font-weight:400;color:var(--text-3);font-size:11px;background:var(--cnt-bg);
+              border-radius:9px;padding:1px 8px;flex-shrink:0;}
+  .appicon{width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;
+           font-size:10px;color:#fff;font-weight:600;flex-shrink:0;}
+  .row:hover{background:var(--hover-weak);}
+  .row.sel{background:var(--primary-soft);}
+  .method{width:56px;font-weight:600;font-size:11px;flex-shrink:0;}
+  .m-get{color:var(--get)} .m-post{color:var(--post)} .m-put{color:var(--put)}
+  .m-del{color:var(--delete)} .m-ws{color:var(--ws)}
+  .status{width:44px;font-size:11.5px;flex-shrink:0;}
+  .s-ok{color:var(--ok)} .s-err{color:var(--err)} .s-warn{color:var(--warn);}
+  .host{width:150px;flex-shrink:0;color:var(--text-1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .path{flex:1;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .time{width:70px;text-align:right;color:var(--text-3);font-size:11px;flex-shrink:0;font-variant-numeric:tabular-nums;}
+  .lock{color:var(--text-3);width:14px;flex-shrink:0;margin-right:6px;}
+  .lock svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+  .star{width:16px;color:#E8A23C;flex-shrink:0;font-size:12px;}
+
+  /* 右侧详情 */
+  .detail{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .d-head{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 16px 0;}
+  .d-title{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .d-url{font-size:13px;font-weight:600;color:var(--text-1);}
+  .d-actions{margin-left:auto;display:flex;gap:4px;}
+  .mini{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-3);}
+  .mini:hover{background:var(--hover);color:var(--text-1);}
+  .mini svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+  .tabs{display:flex;gap:2px;}
+  .tab{height:34px;padding:0 14px;display:flex;align-items:center;font-size:12.5px;color:var(--text-2);
+       border-bottom:2px solid transparent;}
+  .tab.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+
+  .d-body{flex:1;padding:14px 16px;overflow:hidden;display:flex;flex-direction:column;gap:12px;}
+
+  /* 桌面详情各 Tab */
+  .dp-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px;}
+  .dp-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;
+            display:flex;flex-direction:column;height:340px;}
+  .dp-panel .tabs{padding:0 14px;border-bottom:1px solid var(--border);}
+  .dp-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+  .d-sec{font-size:11px;color:var(--text-3);padding:8px 14px 4px;}
+  .dp-label{color:#9AA0A6;font-size:12px;text-align:center;margin-top:8px;}
+  .d-msg{display:flex;gap:10px;padding:8px 14px;border-bottom:1px solid var(--divider);align-items:flex-start;font-size:12px;}
+  .d-msg .dir{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+              font-size:10px;color:#fff;margin-top:1px;}
+  .d-msg .up{background:var(--primary);}
+  .d-msg .down{background:#5A616B;}
+  .d-msg .txt{flex:1;font-family:"SF Mono",Menlo,monospace;font-size:11px;color:var(--text-1);word-break:break-all;line-height:1.5;}
+  .d-msg .tm{font-size:10px;color:var(--text-3);flex-shrink:0;margin-top:2px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .kv{display:flex;font-size:12.5px;padding:8px 14px;border-bottom:1px solid var(--divider);}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{width:130px;color:var(--text-3);flex-shrink:0;}
+  .kv .v{color:var(--text-1);font-family:"SF Mono",Menlo,monospace;font-size:12px;}
+  .code-card{flex:1;display:flex;flex-direction:column;}
+  .code-head{padding:8px 14px;border-bottom:1px solid var(--divider);display:flex;align-items:center;font-size:12px;color:var(--text-3);}
+  .code-head .fmt{margin-left:auto;display:flex;gap:4px;}
+  .fmt span{padding:2px 8px;border-radius:5px;font-size:11px;}
+  .fmt .on{background:var(--primary-soft);color:var(--primary);font-weight:500;}
+  pre{flex:1;padding:12px 14px;font-family:"SF Mono",Menlo,monospace;font-size:12px;line-height:1.7;color:var(--text-1);
+      overflow:hidden;}
+  .j-k{color:#C586E0}.j-s{color:var(--ok)}.j-n{color:var(--warn)}
+
+  /* 状态栏 */
+  .statusbar{height:26px;background:var(--panel);border-top:1px solid var(--border);
+             display:flex;align-items:center;padding:0 14px;gap:16px;font-size:11px;color:var(--text-3);}
+  .statusbar .right{margin-left:auto;display:flex;gap:14px;}
+  .green{color:var(--ok);}
+
+  /* ===== 设置菜单（分组扁平） ===== */
+  .gm-row{display:flex;gap:36px;align-items:flex-start;margin-top:14px;}
+  .gm-col{display:flex;flex-direction:column;}
+  .gm-label{color:#9AA0A6;font-size:12px;margin-bottom:8px;text-align:center;}
+  .gmenu{width:230px;background:var(--panel);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.6);
+         padding:5px;font-size:13px;color:var(--text-1);}
+  .gmenu .gt{padding:7px 12px 3px;font-size:11px;color:var(--text-3);letter-spacing:.3px;}
+  .gmenu .gi{display:flex;align-items:center;gap:9px;padding:6px 12px;border-radius:6px;}
+  .gmenu .gi:hover{background:var(--hover);}
+  .gmenu .gi svg{width:15px;height:15px;stroke:var(--text-2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+  .gmenu .gi .arrow{margin-left:auto;color:var(--text-3);font-size:11px;}
+  .gmenu .gi .st2{margin-left:auto;font-size:11px;color:var(--ok);}
+  .gmenu .gsep{height:1px;background:var(--hover);margin:4px 8px;}
+  .gmenu .gi .pin{margin-left:auto;font-size:11px;opacity:.35;}
+  .gmenu .gi .pin.pinned{opacity:1;filter:none;}
+  .gmenu .gi:hover .pin{opacity:.8;}
+
+  /* 工具箱 mock */
+  .tb-panel{width:560px;background:var(--panel);border-radius:10px;border:1px solid var(--border);padding:16px 18px;}
+  .tb-sec{font-size:12px;color:var(--text-3);margin:10px 0 8px;font-weight:500;}
+  .tb-sec:first-child{margin-top:0;}
+  .tb-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .tb-item{width:82px;padding:10px 0 8px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:6px;
+           font-size:12px;color:var(--text-1);}
+  .tb-item:hover{background:var(--primary-soft);}
+  .tb-item svg{width:20px;height:20px;stroke:var(--text-2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .tb-item.new{outline:1.5px dashed var(--primary);background:var(--primary-soft);}
+  .tb-item.new svg{stroke:var(--primary);}
+  .tb-dim{opacity:.4;}
+
+  /* 快捷工具栏 mock */
+  .qt-strip{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:10px;
+            display:flex;align-items:center;padding:8px 14px;gap:6px;}
+  .qt-strip .tbtn{height:30px;}
+  .qt-div{width:1px;height:18px;background:var(--border);margin:0 4px;}
+  /* 自定义面板 mock */
+  .cz-panel{width:600px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0;}
+  .cz-head{padding:12px 18px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:600;
+           display:flex;align-items:center;color:var(--text-1);}
+  .cz-head .reset{margin-left:auto;font-size:12px;color:var(--primary);font-weight:400;}
+  .cz-body{padding:14px 18px;}
+  .cz-sec{font-size:12px;color:var(--text-3);margin:4px 0 8px;}
+  .cz-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .cz-chip{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:8px;
+           background:var(--primary-soft);color:var(--text-1);font-size:12.5px;
+           outline:1px solid rgba(93,124,250,.4);}
+  .cz-chip .drag{color:var(--text-3);font-size:12px;cursor:grab;}
+  .cz-chip .x{color:var(--text-3);font-size:13px;}
+  .cz-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .cz-item{width:84px;padding:9px 0 7px;border-radius:9px;display:flex;flex-direction:column;align-items:center;
+           gap:5px;font-size:12px;color:var(--text-2);border:1px solid transparent;position:relative;}
+  .cz-item:hover{border-color:var(--border);}
+  .cz-item svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .cz-item .plus{position:absolute;top:3px;right:5px;width:15px;height:15px;border-radius:50%;
+                 background:var(--primary);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;line-height:1;}
+  .cz-item.added{opacity:.35;}
+  .cz-item.added .plus{background:var(--ok);}
+
+  /* 流量控制页 mock */
+  .rl-panel{width:560px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .rl-head{padding:13px 18px;font-size:14px;font-weight:600;color:var(--text-1);border-bottom:1px solid var(--border);
+           display:flex;align-items:center;}
+  .rl-head .hint{margin-left:auto;font-size:11px;color:var(--text-3);font-weight:400;}
+  .rl-row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--divider);font-size:13px;}
+  .rl-row:last-child{border-bottom:none;}
+  .rl-row:hover{background:var(--hover-weak);}
+  .rl-row .ric{width:30px;height:30px;border-radius:8px;background:var(--primary-soft);color:var(--primary);
+               display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rl-row .ric svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .rl-row .rt{flex:1;min-width:0;}
+  .rl-row .rt .t{color:var(--text-1);font-weight:500;}
+  .rl-row .rt .d{font-size:11.5px;color:var(--text-3);margin-top:1px;}
+  .rl-row .on{font-size:11.5px;color:var(--ok);flex-shrink:0;}
+  .rl-row .off{font-size:11.5px;color:var(--text-3);flex-shrink:0;}
+  .rl-row .go{color:var(--text-3);font-size:13px;flex-shrink:0;}
+
+  /* 手机端 mock */
+  .phones-row{display:flex;gap:40px;align-items:flex-start;margin-top:14px;}
+  .phone{width:290px;background:#1B1C1E;border-radius:38px;padding:9px;flex-shrink:0;
+         box-shadow:0 24px 60px rgba(0,0,0,.5);}
+  .p-screen{background:var(--bg);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;height:590px;}
+  .p-status{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+            font-size:11px;color:var(--text-1);font-weight:600;background:var(--panel);}
+  .p-status .ics{display:flex;gap:5px;align-items:center;font-size:9px;color:var(--text-2);}
+  .p-appbar{background:var(--panel);display:flex;align-items:center;gap:6px;padding:6px 10px;
+            border-bottom:1px solid var(--border);}
+  .p-search{flex:1;height:28px;border-radius:14px;background:var(--bg);display:flex;align-items:center;gap:6px;
+            padding:0 10px;color:var(--text-3);font-size:11.5px;}
+  .p-search svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;}
+  .p-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-2);flex-shrink:0;}
+  .p-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .p-tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--border);}
+  .p-tab{flex:1;text-align:center;font-size:11.5px;color:var(--text-2);padding:7px 0;border-bottom:2px solid transparent;}
+  .p-tab.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:500;}
+  .p-body{flex:1;overflow:hidden;position:relative;}
+  .p-group{display:flex;align-items:center;height:30px;padding:0 10px;gap:5px;background:var(--subtle);
+           border-bottom:1px solid var(--hover);font-size:11.5px;font-weight:600;color:var(--text-1);}
+  .p-group .arrow{font-size:8px;color:var(--text-3);width:10px;}
+  .p-group .cnt{margin-left:auto;font-weight:400;color:var(--text-3);font-size:10px;background:var(--cnt-bg);border-radius:8px;padding:0 6px;}
+  .p-appicon{width:15px;height:15px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;
+             font-size:8.5px;color:#fff;font-weight:600;flex-shrink:0;}
+  .p-row{display:flex;align-items:center;padding:0 10px 0 22px;height:30px;font-size:11px;border-bottom:1px solid var(--divider);gap:6px;}
+  .p-row .method{width:38px;font-size:9.5px;}
+  .p-row .status{width:28px;font-size:10px;}
+  .p-row .path{flex:1;font-size:11px;}
+  .p-row .time{width:40px;font-size:9.5px;}
+  .p-fab{position:absolute;right:14px;bottom:16px;width:46px;height:46px;border-radius:50%;background:var(--ok);
+         display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(63,185,106,.45);}
+  .p-fab svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;}
+  .p-fab .stopsq{width:11px;height:11px;background:var(--panel);border-radius:2.5px;}
+  .p-bnav{height:52px;background:var(--panel);border-top:1px solid var(--border);display:flex;}
+  .p-bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+        color:var(--text-3);font-size:9px;}
+  .p-bn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .p-bn.on{color:var(--primary);}
+  .p-title{background:var(--panel);padding:11px 14px;font-size:13px;font-weight:600;color:var(--text-1);
+           border-bottom:1px solid var(--border);}
+  .p-rrow{display:flex;align-items:center;gap:10px;background:var(--panel);padding:9px 14px;
+          border-bottom:1px solid var(--divider);font-size:12px;}
+  .p-rrow .ric{width:28px;height:28px;border-radius:7px;background:var(--primary-soft);color:var(--primary);
+               display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .p-rrow .ric svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .p-rrow .rt{flex:1;min-width:0;}
+  .p-rrow .rt .t{color:var(--text-1);font-weight:500;font-size:12px;}
+  .p-rrow .rt .d{font-size:10px;color:var(--text-3);margin-top:1px;}
+  .p-rrow .on{font-size:10px;color:var(--ok);flex-shrink:0;}
+  .p-rrow .off{font-size:10px;color:var(--text-3);flex-shrink:0;}
+  .p-rrow .go{color:var(--text-3);font-size:12px;flex-shrink:0;}
+  .phone-label{color:#9AA0A6;font-size:12px;text-align:center;margin-top:10px;}
+  .p-ptitle{flex:1;font-size:12px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .p-card{background:var(--panel);border-bottom:1px solid var(--border);margin-bottom:8px;}
+  .p-kv{display:flex;font-size:11px;padding:7px 12px;border-bottom:1px solid var(--divider);}
+  .p-kv:last-child{border-bottom:none;}
+  .p-kv .k{width:62px;color:var(--text-3);flex-shrink:0;}
+  .p-kv .v{color:var(--text-1);font-family:"SF Mono",Menlo,monospace;font-size:10.5px;}
+  .p-code{background:var(--panel);padding:9px 12px;font-family:"SF Mono",Menlo,monospace;font-size:9.5px;line-height:1.6;color:var(--text-1);}
+  .p-mini-bar{display:flex;align-items:center;gap:8px;background:var(--panel);padding:6px 12px;
+              border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text-2);}
+  .p-mini-bar .fmt{padding:2px 7px;border-radius:5px;background:var(--primary-soft);color:var(--primary);font-weight:500;font-size:10px;}
+  .p-mini-bar svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+  .p-sec{font-size:10px;color:var(--text-3);padding:8px 12px 4px;background:var(--bg);}
+  .p-msg{display:flex;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--divider);align-items:flex-start;}
+  .p-msg .dir{width:17px;height:17px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+              font-size:9px;color:#fff;margin-top:1px;}
+  .p-msg .up{background:var(--primary);}
+  .p-msg .down{background:#5A616B;}
+  .p-msg .txt{flex:1;font-family:"SF Mono",Menlo,monospace;font-size:9.5px;color:var(--text-1);word-break:break-all;line-height:1.5;}
+  .p-msg .tm{font-size:8.5px;color:var(--text-3);flex-shrink:0;margin-top:2px;}
+  .tb-sep{height:1px;background:var(--hover);margin:10px 0 0;}
+
+  /* 手机端 · 配置/设置卡片 & 工具箱宫格 */
+  .p-apptitle{flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--text-1);}
+  .p-mcard{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:0 12px 10px;overflow:hidden;}
+  .p-mrow{display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:12px;color:var(--text-1);position:relative;}
+  /* 分隔线缩进对齐标题文字（带图标块行 43，无图标行 12） */
+  .p-mrow:not(:last-child)::after{content:'';position:absolute;left:43px;right:0;bottom:0;height:1px;background:var(--divider);}
+  .p-mrow.noicon:not(:last-child)::after{left:12px;}
+  .p-mrow .mic{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .p-mrow .mic svg{width:13px;height:13px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .p-mrow .micg{font-size:8.5px;font-weight:700;font-family:"SF Mono",Menlo,monospace;}
+  .p-mrow .go{margin-left:auto;color:var(--text-3);font-size:12px;}
+  .p-mrow .on{margin-left:auto;font-size:10px;color:var(--ok);}
+  .p-mrow .val{margin-left:auto;font-size:10.5px;color:var(--text-3);}
+  .p-mrow .on+.go,.p-mrow .val+.go{margin-left:7px;}
+  .p-sw{margin-left:auto;width:32px;height:19px;border-radius:10px;background:var(--ok);position:relative;flex-shrink:0;}
+  .p-sw::after{content:'';position:absolute;top:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);}
+  .p-sw.off{background:#4A4E55;}
+  .p-sw.off::after{right:auto;left:2px;}
+  .p-sec2{font-size:10.5px;color:var(--text-3);padding:8px 14px 5px;font-weight:500;}
+  /* 工具箱：分组深卡 + 淡色块彩色描边图标（与配置/设置页同一视觉语言） */
+  .p-tbcard{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:0 12px 2px;
+            padding:10px 4px 8px;display:flex;flex-wrap:wrap;}
+  .p-tbt{width:25%;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 0;
+         font-size:10px;color:var(--text-1);}
+  .p-tbt .tic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+  .p-tbt .tic svg{width:19px;height:19px;stroke:var(--text-2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .p-tbt .glyph{font-size:15px;font-weight:700;color:var(--text-2);font-family:"SF Mono",Menlo,monospace;}
+
+  /* ===== 标注 ===== */
+  .notes{width:1280px;color:var(--text-2);font-size:13px;line-height:1.9;background:#232529;border-radius:10px;padding:20px 28px;}
+  .notes b{color:#fff;}
+  .notes .tag{display:inline-block;background:var(--primary);color:#fff;border-radius:4px;padding:0 7px;font-size:11px;margin-right:8px;}
+</style>
+</head>
+<body>
+
+<h1>ProxyPin · 首页 UI 设计稿 · 暗黑模式</h1>
+<div class="subtitle">桌面端 1280×800 · 深色主题（Dark）· 与浅色稿同结构同布局，仅色彩体系切换</div>
+
+<div class="window">
+
+  <!-- ===== 顶部工具栏 ===== -->
+  <div class="toolbar">
+    <div class="traffic"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span></div>
+
+    <!-- 代理开关：浅色边框胶囊，电源图标 + 绿点 + 状态文字 -->
+    <div class="proxy-state" title="代理运行中 · :9099，点击停止">
+      <svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>
+      <span class="dotg"></span>运行中 · :9099
+    </div>
+
+    <div class="tbtn" title="清空">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13h10l1-13"/></svg>
+    </div>
+    <div class="tsep"></div>
+
+    <div class="tbtn" title="HTTPS 抓包">
+      <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      HTTPS
+    </div>
+    <div class="tbtn" title="手机连接">
+      <svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>
+    </div>
+    <div class="tbtn" title="设置">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>
+    </div>
+    <div class="badge">弱网 3G</div>
+
+    <div class="env-switch">
+      <span class="dotg"></span> 开发环境
+      <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ===== 左侧导航 ===== -->
+    <div class="rail">
+      <div class="ritem active">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求
+      </div>
+      <div class="ritem">
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 3 1.2-6.1L3 9.6l6.3-.8z"/></svg>收藏
+      </div>
+      <div class="ritem">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>历史
+      </div>
+      <div class="ritem">
+        <svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱
+      </div>
+      <div class="spacer"></div>
+      <div class="ritem">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>偏好
+      </div>
+      <div class="ritem" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 20l1-4.9A8.4 8.4 0 1 1 21 11.5z"/></svg>反馈
+      </div>
+    </div>
+
+    <!-- ===== 请求列表 ===== -->
+    <div class="list-pane">
+      <div class="list-head">
+        <div class="view-tabs">
+          <div class="vtab on">域名列表</div>
+          <div class="vtab">时序</div>
+          <div class="mini head-more" title="更多">
+            <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+          </div>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          搜索 URL / 域名 / 内容…
+          <span style="margin-left:auto;display:inline-flex;color:var(--text-2)" title="搜索条件">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>
+          </span>
+        </div>
+        <div class="filters">
+          <div class="chip on">全部</div>
+          <div class="chip">XHR</div>
+          <div class="chip">JS/CSS</div>
+          <div class="chip">图片</div>
+          <div class="chip">WebSocket</div>
+        </div>
+      </div>
+
+      <div class="rows">
+        <!-- 域名组 1（展开）：手机抓包，组头带来源 App 图标 -->
+        <div class="group">
+          <span class="arrow">▼</span>
+          <span class="appicon" style="background:#07C160">微</span>
+          <span class="hname">api.example.com</span>
+          <span class="cnt">4</span>
+        </div>
+        <div class="row child sel"><span class="method m-post">POST</span><span class="status s-ok">200</span>
+          <span class="path">/v1/orders/create</span><span class="time">342ms</span></div>
+        <div class="row child"><span class="method m-put">PUT</span><span class="status s-warn">304</span>
+          <span class="path">/v1/users/profile</span><span class="time">89ms</span></div>
+        <div class="row child"><span class="method m-del">DELETE</span><span class="status s-err">500</span>
+          <span class="path">/v1/sessions/9f2c</span><span class="time">1.2s</span></div>
+        <div class="row child"><span class="method m-post">POST</span><span class="status s-ok">200</span>
+          <span class="path">/v1/auth/refresh <span class="star">★</span></span><span class="time">156ms</span></div>
+
+        <!-- 域名组 2（展开） -->
+        <div class="group">
+          <span class="arrow">▼</span>
+          <span class="appicon" style="background:#4285F4">C</span>
+          <span class="hname">api.github.com</span>
+          <span class="cnt">2</span>
+        </div>
+        <div class="row child"><span class="method m-get">GET</span><span class="status s-ok">200</span>
+          <span class="path">/users/wanghongenpin/repos?sort=updated</span><span class="time">128ms</span></div>
+        <div class="row child"><span class="method m-get">GET</span><span class="status s-err">404</span>
+          <span class="path">/repos/proxypin/legacy</span><span class="time">96ms</span></div>
+
+        <!-- 域名组 3（收起，无来源 App 信息） -->
+        <div class="group">
+          <span class="arrow">▶</span>
+          <span class="hname">cdn.example.com</span>
+          <span class="cnt">12</span>
+        </div>
+
+        <!-- 域名组 4（收起，WSS） -->
+        <div class="group">
+          <span class="arrow">▶</span>
+          <span class="appicon" style="background:#FF6A00">钉</span>
+          <span class="hname">push.example.com</span>
+          <span class="cnt">1</span>
+        </div>
+      </div>
+
+      <!-- 右键菜单浮层（设计稿示意） -->
+      <div class="ctx-tag">行右键菜单</div>
+      <div class="ctx-menu">
+        <div class="ci">复制<span class="arrow">▸ URL / cURL / Python / fetch</span></div>
+        <div class="ci">新窗口打开</div>
+        <div class="csep"></div>
+        <div class="ci">重发请求</div>
+        <div class="ci">自定义重发<span class="arrow">▸</span></div>
+        <div class="ci">编辑请求</div>
+        <div class="csep"></div>
+        <div class="ci">请求重写</div>
+        <div class="ci">请求映射<span class="arrow">▸ 本地 / 远程</span></div>
+        <div class="ci">脚本</div>
+        <div class="csep"></div>
+        <div class="ci">收藏</div>
+        <div class="ci">高亮<span class="arrow">▸ 红/黄/蓝/绿/灰</span></div>
+        <div class="ci danger">删除</div>
+      </div>
+    </div>
+
+    <!-- ===== 详情面板 ===== -->
+    <div class="detail">
+      <div class="d-head">
+        <div class="d-title">
+          <span class="method m-post" style="width:auto">POST</span>
+          <span class="d-url">https://api.example.com/v1/orders/create</span>
+          <div class="d-actions">
+            <div class="mini" title="复制"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+            <div class="mini" title="重发"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
+            <div class="mini" title="收藏"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 3 1.2-6.1L3 9.6l6.3-.8z"/></svg></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab on">Overview</div>
+          <div class="tab">请求</div>
+          <div class="tab">响应</div>
+          <div class="tab">Cookies</div>
+        </div>
+      </div>
+
+      <div class="d-body">
+        <div class="card">
+          <div class="kv"><span class="k">状态码</span><span class="v" style="color:var(--ok)">200 OK</span></div>
+          <div class="kv"><span class="k">协议</span><span class="v">HTTP/2 · TLS 1.3</span></div>
+          <div class="kv"><span class="k">耗时</span><span class="v">342 ms（TTFB 198 ms）</span></div>
+          <div class="kv"><span class="k">大小</span><span class="v">请求 1.2 KB · 响应 8.6 KB（gzip）</span></div>
+          <div class="kv"><span class="k">远程地址</span><span class="v">203.0.113.24:443</span></div>
+          <div class="kv"><span class="k">请求时间</span><span class="v">2026-10-17 14:02:11.342</span></div>
+          <div class="kv"><span class="k">App</span><span class="v">微信</span></div>
+        </div>
+
+        <div class="card code-card">
+          <div class="code-head">
+            Response Body
+            <div class="fmt"><span class="on">JSON</span><span>Raw</span><span>Preview</span></div>
+          </div>
+          <pre>{
+  <span class="j-k">"code"</span>: <span class="j-n">0</span>,
+  <span class="j-k">"data"</span>: {
+    <span class="j-k">"orderId"</span>: <span class="j-s">"ORD-20261017-8842"</span>,
+    <span class="j-k">"amount"</span>: <span class="j-n">199.00</span>,
+    <span class="j-k">"status"</span>: <span class="j-s">"PAID"</span>,
+    <span class="j-k">"items"</span>: [
+      { <span class="j-k">"sku"</span>: <span class="j-s">"PRO-MONTHLY"</span>, <span class="j-k">"qty"</span>: <span class="j-n">1</span> }
+    ]
+  },
+  <span class="j-k">"traceId"</span>: <span class="j-s">"b3f1c9a2e7"</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 状态栏 ===== -->
+  <div class="statusbar">
+    <span class="green">● 代理 127.0.0.1:9099</span>
+    <span>请求 128</span>
+    <span>过滤 0</span>
+    <div class="right">
+      <span>↓ 24.6 KB/s</span><span>↑ 3.1 KB/s</span><span>v1.2.9</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 设计说明 ===== -->
+<div class="notes">
+  <b>现有功能覆盖清单（对照 lib/ui/desktop）</b><br>
+  <span class="tag">✓</span>顶部工具栏：代理开关 / 清空 / HTTPS（证书安装）/ 设置（含 MCP）/ 弱网徽章 / 手机连接 / 环境切换器 — 全部保留。<br>
+  <span class="tag">✓</span>左侧导航：请求 / 收藏 / 历史 / 工具箱 + 底部偏好设置、反馈。<br>
+  <span class="tag">✓</span>列表视图：「域名列表 | 时序」双 Tab 保留在列表头部；右侧 ⋯ 菜单收纳 导出 / 重发全部 / 多选 / 排序 / 上报服务器。<br>
+  <span class="tag">✓</span>域名列表为树形结构：域名组头（展开/收起箭头 + 域名 + 请求数徽标）下挂子请求行；组头右键为 域名黑/白名单、导出 HAR、删除该域名。<br>
+  <span class="tag">✓</span>来源 App 图标：手机抓包时按请求的 processInfo 在域名组头展示来源应用图标（如微信、Chrome），无进程信息时不显示。<br>
+  <span class="tag">✓</span>搜索交互：搜索框置于列表头部（现位置在列表底部）；输入即实时过滤，点击框内右侧「漏斗」图标弹出搜索条件弹窗（响应类型 JSON/图片/HTML…、状态码、关键字范围）。「时序」Tab 为无分组的平铺视图。<br>
+  <span class="tag">✓</span>行右键菜单：以浮层示意（复制 URL/cURL/Python/fetch、新窗口、重发、自定义重发、编辑、重写、映射、脚本、收藏、高亮、删除）。<br>
+  <span class="tag">✓</span>详情面板：新增 <b>Overview</b> 作为首 Tab（替代原 General，聚合关键指标 + 响应体预览）；请求 / 响应 / Cookies 不变；WS/SSE 时第 4 位变消息流，MQTT 为 Overview / MQTT。<br>
+  <span class="tag">✓</span>多选模式：进入多选后列表顶部出现操作条（批量重发 / 导出 / 删除），本稿未单独画出，样式同 SelectionActionBar。<br><br>
+  <b>相对当前实现的改动</b><br>
+  <span class="tag">1</span>代理开关为浅色胶囊：<b>运行中</b> = 淡绿底 var(--proxy-bg) + 绿色描边 + 绿色电源图标 + 绿点 +「运行中 · :9099」（文字深灰）；<b>停止时</b> = 白底灰边框 + 灰点 +「已停止」，点击启动。<br>
+  <span class="tag">2</span>搜索框由列表底部移至头部，并新增内容类型过滤 Chip（全部 / XHR / 图片 / WebSocket）。<br>
+  <span class="tag">3</span>详情面板顶部增加 URL + 快捷操作（复制 / 重发 / 收藏）；Overview 聚合 状态码 / 协议 / 耗时 / 大小 / 远程地址 / 请求时间 / App + 响应体预览（原 General 字段不丢失）。<br>
+  <span class="tag">4</span>新增底部状态栏：代理地址、请求数、实时上下行速率、版本号。<br>
+  <span class="tag">5</span>视觉规范：主色 #5D7CFA、圆角 8–10px、边框 #36393F、面板 #24262C、背景 #1B1D22、代码与数值用等宽字体；语义色 GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / WS 紫。
+</div>
+
+<!-- ===== 设置菜单瘦身：13 → 7 项，流量控制走 ⋯ 菜单 ===== -->
+<div class="notes" style="width:1280px">
+  <b>最终方案：设置菜单 13 → 7 项；「流量控制」6 项走顶部 ⋯ 菜单，可固定到快捷工具栏（不进左侧导航）</b>
+  <div class="gm-row">
+
+    <!-- 瘦身后的设置菜单 -->
+    <div class="gm-col">
+      <div class="gm-label">设置菜单 · 7 项（只剩真正的设置）</div>
+      <div class="gmenu">
+        <div class="gt">网络</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>代理<span class="arrow">▸</span></div>
+        <div class="gi"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>域名过滤</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Hosts</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg>外部代理</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>弱网<span class="st2">已开启</span></div>
+        <div class="gsep"></div>
+        <div class="gt">其他</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>MCP 服务</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>关于</div>
+      </div>
+    </div>
+
+  </div>
+  <br>
+  <span class="tag">1</span><b>为什么不放工具箱</b>：这 6 项是持续作用于抓包流量的核心调试能力，工具箱里是无状态小工具，性质不同。<br>
+  <span class="tag">2</span><b>设置菜单只剩 7 项</b>：代理▸ / 域名过滤 / Hosts / 外部代理 / 弱网 / MCP 服务 / 关于，弹出来不再是一堵墙。<br>
+  <span class="tag">3</span>高频项固定到顶部快捷工具栏（见下节），请求右键菜单的 重写 / 映射 / 脚本 快捷入口保留。
+</div>
+
+<!-- ===== 可自定义快捷工具栏 ===== -->
+<div class="notes" style="width:1280px">
+  <b>顶部快捷工具栏（参考 Reqable）：固定区 + 用户自定义快捷区，支持编辑 / 排序 / 增删</b>
+  <div class="gm-row" style="flex-direction:column;gap:14px">
+
+    <!-- 工具栏效果 -->
+    <div class="gm-col" style="width:100%">
+      <div class="gm-label">首页工具栏 · 快捷区为用户固定的高频功能（示例：重写 / 映射 / 脚本 / 断点）</div>
+      <div class="qt-strip">
+        <div class="proxy-state" title="代理运行中 · :9099，点击停止">
+          <svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>
+          <span class="dotg"></span>运行中 · :9099
+        </div>
+        <div class="tbtn"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13h10l1-13"/></svg></div>
+        <div class="qt-div"></div>
+        <div class="tbtn"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+        <div class="qt-div"></div>
+        <!-- 用户自定义快捷区：纯图标 + tooltip，与其他图标一致 -->
+        <div class="tbtn" title="请求重写" style="color:var(--primary)"><svg viewBox="0 0 24 24"><path d="M14 3l7 7-9 9H5v-7z"/><path d="M12 5l7 7"/></svg></div>
+        <div class="tbtn" title="请求映射" style="color:var(--primary)"><svg viewBox="0 0 24 24"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg></div>
+        <div class="tbtn" title="脚本" style="color:var(--primary)"><svg viewBox="0 0 24 24"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></div>
+        <div class="tbtn" title="断点" style="color:var(--primary)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <div class="tbtn" title="全部功能" style="background:var(--hover)"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          <div class="badge">弱网 3G</div>
+          <div class="env-switch"><span class="dotg"></span> 开发环境
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⋯ 全部功能菜单 -->
+    <div class="gm-col">
+      <div class="gm-label">快捷区末尾 ⋯ → 流量控制菜单（点项直接打开，行尾 📌 固定到快捷区）</div>
+      <div class="gmenu" style="width:250px">
+        <div class="gt">流量控制</div>
+        <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>请求屏蔽<span class="pin">📌</span></div>
+        <div class="gi" style="background:var(--hover)"><svg viewBox="0 0 24 24"><path d="M14 3l7 7-9 9H5v-7z"/><path d="M12 5l7 7"/></svg>请求重写<span class="pin pinned">📌</span></div>
+        <div class="gi"><svg viewBox="0 0 24 24"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg>请求映射<span class="pin pinned">📌</span></div>
+        <div class="gi"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>请求加密<span class="pin">📌</span></div>
+        <div class="gi"><svg viewBox="0 0 24 24"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg>脚本<span class="pin pinned">📌</span></div>
+        <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>断点<span class="pin pinned">📌</span></div>
+        <div class="gsep"></div>
+        <div class="gi" style="color:var(--primary)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>自定义快捷工具栏…</div>
+      </div>
+    </div>
+
+    <!-- 自定义面板 -->
+    <div class="gm-col">
+      <div class="gm-label">「自定义快捷工具栏」面板 · 排序 / 增删（从 ⋯ 菜单底部进入）</div>
+      <div class="cz-panel">
+        <div class="cz-head">自定义快捷工具栏 <span class="reset">恢复默认</span></div>
+        <div class="cz-body">
+          <div class="cz-sec">已固定（拖拽排序）</div>
+          <div class="cz-chips">
+            <div class="cz-chip"><span class="drag">≡</span>请求重写<span class="x">×</span></div>
+            <div class="cz-chip"><span class="drag">≡</span>请求映射<span class="x">×</span></div>
+            <div class="cz-chip"><span class="drag">≡</span>脚本<span class="x">×</span></div>
+            <div class="cz-chip"><span class="drag">≡</span>断点<span class="x">×</span></div>
+          </div>
+          <div class="cz-sec">全部功能（点 ＋ 固定到工具栏）</div>
+          <div class="cz-grid">
+            <div class="cz-item added"><svg viewBox="0 0 24 24"><path d="M14 3l7 7-9 9H5v-7z"/></svg>请求重写<span class="plus">✓</span></div>
+            <div class="cz-item added"><svg viewBox="0 0 24 24"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg>请求映射<span class="plus">✓</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>请求屏蔽<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>请求加密<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>域名过滤<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Hosts<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg>外部代理<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>弱网<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>手机连接<span class="plus">＋</span></div>
+            <div class="cz-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>MCP 服务<span class="plus">＋</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  <span class="tag">1</span><b>三层入口各司其职</b>：快捷区 = 高频（纯图标）；⋯ = 流量控制菜单；工具箱 = 无状态小工具（不混）；⚙ 设置 = 真设置（7 项）。<br>
+  <span class="tag">2</span><b>快捷区纯图标</b>，尺寸样式与工具栏其他图标完全一致，名称靠 hover tooltip 展示，不放文字。<br>
+  <span class="tag">3</span><b>⋯ 流量控制菜单</b>：只含 屏蔽 / 重写 / 映射 / 加密 / 脚本 / 断点 6 项，点项直接打开；行尾 📌 一键固定 / 取消固定；底部「自定义快捷工具栏…」进入排序面板。<br>
+  <span class="tag">4</span><b>自定义面板</b>只管排序和批量增删：已固定 chip 拖拽排序、点 × 移除；支持「恢复默认」。<br>
+  <span class="tag">5</span><b>实现</b>：功能注册表（id / 图标 / 名称 / 启动动作，动作即现有 MultiWindow.openWindow 或 dialog 调用）；AppConfiguration 持久化一个有序 id 列表（默认 重写/映射/脚本）；工具栏按列表动态构建 IconButton。<br>
+  <span class="tag">6</span><b>边界</b>：可固定范围 = 流量控制 6 项 + 设置菜单项（域名过滤 / Hosts / 外部代理 / 弱网 / MCP）；工具箱的无状态小工具不进工具栏、不参与固定，只在左侧导航「工具箱」。<br>
+  <span class="tag">7</span>注意：项目用的是定制 Flutter SDK，ReorderableListView 的 onReorderItem 回调里 newIndex 已减过 1，业务代码不要再减。
+</div>
+
+<!-- ===== 手机端 ===== -->
+<div class="notes" style="width:1280px">
+  <b>手机端：与桌面同一套入口逻辑（设置归位 / 状态语言统一）</b>
+  <div class="phones-row">
+
+    <!-- 手机 1：首页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar">
+          <div class="p-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>搜索</div>
+          <div class="p-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13h10l1-13"/></svg></div>
+          <div class="p-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg></div>
+        </div>
+        <div class="p-tabs"><div class="p-tab on">域名列表</div><div class="p-tab">时序</div></div>
+        <div class="p-body">
+          <div class="p-group"><span class="arrow">▼</span><span class="p-appicon" style="background:#07C160">微</span>api.example.com<span class="cnt">4</span></div>
+          <div class="p-row"><span class="method m-post">POST</span><span class="status s-ok">200</span><span class="path">/v1/orders/create</span><span class="time">342ms</span></div>
+          <div class="p-row"><span class="method m-get">GET</span><span class="status s-ok">200</span><span class="path">/v1/users/profile</span><span class="time">89ms</span></div>
+          <div class="p-row"><span class="method m-del">DELETE</span><span class="status s-err">500</span><span class="path">/v1/sessions/9f2c</span><span class="time">1.2s</span></div>
+          <div class="p-group"><span class="arrow">▼</span><span class="p-appicon" style="background:#4285F4">C</span>api.github.com<span class="cnt">2</span></div>
+          <div class="p-row"><span class="method m-get">GET</span><span class="status s-ok">200</span><span class="path">/users/wanghongenpin/repos</span><span class="time">128ms</span></div>
+          <div class="p-group"><span class="arrow">▶</span>cdn.example.com<span class="cnt">12</span></div>
+          <div class="p-fab" title="运行中，点击停止"><span class="stopsq"></span></div>
+        </div>
+        <div class="p-bnav"><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">首页 · 底部导航保持原 4 项（请求/配置/工具箱/设置）；FAB 启停（运行=绿 ⏹ / 停止=灰 ▶）</div>
+    </div>
+
+    <!-- 手机 3：请求详情页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar">
+          <div class="p-icon"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></div>
+          <div class="p-ptitle"><span class="m-post" style="font-weight:600">POST</span> api.example.com/v1/orders/create</div>
+          <div class="p-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div>
+          <div class="p-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg></div>
+        </div>
+        <div class="p-tabs">
+          <div class="p-tab on">General</div><div class="p-tab">请求</div><div class="p-tab">响应</div><div class="p-tab">Cookies</div>
+        </div>
+        <div class="p-body" style="padding:8px 0">
+          <div class="p-card">
+            <div class="p-kv"><span class="k">Request URL</span><span class="v">https://api.example.com/v1/orders/create</span></div>
+            <div class="p-kv"><span class="k">Method</span><span class="v">POST</span></div>
+            <div class="p-kv"><span class="k">Protocol</span><span class="v">HTTP/2</span></div>
+            <div class="p-kv"><span class="k">Status Code</span><span class="v" style="color:var(--ok)">200</span></div>
+            <div class="p-kv"><span class="k">Remote Addr</span><span class="v">203.0.113.24:443</span></div>
+            <div class="p-kv"><span class="k">Request Time</span><span class="v">2026-10-17 14:02:11.342</span></div>
+            <div class="p-kv"><span class="k">Duration</span><span class="v">342 ms</span></div>
+            <div class="p-kv"><span class="k">Req Type</span><span class="v">application/json</span></div>
+            <div class="p-kv"><span class="k">Resp Type</span><span class="v">application/json</span></div>
+            <div class="p-kv"><span class="k">Req Package</span><span class="v">1.2 KB</span></div>
+            <div class="p-kv"><span class="k">Resp Package</span><span class="v">8.6 KB</span></div>
+            <div class="p-kv"><span class="k">App</span><span class="v">微信</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="phone-label">请求详情 · General tab（字段与现有实现一致）；AppBar = 分享 + ⋮</div>
+    </div>
+  </div>
+  <br>
+  <span class="tag">1</span><b>底部导航保持原 4 项不变</b>：请求 / 配置 / 工具箱 / 设置，「配置」页保持现有实现；收藏 / 历史入口可放请求页 ⋮ MoreMenu。<br>
+  <span class="tag">2</span><b>VPN 启停 FAB 保留在右下</b>（单手可达，优于挪到 AppBar），状态语言与桌面胶囊统一：<b>运行中 = 绿底白 ⏹</b>，<b>已停止 = 灰底白 ▶</b>。<br>
+  <span class="tag">3</span>搜索本就在 AppBar 顶部，与桌面新设计一致；⋮ MoreMenu（HTTPS / 应用白名单 / 高亮 / 导出 / 多选 / 排序）保持不变。<br>
+  <span class="tag">4</span>域名分组列表、App 图标、Method / 状态码语义色、详情页（General / 请求 / 响应 / Cookies）全部与桌面同一视觉规范。<br>
+  <span class="tag">5</span><b>请求详情页</b>：push 全屏路由（无底部导航），AppBar = 返回 + Method/URL + 收藏 / 重发 / ⋮（复制 cURL·Python / 编辑 / 导出 / 删除），Tab = General / 请求 / 响应 / Cookies，与桌面右侧面板同一结构与视觉规范。<br>
+  <span class="tag">6</span>手机端屏幕窄，不做顶部快捷图标区；高频功能靠请求长按菜单触达。
+</div>
+
+<!-- ===== 手机端 · 主页面：配置 / 工具箱 / 设置 ===== -->
+<div class="notes" style="width:1280px">
+  <b>手机端 · 主页面（底部导航 配置 / 工具箱 / 设置，严格对齐 bottom_navigation.dart / toolbox.dart 现有入口）</b>
+  <div class="phones-row" style="gap:24px">
+
+    <!-- 配置页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar"><div class="p-apptitle">配置</div></div>
+        <div class="p-body" style="padding:10px 0">
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(203,178,106,.15)"><svg viewBox="0 0 24 24" style="stroke:#CBB26A"><path d="M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 3 1.2-6.1L3 9.6l6.3-.8z"/></svg></span>收藏<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(130,169,204,.15)"><svg viewBox="0 0 24 24" style="stroke:#82A9CC"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>历史<span class="go">›</span></div>
+          </div>
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(112,188,175,.15)"><svg viewBox="0 0 24 24" style="stroke:#70BCAF"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>Hosts<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(208,123,108,.15)"><svg viewBox="0 0 24 24" style="stroke:#D07B6C"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg></span>请求屏蔽<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(203,165,95,.15)"><svg viewBox="0 0 24 24" style="stroke:#CBA55F"><path d="M14 3l7 7-9 9H5v-7z"/><path d="M12 5l7 7"/></svg></span>请求重写<span class="on">2 条</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(121,178,143,.15)"><svg viewBox="0 0 24 24" style="stroke:#79B28F"><path d="M9 20H4v-5M4 15l7-7 5 5-7 7M20 9l-5-5"/></svg></span>请求映射<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(167,139,207,.15)"><svg viewBox="0 0 24 24" style="stroke:#A78BCF"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>请求加密<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(157,157,218,.15)"><svg viewBox="0 0 24 24" style="stroke:#9D9DDA"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></span>脚本<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(203,138,172,.15)"><svg viewBox="0 0 24 24" style="stroke:#CB8AAC"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>断点<span class="on">1 条</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(226,158,118,.15)"><svg viewBox="0 0 24 24" style="stroke:#E29E76"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg></span>弱网<span class="on">1 条</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(141,160,226,.15)"><svg viewBox="0 0 24 24" style="stroke:#8DA0E2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13.5 13.5 0 0 1 0 18M12 3a13.5 13.5 0 0 0 0 18"/></svg></span>环境变量<span class="val">开发环境</span><span class="go">›</span></div>
+          </div>
+        </div>
+        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">配置 · 收藏/历史一卡 + 流量控制 9 项一卡（行尾仅生效时显示绿「N 条」）</div>
+    </div>
+
+    <!-- 工具箱页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar"><div class="p-apptitle">工具箱</div></div>
+        <div class="p-body" style="padding:8px 0">
+          <div class="p-sec2">请求</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(141,160,226,.14)"><svg viewBox="0 0 24 24" style="stroke:#8DA0E2"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></div>HTTP</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(167,139,207,.14)"><svg viewBox="0 0 24 24" style="stroke:#A78BCF"><circle cx="12" cy="12" r="1.8"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg></div>WebSocket</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(203,165,95,.15)"><svg viewBox="0 0 24 24" style="stroke:#CBA55F"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg></div>JavaScript</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(130,169,204,.15)"><svg viewBox="0 0 24 24" style="stroke:#82A9CC"><circle cx="12" cy="13" r="8"/><path d="M12 9.5V13l2.5 2M9 2.5h6"/></svg></div>重发任务</div>
+          </div>
+          <div class="p-sec2">视图</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(121,178,143,.15)"><svg viewBox="0 0 24 24" style="stroke:#79B28F"><path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/></svg></div>JSON</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(226,158,118,.15)"><svg viewBox="0 0 24 24" style="stroke:#E29E76"><path d="M8 5l-5 7 5 7M16 5l5 7-5 7"/></svg></div>XML</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(157,157,218,.14)"><svg viewBox="0 0 24 24" style="stroke:#9D9DDA"><rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/></svg></div>文本对比</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(133,149,170,.14)"><svg viewBox="0 0 24 24" style="stroke:#8595AA"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>文本编辑</div>
+          </div>
+          <div class="p-sec2">编码</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(112,188,175,.14)"><svg viewBox="0 0 24 24" style="stroke:#70BCAF"><path d="M10 14a5 5 0 0 0 7 0l2.5-2.5a5 5 0 0 0-7-7L11 6M14 10a5 5 0 0 0-7 0l-2.5 2.5a5 5 0 0 0 7 7L13 18"/></svg></div>URL</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(203,138,172,.14)"><span class="glyph" style="color:#CB8AAC">B</span></div>Base64</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(176,149,228,.14)"><span class="glyph" style="color:#B095E4;text-decoration:underline">U</span></div>Unicode</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(181,144,90,.15)"><svg viewBox="0 0 24 24" style="stroke:#B5905A"><path d="M9 3L7 21M17 3l-2 18M4 8h17M3 16h17"/></svg></div>MD5</div>
+          </div>
+          <div class="p-sec2">加密</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(208,123,108,.14)"><svg viewBox="0 0 24 24" style="stroke:#D07B6C"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg></div>AES</div>
+          </div>
+          <div class="p-sec2">其他</div>
+          <div class="p-tbcard">
+            <div class="p-tbt"><div class="tic" style="background:rgba(114,186,186,.14)"><svg viewBox="0 0 24 24" style="stroke:#72BABA"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>时间戳</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(203,178,106,.15)"><svg viewBox="0 0 24 24" style="stroke:#CBB26A"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2.5 2.5M14 9l2.5 2.5"/></svg></div>证书 Hash</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(160,162,228,.14)"><svg viewBox="0 0 24 24" style="stroke:#A0A2E4"><path d="M12 3v18M4.5 7l15 10M19.5 7l-15 10"/></svg></div>正则</div>
+            <div class="p-tbt"><div class="tic" style="background:rgba(154,160,166,.13)"><svg viewBox="0 0 24 24" style="stroke:#9AA0A6"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5zM14 20v.01M20 14v.01"/></svg></div>二维码</div>
+          </div>
+        </div>
+        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn on"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">工具箱 · 分组深卡 + 彩色淡色块图标（与配置/设置页同一色彩体系）</div>
+    </div>
+
+    <!-- 设置页 -->
+    <div>
+      <div class="phone"><div class="p-screen">
+        <div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div>
+        <div class="p-appbar"><div class="p-apptitle">设置</div></div>
+        <div class="p-body" style="padding:10px 0">
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(121,178,143,.15)"><svg viewBox="0 0 24 24" style="stroke:#79B28F"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>HTTPS 抓包<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(226,158,118,.15)"><svg viewBox="0 0 24 24" style="stroke:#E29E76"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg></span>域名过滤<span class="go">›</span></div>
+          </div>
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(141,160,226,.14)"><svg viewBox="0 0 24 24" style="stroke:#8DA0E2"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></span>代理端口<span class="val">9099</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(133,149,170,.14)"><span class="micg" style="color:#8595AA">S5</span></span>SOCKS5<span class="p-sw off"></span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(130,169,204,.15)"><span class="micg" style="color:#82A9CC">H2</span></span>启用 HTTP/2<span class="p-sw"></span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(112,188,175,.15)"><svg viewBox="0 0 24 24" style="stroke:#70BCAF"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>外部代理<span class="val">未设置</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(133,149,170,.14)"><svg viewBox="0 0 24 24" style="stroke:#8595AA"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span>代理忽略域名<span class="go">›</span></div>
+          </div>
+          <div class="p-mcard">
+            <div class="p-mrow"><span class="mic" style="background:rgba(167,139,207,.15)"><svg viewBox="0 0 24 24" style="stroke:#A78BCF"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></span>MCP 服务<span class="on">运行中</span><span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(157,157,218,.15)"><svg viewBox="0 0 24 24" style="stroke:#9D9DDA"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg></span>偏好设置<span class="go">›</span></div>
+            <div class="p-mrow"><span class="mic" style="background:rgba(130,169,204,.15)"><svg viewBox="0 0 24 24" style="stroke:#82A9CC"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg></span>关于<span class="go">›</span></div>
+          </div>
+        </div>
+        <div class="p-bnav"><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>请求</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2.2"/><circle cx="9" cy="16" r="2.2"/></svg>配置</div><div class="p-bn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2.5-.7-.7-2.5z"/></svg>工具箱</div><div class="p-bn on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5A7 7 0 0 0 19 12z"/></svg>设置</div></div>
+      </div></div>
+      <div class="phone-label">设置 · HTTPS/过滤 + 代理 + MCP/偏好/关于；忽略域名改为独立编辑页</div>
+    </div>
+  </div>
+  <br>
+  <span class="tag">1</span><b>配置页</b>：收藏 / 历史放配置页首卡（与现实现一致，首页 ⋮ 不再重复入口）；Hosts + 流量控制 8 项一卡。行尾状态采用最简口径（用户拍板，避免密集）：<b>仅生效时显示绿「N 条」（启用规则数），其余情况（无规则 / 未开启）一律不显示</b>（规则型：屏蔽 / 重写 / 映射 / 加密 / 脚本 / 断点，manager 均有全局 enabled + 规则 enabled；条数 = 启用的规则数，绿色即表生效，不再写「启用中」）；环境变量显示当前环境名（灰色取值，非状态）；收藏 / 历史为数据页不显示状态。<br>
+  <span class="tag">2</span><b>工具箱页</b>：与桌面同一分组（请求 / 视图 / 编码 / 加密 / 其他），每组一张深卡（var(--border) 发丝边、10 圆角），卡内 4 列宫格；工具图标为 <b>38px 彩色淡色块（14–15% 淡底 + 提亮的降饱和彩色描边图标）</b>；Base64 / Unicode 沿用 B / U 字符图标（对齐 Icons.format_bold / format_underline）；点击 push 全屏子页。<br>
+  <span class="tag">3</span><b>设置页</b>：HTTPS 抓包 / 域名过滤一卡；代理（端口 / SOCKS5 / HTTP2 / 外部代理 / 忽略域名）一卡（手机端无系统代理）；MCP / 偏好 / 关于一卡，MCP 行尾显示运行状态。<br>
+  <span class="tag">4</span><b>代理忽略域名</b>由卡内嵌输入框改为独立编辑页：手机端卡内输入体验差，且与其它入口行形态统一。<br>
+  <span class="tag">5</span><b>卡片规范</b>：面板底 var(--panel)、var(--border) 发丝边、10px 圆角；入口行 = <b>22px 彩色淡色块图标</b> + 标题 + 灰色 ›；开关行（SOCKS5 / HTTP2）无象形图标，用 <b>S5 / H2 字符色块</b>（同 Base64/Unicode 的 B/U 手法），全行图标对齐；底导航当前项主色高亮。<br>
+  <span class="tag">6</span><b>色彩体系（与浅色稿同一套语义色，暗色下提亮、淡底加深至 14–15%）</b>：菜单/工具图标统一「淡色底 + 彩色描边」；<b>每功能固定一个语义色，全端一致</b>（如 重写 = 琥珀、脚本 = 靛蓝、弱网 = 橙、屏蔽 = 红、加密 = 紫），颜色即功能 ID；配置/设置行内块 22px，工具箱宫格块 38px，同一套色值。
+</div>
+
+<!-- ===== 手机端 · 请求详情各 Tab ===== -->
+<div class="notes" style="width:1280px">
+  <b>请求详情页 · 各 Tab（严格对齐现有实现：panel.dart / body.dart）</b>
+  <div class="phones-row" style="gap:24px">
+<div><div class="phone"><div class="p-screen"><div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div><div class="p-appbar"><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></div><div class="p-ptitle"><span class="m-post" style="font-weight:600">POST</span> api.example.com/v1/orders</div><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div><div class="p-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg></div></div><div class="p-tabs"><div class="p-tab">General</div><div class="p-tab on">请求</div><div class="p-tab">响应</div><div class="p-tab">Cookies</div></div><div class="p-body">
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">Path</span><span class="v">/v1/orders/create?source=app&amp;v=3</span></div>
+  </div>
+  <div class="p-sec">Query 参数</div>
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">source</span><span class="v">app</span></div>
+    <div class="p-kv"><span class="k">v</span><span class="v">3</span></div>
+  </div>
+  <div class="p-sec">请求头</div>
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">content-type</span><span class="v">application/json</span></div>
+    <div class="p-kv"><span class="k">authorization</span><span class="v">Bearer ••••••</span></div>
+    <div class="p-kv"><span class="k">user-agent</span><span class="v">okhttp/4.12.0</span></div>
+  </div>
+  <div class="p-sec">请求体 · JSON</div>
+  <div class="p-code">{ <span class="j-k">"sku"</span>: <span class="j-s">"PRO-MONTHLY"</span>, <span class="j-k">"qty"</span>: <span class="j-n">1</span>,<br>&nbsp;&nbsp;<span class="j-k">"coupon"</span>: <span class="j-s">"NEW2026"</span> }</div>
+</div></div></div><div class="phone-label">请求 tab · Path → Query → 请求头 → 请求体</div></div>
+<div><div class="phone"><div class="p-screen"><div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div><div class="p-appbar"><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></div><div class="p-ptitle"><span class="m-post" style="font-weight:600">POST</span> api.example.com/v1/orders</div><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div><div class="p-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg></div></div><div class="p-tabs"><div class="p-tab">General</div><div class="p-tab">请求</div><div class="p-tab on">响应</div><div class="p-tab">Cookies</div></div><div class="p-body">
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">StatusCode</span><span class="v" style="color:var(--ok)">200</span></div>
+  </div>
+  <div class="p-sec">响应头</div>
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">content-type</span><span class="v">application/json; charset=utf-8</span></div>
+    <div class="p-kv"><span class="k">content-encoding</span><span class="v">gzip</span></div>
+  </div>
+</div>
+<div class="p-mini-bar">
+  <span class="fmt">JSON</span><span>Raw</span>
+  <span style="margin-left:auto"></span>
+  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+  <svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+</div>
+<div class="p-code" style="flex:1;overflow:hidden">{
+  <span class="j-k">"code"</span>: <span class="j-n">0</span>,
+  <span class="j-k">"data"</span>: {
+    <span class="j-k">"orderId"</span>: <span class="j-s">"ORD-20261017-8842"</span>,
+    <span class="j-k">"status"</span>: <span class="j-s">"PAID"</span>
+  },
+  <span class="j-k">"traceId"</span>: <span class="j-s">"b3f1c9a2e7"</span>
+}</div></div></div><div class="phone-label">响应 tab · StatusCode → 响应头 → Body（格式化/搜索/复制）</div></div>
+<div><div class="phone"><div class="p-screen"><div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div><div class="p-appbar"><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></div><div class="p-ptitle"><span class="m-post" style="font-weight:600">POST</span> api.example.com/v1/orders</div><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div><div class="p-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg></div></div><div class="p-tabs"><div class="p-tab">General</div><div class="p-tab">请求</div><div class="p-tab">响应</div><div class="p-tab on">Cookies</div></div><div class="p-body">
+  <div class="p-sec">Request Cookies</div>
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">session</span><span class="v">ab12cd34ef56</span></div>
+    <div class="p-kv"><span class="k">uid</span><span class="v">10086</span></div>
+  </div>
+  <div class="p-sec">Response Cookies</div>
+  <div class="p-card" style="margin-bottom:0">
+    <div class="p-kv"><span class="k">token</span><span class="v">eyJhbGciOi•••; HttpOnly</span></div>
+    <div class="p-kv"><span class="k">pref</span><span class="v">dark=1; Max-Age=86400</span></div>
+  </div>
+</div></div></div><div class="phone-label">Cookies tab · Request / Response 两组</div></div>
+<div><div class="phone"><div class="p-screen"><div class="p-status"><span>9:41</span><span class="ics">●●●● 5G ▮</span></div><div class="p-appbar"><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></div><div class="p-ptitle"><span class="m-post" style="font-weight:600">POST</span> api.example.com/v1/orders</div><div class="p-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div><div class="p-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg></div></div><div class="p-tabs"><div class="p-tab">General</div><div class="p-tab">请求</div><div class="p-tab">响应</div><div class="p-tab on">WebSocket</div></div><div class="p-body">
+  <div class="p-msg"><span class="dir up">↑</span><span class="txt">{"type":"subscribe","channel":"order.8842"}</span><span class="tm">14:02:11</span></div>
+  <div class="p-msg"><span class="dir down">↓</span><span class="txt">{"type":"ack","ok":true}</span><span class="tm">14:02:11</span></div>
+  <div class="p-msg"><span class="dir down">↓</span><span class="txt">{"type":"push","status":"PAID","amount":199}</span><span class="tm">14:02:13</span></div>
+  <div class="p-msg"><span class="dir up">↑</span><span class="txt">{"type":"ping"}</span><span class="tm">14:02:40</span></div>
+  <div class="p-msg"><span class="dir down">↓</span><span class="txt">{"type":"pong"}</span><span class="tm">14:02:40</span></div>
+</div>
+<div class="p-mini-bar" style="border-top:1px solid var(--border);border-bottom:none">
+  <svg viewBox="0 0 24 24"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg><span>全部消息</span>
+  <span style="margin-left:auto;font-size:10px;color:var(--text-3)">共 5 条</span>
+</div></div></div><div class="phone-label">WebSocket / SSE · 末位 Tab 动态变为消息流</div></div>
+  </div>
+  <br>
+  <span class="tag">1</span><b>Tab 结构</b>：General / 请求 / 响应 / 第 4 位动态（Cookies → WebSocket → SSE）；MQTT 请求为 General / MQTT 两个 Tab（同 panel.dart）。<br>
+  <span class="tag">2</span><b>AppBar</b>：返回 + URL 标题 + <b>分享</b>（ShareWidget）+ <b>⋮</b>（DetailMenuWidget：复制 URL/cURL/Python、重发、编辑请求、收藏、导出、删除等）。<br>
+  <span class="tag">3</span><b>General</b>：Request URL / Method / Protocol / Status Code / Remote Address / Request Time / Duration / 双 Content-Type / 双 Package / App（手机抓包时），MQTT 为 Connection / Protocol / Packets / Start Time。<br>
+  <span class="tag">4</span><b>请求 tab</b>：Path → Query 参数 → 请求头 → 请求体；<b>响应 tab</b>：StatusCode → 响应头 → 响应体；Body 支持格式化切换、内容搜索 overlay、复制（HttpBodyWidget 现有能力）。<br>
+  <span class="tag">5</span><b>消息流</b>：↑ 上行主色圆点 / ↓ 下行灰点，等宽字体 + 时间戳，底部过滤条；桌面右侧面板与手机详情共用同一结构，仅布局差异。
+</div>
+
+<!-- ===== 桌面端 · 详情面板各 Tab ===== -->
+<div class="notes" style="width:1280px">
+  <b>桌面端 · 详情面板各 Tab（严格对齐 panel.dart 现有实现，视觉规范同首页稿）</b>
+  <div class="dp-grid">
+<div><div class="dp-panel"><div class="tabs"><div class="tab">General</div><div class="tab on">请求</div><div class="tab">响应</div><div class="tab">Cookies</div></div><div class="dp-body">
+    <div class="card" style="border:none;border-bottom:1px solid var(--divider);border-radius:0">
+      <div class="kv"><span class="k">Path</span><span class="v">/v1/orders/create?source=app&amp;v=3</span></div>
+    </div>
+    <div class="d-sec">Query 参数</div>
+    <div class="kv"><span class="k">source</span><span class="v">app</span></div>
+    <div class="kv"><span class="k">v</span><span class="v">3</span></div>
+    <div class="d-sec">请求头</div>
+    <div class="kv"><span class="k">content-type</span><span class="v">application/json</span></div>
+    <div class="kv"><span class="k">authorization</span><span class="v">Bearer ••••••</span></div>
+    <div class="d-sec">请求体 · JSON</div>
+    <pre style="padding:8px 14px;font-size:11px">{ <span class="j-k">"sku"</span>: <span class="j-s">"PRO-MONTHLY"</span>, <span class="j-k">"qty"</span>: <span class="j-n">1</span>, <span class="j-k">"coupon"</span>: <span class="j-s">"NEW2026"</span> }</pre></div></div></div>
+<div><div class="dp-panel"><div class="tabs"><div class="tab">General</div><div class="tab">请求</div><div class="tab on">响应</div><div class="tab">Cookies</div></div><div class="dp-body">
+    <div class="kv"><span class="k">StatusCode</span><span class="v" style="color:var(--ok)">200</span></div>
+    <div class="d-sec">响应头</div>
+    <div class="kv"><span class="k">content-type</span><span class="v">application/json; charset=utf-8</span></div>
+    <div class="kv"><span class="k">content-encoding</span><span class="v">gzip</span></div>
+    <div class="d-sec" style="display:flex;align-items:center;gap:8px">响应体
+      <span style="margin-left:auto"></span>
+      <span style="padding:1px 7px;border-radius:5px;background:var(--primary-soft);color:var(--primary);font-size:10px">JSON</span>
+      <span style="font-size:10px">Raw</span>
+    </div>
+    <pre style="padding:6px 14px;font-size:11px;flex:1;overflow:hidden">{
+  <span class="j-k">"code"</span>: <span class="j-n">0</span>,
+  <span class="j-k">"data"</span>: { <span class="j-k">"orderId"</span>: <span class="j-s">"ORD-20261017-8842"</span>, <span class="j-k">"status"</span>: <span class="j-s">"PAID"</span> },
+  <span class="j-k">"traceId"</span>: <span class="j-s">"b3f1c9a2e7"</span>
+}</pre></div></div></div>
+<div><div class="dp-panel"><div class="tabs"><div class="tab">General</div><div class="tab">请求</div><div class="tab">响应</div><div class="tab on">Cookies</div></div><div class="dp-body">
+    <div class="d-sec">Request Cookies</div>
+    <div class="kv"><span class="k">session</span><span class="v">ab12cd34ef56</span></div>
+    <div class="kv"><span class="k">uid</span><span class="v">10086</span></div>
+    <div class="d-sec">Response Cookies</div>
+    <div class="kv"><span class="k">token</span><span class="v">eyJhbGciOi•••; HttpOnly</span></div>
+    <div class="kv"><span class="k">pref</span><span class="v">dark=1; Max-Age=86400</span></div></div></div></div>
+<div><div class="dp-panel"><div class="tabs"><div class="tab">General</div><div class="tab">请求</div><div class="tab">响应</div><div class="tab on">WebSocket</div></div><div class="dp-body">
+    <div class="d-msg"><span class="dir up">↑</span><span class="txt">{"type":"subscribe","channel":"order.8842"}</span><span class="tm">14:02:11</span></div>
+    <div class="d-msg"><span class="dir down">↓</span><span class="txt">{"type":"ack","ok":true}</span><span class="tm">14:02:11</span></div>
+    <div class="d-msg"><span class="dir down">↓</span><span class="txt">{"type":"push","status":"PAID","amount":199}</span><span class="tm">14:02:13</span></div>
+    <div class="d-msg"><span class="dir up">↑</span><span class="txt">{"type":"ping"}</span><span class="tm">14:02:40</span></div>
+    <div class="d-msg"><span class="dir down">↓</span><span class="txt">{"type":"pong"}</span><span class="tm">14:02:40</span></div></div></div></div>
+  </div>
+  <br>
+  <span class="tag">1</span>首 Tab 为 <b>Overview</b>（见上方首页稿右侧面板）：聚合关键指标 + 响应体预览，替代原 General 纯字段列表，信息不丢失。<br>
+  <span class="tag">2</span><b>请求 tab</b>：Path → Query 参数 → 请求头 → 请求体；<b>响应 tab</b>：StatusCode → 响应头 → 响应体；Body 支持格式化切换、内容搜索、复制（HttpBodyWidget 现有能力）。<br>
+  <span class="tag">3</span><b>第 4 位 Tab 动态</b>：Cookies → WebSocket → SSE（按选中请求类型）；MQTT 请求为 Overview / MQTT 两个 Tab。<br>
+  <span class="tag">4</span>嵌入主窗口时面板无标题栏（仅 Tab）；「新窗口打开」的独立详情窗口才有标题栏 + 分享 + ⋮ 菜单。<br>
+  <span class="tag">5</span>与手机端详情页同一信息结构，仅布局差异（桌面分栏 / 手机全屏分页）。
+</div>
+
+</body>
+</html>

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:pointycastle/asn1.dart';
@@ -552,10 +553,8 @@ class Pkcs12 {
     Uint8List pkcs12, {
     String? password,
   }) {
-    Uint8List? pwFormatted;
-    if (password != null) {
-      pwFormatted = formatPkcs12Password(Uint8List.fromList(password.codeUnits));
-    }
+    // 空密码也按 RFC7292 格式化, 与 openssl -passout pass: 行为一致
+    final pwFormatted = formatPkcs12Password(Uint8List.fromList(password?.codeUnits ?? []));
 
     var pems = <String>[];
     var parser = ASN1Parser(pkcs12);
@@ -623,13 +622,13 @@ class Pkcs12 {
 
             // DECRYPT
             var contentEncryptionAlgorithm = encryptedContentInfo.contentEncryptionAlgorithm;
-            var decryptedContent = _decryptData(rawData, contentEncryptionAlgorithm, pwFormatted!);
+            var decryptedContent = _decryptData(rawData, contentEncryptionAlgorithm, pwFormatted, password);
 
             var contentType = encryptedContentInfo.contentType;
 
             switch (contentType.objectIdentifierAsString) {
               case '1.2.840.113549.1.7.1': // CERTIFICATES
-                loadSafeContents(DerInputStream.fromBytes(decryptedContent), pems, pwFormatted);
+                loadSafeContents(DerInputStream.fromBytes(decryptedContent), pems, pwFormatted, password);
                 break;
             }
 
@@ -637,13 +636,13 @@ class Pkcs12 {
           case '1.2.840.113549.1.7.1': // data (PKCS #7)
             if (contentInfo.content!.isConstructed == true && contentInfo.content is ASN1OctetString) {
               var content = contentInfo.content as ASN1OctetString;
-              loadSafeContents(DerInputStream.fromBytes(content.octets!), pems, pwFormatted);
+              loadSafeContents(DerInputStream.fromBytes(content.octets!), pems, pwFormatted, password);
             } else {
               var safeContents =
                   ASN1SafeContents.fromSequence(ASN1Sequence.fromBytes(contentInfo.content!.valueBytes!));
               for (var element in safeContents.safeBags) {
                 var bagValueSeq = element.bagValue as ASN1Sequence;
-                _parseSafaBag(element.bagId, bagValueSeq, pems, pwFormatted);
+                _parseSafaBag(element.bagId, bagValueSeq, pems, pwFormatted, password);
               }
             }
             break;
@@ -653,7 +652,7 @@ class Pkcs12 {
     return pems;
   }
 
-  static void loadSafeContents(DerInputStream stream, List<String> pems, Uint8List? pwFormatted) {
+  static void loadSafeContents(DerInputStream stream, List<String> pems, Uint8List pwFormatted, String? password) {
     List<DerValue> safeBags = stream.getSequence(2);
     int count = safeBags.length;
 
@@ -664,12 +663,12 @@ class Pkcs12 {
       bagValue = bagValue.data.getDerValue();
       var data = bagValue.toByteArray();
       var bagValueSeq = ASN1Sequence.fromBytes(data);
-      _parseSafaBag(bagId, bagValueSeq, pems, pwFormatted);
+      _parseSafaBag(bagId, bagValueSeq, pems, pwFormatted, password);
     }
   }
 
-  static void _parseSafaBag(
-      ASN1ObjectIdentifier bagId, ASN1Sequence bagValueSeq, List<String> pems, Uint8List? pwFormatted) {
+  static void _parseSafaBag(ASN1ObjectIdentifier bagId, ASN1Sequence bagValueSeq, List<String> pems,
+      Uint8List pwFormatted, String? password) {
     //private key
     if (bagId.objectIdentifierAsString == "1.2.840.113549.1.12.10.1.2") {
       var contentEncryptionAlgorithm =
@@ -677,7 +676,7 @@ class Pkcs12 {
 
       // DECRYPT
       var decryptedContent =
-          _decryptData(bagValueSeq.elements!.elementAt(1).valueBytes!, contentEncryptionAlgorithm, pwFormatted!);
+          _decryptData(bagValueSeq.elements!.elementAt(1).valueBytes!, contentEncryptionAlgorithm, pwFormatted, password);
       var s = ASN1Sequence.fromBytes(decryptedContent);
 
       //private key
@@ -716,14 +715,106 @@ class Pkcs12 {
   }
 
   static Uint8List _decryptData(
-      Uint8List data, ASN1AlgorithmIdentifier contentEncryptionAlgorithm, Uint8List pwFormatted) {
+      Uint8List data, ASN1AlgorithmIdentifier contentEncryptionAlgorithm, Uint8List pwFormatted, String? password) {
+    final oid = contentEncryptionAlgorithm.algorithm.objectIdentifierAsString!;
+
+    // PBES2 (openssl 3.x 默认导出格式): PBKDF2 + AES/3DES-CBC
+    if (oid == '1.2.840.113549.1.5.13') {
+      return _decryptPbes2(data, contentEncryptionAlgorithm.parameters as ASN1Sequence, pwFormatted, password);
+    }
+
 // GET ALGORITHM
-    var encryptionAlgorithm = _algorithmFromOi(contentEncryptionAlgorithm.algorithm.objectIdentifierAsString!);
+    var encryptionAlgorithm = _algorithmFromOi(oid);
 // GET SALT AND MACITER AND DIGEST ALGORITHM
     Uint8List salt = _getSaltFromAlgorithmParameters(contentEncryptionAlgorithm.parameters);
     int macIter = _getMacIterFromAlgorithmParameters(contentEncryptionAlgorithm.parameters);
     var digestAlgorithm = _getDigestAlgorithmFromEncryptionAlgorithm(encryptionAlgorithm);
     return _decrypt(data, encryptionAlgorithm, pwFormatted, salt, macIter, digestAlgorithm);
+  }
+
+  /// PBES2 解密: PBKDF2(1.2.840.113549.1.5.12) 派生密钥 + AES/3DES-CBC
+  static Uint8List _decryptPbes2(Uint8List data, ASN1Sequence params, Uint8List pwFormatted, String? password) {
+    final kdf = ASN1AlgorithmIdentifier.fromSequence(params.elements!.elementAt(0) as ASN1Sequence);
+    final encScheme = ASN1AlgorithmIdentifier.fromSequence(params.elements!.elementAt(1) as ASN1Sequence);
+
+    if (kdf.algorithm.objectIdentifierAsString != '1.2.840.113549.1.5.12') {
+      throw ArgumentError('unsupported PBES2 kdf ${kdf.algorithm.objectIdentifierAsString}');
+    }
+
+    final kdfParams = kdf.parameters as ASN1Sequence;
+    final salt = (kdfParams.elements!.elementAt(0) as ASN1OctetString).valueBytes!;
+    final iterations = (kdfParams.elements!.elementAt(1) as ASN1Integer).integer!.toInt();
+
+    // PRF, 缺省 hmacWithSHA1
+    var digestName = 'SHA-1';
+    var hmacBlockSize = 64;
+    for (var e in kdfParams.elements!) {
+      if (e is! ASN1Sequence) continue;
+      final prf = ASN1AlgorithmIdentifier.fromSequence(e);
+      switch (prf.algorithm.objectIdentifierAsString) {
+        case '1.2.840.113549.2.7': // hmacWithSHA1
+          break;
+        case '1.2.840.113549.2.8': // hmacWithSHA224
+          digestName = 'SHA-224';
+          break;
+        case '1.2.840.113549.2.9': // hmacWithSHA256
+          digestName = 'SHA-256';
+          break;
+        case '1.2.840.113549.2.10': // hmacWithSHA384
+          digestName = 'SHA-384';
+          hmacBlockSize = 128;
+          break;
+        case '1.2.840.113549.2.11': // hmacWithSHA512
+          digestName = 'SHA-512';
+          hmacBlockSize = 128;
+          break;
+      }
+    }
+
+    final encOid = encScheme.algorithm.objectIdentifierAsString!;
+    final iv = (encScheme.parameters as ASN1OctetString).valueBytes!;
+
+    final int keyLength;
+    final String cipherName;
+    switch (encOid) {
+      case '2.16.840.1.101.3.4.1.2': // aes128-CBC
+        keyLength = 16;
+        cipherName = 'AES/CBC/PKCS7';
+      case '2.16.840.1.101.3.4.1.22': // aes192-CBC
+        keyLength = 24;
+        cipherName = 'AES/CBC/PKCS7';
+      case '2.16.840.1.101.3.4.1.42': // aes256-CBC
+        keyLength = 32;
+        cipherName = 'AES/CBC/PKCS7';
+      case '1.2.840.113549.3.7': // des-EDE3-CBC
+        keyLength = 24;
+        cipherName = 'DESede/CBC/PKCS7';
+      default:
+        throw ArgumentError('unsupported PBES2 encryption scheme $encOid');
+    }
+
+    // PBES2 密码编码各实现不一致: openssl 用原始 UTF-8 字节, RFC7292 B.1 是 BMPString(无终止符), 逐个尝试
+    final bmpPassword = pwFormatted.length >= 2 ? pwFormatted.sublist(0, pwFormatted.length - 2) : pwFormatted;
+    final candidates = <Uint8List>[
+      Uint8List.fromList(utf8.encode(password ?? '')),
+      bmpPassword,
+    ];
+
+    Object? lastError;
+    for (var candidate in candidates) {
+      try {
+        final derivator = PBKDF2KeyDerivator(HMac(Digest(digestName), hmacBlockSize));
+        derivator.init(Pbkdf2Parameters(salt, iterations, keyLength));
+        final key = derivator.process(candidate);
+
+        final cipher = PaddedBlockCipher(cipherName);
+        cipher.init(false, PaddedBlockCipherParameters(ParametersWithIV(KeyParameter(key), iv), null));
+        return cipher.process(data);
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw ArgumentError('PBES2 decrypt failed: $lastError');
   }
 
   static String _algorithmFromOi(String keyPbe) {

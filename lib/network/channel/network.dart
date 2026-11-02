@@ -24,7 +24,9 @@ import 'package:proxypin/network/channel/channel.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/channel_dispatcher.dart';
 import 'package:proxypin/network/components/host_filter.dart';
+import 'package:proxypin/network/components/manager/client_cert_manager.dart';
 import 'package:proxypin/network/handle/relay_handle.dart';
+import 'package:proxypin/network/mqtt/protocol_sniffer.dart';
 import 'package:proxypin/network/socks/socks5.dart';
 import 'package:proxypin/network/util/attribute_keys.dart';
 import 'package:proxypin/network/util/crts.dart';
@@ -87,7 +89,7 @@ class Server extends Network {
       var channel = Channel(socket);
       _connections.add(channel);
 
-      socket.done.whenComplete(() => _connections.remove(channel));
+      socket.done.whenComplete(() => _connections.remove(channel)).onError((_, __) {});
 
       ChannelContext channelContext = ChannelContext();
       channelContext.clientChannel = channel;
@@ -232,6 +234,11 @@ class Server extends Network {
 
       if (remoteChannel != null && !remoteChannel.isSsl) {
         var supportProtocols = configuration.enabledHttp2 ? TLS.supportProtocols(data) : ['http/1.1'];
+        // 与转发路径一致：含 h2 时带上 http/1.1 兜底，让 h1-only 上游显式选择
+        if (supportProtocols?.contains('h2') == true && supportProtocols?.contains('http/1.1') == false) {
+          supportProtocols = [...supportProtocols!, 'http/1.1'];
+        }
+        if (supportProtocols?.isEmpty == true) supportProtocols = null;
         await remoteChannel.startSecureSocket(channelContext, host: serviceName, supportedProtocols: supportProtocols);
       }
 
@@ -239,9 +246,32 @@ class Server extends Network {
       var certificate = await CertificateManager.getCertificateContext(serviceName!);
       var selectedProtocol = remoteChannel?.selectedProtocol;
 
-      var supportedProtocols = selectedProtocol != null ? [selectedProtocol] : ['http/1.1'];
+      final offeredProtocols = TLS.supportProtocols(data);
+      List<String>? supportedProtocols;
+      if (selectedProtocol != null) {
+        supportedProtocols = [selectedProtocol];
+      } else if (remoteChannel != null && remoteChannel.isSsl) {
+        // 上游已完成握手但未选择 ALPN（h1-only 服务器/中间盒）：
+        // 优先让客户端也走 HTTP/1.1，端到端协议一致，避免协议转换；
+        // 客户端只提供 h2 时原样提供，由 h2<->h1 转换层桥接。
+        final nonH2 = offeredProtocols?.where((p) => p != 'h2' && p != 'h2-14').toList();
+        supportedProtocols = (nonH2?.isNotEmpty == true) ? nonH2 : offeredProtocols;
+      } else {
+        supportedProtocols = offeredProtocols?.isNotEmpty == true
+            ? (configuration.enabledHttp2
+                ? offeredProtocols
+                : offeredProtocols!.where((protocol) => protocol != 'h2').toList())
+            : ['http/1.1'];
+      }
+      if (supportedProtocols?.isEmpty == true) supportedProtocols = null;
 
-      certificate.setAlpnProtocols(supportedProtocols, true);
+      if (supportedProtocols != null) certificate.setAlpnProtocols(supportedProtocols, true);
+
+      final httpDecoder = channel.dispatcher.decoder;
+      final httpEncoder = channel.dispatcher.encoder;
+      final httpHandler = channel.dispatcher.handler;
+      channel.dispatcher.channelHandle(RawCodec(),
+          ProtocolSniffer(hostAndPort, serviceName, httpDecoder, httpEncoder, httpHandler));
 
       //处理客户端ssl握手
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,
@@ -308,8 +338,9 @@ class Client extends Network {
 
   /// ssl连接
   Future<Channel> secureConnect(HostAndPort hostAndPort, ChannelContext channelContext) async {
+    SecurityContext? context = await ClientCertManager.securityContextForHost(hostAndPort.host);
     return SecureSocket.connect(_stripIPv6Brackets(hostAndPort.host), hostAndPort.port,
-        timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
+        context: context, timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
       var channel = Channel(socket);
       channelContext.serverChannel = channel;
       return listen(channel, channelContext);

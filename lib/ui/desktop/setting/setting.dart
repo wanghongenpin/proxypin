@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -23,6 +24,7 @@ import 'package:proxypin/network/components/manager/request_block_manager.dart';
 import 'package:proxypin/network/util/system_proxy.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/proxy_port_setting.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/desktop/setting/about.dart';
 import 'package:proxypin/ui/desktop/setting/external_proxy.dart';
@@ -48,6 +50,9 @@ class Setting extends StatefulWidget {
 class _SettingState extends State<Setting> {
   late Configuration configuration;
 
+  /// 设置菜单控制器（自建以便在菜单内容里注册 Esc 关闭动作）
+  final MenuController _menuController = MenuController();
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -59,9 +64,13 @@ class _SettingState extends State<Setting> {
   @override
   Widget build(BuildContext context) {
     return MenuAnchor(
+      controller: _menuController,
       builder: (context, controller, child) {
         return IconButton(
-            icon: const Icon(Icons.settings, size: 21),
+            // 设计稿 .tbtn：32x32 点击盒
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            padding: EdgeInsets.zero,
+            icon: SvgIcon('gear', size: 17, color: Theme.of(context).colorScheme.onSurfaceVariant),
             tooltip: localizations.setting,
             onPressed: () {
               if (controller.isOpen) {
@@ -71,21 +80,44 @@ class _SettingState extends State<Setting> {
               }
             });
       },
+      // 旧版全部平铺（含流量控制 6 项）；底部保留「自定义快捷工具栏…」入口。
+      // 包一层 Actions 注册 DismissIntent：独立 MenuAnchor 的菜单面板有 Esc→DismissIntent 快捷键，
+      // 但 SDK 只为 MenuBar 内的 anchor 注册 DismissMenuAction，独立 anchor 缺了它导致 Esc 关不掉菜单。
       menuChildren: [
-        _ProxyMenu(proxyServer: widget.proxyServer),
-        item(localizations.domainFilter, onPressed: hostFilter),
-        item(localizations.hosts, onPressed: hosts),
-        item(localizations.requestBlock, onPressed: showRequestBlock),
-        item(localizations.requestRewrite, onPressed: requestRewrite),
-        item(localizations.requestMap, onPressed: requestMap),
-        item(localizations.requestCrypto, onPressed: showRequestCrypto),
-        item(localizations.script,
-            onPressed: () => MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
-        item(localizations.breakpoint, onPressed: requestBreakpoint),
-        item(localizations.weakNetwork, onPressed: showWeakNetwork),
-        item(localizations.externalProxy, onPressed: setExternalProxy),
-        item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
-        item(localizations.about, onPressed: showAbout),
+        Actions(
+            actions: {
+              DismissIntent: CallbackAction<DismissIntent>(onInvoke: (intent) {
+                _menuController.close();
+                return null;
+              })
+            },
+            // 自带 autofocus 焦点节点：菜单打开即获得 Esc 按键事件，不依赖 SDK 是否把焦点移进菜单
+            child: Focus(
+                autofocus: true,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+                    _menuController.close();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+              _ProxyMenu(proxyServer: widget.proxyServer),
+              item(localizations.domainFilter, onPressed: hostFilter),
+              item(localizations.hosts, onPressed: hosts),
+              item(localizations.requestBlock, onPressed: showRequestBlock),
+              item(localizations.requestRewrite, onPressed: requestRewrite),
+              item(localizations.requestMap, onPressed: requestMap),
+              item(localizations.requestCrypto, onPressed: showRequestCrypto),
+              item(localizations.script,
+                  onPressed: () =>
+                      MultiWindow.openWindow(localizations.script, 'ScriptWidget', size: const Size(800, 780))),
+              item(localizations.breakpoint, onPressed: requestBreakpoint),
+              item(localizations.weakNetwork, onPressed: showWeakNetwork),
+              item(localizations.externalProxy, onPressed: setExternalProxy),
+              item(localizations.mcpService, onPressed: () => McpServiceDialog.show(context, widget.proxyServer)),
+              item(localizations.about, onPressed: showAbout),
+            ]))),
       ],
     );
   }
@@ -97,6 +129,36 @@ class _SettingState extends State<Setting> {
         child: Padding(
             padding: const EdgeInsets.only(left: 10, right: 5),
             child: Text(text, style: const TextStyle(fontSize: 14))));
+  }
+
+  ///请求重写
+  void requestRewrite() {
+    MultiWindow.openWindow(localizations.requestRewrite, 'RequestRewriteWidget', size: const Size(800, 750));
+  }
+
+  ///断点
+  void requestBreakpoint() {
+    MultiWindow.openWindow(localizations.breakpoint, 'RequestBreakpointPage', size: const Size(800, 750));
+  }
+
+  ///请求映射
+  void requestMap() {
+    MultiWindow.openWindow(localizations.requestMap, 'RequestMapPage', size: const Size(800, 720));
+  }
+
+  ///请求加密
+  void showRequestCrypto() {
+    MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
+  }
+
+  ///请求屏蔽
+  void showRequestBlock() async {
+    var requestBlockManager = await RequestBlockManager.instance;
+    if (!mounted) return;
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
   }
 
   void showAbout() {
@@ -113,21 +175,6 @@ class _SettingState extends State<Setting> {
         });
   }
 
-  ///请求重写Dialog
-  void requestRewrite() async {
-    MultiWindow.openWindow(localizations.requestRewrite, 'RequestRewriteWidget', size: const Size(800, 750));
-  }
-
-  void requestBreakpoint() async {
-    MultiWindow.openWindow(localizations.breakpoint, 'RequestBreakpointPage', size: const Size(800, 750));
-  }
-
-  ///请求本地映射
-  void requestMap() async {
-    if (!mounted) return;
-    MultiWindow.openWindow(localizations.requestMap, 'RequestMapPage', size: const Size(800, 720));
-  }
-
   ///show域名过滤Dialog
   void hostFilter() {
     showDialog(
@@ -139,20 +186,6 @@ class _SettingState extends State<Setting> {
     var hosts = await HostsManager.instance;
     if (!mounted) return;
     showDialog(barrierDismissible: false, context: context, builder: (context) => HostsDialog(hostsManager: hosts));
-  }
-
-  //请求屏蔽
-  void showRequestBlock() async {
-    var requestBlockManager = await RequestBlockManager.instance;
-    if (!mounted) return;
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => RequestBlock(requestBlockManager: requestBlockManager));
-  }
-
-  void showRequestCrypto() {
-    MultiWindow.openWindow(localizations.requestCrypto, 'RequestCryptoPage', size: const Size(820, 750));
   }
 
   void showWeakNetwork() async {
@@ -280,6 +313,7 @@ class _ProxyMenuState extends State<_ProxyMenu> {
                 minLines: 1)),
         const SizedBox(height: 10),
       ],
+      // 不带 leadingIcon：与菜单内其他项保持一致（设计稿分组菜单项无图标）
       child: Padding(
           padding: const EdgeInsets.only(left: 10),
           child: Text(localizations.proxy, style: const TextStyle(fontSize: 14))),

@@ -16,6 +16,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
+import 'package:flutter_highlight/themes/atom-one-dark.dart';
+import 'package:flutter_highlight/themes/atom-one-light.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -24,6 +26,7 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/code_editor_compat.dart';
 import 'package:proxypin/utils/flutter_compat.dart';
+import 'package:proxypin/utils/highlight_languages.dart';
 import 'package:proxypin/utils/lang.dart';
 
 class MobileRewriteUpdate extends StatefulWidget {
@@ -137,11 +140,21 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     keyController.text = rewriteItem.key ?? '';
     valueController.text = rewriteItem.value ?? '';
 
-    _findController = CodeSearchController(codeController: _codeDataController);
+    // CodeField owns this controller; using the same instance keeps the toolbar and editor in sync.
+    // ignore: invalid_use_of_internal_member
+    _findController = _codeDataController.searchController;
     _findController.isRegex = useRegex;
 
     initTestData();
     keyController.addListener(onInputChangeMatch);
+
+    var previousText = _codeDataController.text;
+    _codeDataController.addListener(() {
+      if (previousText != _codeDataController.text) {
+        previousText = _codeDataController.text;
+        onInputChangeMatch();
+      }
+    });
   }
 
   @override
@@ -149,7 +162,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
     keyController.dispose();
     valueController.dispose();
     _codeDataController.dispose();
-    _findController.dispose();
+    // _findController is owned and disposed by _codeDataController.
     super.dispose();
   }
 
@@ -271,14 +284,23 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                 const SizedBox(width: 3),
               ]),
               const SizedBox(height: 5),
-              Container(
+              Builder(builder: (context) {
+                _codeDataController.language = isJsonText() ? langJson : null;
+                return Container(
                   height: MediaQuery.of(context).size.height * 0.45,
-                  decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                  child: CodeField(
-                    controller: _codeDataController,
-                    cursorColor: Theme.of(context).colorScheme.primary,
-                    textStyle: const TextStyle(fontSize: 14),
-                  )),
+                  decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
+                  child: CodeTheme(
+                    data: CodeThemeData(
+                        styles: ThemeCompat.brightnessOf(context) == Brightness.dark
+                            ? atomOneDarkTheme
+                            : atomOneLightTheme),
+                    child: CodeField(
+                      controller: _codeDataController,
+                      cursorColor: Theme.of(context).colorScheme.primary,
+                      textStyle: const TextStyle(fontSize: 14),
+                    ),
+                  ));
+              })
             ])));
   }
 
@@ -291,6 +313,9 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
 
   void initTestData() {
     // dataController.splitPattern = null;
+    final caseSensitive = rewriteType != RewriteType.updateHeader && rewriteType != RewriteType.removeHeader;
+    _findController.settingsController.value =
+        _findController.settingsController.value.copyWith(isCaseSensitive: caseSensitive);
     bool isRemove = [RewriteType.removeHeader, RewriteType.removeQueryParam].contains(rewriteType);
 
     valueController.removeListener(onInputChangeMatch);
@@ -356,13 +381,9 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
         key = '$key${valueController.text}';
       }
 
-      // 使用简单正则匹配检测 key 是否存在于文本中
-      if (key.isEmpty) {
-        isMatch.value = true;
-      } else {
-        final pattern = RegExp(RegExp.escape(key), caseSensitive: false);
-        isMatch.value = pattern.hasMatch(_codeDataController.text);
-      }
+      _findController.findInputController.text = key;
+      _findController.isActive = key.isNotEmpty;
+      isMatch.value = key.isEmpty || _findController.matchCount > 0;
     });
   }
 

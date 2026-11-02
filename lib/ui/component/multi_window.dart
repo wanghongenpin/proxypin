@@ -153,7 +153,7 @@ Widget multiWindow(String windowId, Map<dynamic, dynamic> argument) {
   }
 
   if (argument['name'] == 'AesPage') {
-    return AesPage();
+    return AesPage(text: argument['text']);
   }
 
   //脚本日志
@@ -194,6 +194,21 @@ enum Operation {
 class MultiWindow {
   static Function(String widgetName, Map<String, dynamic>? args)? onOpenWindow;
 
+  /// 单例型子窗口（编辑共享配置的管理器页）：重复打开时前置已有窗口而不是再开一个，
+  /// 避免多个窗口各自加载/保存同一配置互相覆盖，导致编辑静默丢失
+  static const Set<String> _singletonWidgets = {
+    'RequestRewriteWidget',
+    'RequestMapPage',
+    'RequestCryptoPage',
+    'ScriptWidget',
+    'RequestBreakpointPage',
+    'ScriptConsoleWidget',
+  };
+
+  /// 正在创建中的单例窗口：createWindow 需启动新 engine 耗时数百毫秒，
+  /// 期间连点在原生窗口注册表里还查不到，会重复开
+  static final Set<String> _openingWidgets = {};
+
   /// 刷新请求重写
   static Future<void> invokeRefreshRewrite(Operation operation,
       {int? index, RequestRewriteRule? rule, List<RewriteItem>? items, bool? enabled, List<int>? order}) async {
@@ -214,23 +229,66 @@ class MultiWindow {
       return WindowController.fromWindowId('0'); // Dummy controller
     }
 
-    var ratio = 1.0;
-    if (Platform.isWindows) {
-      ratio = WindowManager.instance.getDevicePixelRatio();
+    if (_singletonWidgets.contains(widgetName)) {
+      var existing = await _focusSingletonWindow(widgetName);
+      if (existing != null) return existing;
+      if (!_openingWidgets.add(widgetName)) {
+        return WindowController.fromWindowId('0'); // 正在创建中（连点），忽略本次点击
+      }
     }
-    registerMethodHandler();
-    final window = await DesktopMultiWindow.createWindow(jsonEncode(
-      {'name': widgetName, ...?args},
-    ));
 
-    if (!Platform.isMacOS) {
-      window.setTitle(title);
+    try {
+      var ratio = 1.0;
+      if (Platform.isWindows) {
+        ratio = WindowManager.instance.getDevicePixelRatio();
+      }
+      registerMethodHandler();
+      final window = await DesktopMultiWindow.createWindow(jsonEncode(
+        {'name': widgetName, ...?args},
+      ));
+
+      if (!Platform.isMacOS) {
+        window.setTitle(title);
+      }
+      await window.center();
+      await window.setSize(Size(size.width * ratio, size.height * ratio));
+      await window.show();
+
+      return window;
+    } finally {
+      _openingWidgets.remove(widgetName);
     }
-    await window.center();
-    await window.setSize(Size(size.width * ratio, size.height * ratio));
-    await window.show();
+  }
 
-    return window;
+  /// 查找已存在的单例子窗口并前置。窗口销毁后原生注册表可能短暂残留已注销 channel 的条目，
+  /// 残留条目 focus 失败时跳过继续扫描；整体查询异常返回 null，调用方回落到新建窗口
+  static Future<WindowController?> _focusSingletonWindow(String widgetName) async {
+    try {
+      for (var window in await WindowController.getAll()) {
+        String? name;
+        try {
+          var decoded = jsonDecode(window.arguments);
+          if (decoded is Map<String, dynamic>) {
+            name = decoded['name'] as String?;
+          }
+        } catch (_) {
+          continue; // 主窗口等无 JSON 参数的窗口
+        }
+        if (name != widgetName) continue;
+        try {
+          await DesktopMultiWindow.invokeMethod(window.windowId, 'window_focus');
+          return window;
+        } catch (e) {
+          // 窗口刚销毁、原生注册表残留（channel 已注销）：跳过继续扫描，
+          // 否则异常中断循环会导致已存在的单例窗口被重复创建
+          logger.d('skip focusing stale window ${window.windowId} (likely closed): $e');
+          continue;
+        }
+      }
+    } catch (e) {
+      logger.w('focus singleton window $widgetName failed, fallback to create new: $e');
+    }
+    return null;
   }
 
   static bool _refreshRewrite = false;
@@ -282,6 +340,10 @@ class MultiWindow {
 
 bool _registerHandler = false;
 
+/// 主窗口管理器状态版本号：子窗口经 invokeMainWindowMethod 触发主窗口 reload 后递增，
+/// 观察者（如工具栏快捷图标启用态高亮）据此刷新
+final ValueNotifier<int> managerStateVersion = ValueNotifier<int>(0);
+
 /// 桌面端多窗口 注册方法处理器
 void registerMethodHandler() {
   if (_registerHandler) {
@@ -296,6 +358,7 @@ void registerMethodHandler() {
     }
     if (call.method == 'refreshRequestRewrite') {
       await MultiWindow._handleRefreshRewrite(Operation.of(call.arguments['operation']), call.arguments);
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -303,6 +366,7 @@ void registerMethodHandler() {
       await ScriptManager.instance.then((value) {
         return value.reloadScript();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -310,6 +374,7 @@ void registerMethodHandler() {
       await RequestMapManager.instance.then((value) {
         return value.reloadConfig();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -317,6 +382,7 @@ void registerMethodHandler() {
       await RequestCryptoManager.instance.then((value) {
         return value.reloadConfig();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -324,6 +390,7 @@ void registerMethodHandler() {
       await RequestBreakpointManager.instance.then((value) {
         return value.load();
       });
+      managerStateVersion.value++;
       return 'done';
     }
 
@@ -376,16 +443,45 @@ Future<void> encodeWindow(EncoderType type, BuildContext context, [String? text]
   await window.show();
 }
 
-Future<void> openScriptConsoleWindow() async {
+///打开 AES 窗口
+Future<void> openAesWindow(BuildContext context, String text) async {
+  if (Platforms.isMobile()) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => AesPage(text: text)));
+    return;
+  }
+
   var ratio = 1.0;
   if (Platform.isWindows) {
     ratio = WindowManager.instance.getDevicePixelRatio();
   }
   final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'ScriptConsoleWidget'},
+    {'name': 'AesPage', 'text': text},
   ));
-  await window.setTitle('Script Console');
-  await window.setSize(Size(900 * ratio, 650 * ratio));
+  await window.setTitle('AES');
+  await window.setSize(Size(700 * ratio, 672 * ratio));
   await window.center();
   await window.show();
+}
+
+Future<void> openScriptConsoleWindow() async {
+  // 单例窗口：已存在则前置；查询/前置异常或正在创建中，按新窗口处理/忽略
+  var existing = await MultiWindow._focusSingletonWindow('ScriptConsoleWidget');
+  if (existing != null) return;
+  if (!MultiWindow._openingWidgets.add('ScriptConsoleWidget')) return;
+
+  try {
+    var ratio = 1.0;
+    if (Platform.isWindows) {
+      ratio = WindowManager.instance.getDevicePixelRatio();
+    }
+    final window = await DesktopMultiWindow.createWindow(jsonEncode(
+      {'name': 'ScriptConsoleWidget'},
+    ));
+    await window.setTitle('Script Console');
+    await window.setSize(Size(900 * ratio, 650 * ratio));
+    await window.center();
+    await window.show();
+  } finally {
+    MultiWindow._openingWidgets.remove('ScriptConsoleWidget');
+  }
 }

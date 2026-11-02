@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:proxypin/network/channel/channel.dart';
@@ -33,6 +34,73 @@ class ChannelContext {
   final http2Requests = Http2RequestQueue();
   final _forwardedHttp2Streams = <int>{};
   final _pendingHttp2StreamFrames = <int, BytesBuilder>{};
+
+  /// 客户端 ALPN 协商了 h2，但上游 TLS 未选择 h2（h1-only 服务器或中间盒），
+  /// 需要 h2 ↔ HTTP/1.1 协议转换。仅适用于 TLS ALPN 场景；
+  /// 明文 h2c prior-knowledge 走原文转发，不在此列。
+  bool get isHttp2Translation {
+    final clientProtocol = clientChannel?.selectedProtocol;
+    if (clientProtocol != 'h2' && clientProtocol != 'h2-14') return false;
+    final server = serverChannel;
+    if (server == null || !server.isSsl) return false;
+    final serverProtocol = server.selectedProtocol;
+    return serverProtocol != 'h2' && serverProtocol != 'h2-14';
+  }
+
+  // ---- h2 ↔ h1 协议转换状态 ----
+  // HTTP/1.1 上游同一时刻只能承载一个请求（响应按序到达）。翻译模式下用
+  // 单槽 + 屏障串行化：请求写完后等响应完整写回客户端再放行下一个 h2 stream，
+  // 保证响应关联不错乱，也避免在老旧服务器上使用脆弱的 pipelining。
+  HttpRequest? _pendingTranslatedRequest;
+  Completer<void>? _translatedResponseDone;
+  bool _translationPrefaceSent = false;
+
+  /// 翻译模式下客户端原始 h2 帧的剥离器：只把 DATA 载荷透传给 h1 上游。
+  final h2ToH1FrameStripper = H2ToH1FrameStripper();
+
+  HttpRequest? get pendingTranslatedRequest => _pendingTranslatedRequest;
+
+  /// 本连接是否曾经处于协议转换模式。上游关闭后 selectedProtocol 不可再读
+  /// （isOpen=false 时返回 null），isHttp2Translation 会失真，需要用这个粘性标记。
+  bool get wasHttp2Translation => _translationPrefaceSent;
+
+  /// 翻译模式下给客户端补发代理自己的 h2 服务端前言（真实上游是 h1，没有
+  /// SETTINGS 可转发，而 h2 客户端要求首帧必须是 SETTINGS）。大窗口避免
+  /// 流控 stall：转换层不参与逐帧流控。
+  Future<void> sendTranslationServerPreface() async {
+    if (_translationPrefaceSent || clientChannel == null) return;
+    _translationPrefaceSent = true;
+    _http2SettingsAckPending = true; // 客户端回的 SETTINGS ACK 由解码侧消费，不转发给 h1 上游
+
+    // SETTINGS_INITIAL_WINDOW_SIZE = 1GB
+    var payload = Uint8List(6);
+    payload[0] = 0; payload[1] = 4; // identifier 4
+    payload[2] = 0x3F; payload[3] = 0xFF; payload[4] = 0xFF; payload[5] = 0xFF;
+    await clientChannel!.writeBytes(FrameHeader(payload.length, FrameType.settings, 0, 0).encode()..addAll(payload));
+
+    // 连接级 WINDOW_UPDATE += 1GB
+    var increment = Uint8List(4);
+    increment[0] = 0x3F; increment[1] = 0xFF; increment[2] = 0xFF; increment[3] = 0xFF;
+    await clientChannel!.writeBytes(FrameHeader(4, FrameType.windowUpdate, 0, 0).encode()..addAll(increment));
+  }
+
+  Future<void> beginTranslatedRequest(HttpRequest request) async {
+    await sendTranslationServerPreface();
+    // 防御：理论上 Http2RequestQueue 已保证串行，异常残留时等上一个屏障释放
+    await _translatedResponseDone?.future;
+    _pendingTranslatedRequest = request;
+    _translatedResponseDone = Completer<void>();
+  }
+
+  Future<void> waitTranslatedResponse() => _translatedResponseDone?.future ?? Future.value();
+
+  /// 响应完整写回客户端（或连接关闭/出错）后释放屏障，放行下一个 stream。
+  void completeTranslatedResponse() {
+    _pendingTranslatedRequest = null;
+    final done = _translatedResponseDone;
+    _translatedResponseDone = null;
+    if (done != null && !done.isCompleted) done.complete();
+  }
 
   Future<Channel?> get readyServerChannel async {
     final connecting = _connectingServerChannel;
@@ -149,12 +217,27 @@ class ChannelContext {
     }
     final streamId = request.streamId!;
     if (!http2Requests.canForward(streamId)) return;
-    // encode/add 在首次 await 前完成，先写 HEADERS，再写之前缓存的 DATA。
-    final writes = <Future<void>>[remote.write(this, request)];
-    final buffered = _pendingHttp2StreamFrames.remove(streamId);
-    if (buffered != null) writes.add(remote.writeBytes(buffered.takeBytes()));
-    _forwardedHttp2Streams.add(streamId);
-    await Future.wait(writes);
+
+    // h2 -> h1 协议转换：请求会以 HTTP/1.1 编码（见 HttpCodec.encode），
+    // 此处串行化并等响应写回客户端后才放行下一个 stream。
+    final translated = isHttp2Translation;
+    if (translated) await beginTranslatedRequest(request);
+
+    try {
+      // encode/add 在首次 await 前完成，先写 HEADERS，再写之前缓存的 DATA。
+      final writes = <Future<void>>[remote.write(this, request)];
+      final buffered = _pendingHttp2StreamFrames.remove(streamId);
+      if (buffered != null) {
+        // 转换模式下缓存的是客户端原始 h2 帧，只能透传 DATA 载荷
+        writes.add(remote.writeBytes(translated ? h2ToH1FrameStripper.strip(buffered.takeBytes()) : buffered.takeBytes()));
+      }
+      _forwardedHttp2Streams.add(streamId);
+      await Future.wait(writes);
+      if (translated) await waitTranslatedResponse();
+    } catch (_) {
+      if (translated) completeTranslatedResponse();
+      rethrow;
+    }
   }
 
   /// 上游尚未打开的流不能收到 RST_STREAM，否则会牵连其它复用请求。
@@ -207,5 +290,64 @@ class ChannelContext {
   bool containsStreamDependency(int? streamId) {
     if (streamId == null) return false;
     return _streamDependency.containsKey(streamId);
+  }
+}
+
+/// h2 → HTTP/1.1 协议转换时，客户端原始帧流的剥离器。
+///
+/// 翻译模式下客户端发来的连接前言、SETTINGS/PING/WINDOW_UPDATE/GOAWAY 等
+/// 控制帧没有 h1 对应物，全部丢弃；只有 DATA 帧的载荷是 h1 请求体的字节流
+/// （大 body streaming upload 时请求头里已有 Content-Length）。
+/// 输入保证是完整帧（解码器只在帧完整时才放入 forward），但跨调用仍做残留缓冲防御。
+class H2ToH1FrameStripper {
+  static final List<int> _preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".codeUnits;
+  static const int _dataFrameType = 0; // FrameType.data
+
+  bool _prefaceConsumed = false;
+  final BytesBuilder _leftover = BytesBuilder();
+
+  List<int> strip(List<int> bytes) {
+    var input = BytesBuilder(copy: false)
+      ..add(_leftover.takeBytes())
+      ..add(bytes);
+    var data = input.takeBytes();
+    var offset = 0;
+    var out = BytesBuilder(copy: false);
+
+    if (!_prefaceConsumed) {
+      if (data.length < _preface.length && _matchesPreface(data)) {
+        // 前言拆包到达：攒够 24 字节再判定（前缀不匹配的流直接按帧解析）
+        _leftover.add(data);
+        return out.takeBytes();
+      }
+      _prefaceConsumed = true;
+      // 连接前言只会出现在最开头
+      if (data.length >= _preface.length && _matchesPreface(data)) {
+        offset = _preface.length;
+      }
+    }
+    while (data.length - offset >= 9) {
+      int length = (data[offset] << 16) | (data[offset + 1] << 8) | data[offset + 2];
+      int type = data[offset + 3];
+      if (data.length - offset - 9 < length) break; // 不完整，留到下次
+      if (type == _dataFrameType && length > 0) {
+        out.add(data.sublist(offset + 9, offset + 9 + length));
+      }
+      offset += 9 + length;
+    }
+
+    if (offset < data.length) {
+      _leftover.add(data.sublist(offset));
+    }
+    return out.takeBytes();
+  }
+
+  /// data 不足前言全长时按前缀匹配
+  bool _matchesPreface(List<int> data) {
+    final n = data.length < _preface.length ? data.length : _preface.length;
+    for (int i = 0; i < n; i++) {
+      if (data[i] != _preface[i]) return false;
+    }
+    return true;
   }
 }

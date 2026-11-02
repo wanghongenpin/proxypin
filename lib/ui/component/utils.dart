@@ -25,8 +25,11 @@ import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
 
+import '../../utils/flutter_compat.dart';
 import '../../utils/lang.dart';
 import '../../utils/platform.dart';
+import '../toolbox/encoder.dart';
+import 'multi_window.dart';
 
 const contentMap = {
   ContentType.json: Icons.data_object,
@@ -40,6 +43,50 @@ const contentMap = {
   ContentType.font: Icons.font_download,
   ContentType.sse: Icons.stream,
 };
+
+/// 暗黑设计稿 docs/design/homepage-dark.html 令牌（浅色令牌在 main.dart 注入主题）
+abstract final class DarkPalette {
+  static const primary = Color(0xFF5D7CFA); // --primary（深底提亮版主色）
+  static const bg = Color(0xFF1B1D22); // --bg 窗口/外框底
+  static const panel = Color(0xFF24262C); // --panel 面板底
+  static const border = Color(0xFF36393F); // --border 结构/卡片描边
+  static const divider = Color(0xFF2D3036); // --divider 卡片内行分隔
+  static const hover = Color(0xFF31343B); // --hover 小控件 hover
+  static const hoverWeak = Color(0xFF2A2D33); // --hover-weak 行 hover
+  static const subtle = Color(0xFF202228); // --subtle 域名组头底
+  static const countBg = Color(0xFF3A3D44); // --cnt-bg 计数胶囊底
+  static const text1 = Color(0xFFE6E8EC); // --text-1
+  static const text2 = Color(0xFFA7ACB4); // --text-2
+  static const text3 = Color(0xFF6F747D); // --text-3
+  static const ok = Color(0xFF3FB96A); // --ok / --get
+  static const warn = Color(0xFFE8A33D); // --warn / --post
+  static const put = Color(0xFF4C9BE8); // --put
+  static const err = Color(0xFFE35B48); // --err / --delete
+  static const ws = Color(0xFF9B72E0); // --ws
+}
+
+/// 结构描边色（工具栏底边 / 导航栏右边 / 状态栏顶边 / 分栏分隔条 / 工具栏小分隔线）。
+/// 深浅色的 dividerColor 都已在 main.dart 注入设计稿 --border 值，直接取用
+Color chromeBorderColor(ThemeData theme) => theme.dividerColor;
+
+/// 主色软底（设计稿 --primary-soft）：浅色主题主色低透明度，暗黑 16%
+Color primarySoftBg(ThemeData theme, {double lightAlpha = 0.08}) =>
+    theme.colorScheme.primary.withValues(
+        alpha: theme.brightness == Brightness.light ? lightAlpha : 0.16);
+
+/// 启用/成功绿（设计稿 --ok）：浅色 #1F8B4C，暗黑 #3FB96A
+Color okColor(ThemeData theme) => theme.brightness == Brightness.light
+    ? const Color(0xFF1F8B4C)
+    : DarkPalette.ok;
+
+/// 弱网徽章（设计稿 .badge）：浅色黄底深字，暗黑 16% 黄底 + --warn 字
+Color warnBadgeBg(ThemeData theme) => theme.brightness == Brightness.light
+    ? const Color(0xFFFFF3E8)
+    : DarkPalette.warn.withValues(alpha: 0.16);
+
+Color warnBadgeText(ThemeData theme) => theme.brightness == Brightness.light
+    ? const Color(0xFFB76E00)
+    : DarkPalette.warn;
 
 /// GraphQL 操作类型对应的高亮颜色
 /// mutation/subscription 会修改或订阅数据，用更醒目的橙红；query 用柔和的紫红
@@ -57,7 +104,8 @@ Color graphqlOperationColor(String? operationType) {
 
 /// 生成 GraphQL operationName 的高亮 TextSpan，形如 `  (GetCountries)`
 /// 与前面的路径之间预留两个空格拉开间距，[fixAutoLines] 控制是否插入 0 宽字符防换行
-TextSpan? graphqlOperationSpan(HttpRequest request, {double? fontSize, bool fixAutoLines = false}) {
+TextSpan? graphqlOperationSpan(HttpRequest request,
+    {double? fontSize, bool fixAutoLines = false}) {
   var operationName = request.graphqlOperationName;
   if (operationName == null) {
     return null;
@@ -75,23 +123,34 @@ TextSpan? graphqlOperationSpan(HttpRequest request, {double? fontSize, bool fixA
 
 Widget getIcon(HttpResponse? response, {Color? color}) {
   if (response == null) {
-    return SizedBox(width: 18, child: Icon(Icons.question_mark, size: 16, color: color ?? Colors.green));
+    return SizedBox(
+        width: 18,
+        child:
+            Icon(Icons.question_mark, size: 16, color: color ?? Colors.green));
   }
   if (response.status.code < 0) {
-    return SizedBox(width: 18, child: Icon(Icons.error, size: 16, color: color ?? Colors.red));
+    return SizedBox(
+        width: 18,
+        child: Icon(Icons.error, size: 16, color: color ?? Colors.red));
   }
 
   var contentType = response.contentType;
   if (contentType.isImage && response.body != null) {
+    // 已是 Uint8List 就直接复用：避免每次 build 拷贝整份图片字节，
+    // 且 MemoryImage 以字节对象身份做缓存键，同一实例才能命中 ImageCache 免于重复解码
+    var body = response.body!;
     return Image.memory(
-      Uint8List.fromList(response.body!),
+      body is Uint8List ? body : Uint8List.fromList(body),
       width: Platforms.isDesktop() ? 19 : 26,
-      errorBuilder: (context, error, stackTrace) => Icon(Icons.image, size: 16, color: color ?? Colors.green),
+      errorBuilder: (context, error, stackTrace) =>
+          Icon(Icons.image, size: 16, color: color ?? Colors.green),
     );
   }
 
   return SizedBox(
-      width: 18, child: Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green));
+      width: 18,
+      child: Icon(contentMap[contentType] ?? Icons.http,
+          size: 16, color: color ?? Colors.green));
 }
 
 //展示报文大小
@@ -136,7 +195,8 @@ String copyRequest(HttpRequest request, HttpResponse? response) {
   response ??= request.response;
   var sb = StringBuffer();
   sb.writeln("Request");
-  sb.writeln("${request.method.name} ${request.requestUrl} ${request.protocolVersion}");
+  sb.writeln(
+      "${request.method.name} ${request.requestUrl} ${request.protocolVersion}");
   sb.writeln(request.headers.headerLines());
   sb.writeln();
   sb.writeln(request.bodyAsString);
@@ -153,7 +213,8 @@ String copyRequest(HttpRequest request, HttpResponse? response) {
 
 RelativeRect menuPosition(BuildContext context) {
   final RenderBox bar = context.findRenderObject() as RenderBox;
-  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final RenderBox overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox;
   const Offset offset = Offset.zero;
   final RelativeRect position = RelativeRect.fromRect(
     Rect.fromPoints(
@@ -165,7 +226,8 @@ RelativeRect menuPosition(BuildContext context) {
   return position;
 }
 
-Widget contextMenu(BuildContext context, EditableTextState editableTextState, {ContextMenuButtonItem? customItem}) {
+Widget contextMenu(BuildContext context, EditableTextState editableTextState,
+    {ContextMenuButtonItem? customItem, bool copyValue = true}) {
   List<ContextMenuButtonItem> list = [
     ContextMenuButtonItem(
       onPressed: () {
@@ -178,17 +240,25 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
       },
       type: ContextMenuButtonType.copy,
     ),
-    ContextMenuButtonItem(
-      label: Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh') ? '复制值' : 'Copy Value',
-      onPressed: () {
-        unSelect(editableTextState);
-        Clipboard.setData(ClipboardData(text: editableTextState.textEditingValue.text)).then((value) {
-          if (context.mounted) FlutterToastr.show(AppLocalizations.of(context)!.copied, context);
-          editableTextState.hideToolbar();
-        });
-      },
-      type: ContextMenuButtonType.custom,
-    ),
+    // “复制值”在 header 等场景有用；body 整个文本即全部内容，用全选即可，故可关闭
+    if (copyValue)
+      ContextMenuButtonItem(
+        label: Localizations.localeOf(context) ==
+                const Locale.fromSubtags(languageCode: 'zh')
+            ? '复制值'
+            : 'Copy Value',
+        onPressed: () {
+          unSelect(editableTextState);
+          Clipboard.setData(
+                  ClipboardData(text: editableTextState.textEditingValue.text))
+              .then((value) {
+            if (context.mounted)
+              FlutterToastr.show(AppLocalizations.of(context)!.copied, context);
+            editableTextState.hideToolbar();
+          });
+        },
+        type: ContextMenuButtonType.custom,
+      ),
     ContextMenuButtonItem(
       onPressed: () {
         editableTextState.selectAll(SelectionChangedCause.tap);
@@ -196,6 +266,14 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
       type: ContextMenuButtonType.selectAll,
     ),
   ];
+
+  //选中的文本，未选中时回退为整个值
+  final value = editableTextState.textEditingValue;
+  var payload = value.selection.textInside(value.text).trim();
+  if (payload.isEmpty) payload = value.text;
+
+  list.addAll(
+      sendToToolItems(context, payload, () => editableTextState.hideToolbar()));
 
   if (customItem != null) {
     list.add(customItem);
@@ -216,16 +294,62 @@ Widget contextMenu(BuildContext context, EditableTextState editableTextState, {C
   );
 }
 
+/// “发送到解码器 / AES 解密” 菜单项，[payload] 为空时返回空列表
+List<ContextMenuButtonItem> sendToToolItems(
+    BuildContext context, String payload, VoidCallback onDone) {
+  if (payload.isEmpty) return const [];
+
+  final bool isZh = Localizations.localeOf(context) ==
+      const Locale.fromSubtags(languageCode: 'zh');
+  return [
+    ContextMenuButtonItem(
+      label: isZh ? '发送到解码器' : 'Send to Decoder',
+      onPressed: () {
+        encodeWindow(EncoderType.base64, context, payload);
+        onDone();
+      },
+      type: ContextMenuButtonType.custom,
+    ),
+    ContextMenuButtonItem(
+      label: isZh ? '发送到 AES 解密' : 'Send to AES Decrypt',
+      onPressed: () {
+        openAesWindow(context, payload);
+        onDone();
+      },
+      type: ContextMenuButtonType.custom,
+    ),
+  ];
+}
+
+/// SelectionArea（SelectableRegionState）的右键菜单，用于 body 的虚拟化 / 超大文本等区域选择场景。
+/// [selected] 由调用方通过 SelectableRegion.onSelectionChanged 捕获。
+/// body 场景不提供“复制值”（复制全部用全选即可）。
+Widget selectableRegionContextMenu(
+    BuildContext context, SelectableRegionState state, String selected) {
+  final payload = selected.trim();
+
+  //复用平台默认的 复制/全选/分享 项，再追加“发送到解码器/AES”
+  final list = <ContextMenuButtonItem>[
+    ...state.contextMenuButtonItems,
+    ...sendToToolItems(context, payload, () => state.hideToolbar()),
+  ];
+
+  return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: state.contextMenuAnchors, buttonItems: list);
+}
+
 void unSelect(EditableTextState editableTextState) {
   editableTextState.userUpdateTextEditingValue(
-    editableTextState.textEditingValue
-        .copyWith(selection: TextSelection.collapsed(offset: editableTextState.textEditingValue.selection.baseOffset)),
+    editableTextState.textEditingValue.copyWith(
+        selection: TextSelection.collapsed(
+            offset: editableTextState.textEditingValue.selection.baseOffset)),
     SelectionChangedCause.tap,
   );
 }
 
 ///Future — skips rebuild when the resolved value equals [initialData].
-Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget, {T? initialData, bool loading = false}) {
+Widget futureWidget<T>(Future<T> future, Widget Function(T data) toWidget,
+    {T? initialData, bool loading = false}) {
   return _FutureWidget<T>(
     future: future,
     toWidget: toWidget,
@@ -264,8 +388,9 @@ class _FutureWidgetState<T> extends State<_FutureWidget<T>> {
   @override
   void didUpdateWidget(covariant _FutureWidget<T> old) {
     super.didUpdateWidget(old);
-    if (old.future != widget.future || old.initialData != widget.initialData) {
-      _data = widget.initialData;
+    // Future 实例变化（如 body 子树重建）时，继续展示当前已有的内容直到新结果返回，
+    // 不重置回 initialData，避免界面出现“刷新/闪烁”。
+    if (old.future != widget.future) {
       _subscribe();
     }
   }
@@ -287,11 +412,14 @@ class _FutureWidgetState<T> extends State<_FutureWidget<T>> {
     if (_data != null) {
       return widget.toWidget(_data as T);
     }
-    return widget.loading ? const Center(child: CircularProgressIndicator()) : const SizedBox();
+    return widget.loading
+        ? const Center(child: CircularProgressIndicator())
+        : const SizedBox();
   }
 }
 
-Future showContextMenu(BuildContext context, Offset offset, {required List<PopupMenuEntry> items}) {
+Future showContextMenu(BuildContext context, Offset offset,
+    {required List<PopupMenuEntry> items}) {
   return showMenu(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -303,14 +431,17 @@ Future showContextMenu(BuildContext context, Offset offset, {required List<Popup
       items: items);
 }
 
-Future<T?> showConfirmDialog<T>(BuildContext context, {String? title, String? content, VoidCallback? onConfirm}) {
+Future<T?> showConfirmDialog<T>(BuildContext context,
+    {String? title, String? content, VoidCallback? onConfirm}) {
   title ??= AppLocalizations.of(context)!.confirmTitle;
   content ??= AppLocalizations.of(context)!.confirmContent;
   return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(title!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text(title!,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           content: Text(content!),
           actions: [
             TextButton(
@@ -338,14 +469,18 @@ ScrollController? trackingScroll(ScrollController? scrollController) {
   var trackingScroll = TrackingScrollController();
   double offset = 0;
   trackingScroll.addListener(() {
-    if (trackingScroll.offset < 30 && trackingScroll.offset < offset && scrollController.offset > 0) {
+    if (trackingScroll.offset < 30 &&
+        trackingScroll.offset < offset &&
+        scrollController.offset > 0) {
       //往上滚动
-      scrollController.jumpTo(scrollController.offset - max(offset - trackingScroll.offset, 15));
+      scrollController.jumpTo(
+          scrollController.offset - max(offset - trackingScroll.offset, 15));
     } else if (trackingScroll.offset > 0 &&
         trackingScroll.offset > offset &&
         scrollController.offset < scrollController.position.maxScrollExtent) {
       //往下滚动
-      scrollController.jumpTo(scrollController.offset + max(trackingScroll.offset - offset, 15));
+      scrollController.jumpTo(
+          scrollController.offset + max(trackingScroll.offset - offset, 15));
     }
 
     offset = trackingScroll.offset;

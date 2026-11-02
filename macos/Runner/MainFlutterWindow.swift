@@ -4,10 +4,11 @@ import desktop_multi_window
 
 class MainFlutterWindow: NSWindow {
     // Offsets from the top-left corner of the title bar container (in points)
-    // Tweak these to your preferred locations.
-    private let closeButtonTopLeftOffset = NSPoint(x: 10, y: 13)
-    private let miniaturizeButtonTopLeftOffset = NSPoint(x: 32, y: 13)
-    private let zoomButtonTopLeftOffset = NSPoint(x: 52, y: 13)
+    // 对齐设计稿 homepage.html：toolbar 高 52，按钮 12pt 垂直居中 -> y = (52-12)/2 = 20；
+    // 水平 left:16、间距 8 -> x = 16 / 36 / 56
+    private let closeButtonTopLeftOffset = NSPoint(x: 16, y: 20)
+    private let miniaturizeButtonTopLeftOffset = NSPoint(x: 36, y: 20)
+    private let zoomButtonTopLeftOffset = NSPoint(x: 56, y: 20)
 
     // Whether to auto-apply on window events
     private let shouldAutoApplyTrafficLightPositions = true

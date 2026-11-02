@@ -1,5 +1,8 @@
 output: dist/
 
+# 产物文件名模板（mustache 语法），如 proxypin-macos-1.4.0.dmg
+artifact_name: '{{name}}-{{platform}}-{{build_name}}{{#is_installer}}-setup{{/is_installer}}{{#ext}}.{{ext}}{{/ext}}'
+
 releases:
   - name: release
     jobs:

@@ -51,7 +51,7 @@ class XmlViewerPage extends StatefulWidget {
 class _XmlViewerPageState extends State<XmlViewerPage> {
   late final CodeController _controller;
 
-  /// 编辑器自动换行；CodeForge 的 lineWrap 是 late final，切换需要靠新的 key 重建组件，
+  /// 编辑器自动换行；切换时用新的 key 重建 CodeField，
   /// controller 在本 State 持有，重建不会丢文本与撤销栈。
   bool _wrap = true;
 

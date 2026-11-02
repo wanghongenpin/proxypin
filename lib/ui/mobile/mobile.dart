@@ -17,7 +17,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -38,6 +37,7 @@ import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/content/panel.dart';
@@ -52,6 +52,7 @@ import 'package:proxypin/ui/mobile/request/search.dart';
 import 'package:proxypin/ui/mobile/widgets/pip.dart';
 import 'package:proxypin/ui/mobile/widgets/remote_device.dart';
 import 'package:proxypin/ui/toolbox/toolbox.dart';
+import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/ip.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
@@ -129,6 +130,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer = ProxyServer(widget.configuration);
     proxyServer.addListener(this);
     proxyServer.start();
+    // 启动历史记录任务（单例；原由 ConfigPage 触发，配置页移除后在这里保证初始化）
+    HistoryTask.ensureInstance(widget.configuration, MobileApp.container);
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
 
     // MCP 局域网服务：启用时随抓包一起启动，clear_session 同步清空界面列表
@@ -144,7 +147,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
       }));
     }
 
-    if (widget.appConfiguration.upgradeNoticeV32) {
+    if (widget.appConfiguration.upgradeNoticeV40) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -182,7 +185,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   void toRequestsView(HistoryItem item, HistoryStorage storage) {}
 
   void _openHistoryPage(HistoryItem item) {
-    _selectIndex.value = 2;
+    _selectIndex.value = 0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -200,8 +203,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   int exitTime = 0;
 
   var requestPageNavigatorKey = GlobalKey<NavigatorState>();
-  var toolboxNavigatorKey = GlobalKey<NavigatorState>();
   var configNavigatorKey = GlobalKey<NavigatorState>();
+  var toolboxNavigatorKey = GlobalKey<NavigatorState>();
   var settingNavigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -256,47 +259,55 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
         },
         child: ValueListenableBuilder<int>(
             valueListenable: _selectIndex,
-            builder: (context, index, child) => Scaffold(
-                body: IndexedStack(index: index, children: navigationView),
-                bottomNavigationBar: widget.appConfiguration.bottomNavigation
-                    ? Container(
-                        constraints: const BoxConstraints(maxHeight: 85),
-                        // padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                        child: ClipRRect(
-                            // borderRadius: BorderRadius.circular(16),
-                            child: Theme(
-                          data: Theme.of(context).copyWith(splashColor: Colors.transparent),
-                          child: BottomNavigationBar(
-                            type: BottomNavigationBarType.fixed,
-                            iconSize: 23,
-                            showSelectedLabels: false,
-                            showUnselectedLabels: false,
-                            selectedFontSize: 2,
-                            unselectedFontSize: 2,
-                            elevation: 0,
-                            items: [
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.requests,
-                                  icon: const Icon(Icons.workspaces_outlined),
-                                  label: localizations.requests),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.toolbox,
-                                  icon: const Icon(Icons.hardware_outlined),
-                                  label: localizations.toolbox),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.config,
-                                  icon: const Icon(Icons.description_outlined),
-                                  label: localizations.config),
-                              BottomNavigationBarItem(
-                                  tooltip: localizations.setting,
-                                  icon: const Icon(Icons.settings_outlined),
-                                  label: localizations.setting),
-                            ],
-                            currentIndex: _selectIndex.value,
-                            onTap: (index) => _selectIndex.value = index,
-                          ),
-                        )))
-                    : null)));
+            builder: (context, index, child) {
+              var theme = Theme.of(context);
+              return Scaffold(
+                  body: IndexedStack(index: index, children: navigationView),
+                  // 实心底导航（放弃毛玻璃：真机上模糊效果不明显，且 extendBody 会引入一系列页尾遮挡问题）
+                  bottomNavigationBar: widget.appConfiguration.bottomNavigation
+                      ? Container(
+                          decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              border: Border(
+                                  top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.6), width: 0.5))),
+                          child: SafeArea(
+                              top: false,
+                              child: Theme(
+                                data: theme.copyWith(splashColor: Colors.transparent),
+                                child: BottomNavigationBar(
+                                  type: BottomNavigationBarType.fixed,
+                                  backgroundColor: Colors.transparent,
+                                  iconSize: 20,
+                                  // 设计稿 .p-bn：图标 19 + 9px 文字标签
+                                  showSelectedLabels: true,
+                                  showUnselectedLabels: true,
+                                  selectedFontSize: 10,
+                                  unselectedFontSize: 10,
+                                  elevation: 0,
+                                  items: [
+                                    // 设计稿线条 SVG 图标：list / wrench / sliders / gear（工具箱第 2、配置第 3）
+                                    // 与桌面 rail 首项同款标签（设计稿底导航「请求」）
+                                    _navItem(context, 'list', localizations.navRequests, index == 0),
+                                    _navItem(context, 'wrench', localizations.toolbox, index == 1),
+                                    _navItem(context, 'sliders', localizations.config, index == 2),
+                                    _navItem(context, 'gear', localizations.setting, index == 3),
+                                  ],
+                                  currentIndex: _selectIndex.value,
+                                  onTap: (index) => _selectIndex.value = index,
+                                ),
+                              )))
+                      : null);
+            }));
+  }
+
+  /// 底导航项：设计稿线条 SVG 图标，选中主色 / 未选中灰
+  BottomNavigationBarItem _navItem(BuildContext context, String icon, String label, bool selected) {
+    var theme = Theme.of(context);
+    return BottomNavigationBarItem(
+        tooltip: label,
+        icon: SvgIcon(icon,
+            size: 20, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+        label: label);
   }
 
   @override
@@ -352,24 +363,24 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 新增内置 MCP 服务，AI 助手（如 Claude）可接入查看与调试抓包流量；\n'
-            '2. 环境变量支持内置动态变量；\n'
-            '3. 请求重写规则支持上移、下移排序；\n'
-            '4. 修复 Windows 端右键菜单导致崩溃的问题；\n'
-            '5. 修复脚本或重写处理多值请求头（如多个 Set-Cookie）时被错误合并的问题；\n'
-            '6. 修复明文 HTTP/2（h2c）抓包、非 ASCII 域名归一化、以 IP 访问时证书校验失败等问题；\n'
-            '7. 修复 iOS 13 崩溃、无 Content-Length 响应 Body 丢失、Android VPN 目的端口记录等若干问题。\n'
+            '1. 界面全新改版：桌面端左侧导航、可固定快捷工具栏与流量控制页、全新深色模式与 SVG 图标；移动端导航页与工具箱同步改版；\n'
+            '2. 支持导入 mTLS 客户端证书 (#680)；\n'
+            '3. 新增重放任务管理，支持批量保存与重放请求；\n'
+            '4. 支持抓取 MQTT over TLS 流量，按报文流展示并显示来源应用 (#949)；\n'
+            '5. form-data / form-urlencoded 请求体支持表单方式编辑，选中文本可直接发送到 Decoder 或 AES 工具；\n'
+            '6. 复制为 Python requests 与 curl 导入解析增强；\n'
+            '7. 修复压缩及非标准 SSE 响应体显示、close-delimited 响应体处理 (#956)、应用过滤加载失败等问题；iOS 最低支持提升至 iOS 15。\n'
         : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
-            '1. Added a built-in MCP server so AI assistants (e.g. Claude) can inspect and debug captured traffic;\n'
-            '2. Added built-in dynamic variables for environments;\n'
-            '3. Request rewrite rules can now be reordered with move up/down actions;\n'
-            '4. Fixed a crash triggered by the Windows context menu;\n'
-            '5. Fixed multi-value headers (e.g. multiple Set-Cookie) being incorrectly merged when handled by scripts or rewrite rules;\n'
-            '6. Fixed h2c (plaintext HTTP/2) capture, non-ASCII domain normalization, and certificate validation failures for IP hosts;\n'
-            '7. Fixed an iOS 13 crash, dropped bodies for close-delimited responses, Android VPN destination-port recording, and other issues.\n';
+            '1. Brand-new UI: desktop left-side navigation, pinnable quick toolbar with a traffic control page, redesigned dark mode and SVG icons; mobile navigation pages and toolbox revamped as well;\n'
+            '2. Support importing mTLS client certificates (#680);\n'
+            '3. Added replay task management to save and replay requests in batches;\n'
+            '4. Capture MQTT over TLS traffic, displayed as a packet stream with originating app attribution (#949);\n'
+            '5. Form-based editing for form-data and form-urlencoded bodies; selected text can be sent directly to the Decoder or AES tools;\n'
+            '6. Enhanced copy-as-Python-requests and curl import parsing;\n'
+            '7. Fixed display of compressed and non-standard SSE bodies, close-delimited response body handling (#956), app filter loading failures, and other issues; minimum iOS version raised to iOS 15.\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV32 = false;
+      widget.appConfiguration.upgradeNoticeV40 = false;
       widget.appConfiguration.flushConfig();
     });
   }
@@ -443,7 +454,6 @@ class RequestPageState extends State<RequestPage> {
         drawer: widget.appConfiguration.bottomNavigation
             ? null
             : DrawerWidget(proxyServer: proxyServer, container: MobileApp.container),
-        floatingActionButton: _launchActionButton(),
         body: ValueListenableBuilder(
             valueListenable: remoteDevice,
             builder: (context, value, _) {
@@ -459,19 +469,29 @@ class RequestPageState extends State<RequestPage> {
             }),
       ),
       PictureInPictureIcon(proxyServer),
+      // FAB 用 Stack 定位在右下（内层 Scaffold 的 floatingActionButton 会与底导航布局冲突）
+      Positioned(right: 16, bottom: 12, child: _launchActionButton()),
     ]);
   }
 
+  /// 设计稿：运行中 = 绿底白 ⏹，已停止 = 灰底白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
   Widget _launchActionButton() {
-    var theme = Theme.of(context);
-    return Theme(
-        data: ThemeData.from(colorScheme: theme.colorScheme, textTheme: theme.textTheme, useMaterial3: true),
-        child: FloatingActionButton(
-          onPressed: null,
-          backgroundColor: theme.colorScheme.primaryContainer,
-          child: SocketLaunch(
-              proxyServer: proxyServer,
-              size: 36,
+    return ValueListenableBuilder<ValueWrap<bool>>(
+        valueListenable: SocketLaunch.startStatus,
+        builder: (context, status, _) {
+          var running = status.get() == true;
+          var theme = Theme.of(context);
+          // 46px 正圆右下悬浮（设计稿 .p-fab）；配色用户拍板：运行=绿 #1F8B4C / 停止=主题主色，图标恒白
+          return SizedBox(
+            width: 46,
+            height: 46,
+            child: FloatingActionButton(
+              onPressed: null,
+              shape: const CircleBorder(),
+              backgroundColor: running ? okColor(theme) : theme.colorScheme.primary,
+              child: SocketLaunch(
+                proxyServer: proxyServer,
+                size: 22,
               startup: proxyServer.configuration.startup,
               serverLaunch: false,
               onStart: () async {
@@ -489,7 +509,9 @@ class RequestPageState extends State<RequestPage> {
                 Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
               },
               onStop: () => Vpn.stopVpn()),
-        ));
+            ),
+          );
+        });
   }
 
   /// 远程连接

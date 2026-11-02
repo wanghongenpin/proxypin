@@ -579,7 +579,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
       return Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.check_circle_rounded, size: 15, color: color),
         const SizedBox(width: 6),
-        Text(l.mcpStatusRunning, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
+        Text(l.statusRunning, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color)),
       ]);
     }
     return Row(mainAxisSize: MainAxisSize.min, children: [
@@ -590,7 +590,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
         child: Icon(Icons.close_rounded, size: 10, color: cs.surface),
       ),
       const SizedBox(width: 6),
-      Text(l.mcpStatusStopped, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurfaceVariant)),
+      Text(l.statusStopped, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurfaceVariant)),
     ]);
   }
 

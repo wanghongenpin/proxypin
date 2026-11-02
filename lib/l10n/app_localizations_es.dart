@@ -9,7 +9,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get breakpoint => 'Punto de interrupción';
+  String get breakpoint => 'Puntos de interrupción';
 
   @override
   String get breakpointRule => 'Regla de punto de interrupción';
@@ -19,6 +19,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get requests => 'Captura';
+
+  @override
+  String get navRequests => 'Solicitudes';
 
   @override
   String get favorites => 'Favoritos';
@@ -33,6 +36,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get preference => 'Preferencias';
 
   @override
+  String get preferenceShort => 'Preferences';
+
+  @override
   String get feedback => 'Comentarios';
 
   @override
@@ -42,7 +48,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get filter => 'Filtro de proxy';
 
   @override
-  String get script => 'Script';
+  String get script => 'Scripts';
 
   @override
   String get share => 'Compartir';
@@ -61,9 +67,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get password => 'Contraseña';
-
-  @override
-  String get proxySetting => 'Proxy Setting';
 
   @override
   String get setAs => 'Establecer como';
@@ -274,6 +277,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get requestMethod => 'Método de solicitud';
 
   @override
+  String get protocol => 'Protocol';
+
+  @override
+  String get size => 'Size';
+
+  @override
+  String get remoteAddress => 'Remote Address';
+
+  @override
+  String get requestTime => 'Request Time';
+
+  @override
+  String get app => 'App';
+
+  @override
+  String get requestUrl => 'Request URL';
+
+  @override
   String get param => 'Parámetro';
 
   @override
@@ -337,9 +358,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get replace => 'Reemplazar';
-
-  @override
-  String get clickEdit => 'Click Edit';
 
   @override
   String get refresh => 'Actualizar';
@@ -618,6 +636,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get requestBody => 'Cuerpo de la solicitud';
 
   @override
+  String get queryParams => 'Query Params';
+
+  @override
+  String get path => 'Path';
+
+  @override
+  String get requestCookies => 'Request Cookies';
+
+  @override
+  String get responseCookies => 'Response Cookies';
+
+  @override
   String get responseBody => 'Cuerpo de la respuesta';
 
   @override
@@ -664,10 +694,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importCaP12 => 'Importar certificado raíz (.p12)';
 
   @override
-  String get trustCa => 'Confiar en el certificado';
+  String get clientCertificate => 'Client Certificate (mTLS)';
 
   @override
-  String get profileDownload => 'Profile Download';
+  String get importClientCert => 'Import Client Certificate(.p12)';
+
+  @override
+  String get expires => 'Expires';
+
+  @override
+  String get expired => 'Expired';
+
+  @override
+  String get trustCa => 'Confiar en el certificado';
 
   @override
   String get exportCA => 'Exportar certificado raíz';
@@ -777,9 +816,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get connect => 'Connect';
 
   @override
-  String get reconnect => 'Reconnect';
-
-  @override
   String remoteConnected(Object os) {
     return 'Connected $os, traffic will be forwarded to $os';
   }
@@ -789,9 +825,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get connectSuccess => 'Conexión exitosa';
-
-  @override
-  String get connectedRemote => 'Connected to remote';
 
   @override
   String get connected => 'Conectado';
@@ -921,13 +954,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get material3 => 'Material 3';
 
   @override
-  String get iosVpnBackgroundAudio =>
-      'After turning on packet capture, exit to the background. In order to maintain the main UI thread for network communication, a silent audio playback will be enabled to keep the main thread running. Otherwise, it will only run in the background for 30 seconds. Do you agree to play audio in the background after turning on packet capture?';
-
-  @override
-  String get markRead => 'Mark as read';
-
-  @override
   String get autoRead => 'Auto read';
 
   @override
@@ -964,6 +990,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get certHashName => 'CA Hash Name';
 
   @override
+  String get certHashShort => 'CA Hash';
+
+  @override
   String get regExp => 'RegExp';
 
   @override
@@ -971,12 +1000,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get qrCode => 'QR Code';
-
-  @override
-  String get jsonViewer => 'JSON Viewer';
-
-  @override
-  String get xmlViewer => 'XML Viewer';
 
   @override
   String get textDiff => 'Text Diff';
@@ -1244,9 +1267,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mcpPort => 'Port';
 
   @override
-  String get mcpAdvanced => 'Advanced settings';
-
-  @override
   String get mcpConfig => 'MCP Configuration';
 
   @override
@@ -1269,18 +1289,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mcpLearnMore => 'Learn more about MCP';
-
-  @override
-  String get mcpSkills => 'Skills';
-
-  @override
-  String get mcpSkillsTitle => 'MCP Skills';
-
-  @override
-  String get mcpSkillsReadonly => 'Read-only traffic tools';
-
-  @override
-  String get mcpSkillsRules => 'Rules, replay & environment tools';
 
   @override
   String get mcpEndpoint => 'MCP Endpoint';
@@ -1317,31 +1325,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mcpRegenerateToken => 'Reset token';
 
   @override
-  String get mcpStatusRunning => 'Running';
+  String get statusRunning => 'Running';
 
   @override
-  String get mcpStatusStopped => 'Stopped';
-
-  @override
-  String get mcpClientLabel => 'AI client';
-
-  @override
-  String get mcpTransportLabel => 'Transport';
-
-  @override
-  String get mcpCommandLabel => 'Connect command';
-
-  @override
-  String get mcpClientsIntl => 'International';
-
-  @override
-  String get mcpClientsDomestic => 'Chinese';
-
-  @override
-  String get mcpTransportStdio => 'stdio';
-
-  @override
-  String get mcpTransportHttp => 'HTTP';
+  String get statusStopped => 'Stopped';
 
   @override
   String get mcpHintTerminal => 'Copy and run in your terminal.';
@@ -1368,9 +1355,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mcpStartChat => 'Start chat';
 
   @override
-  String get mcpOpenTerminal => 'Run in terminal';
-
-  @override
   String get mcpSetupDone => 'Configured. Restart your AI client to apply.';
 
   @override
@@ -1394,6 +1378,97 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mcpStartFailed => 'MCP service failed to start';
 
   @override
-  String get mcpPrivacyHint =>
-      'Only listens on 127.0.0.1 (this machine). Data leaves the app only when an AI client explicitly requests it via a tool.';
+  String get replayTasks => 'Tareas de repetición';
+
+  @override
+  String get clearFinished => 'Borrar finalizadas';
+
+  @override
+  String get statusWaiting => 'En espera';
+
+  @override
+  String get statusCancelled => 'Cancelado';
+
+  @override
+  String get statusPaused => 'En pausa';
+
+  @override
+  String get pause => 'Pausar';
+
+  @override
+  String get resume => 'Reanudar';
+
+  @override
+  String get overview => 'Vista general';
+
+  @override
+  String get network => 'Network';
+
+  @override
+  String get trafficControl => 'Traffic Control';
+
+  @override
+  String get rulesPageHint => 'Click a row to open its window';
+
+  @override
+  String get notEnabled => 'Not enabled';
+
+  @override
+  String statusEnabledRules(int count) {
+    return 'Enabled · $count rules';
+  }
+
+  @override
+  String statusEnabledScripts(int count) {
+    return 'Enabled · $count scripts';
+  }
+
+  @override
+  String rulesCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String scriptsCount(int count) {
+    return '$count scripts';
+  }
+
+  @override
+  String get requestBlockDesc => 'Block matching requests, disconnect or return an error';
+
+  @override
+  String get requestRewriteDesc => 'Rewrite request/response line, headers and body by rule';
+
+  @override
+  String get requestMapDesc => 'Map requests to a local file or a remote URL';
+
+  @override
+  String get requestCryptoDesc => 'Encrypt or decrypt request and response bodies';
+
+  @override
+  String get scriptDesc => 'Handle requests and responses with JavaScript';
+
+  @override
+  String get breakpointDesc => 'Intercept requests/responses, modify, then resume';
+
+  @override
+  String get allFunctions => 'All functions';
+
+  @override
+  String get customizeToolbar => 'Customize toolbar';
+
+  @override
+  String get restoreDefaults => 'Restore defaults';
+
+  @override
+  String get pinnedDragSort => 'Pinned (drag to reorder)';
+
+  @override
+  String get pinToolsHint => 'All tools (tap + to pin to toolbar)';
+
+  @override
+  String get image => 'Image';
+
+  @override
+  String get filtered => 'Filtered';
 }

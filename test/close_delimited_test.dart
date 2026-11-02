@@ -6,9 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/channel/channel_context.dart';
 import 'package:proxypin/network/channel/network.dart';
+import 'package:proxypin/network/components/interceptor.dart';
 import 'package:proxypin/network/handle/http_proxy_handle.dart';
 import 'package:proxypin/network/http/codec.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/http/http_headers.dart';
 import 'package:proxypin/network/util/byte_buf.dart';
 
 /// Reproduction for issue #844: proxy records 200 but the client times out
@@ -93,6 +95,83 @@ void main() {
     expect(text.contains(body), isTrue, reason: 'client must receive the close-delimited body');
   });
 
+  test('close-delimited response runs onResponse interceptors (issue #956)', () async {
+    const int proxyPort = 19096;
+    const int originPort = 18082;
+    const String originBody = '{"origin":"RAW_BODY_FROM_SERVER"}';
+    const String replacedBody = '{"rewritten":"ProxyPin_Script_Fired"}';
+
+    final origin = await ServerSocket.bind(InternetAddress.loopbackIPv4, originPort);
+    origin.listen((socket) {
+      final resp = 'HTTP/1.1 200 OK\r\n'
+          'Content-Type: application/json\r\n'
+          '\r\n'
+          '$originBody';
+      socket.listen((_) {}, onError: (_) {}, cancelOnError: true);
+      () async {
+        try {
+          socket.add(utf8.encode(resp));
+          await socket.flush();
+          await socket.close();
+        } catch (_) {}
+      }();
+    });
+
+    final config = Configuration.fromJson({
+      'enableSsl': false,
+      'enableSocks5': false,
+      'enableSystemProxy': false,
+      'enabledHttp2': false,
+    });
+    config.port = proxyPort;
+
+    final interceptedUrls = <String>[];
+    final proxy = Server(config);
+    proxy.initChannel((channel) {
+      channel.dispatcher.handle(
+        HttpRequestCodec(),
+        HttpResponseCodec(),
+        HttpProxyChannelHandler(
+          listener: null,
+          interceptors: [
+            _ReplaceBodyInterceptor(replacedBody, (url) => interceptedUrls.add(url)),
+          ],
+        ),
+      );
+    });
+    await proxy.bind(proxyPort);
+
+    try {
+      final socket = await Socket.connect(InternetAddress.loopbackIPv4, proxyPort);
+      final completer = Completer<List<int>>();
+      final buf = <int>[];
+      socket.listen(
+        buf.addAll,
+        onError: completer.completeError,
+        onDone: () => completer.isCompleted ? null : completer.complete(buf),
+        cancelOnError: true,
+      );
+
+      socket.write('GET http://127.0.0.1:$originPort/test HTTP/1.1\r\n'
+          'Host: 127.0.0.1:$originPort\r\n'
+          '\r\n');
+      await socket.flush();
+
+      final data = await completer.future.timeout(const Duration(seconds: 5));
+      socket.destroy();
+      final text = utf8.decode(data, allowMalformed: true);
+
+      expect(text.contains('200'), isTrue);
+      expect(text.contains(replacedBody), isTrue,
+          reason: 'interceptor must replace the close-delimited body');
+      expect(text.contains('RAW_BODY_FROM_SERVER'), isFalse);
+      expect(interceptedUrls, hasLength(1));
+    } finally {
+      await proxy.stop();
+      await origin.close();
+    }
+  });
+
   test('CONNECT response is parsed, not close-delimited-relayed', () {
     // Upstream proxy replies "200 Connection established" with no
     // Content-Length. That must keep going through the existing CONNECT
@@ -109,4 +188,20 @@ void main() {
     expect(result.isDone, isTrue);
     expect(result.data?.status.code, 200);
   });
+}
+
+class _ReplaceBodyInterceptor extends Interceptor {
+  final String body;
+  final void Function(String url) onUrl;
+
+  _ReplaceBodyInterceptor(this.body, this.onUrl);
+
+  @override
+  Future<HttpResponse?> onResponse(HttpRequest request, HttpResponse response) async {
+    onUrl(request.requestUrl);
+    response.body = utf8.encode(body);
+    response.headers.remove(HttpHeaders.CONTENT_LENGTH);
+    response.headers.contentType = 'application/json';
+    return response;
+  }
 }

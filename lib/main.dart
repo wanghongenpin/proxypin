@@ -23,6 +23,7 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
@@ -110,10 +111,12 @@ class FluentApp extends StatelessWidget {
     bool isDark = brightness == Brightness.dark;
 
     final Color themeColor = appConfiguration.themeColor;
-    final Color cardColor = isDark ? const Color(0xFF3C3C3C) : Colors.white;
-    final Color scaffoldBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
-    final Color surfaceContainer = isDark ? const Color(0xFF353535) : Colors.white;
-    final Color dividerColor = isDark ? const Color(0xFF3F3F3F) : const Color(0xFFE0E0E0);
+    final Color cardColor = isDark ? DarkPalette.panel : Colors.white;
+    final Color scaffoldBg = isDark
+        ? DarkPalette.bg
+        : (Platforms.isMobile() ? Colors.white : const Color(0xFFF5F6F8));
+    final Color surfaceContainer = isDark ? DarkPalette.panel : Colors.white;
+    final Color dividerColor = isDark ? DarkPalette.border : const Color(0xFFE4E6EB);
 
     Color? secondary = useMaterial3 ? null : themeColor;
     if (themeColor is MaterialColor) {
@@ -134,6 +137,26 @@ class FluentApp extends StatelessWidget {
       onPrimary: onPrimary,
       outlineVariant: dividerColor,
     );
+
+    // 浅色结构色严格按设计稿 token：--bg #F5F6F8 / --panel #FFF / --border #E4E6EB / --text-1/2/3
+    if (!isDark) {
+      colorScheme = colorScheme.copyWith(
+        surface: Colors.white,
+        onSurface: const Color(0xFF1F2329),
+        // onSurfaceVariant: const Color(0xFF646A73),
+        outlineVariant: const Color(0xFFE4E6EB),
+      );
+    } else {
+      // 暗黑结构色按设计稿 homepage-dark.html：--bg #1B1D22 / --panel #24262C / --border #36393F / --text-1/2/3
+      colorScheme = colorScheme.copyWith(
+        // 默认蓝（设计稿 #4A6CF7）在深底上偏暗，切换为暗黑设计稿 --primary #5D7CFA；用户自选主题色不干预
+        primary: appConfiguration.themeColor == const Color(0xFF4A6CF7) ? DarkPalette.primary : null,
+        surface: DarkPalette.panel,
+        onSurface: DarkPalette.text1,
+        onSurfaceVariant: DarkPalette.text2,
+        outlineVariant: DarkPalette.border,
+      );
+    }
 
     var themeData = ThemeData(
       brightness: brightness,

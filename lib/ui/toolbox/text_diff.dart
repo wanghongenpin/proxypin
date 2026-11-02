@@ -27,9 +27,9 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/text_diff.dart';
 
 /// 文本对比工具
-/// - 左右两个 CodeForge 输入；
+/// - 左右两个文本编辑器输入；
 /// - 点对比后差异直接在原文 / 新文上染色（删行红、增行绿），无单独结果区；
-/// - 用户开始编辑任一侧时清空高亮，避免行号错位误导。
+/// - 用户开始编辑任一侧后自动重新对比，避免行号错位误导。
 ///
 /// @author Hongen Wang
 class TextDiffPage extends StatefulWidget {
@@ -44,8 +44,8 @@ class TextDiffPage extends StatefulWidget {
 }
 
 class _TextDiffPageState extends State<TextDiffPage> {
-  late final TextEditingController _left;
-  late final TextEditingController _right;
+  late final _DiffTextController _left;
+  late final _DiffTextController _right;
 
   bool _wrap = true;
   String? _summary;
@@ -59,8 +59,8 @@ class _TextDiffPageState extends State<TextDiffPage> {
   @override
   void initState() {
     super.initState();
-    _left = TextEditingController(text: widget.initialLeft ?? '');
-    _right = TextEditingController(text: widget.initialRight ?? '');
+    _left = _DiffTextController(text: widget.initialLeft ?? '');
+    _right = _DiffTextController(text: widget.initialRight ?? '');
     _left.addListener(_onLeftChanged);
     _right.addListener(_onRightChanged);
 
@@ -105,10 +105,17 @@ class _TextDiffPageState extends State<TextDiffPage> {
   bool textChanged = false;
 
   void _onTextChange() {
+    // TextField 不能随编辑自动迁移装饰范围，先清掉旧高亮，稍后重新计算。
+    _leftSnapshot = _left.text;
+    _rightSnapshot = _right.text;
+    _left.clearHighlights();
+    _right.clearHighlights();
+    if (_summary != null) setState(() => _summary = null);
+
     if (textChanged) return;
     textChanged = true;
     Future.delayed(const Duration(milliseconds: 1500), () {
-      _compare();
+      if (mounted) _compare();
       textChanged = false;
     });
   }
@@ -117,6 +124,15 @@ class _TextDiffPageState extends State<TextDiffPage> {
   void _compare() {
     if (_left.text.isEmpty && _right.text.isEmpty) return;
     final diffs = diffLines(_left.text, _right.text);
+    final leftLineStarts = _lineStartOffsets(_left.text);
+    final rightLineStarts = _lineStartOffsets(_right.text);
+    final leftHighlights = <_DiffHighlight>[];
+    final rightHighlights = <_DiffHighlight>[];
+
+    const deleteLine = TextStyle(backgroundColor: Color(0x2EE53935));
+    const insertLine = TextStyle(backgroundColor: Color(0x2E43A047));
+    const deleteChars = TextStyle(backgroundColor: Color(0xCCE53935));
+    const insertChars = TextStyle(backgroundColor: Color(0xCC43A047));
 
     var inserts = 0, deletes = 0;
     for (final d in diffs) {
@@ -125,15 +141,56 @@ class _TextDiffPageState extends State<TextDiffPage> {
           break;
         case LineDiffType.delete:
           deletes++;
+          final start = leftLineStarts[d.leftLine! - 1];
+          leftHighlights.add(_DiffHighlight(start, start + d.text.length, deleteLine));
           break;
         case LineDiffType.insert:
           inserts++;
+          final start = rightLineStarts[d.rightLine! - 1];
+          rightHighlights.add(_DiffHighlight(start, start + d.text.length, insertLine));
           break;
       }
     }
 
+    // 紧邻的删除 / 新增行再计算字符差异，深底色叠加在整行浅底色上。
+    final pairedDeleteLines = <int>{};
+    final pairedInsertLines = <int>{};
+    for (var k = 0; k + 1 < diffs.length; k++) {
+      final a = diffs[k];
+      final b = diffs[k + 1];
+      LineDiff? deleted, inserted;
+      if (a.type == LineDiffType.delete && b.type == LineDiffType.insert) {
+        deleted = a;
+        inserted = b;
+      } else if (a.type == LineDiffType.insert && b.type == LineDiffType.delete) {
+        deleted = b;
+        inserted = a;
+      }
+      if (deleted == null || inserted == null) continue;
+
+      final leftLine = deleted.leftLine! - 1;
+      final rightLine = inserted.rightLine! - 1;
+      if (pairedDeleteLines.contains(leftLine) || pairedInsertLines.contains(rightLine)) continue;
+
+      final chars = diffChars(deleted.text, inserted.text);
+      final leftOffset = leftLineStarts[leftLine];
+      final rightOffset = rightLineStarts[rightLine];
+      for (final range in chars.leftRanges) {
+        if (range.start == range.end) continue;
+        leftHighlights.add(_DiffHighlight(leftOffset + range.start, leftOffset + range.end, deleteChars));
+      }
+      for (final range in chars.rightRanges) {
+        if (range.start == range.end) continue;
+        rightHighlights.add(_DiffHighlight(rightOffset + range.start, rightOffset + range.end, insertChars));
+      }
+      pairedDeleteLines.add(leftLine);
+      pairedInsertLines.add(rightLine);
+    }
+
     _leftSnapshot = _left.text;
     _rightSnapshot = _right.text;
+    _left.updateHighlights(leftHighlights);
+    _right.updateHighlights(rightHighlights);
 
     setState(() {
       if (inserts == 0 && deletes == 0) {
@@ -155,9 +212,9 @@ class _TextDiffPageState extends State<TextDiffPage> {
 
   /// 清掉两侧高亮，但保留文本内容。
   void _clearHighlights() {
-    if (_summary == null) return;
-    // flutter_code_editor 0.3.5 不支持行高亮装饰，
-    // 这里简化处理，只重置摘要状态。
+    if (_summary == null && !_left.hasHighlights && !_right.hasHighlights) return;
+    _left.clearHighlights();
+    _right.clearHighlights();
     setState(() => _summary = null);
   }
 
@@ -169,7 +226,7 @@ class _TextDiffPageState extends State<TextDiffPage> {
   }
 
   /// 文件选择填到指定一侧。macOS 子窗口走父进程 IPC，跟 Json/Xml 工具一致。
-  Future<void> _openFileInto(TextEditingController target) async {
+  Future<void> _openFileInto(_DiffTextController target) async {
     String? path;
     try {
       if (Platform.isMacOS && widget.windowId != null) {
@@ -269,21 +326,21 @@ class _TextDiffPageState extends State<TextDiffPage> {
 
   Widget _wideLayout() {
     return Row(children: [
-      Expanded(child: _editor(_left, localizations.diffOriginal, isLeft: true)),
+      Expanded(child: _editor(_left, localizations.diffOriginal)),
       const VerticalDivider(width: 1, thickness: 0.3),
-      Expanded(child: _editor(_right, localizations.diffChanged, isLeft: false)),
+      Expanded(child: _editor(_right, localizations.diffChanged)),
     ]);
   }
 
   Widget _narrowLayout() {
     return Column(children: [
-      Expanded(child: _editor(_left, localizations.diffOriginal, isLeft: true)),
+      Expanded(child: _editor(_left, localizations.diffOriginal)),
       const Divider(height: 1, thickness: 0.3),
-      Expanded(child: _editor(_right, localizations.diffChanged, isLeft: false)),
+      Expanded(child: _editor(_right, localizations.diffChanged)),
     ]);
   }
 
-  Widget _editor(TextEditingController controller, String title, {required bool isLeft}) {
+  Widget _editor(_DiffTextController controller, String title) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -321,4 +378,60 @@ class _TextDiffPageState extends State<TextDiffPage> {
       ),
     ]);
   }
+}
+
+class _DiffTextController extends TextEditingController {
+  _DiffTextController({super.text});
+
+  List<_DiffHighlight> _highlights = const [];
+
+  bool get hasHighlights => _highlights.isNotEmpty;
+
+  void updateHighlights(List<_DiffHighlight> highlights) {
+    _highlights = highlights;
+    notifyListeners();
+  }
+
+  void clearHighlights() {
+    if (_highlights.isEmpty) return;
+    _highlights = const [];
+    notifyListeners();
+  }
+
+  @override
+  TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
+    if (_highlights.isEmpty || text.isEmpty) {
+      return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
+    }
+
+    // 在整行与字符范围的边界切分 TextSpan，按顺序合并样式。
+    final boundaries = <int>{0, text.length};
+    for (final highlight in _highlights) {
+      boundaries.add(highlight.start.clamp(0, text.length));
+      boundaries.add(highlight.end.clamp(0, text.length));
+    }
+    final offsets = boundaries.toList()..sort();
+    final children = <TextSpan>[];
+    for (var i = 0; i + 1 < offsets.length; i++) {
+      final start = offsets[i];
+      final end = offsets[i + 1];
+      if (start == end) continue;
+      TextStyle? spanStyle = style;
+      for (final highlight in _highlights) {
+        if (highlight.start <= start && highlight.end >= end) {
+          spanStyle = spanStyle == null ? highlight.style : spanStyle.merge(highlight.style);
+        }
+      }
+      children.add(TextSpan(style: spanStyle, text: text.substring(start, end)));
+    }
+    return TextSpan(style: style, children: children);
+  }
+}
+
+class _DiffHighlight {
+  final int start;
+  final int end;
+  final TextStyle style;
+
+  const _DiffHighlight(this.start, this.end, this.style);
 }

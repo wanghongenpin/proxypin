@@ -23,6 +23,8 @@ import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/desktop/ssl/pc_cert.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/utils/lang.dart';
@@ -30,13 +32,15 @@ import 'package:proxypin/utils/desktop_tray.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../utils/flutter_compat.dart';
 import '../mobile/setting/ssl.dart';
 
 ///启动按钮
 ///@author wanghongen
 ///2023/10/8
 class SocketLaunch extends StatefulWidget {
-  static ValueNotifier<ValueWrap<bool>> startStatus = ValueNotifier(ValueWrap());
+  static ValueNotifier<ValueWrap<bool>> startStatus =
+      ValueNotifier(ValueWrap());
 
   final ProxyServer proxyServer;
   final int size;
@@ -59,7 +63,8 @@ class SocketLaunch extends StatefulWidget {
   State<StatefulWidget> createState() => _SocketLaunchState();
 }
 
-class _SocketLaunchState extends State<SocketLaunch> with WindowListener, WidgetsBindingObserver {
+class _SocketLaunchState extends State<SocketLaunch>
+    with WindowListener, WidgetsBindingObserver {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   bool started = false;
   Future<void>? _exitFuture;
@@ -117,7 +122,8 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   Future<void> _performWindowClose() async {
     final appConfiguration = AppConfiguration.current;
     if (Platforms.isDesktop() &&
-        (appConfiguration?.minimizeToTray == null || appConfiguration?.minimizeToTray == true)) {
+        (appConfiguration?.minimizeToTray == null ||
+            appConfiguration?.minimizeToTray == true)) {
       if (appConfiguration?.minimizeToTray == null) {
         final minimize = await _showTrayClosePrompt();
         if (!mounted) {
@@ -152,7 +158,10 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
           builder: (ctx) {
             return AlertDialog(
               title: Text(localizations.minimizeToTrayTitle),
-              content: SizedBox(width: 320, child: Text(maxLines: 3, localizations.trayClosePromptContent)),
+              content: SizedBox(
+                  width: 320,
+                  child:
+                      Text(maxLines: 3, localizations.trayClosePromptContent)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(false),
@@ -186,12 +195,12 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
     if (!Platform.isWindows && !Platform.isLinux) {
       try {
-        await SystemNavigator.pop(animated: true).timeout(const Duration(milliseconds: 150));
+        await SystemNavigator.pop(animated: true)
+            .timeout(const Duration(milliseconds: 150));
       } catch (_) {
         //
       }
     }
-
   }
 
   @override
@@ -233,41 +242,93 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
   @override
   Widget build(BuildContext context) {
-    Color primaryColor = Theme.of(context).colorScheme.primary;
+    if (Platforms.isDesktop()) {
+      return Tooltip(
+          // 设计稿 title：状态 · 端口 · 操作提示（端口不进胶囊文案，避免启停时宽度变化推动右侧图标）
+          message:
+              '${started ? localizations.statusRunning : localizations.statusStopped} · :${widget.proxyServer.port} · ${started ? localizations.stop : localizations.start}',
+          child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: onToggle,
+              child: capsule()));
+    }
+    // 移动端嵌在 FAB 里：图标恒白，状态色由 FAB 底色表达（运行绿 / 停止灰）
     return IconButton(
         tooltip: started ? localizations.stop : localizations.start,
         icon: Icon(started ? Icons.stop : Icons.play_arrow_sharp,
-            color: started ? Colors.red : primaryColor, size: widget.size.toDouble()),
-        onPressed: () async {
-          if (started) {
-            if (!widget.serverLaunch) {
-              setState(() {
-                widget.onStop?.call();
-                started = !started;
-              });
-              return;
-            }
+            color: Colors.white, size: widget.size.toDouble()),
+        onPressed: onToggle);
+  }
 
-            widget.proxyServer.stop().then((value) {
-              widget.onStop?.call();
-              if (mounted) {
-                setState(() {
-                  started = !started;
-                });
-              }
-            }).catchError((e) {
-              logger.e("stop proxy server failed", error: e);
-              if (mounted) {
-                FlutterToastr.show(localizations.fail, context, duration: 3);
-                setState(() {
-                  started = false;
-                });
-              }
-            });
-          } else {
-            start();
-          }
-        });
+  /// 更新启动状态并广播（FAB 底色、桌面状态栏等监听 startStatus）
+  void _updateStarted(bool value) {
+    setState(() {
+      started = value;
+    });
+    SocketLaunch.startStatus.value = ValueWrap.of(value);
+  }
+
+  Future<void> onToggle() async {
+    if (started) {
+      if (!widget.serverLaunch) {
+        widget.onStop?.call();
+        _updateStarted(false);
+        return;
+      }
+
+      widget.proxyServer.stop().then((value) {
+        widget.onStop?.call();
+        if (mounted) {
+          _updateStarted(false);
+        }
+      }).catchError((e) {
+        logger.e("stop proxy server failed", error: e);
+        if (mounted) {
+          FlutterToastr.show(localizations.fail, context, duration: 3);
+          _updateStarted(false);
+        }
+      });
+    } else {
+      start();
+    }
+  }
+
+  /// 桌面端浅色胶囊（设计稿 .proxy-state）：电源图标 + 状态点 +「运行中 · :9099」
+  Widget capsule() {
+    var theme = Theme.of(context);
+    final green = okColor(theme);
+    var color = started ? green : theme.colorScheme.onSurfaceVariant;
+    return Container(
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            // 运行中底色：浅色 #F0F8F2，暗黑 --proxy-bg（绿 13%）
+            color: started
+                ? (theme.brightness == Brightness.light
+                    ? const Color(0xFFF0F8F2)
+                    : DarkPalette.ok.withValues(alpha: 0.13))
+                : theme.colorScheme.surface,
+            border: Border.all(
+                color: started
+                    ? green.withValues(alpha: 0.4)
+                    : theme.dividerColor.withValues(alpha: 0.8))),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          SvgIcon('power', size: 14, color: color),
+          const SizedBox(width: 6),
+          Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+          const SizedBox(width: 6),
+          // 不带端口：两种状态等宽（端口见 tooltip 与底部状态栏），胶囊宽度稳定，右侧图标不随启停移位
+          Text(
+              started
+                  ? localizations.statusRunning
+                  : localizations.statusStopped,
+              style:
+                  TextStyle(fontSize: 12, color: theme.colorScheme.onSurface)),
+        ]));
   }
 
   ///启动代理服务器
@@ -275,17 +336,13 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     try {
       if (!widget.serverLaunch) {
         await widget.onStart?.call();
-        setState(() {
-          started = true;
-        });
+        _updateStarted(true);
         return;
       }
 
       widget.proxyServer.start().then((value) {
         if (mounted) {
-          setState(() {
-            started = true;
-          });
+          _updateStarted(true);
         }
         widget.onStart?.call();
       }).catchError((e) {

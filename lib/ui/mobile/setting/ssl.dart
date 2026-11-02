@@ -30,6 +30,7 @@ import 'package:proxypin/storage/local_storage.dart';
 import 'package:proxypin/storage/shared_preference_keys.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/mobile/menu/drawer.dart';
+import 'package:proxypin/ui/mobile/setting/client_cert.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -133,6 +134,12 @@ class _MobileSslState extends State<MobileSslWidget> {
                     if (Platform.isIOS && !_trusted) _refreshStatus();
                   });
                 }),
+            Divider(height: 0, thickness: 0.3, color: dividerColor),
+            // 客户端证书 (mTLS)
+            ListTile(
+                title: Text(localizations.clientCertificate),
+                trailing: const Icon(Icons.keyboard_arrow_right),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MobileClientCertPage()))),
           ]),
           const SizedBox(height: 12),
           // Export options

@@ -93,14 +93,18 @@ class _SearchFieldState extends State<SearchField> {
             ),
             if (Platforms.isDesktop()) Obx(() => SizedBox(width: 85, child: _getText())),
             if (Platforms.isMobile()) SizedBox(width: 10),
+            // InkWell + 圆角水波纹（有 Material 祖先可画 ink）；总宽与旧版持平（19+6+19=44），
+            // 搜索框是定宽 Row，换 IconButton 会被强制最小尺寸撑溢出
             InkWell(
               onTap: widget.searchController.movePrevious,
-              child: const Icon(Icons.north, size: 17),
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(padding: EdgeInsets.all(1), child: Icon(Icons.north, size: 17)),
             ),
-            SizedBox(width: 10),
+            SizedBox(width: 6),
             InkWell(
               onTap: widget.searchController.moveNext,
-              child: const Icon(Icons.south, size: 17),
+              borderRadius: BorderRadius.circular(12),
+              child: const Padding(padding: EdgeInsets.all(1), child: Icon(Icons.south, size: 17)),
             ),
             const SizedBox(width: 3),
             IconButton(

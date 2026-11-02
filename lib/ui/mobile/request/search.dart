@@ -88,6 +88,8 @@ class MobileSearchState extends State<MobileSearch> {
     showModalBottomSheet(
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(10))),
         isScrollControlled: true,
+        // 挂到根 Navigator：弹层盖住底导航（嵌套 Navigator 下弹框会被底导航截断）
+        useRootNavigator: true,
         context: context,
         builder: (context) {
           if (!_searched) {

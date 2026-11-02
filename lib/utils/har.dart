@@ -67,13 +67,13 @@ class Har {
       "cookies": [], // 响应携带的cookie
       "headers": _headers(request.response), // 响应头
       "content": {
-        "size": request.response?.body?.length ?? -1, // 响应体大小
+        "size": _bodySize(request.response), // 响应体大小
         "mimeType": _getContentType(request.response?.headers.contentType), // 响应体类型
         "text": _getResponseText(request.response),
       },
       "redirectURL": '', // 重定向地址
       "headersSize": -1, // 响应头大小
-      "bodySize": request.response?.body?.length ?? -1, // 响应体大小
+      "bodySize": _bodySize(request.response), // 响应体大小
     };
     return har;
   }
@@ -125,13 +125,13 @@ class Har {
         "cookies": [],
         "headers": _headers(request.response),
         "content": {
-          "size": request.response?.body?.length ?? -1,
+          "size": _bodySize(request.response),
           "mimeType": _getContentType(request.response?.headers.contentType),
           "text": _getResponseText(request.response),
         },
         "redirectURL": '',
         "headersSize": -1,
-        "bodySize": request.response?.body?.length ?? -1,
+        "bodySize": _bodySize(request.response),
       },
       "cache": {},
       'timings': {
@@ -280,7 +280,16 @@ class Har {
     };
   }
 
+  static int _bodySize(HttpResponse? response) {
+    final stream = response?.messagesText;
+    if (stream != null) return utf8.encode(stream).length;
+    return response?.body?.length ?? -1;
+  }
+
   static String _getResponseText(HttpResponse? response) {
+    final stream = response?.messagesText;
+    if (stream != null) return stream;
+
     final responseBody = response?.body;
     if (responseBody == null) {
       return '';

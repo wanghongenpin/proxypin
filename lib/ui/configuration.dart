@@ -26,7 +26,7 @@ import 'package:path_provider/path_provider.dart';
 /// 2024/1/1
 class ColorMapping {
   static final Map<String, Color> colors = {
-    "Blue": Colors.blue,
+    "Blue": Color(0xFF4A6CF7),
     "Pink": Colors.pink,
     "Red": Colors.red,
     "Purple": Colors.deepPurple,
@@ -50,7 +50,7 @@ class ColorMapping {
 class ThemeModel {
   ThemeMode mode;
   bool useMaterial3;
-  String color = "Pink";
+  String color = "Blue";
 
   ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true});
 
@@ -63,7 +63,7 @@ class ThemeModel {
 }
 
 class AppConfiguration {
-  static const String version = "1.3.3";
+  static const String version = "1.4.0";
 
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
@@ -71,7 +71,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV32 = true;
+  bool upgradeNoticeV40 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -100,6 +100,9 @@ class AppConfiguration {
   //桌面window位置
   Offset? windowPosition;
 
+  //Windows保存窗口位置时使用的DPI比例
+  double? windowPositionScale;
+
   //左侧面板占比
   double panelRatio = 0.3;
 
@@ -118,6 +121,11 @@ class AppConfiguration {
   /// MCP 服务监听端口。为 null/非法时使用默认端口 9127，
   /// 被占用时由服务回退到系统随机端口。
   int? mcpPort;
+
+  /// 桌面端工具栏已固定的快捷功能 id 列表
+  static const List<String> defaultToolbarPins = ['requestRewrite', 'requestMap', 'script'];
+
+  final ValueNotifier<List<String>> toolbarPins = ValueNotifier(defaultToolbarPins);
 
   AppConfiguration._();
 
@@ -215,7 +223,7 @@ class AppConfiguration {
       _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV32 = config['upgradeNoticeV32'] ?? true;
+      upgradeNoticeV40 = config['upgradeNoticeV40'] ?? true;
       _language = config['language'] == null
           ? null
           : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
@@ -232,6 +240,8 @@ class AppConfiguration {
       windowPosition = config['windowPosition'] == null
           ? null
           : Offset(config['windowPosition']['dx'], config['windowPosition']['dy']);
+      final positionScale = config['windowPositionScale'];
+      windowPositionScale = positionScale is num ? positionScale.toDouble() : null;
       if (config['panelRatio'] != null) {
         panelRatio = config['panelRatio'];
       }
@@ -242,6 +252,10 @@ class AppConfiguration {
       mcpToken = config['mcpToken'] as String?;
       var port = config['mcpPort'];
       mcpPort = port is int && port > 0 && port <= 65535 ? port : null;
+      var pins = config['toolbarPins'];
+      if (pins is List) {
+        toolbarPins.value = pins.map((e) => e.toString()).toList();
+      }
     } catch (e) {
       logger.e(e);
     }
@@ -271,7 +285,7 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV32': upgradeNoticeV32,
+      'upgradeNoticeV40': upgradeNoticeV40,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerViewMode": headerViewMode,
@@ -285,8 +299,10 @@ class AppConfiguration {
         "windowSize": windowSize == null ? null : {"width": windowSize?.width, "height": windowSize?.height},
       if (Platforms.isDesktop())
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
+      if (Platform.isWindows) 'windowPositionScale': windowPositionScale,
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
       if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
+      if (Platforms.isDesktop()) 'toolbarPins': toolbarPins.value,
       // MCP 配置所有平台都写入
       'mcpEnabled': mcpEnabled,
       'mcpRedactEnabled': mcpRedactEnabled,

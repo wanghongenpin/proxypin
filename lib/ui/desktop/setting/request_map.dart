@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
@@ -26,7 +27,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   if (force) {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
     return;
   }
 
@@ -37,7 +38,7 @@ Future<void> _refreshConfig({bool force = false}) async {
   Future.delayed(const Duration(milliseconds: 1000), () async {
     _refresh = false;
     await RequestMapManager.instance.then((manager) => manager.flushConfig());
-    await DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+    await DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
   });
 }
 
@@ -66,19 +67,25 @@ class _RequestMapPageState extends State<RequestMapPage> {
   }
 
   bool onKeyEvent(KeyEvent event) {
-    if (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.escape) && Navigator.canPop(context)) {
+    if (HardwareKeyboard.instance
+            .isLogicalKeyPressed(LogicalKeyboardKey.escape) &&
+        Navigator.canPop(context)) {
       Navigator.maybePop(context);
       return true;
     }
 
-    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
+    if ((HardwareKeyboard.instance.isMetaPressed ||
+            HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
       if (_refresh) {
-        _refreshConfig(force: true).whenComplete(() => WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close'));
+        _refreshConfig(force: true).whenComplete(() =>
+            WindowController.fromWindowId(widget.windowId!)
+                .invokeMethod('window_close'));
         return true;
       }
-      WindowController.fromWindowId(widget.windowId!).invokeMethod('window_close');
+      WindowController.fromWindowId(widget.windowId!)
+          .invokeMethod('window_close');
       return true;
     }
     return false;
@@ -88,7 +95,9 @@ class _RequestMapPageState extends State<RequestMapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text(localizations.requestMap, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            title: Text(localizations.requestMap,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             toolbarHeight: 36,
             centerTitle: true),
         body: Padding(
@@ -96,47 +105,57 @@ class _RequestMapPageState extends State<RequestMapPage> {
             child: futureWidget(
                 RequestMapManager.instance,
                 loading: true,
-                    (data) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        SizedBox(
-                            width: 350,
-                            child: ListTile(
-                                title: Text("${localizations.enable} ${localizations.requestMap}"),
-                                subtitle:
-                                Text(localizations.requestMapDescribe, style: const TextStyle(fontSize: 12)),
-                                trailing: SwitchWidget(
-                                    value: data.enabled,
-                                    scale: 0.8,
-                                    onChanged: (value) {
-                                      data.enabled = value;
-                                      _refreshConfig();
-                                    }))),
-                        Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                const SizedBox(width: 10),
-                                TextButton.icon(
-                                    icon: const Icon(Icons.add, size: 18),
-                                    onPressed: showEdit,
-                                    label: Text(localizations.add)),
-                                const SizedBox(width: 10),
-                                TextButton.icon(
-                                  icon: const Icon(Icons.input_rounded, size: 18),
-                                  onPressed: import,
-                                  label: Text(localizations.import),
-                                ),
-                                const SizedBox(width: 10),
-                              ],
-                            )),
-                        const SizedBox(width: 15)
-                      ]),
-                      const SizedBox(height: 5),
-                      RequestMapList(list: data.rules, windowId: widget.windowId),
-                    ]))));
+                (data) => LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                              Row(children: [
+                                SizedBox(
+                                    width: 350,
+                                    child: ListTile(
+                                        title: Text(
+                                            "${localizations.enable} ${localizations.requestMap}"),
+                                        subtitle: Text(
+                                            localizations.requestMapDescribe,
+                                            style:
+                                                const TextStyle(fontSize: 12)),
+                                        trailing: SwitchWidget(
+                                            value: data.enabled,
+                                            scale: 0.8,
+                                            onChanged: (value) {
+                                              data.enabled = value;
+                                              _refreshConfig();
+                                            }))),
+                                Expanded(
+                                    child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const SizedBox(width: 10),
+                                    TextButton.icon(
+                                        icon: const Icon(Icons.add, size: 18),
+                                        onPressed: showEdit,
+                                        label: Text(localizations.add)),
+                                    const SizedBox(width: 10),
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.input_rounded,
+                                          size: 18),
+                                      onPressed: import,
+                                      label: Text(localizations.import),
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ],
+                                )),
+                                const SizedBox(width: 15)
+                              ]),
+                              const SizedBox(height: 5),
+                              SizedBox(
+                                  height: max(300, constraints.maxHeight - 85),
+                                  child: RequestMapList(
+                                      list: data.rules,
+                                      windowId: widget.windowId)),
+                            ]))))));
   }
 
   //导入js
@@ -148,7 +167,8 @@ class _RequestMapPageState extends State<RequestMapPage> {
       });
       WindowController.fromWindowId(widget.windowId!).show();
     } else {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      FilePickerResult? result = await FilePicker.platform
+          .pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       path = result?.files.single.path;
     }
 
@@ -180,7 +200,10 @@ class _RequestMapPageState extends State<RequestMapPage> {
 
   /// 添加脚本
   Future<void> showEdit() async {
-    showDialog(barrierDismissible: false, context: context, builder: (_) => RequestMapEdit(windowId: widget.windowId))
+    showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (_) => RequestMapEdit(windowId: widget.windowId))
         .then((value) {
       if (value != null) {
         setState(() {});
@@ -220,7 +243,8 @@ class _RequestMapListState extends State<RequestMapList> {
           if (selected.isEmpty) {
             return;
           }
-          if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
+          if (HardwareKeyboard.instance.isMetaPressed ||
+              HardwareKeyboard.instance.isControlPressed) {
             return;
           }
           setState(() {
@@ -237,28 +261,39 @@ class _RequestMapListState extends State<RequestMapList> {
             },
             child: Container(
                 padding: const EdgeInsets.only(top: 10),
-                height: 530,
-                decoration: BoxDecoration(border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
+                decoration: BoxDecoration(
+                    border:
+                        Border.all(color: Colors.grey.withValues(alpha: 0.2))),
                 child: SingleChildScrollView(
                     child: Column(children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(width: 130, padding: const EdgeInsets.only(left: 10), child: Text(localizations.name)),
-                          SizedBox(width: 50, child: Text(localizations.enable, textAlign: TextAlign.center)),
-                          const VerticalDivider(),
-                          const Expanded(child: Text("URL")),
-                          SizedBox(width: 100, child: Text(localizations.action, textAlign: TextAlign.center)),
-                        ],
-                      ),
-                      const Divider(thickness: 0.5),
-                      Column(children: rows(widget.list))
-                    ])))));
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Container(
+                          width: 130,
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Text(localizations.name)),
+                      SizedBox(
+                          width: 50,
+                          child: Text(localizations.enable,
+                              textAlign: TextAlign.center)),
+                      const VerticalDivider(),
+                      const Expanded(child: Text("URL")),
+                      SizedBox(
+                          width: 100,
+                          child: Text(localizations.action,
+                              textAlign: TextAlign.center)),
+                    ],
+                  ),
+                  const Divider(thickness: 0.5),
+                  Column(children: rows(widget.list))
+                ])))));
   }
 
   List<Widget> rows(List<RequestMapRule> list) {
     var primaryColor = Theme.of(context).colorScheme.primary;
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+    bool isCN = Localizations.localeOf(context) ==
+        const Locale.fromSubtags(languageCode: 'zh');
 
     return List.generate(list.length, (index) {
       return InkWell(
@@ -275,9 +310,12 @@ class _RequestMapListState extends State<RequestMapList> {
             }
           },
           onTap: () {
-            if (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) {
+            if (HardwareKeyboard.instance.isMetaPressed ||
+                HardwareKeyboard.instance.isControlPressed) {
               setState(() {
-                selected.contains(index) ? selected.remove(index) : selected.add(index);
+                selected.contains(index)
+                    ? selected.remove(index)
+                    : selected.add(index);
               });
               return;
             }
@@ -292,13 +330,16 @@ class _RequestMapListState extends State<RequestMapList> {
               color: selected.contains(index)
                   ? primaryColor.withValues(alpha: 0.6)
                   : index.isEven
-                  ? Colors.grey.withValues(alpha: 0.1)
-                  : null,
+                      ? Colors.grey.withValues(alpha: 0.1)
+                      : null,
               height: 30,
               padding: const EdgeInsets.all(5),
               child: Row(
                 children: [
-                  SizedBox(width: 130, child: Text(list[index].name ?? '', style: const TextStyle(fontSize: 13))),
+                  SizedBox(
+                      width: 130,
+                      child: Text(list[index].name ?? '',
+                          style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 40,
                       child: Transform.scale(
@@ -311,12 +352,17 @@ class _RequestMapListState extends State<RequestMapList> {
                               }))),
                   const SizedBox(width: 20),
                   Expanded(
-                      child:
-                      Text(list[index].url, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13))),
+                      child: Text(list[index].url,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13))),
                   SizedBox(
                       width: 100,
-                      child: Text(!isCN ? list[index].type.name.camelCaseToSpaced() : list[index].type.label,
-                          textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
+                      child: Text(
+                          !isCN
+                              ? list[index].type.name.camelCaseToSpaced()
+                              : list[index].type.label,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 13))),
                 ],
               )));
     });
@@ -324,13 +370,28 @@ class _RequestMapListState extends State<RequestMapList> {
 
   void showGlobalMenu(Offset offset) {
     showContextMenu(context, offset, items: [
-      PopupMenuItem(height: 35, child: Text(localizations.newBuilt), onTap: () => showEdit()),
-      PopupMenuItem(height: 35, child: Text(localizations.export), onTap: () => export(selected.toList())),
+      PopupMenuItem(
+          height: 35,
+          child: Text(localizations.newBuilt),
+          onTap: () => showEdit()),
+      PopupMenuItem(
+          height: 35,
+          child: Text(localizations.export),
+          onTap: () => export(selected.toList())),
       const PopupMenuDivider(),
-      PopupMenuItem(height: 35, child: Text(localizations.enableSelect), onTap: () => enableStatus(true)),
-      PopupMenuItem(height: 35, child: Text(localizations.disableSelect), onTap: () => enableStatus(false)),
+      PopupMenuItem(
+          height: 35,
+          child: Text(localizations.enableSelect),
+          onTap: () => enableStatus(true)),
+      PopupMenuItem(
+          height: 35,
+          child: Text(localizations.disableSelect),
+          onTap: () => enableStatus(false)),
       const PopupMenuDivider(),
-      PopupMenuItem(height: 35, child: Text(localizations.deleteSelect), onTap: () => remove(selected.toList())),
+      PopupMenuItem(
+          height: 35,
+          child: Text(localizations.deleteSelect),
+          onTap: () => remove(selected.toList())),
     ]);
   }
 
@@ -345,11 +406,19 @@ class _RequestMapListState extends State<RequestMapList> {
     });
 
     showContextMenu(context, details.globalPosition, items: [
-      PopupMenuItem(height: 35, child: Text(localizations.edit), onTap: () => showEdit(index)),
-      PopupMenuItem(height: 35, child: Text(localizations.export), onTap: () => export([index])),
       PopupMenuItem(
           height: 35,
-          child: widget.list[index].enabled ? Text(localizations.disabled) : Text(localizations.enable),
+          child: Text(localizations.edit),
+          onTap: () => showEdit(index)),
+      PopupMenuItem(
+          height: 35,
+          child: Text(localizations.export),
+          onTap: () => export([index])),
+      PopupMenuItem(
+          height: 35,
+          child: widget.list[index].enabled
+              ? Text(localizations.disabled)
+              : Text(localizations.enable),
           onTap: () {
             widget.list[index].enabled = !widget.list[index].enabled;
             _refreshConfig();
@@ -373,7 +442,10 @@ class _RequestMapListState extends State<RequestMapList> {
   }
 
   Future<void> showEdit([int? index]) async {
-    final item = index == null ? null : await (await RequestMapManager.instance).getMapItem(widget.list[index]);
+    final item = index == null
+        ? null
+        : await (await RequestMapManager.instance)
+            .getMapItem(widget.list[index]);
     if (!mounted) {
       return;
     }
@@ -381,9 +453,10 @@ class _RequestMapListState extends State<RequestMapList> {
     showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (_) =>
-            RequestMapEdit(windowId: widget.windowId, rule: index == null ? null : widget.list[index], item: item))
-        .then((value) {
+        builder: (_) => RequestMapEdit(
+            windowId: widget.windowId,
+            rule: index == null ? null : widget.list[index],
+            item: item)).then((value) {
       if (value != null) {
         setState(() {});
       }
@@ -397,9 +470,11 @@ class _RequestMapListState extends State<RequestMapList> {
     String fileName = 'request_map.json';
     String? path;
     if (Platform.isMacOS) {
-      path = await DesktopMultiWindow.invokeMethod(0, "saveFile", {"fileName": fileName});
+      path = await DesktopMultiWindow.invokeMethod(
+          0, "saveFile", {"fileName": fileName});
 
-      if (widget.windowId != null) WindowController.fromWindowId(widget.windowId!).show();
+      if (widget.windowId != null)
+        WindowController.fromWindowId(widget.windowId!).show();
     } else {
       path = await FilePicker.platform.saveFile(fileName: fileName);
     }
@@ -432,7 +507,8 @@ class _RequestMapListState extends State<RequestMapList> {
 
   Future<void> remove(List<int> indexes) async {
     if (indexes.isEmpty) return;
-    showConfirmDialog(context, content: localizations.confirmContent, onConfirm: () async {
+    showConfirmDialog(context, content: localizations.confirmContent,
+        onConfirm: () async {
       var manager = await RequestMapManager.instance;
       for (var idx in indexes) {
         await manager.deleteRule(idx);
@@ -456,7 +532,8 @@ class RequestMapEdit extends StatefulWidget {
   final String? url;
   final String? title;
 
-  const RequestMapEdit({super.key, this.rule, this.windowId, this.item, this.url, this.title});
+  const RequestMapEdit(
+      {super.key, this.rule, this.windowId, this.item, this.url, this.title});
 
   @override
   State<StatefulWidget> createState() {
@@ -479,7 +556,8 @@ class _RequestMapEditState extends State<RequestMapEdit> {
   @override
   void initState() {
     super.initState();
-    rule = widget.rule ?? RequestMapRule(url: widget.url ?? '', type: RequestMapType.local);
+    rule = widget.rule ??
+        RequestMapRule(url: widget.url ?? '', type: RequestMapType.local);
     mapType = rule.type;
     nameInput = TextEditingController(text: rule.name ?? widget.title);
     urlInput = TextEditingController(text: rule.url);
@@ -495,7 +573,8 @@ class _RequestMapEditState extends State<RequestMapEdit> {
   @override
   Widget build(BuildContext context) {
     GlobalKey formKey = GlobalKey<FormState>();
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+    bool isCN = Localizations.localeOf(context) ==
+        const Locale.fromSubtags(languageCode: 'zh');
 
     return AlertDialog(
         scrollable: true,
@@ -503,9 +582,12 @@ class _RequestMapEditState extends State<RequestMapEdit> {
         actionsPadding: const EdgeInsets.only(right: 15, bottom: 15),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         title: Row(children: [
-          Text(localizations.requestMap, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          Text(localizations.requestMap,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         ]),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
         content: Container(
             width: 550,
             constraints: const BoxConstraints(minHeight: 200, maxHeight: 530),
@@ -516,16 +598,24 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Row(children: [
-                        SizedBox(width: 55, child: Text('${localizations.enable}:')),
-                        SwitchWidget(value: rule.enabled, onChanged: (val) => rule.enabled = val, scale: 0.8)
+                        SizedBox(
+                            width: 55, child: Text('${localizations.enable}:')),
+                        SwitchWidget(
+                            value: rule.enabled,
+                            onChanged: (val) => rule.enabled = val,
+                            scale: 0.8)
                       ]),
                       const SizedBox(height: 5),
-                      textField('${localizations.name}:', nameInput, localizations.pleaseEnter),
+                      textField('${localizations.name}:', nameInput,
+                          localizations.pleaseEnter),
                       const SizedBox(height: 5),
-                      textField('URL:', urlInput, 'https://www.example.com/api/*', required: true),
+                      textField(
+                          'URL:', urlInput, 'https://www.example.com/api/*',
+                          required: true),
                       const SizedBox(height: 5),
                       Row(children: [
-                        SizedBox(width: 60, child: Text('${localizations.action}:')),
+                        SizedBox(
+                            width: 60, child: Text('${localizations.action}:')),
                         SizedBox(
                             width: 150,
                             height: 33,
@@ -533,14 +623,18 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                               onSaved: (val) => rule.type = val!,
                               value: mapType,
                               decoration: InputDecoration(
-                                  errorStyle: const TextStyle(height: 0, fontSize: 0),
-                                  contentPadding: const EdgeInsets.only(left: 7, right: 7),
+                                  errorStyle:
+                                      const TextStyle(height: 0, fontSize: 0),
+                                  contentPadding:
+                                      const EdgeInsets.only(left: 7, right: 7),
                                   focusedBorder: focusedBorder(),
                                   border: const OutlineInputBorder()),
                               items: RequestMapType.values
                                   .map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(isCN ? e.label : e.name, style: const TextStyle(fontSize: 13))))
+                                      value: e,
+                                      child: Text(isCN ? e.label : e.name,
+                                          style:
+                                              const TextStyle(fontSize: 13))))
                                   .toList(),
                               onChanged: onChangeType,
                             )),
@@ -550,12 +644,15 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                       mapRule(),
                     ]))),
         actions: [
-          ElevatedButton(child: Text(localizations.close), onPressed: () => Navigator.of(context).pop()),
+          ElevatedButton(
+              child: Text(localizations.close),
+              onPressed: () => Navigator.of(context).pop()),
           FilledButton(
               child: Text(localizations.save),
               onPressed: () async {
                 if (!(formKey.currentState as FormState).validate()) {
-                  FlutterToastr.show(localizations.cannotBeEmpty, context, position: FlutterToastr.center);
+                  FlutterToastr.show(localizations.cannotBeEmpty, context,
+                      position: FlutterToastr.center);
                   return;
                 }
 
@@ -567,7 +664,8 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                 if (mapType == RequestMapType.local) {
                   item = mapLocalKey.currentState!.getRequestMapItem();
                 } else {
-                  String? scriptCode = mapScriptKey.currentState?.getScriptCode();
+                  String? scriptCode =
+                      mapScriptKey.currentState?.getScriptCode();
                   item = widget.item ?? RequestMapItem();
                   item.script = scriptCode;
                 }
@@ -580,7 +678,7 @@ class _RequestMapEditState extends State<RequestMapEdit> {
                   await requestMapManager.addRule(rule, item);
                 }
 
-                DesktopMultiWindow.invokeMethod(0, "refreshRequestMap");
+                DesktopMultiWindow.invokeMainWindowMethod("refreshRequestMap");
                 if (mounted) {
                   Navigator.of(this.context).pop(rule);
                 }
@@ -599,7 +697,8 @@ class _RequestMapEditState extends State<RequestMapEdit> {
       return DesktopMapScript(key: mapScriptKey, script: widget.item?.script);
     }
 
-    return DesktopMapLocal(key: mapLocalKey, item: widget.item, windowId: widget.windowId);
+    return DesktopMapLocal(
+        key: mapLocalKey, item: widget.item, windowId: widget.windowId);
   }
 
   Widget textField(String label, TextEditingController controller, String hint,
@@ -608,24 +707,27 @@ class _RequestMapEditState extends State<RequestMapEdit> {
       SizedBox(width: 60, child: Text(label)),
       Expanded(
           child: TextFormField(
-            controller: controller,
-            style: const TextStyle(fontSize: 14),
-            validator: (val) => val?.isNotEmpty == true || !required ? null : "",
-            onSaved: onSaved,
-            decoration: InputDecoration(
-                hintText: hint,
-                constraints: const BoxConstraints(minHeight: 38),
-                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                errorStyle: const TextStyle(height: 0, fontSize: 0),
-                focusedBorder: focusedBorder(),
-                isDense: true,
-                border: const OutlineInputBorder()),
-          ))
+        controller: controller,
+        style: const TextStyle(fontSize: 14),
+        validator: (val) => val?.isNotEmpty == true || !required ? null : "",
+        onSaved: onSaved,
+        decoration: InputDecoration(
+            hintText: hint,
+            constraints: const BoxConstraints(minHeight: 38),
+            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            errorStyle: const TextStyle(height: 0, fontSize: 0),
+            focusedBorder: focusedBorder(),
+            isDense: true,
+            border: const OutlineInputBorder()),
+      ))
     ]);
   }
 
   InputBorder focusedBorder() {
-    return OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2));
+    return OutlineInputBorder(
+        borderSide:
+            BorderSide(color: Theme.of(context).colorScheme.primary, width: 2));
   }
 }

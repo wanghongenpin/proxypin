@@ -17,6 +17,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+
 /// Type of a [ContextMenuItem] entry.
 enum ContextMenuItemType { normal, separator, checkbox, submenu }
 
@@ -102,7 +103,8 @@ const double _menuRadius = 8.0;
 const double _itemRadius = 4.0;
 const double _separatorHeight = 7.0;
 const EdgeInsets _itemPadding = EdgeInsets.symmetric(horizontal: 12);
-const EdgeInsets _menuPadding = EdgeInsets.symmetric(horizontal: 4, vertical: 3);
+const EdgeInsets _menuPadding =
+    EdgeInsets.symmetric(horizontal: 4, vertical: 3);
 
 /// Show a context menu at [position] (global coordinates) built from [items].
 ///
@@ -136,7 +138,8 @@ Future<void> showCustomContextMenu(
 class _ContextMenuHost {
   _ContextMenuHost._();
 
-  static final Map<OverlayState, _ContextMenuHost> _hosts = <OverlayState, _ContextMenuHost>{};
+  static final Map<OverlayState, _ContextMenuHost> _hosts =
+      <OverlayState, _ContextMenuHost>{};
 
   static _ContextMenuHost of(OverlayState overlay) {
     return _hosts.putIfAbsent(overlay, () {
@@ -146,11 +149,13 @@ class _ContextMenuHost {
     });
   }
 
-  final GlobalKey<_ContextMenuAnchorState> _anchorKey = GlobalKey<_ContextMenuAnchorState>();
+  final GlobalKey<_ContextMenuAnchorState> _anchorKey =
+      GlobalKey<_ContextMenuAnchorState>();
   OverlayEntry? _entry;
 
   void _install(OverlayState overlay) {
-    _entry = OverlayEntry(builder: (context) => _ContextMenuAnchor(key: _anchorKey));
+    _entry =
+        OverlayEntry(builder: (context) => _ContextMenuAnchor(key: _anchorKey));
     overlay.insert(_entry!);
   }
 
@@ -177,7 +182,8 @@ class _ContextMenuAnchor extends StatefulWidget {
 
 class _ContextMenuAnchorState extends State<_ContextMenuAnchor> {
   final MenuController _controller = MenuController();
-  final FocusNode _anchorFocusNode = FocusNode(debugLabel: 'ContextMenu anchor');
+  final FocusNode _anchorFocusNode =
+      FocusNode(debugLabel: 'ContextMenu anchor');
 
   Offset _position = Offset.zero;
   List<ContextMenuItem> _items = const [];
@@ -213,7 +219,8 @@ class _ContextMenuAnchorState extends State<_ContextMenuAnchor> {
   /// [DismissMenuAction]: that lives inside the menu panel's focus scope, and
   /// opening the menu programmatically does not move focus into it.
   KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
       _dismiss();
       return KeyEventResult.handled;
     }
@@ -288,7 +295,8 @@ ButtonStyle _itemStyle(BuildContext context) {
     textStyle: const TextStyle(fontSize: _fontSize),
     visualDensity: VisualDensity.standard,
     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_itemRadius)),
+    shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_itemRadius)),
   );
 }
 
@@ -300,8 +308,11 @@ List<Widget> _buildMenuChildren(
   // Only reserve the leading checkmark gutter when this menu actually has a
   // checkbox item. Reserving it unconditionally would leave a blank column on
   // the left of menus that have nothing to check.
-  final bool reserveGutter = items.any((i) => i.type == ContextMenuItemType.checkbox);
-  return items.map((item) => _buildMenuChild(context, item, dismiss, reserveGutter)).toList();
+  final bool reserveGutter =
+      items.any((i) => i.type == ContextMenuItemType.checkbox);
+  return items
+      .map((item) => _buildMenuChild(context, item, dismiss, reserveGutter))
+      .toList();
 }
 
 Widget _buildMenuChild(
@@ -316,7 +327,8 @@ Widget _buildMenuChild(
       // children out with loose width constraints and Divider's intrinsic
       // width is 0. Wrapping it in an Expanded inside a Row makes it fill the
       // panel width without widening the panel itself.
-      return const Row(children: [Expanded(child: Divider(height: _separatorHeight))]);
+      return const Row(
+          children: [Expanded(child: Divider(height: _separatorHeight))]);
 
     case ContextMenuItemType.checkbox:
       return MenuItemButton(

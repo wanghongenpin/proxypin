@@ -100,7 +100,10 @@ class RemoteVersionEntity {
 abstract class GithubReleaseParser {
   static RemoteVersionEntity parse(Map<String, dynamic> json) {
     final fullTag = json['tag_name'] as String;
-    final fullVersion = fullTag.removePrefix("v").split("-").first.split("+");
+    // 去掉版本前缀, 兼容 v / V 两种写法(如 v1.3.3、V1.3.3)
+    final tagWithoutPrefix =
+        fullTag.startsWith(RegExp('[vV]')) ? fullTag.substring(1) : fullTag;
+    final fullVersion = tagWithoutPrefix.split("-").first.split("+");
     var version = fullVersion.first;
     var buildNumber = fullVersion.elementAtOrElse(1, (index) => "");
 
@@ -130,7 +133,7 @@ abstract class GithubReleaseParser {
     return RemoteVersionEntity(
         version: version,
         buildNumber: buildNumber,
-        releaseTag: fullTag,
+        releaseTag: tagWithoutPrefix,
         preRelease: preRelease,
         url: json["html_url"] as String,
         content: content,

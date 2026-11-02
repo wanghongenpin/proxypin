@@ -21,6 +21,7 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/hosts.dart';
 import 'package:proxypin/network/components/interceptor.dart';
 import 'package:proxypin/network/components/network_condition.dart';
+import 'package:proxypin/network/components/manager/client_cert_manager.dart';
 import 'package:proxypin/network/components/report_server_interceptor.dart';
 import 'package:proxypin/network/components/request_block.dart';
 import 'package:proxypin/network/components/request_rewrite.dart';
@@ -112,6 +113,7 @@ class ProxyServer {
 
       //初始化证书
       CertificateManager.initCAConfig();
+      ClientCertManager.preload();
       return server;
     });
   }

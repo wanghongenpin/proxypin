@@ -90,6 +90,7 @@ class MoreMenu extends StatelessWidget {
                 },
               )),
           const PopupMenuDivider(height: 0),
+          // 收藏/历史入口已移到「配置」页顶部卡片，此处不再重复
           PopupMenuItem(
               height: 32,
               child: ListTile(

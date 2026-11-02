@@ -36,6 +36,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/mobile/request/repeat.dart';
+import 'package:proxypin/utils/replay_task.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
@@ -376,7 +377,10 @@ class _FavoriteItemState extends State<_FavoriteItem> {
     Navigator.of(context).pop();
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => futureWidget(SharedPreferences.getInstance(),
-            (prefs) => MobileCustomRepeat(onRepeat: () => onRepeat(request), prefs: prefs))));
+            (prefs) => MobileCustomRepeat(
+                onScheduled: (cfg) =>
+                    ReplayTaskManager.instance.start(request: request, action: () => onRepeat(request), config: cfg),
+                prefs: prefs))));
   }
 
   void onRepeat(HttpRequest request) {
@@ -425,7 +429,7 @@ class _FavoriteItemState extends State<_FavoriteItem> {
           proxyServer: widget.proxyServer,
           httpRequest: request,
           httpResponse: request.response,
-          title: Text(localizations.captureDetail, style: const TextStyle(fontSize: 16)));
+          title: mobileDetailTitle(context, request));
     }));
   }
 

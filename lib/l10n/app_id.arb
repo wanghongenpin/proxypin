@@ -187,6 +187,7 @@
   "requestRewriteRule": "Aturan penulisan ulang",
   "requestRewriteDeleteConfirm": "Hapus {size} aturan?",
   "requests": "Tangkap",
+  "navRequests": "Permintaan",
   "reset": "Atur ulang",
   "resetDefaultCA": "Reset sertifikat root default",
   "resetDefaultCADescribe": "Yakin ingin mereset sertifikat root default?",
@@ -263,5 +264,13 @@
   "weakNetworkDownload": "Unduh",
   "weakNetworkBandwidth": "Bandwidth",
   "weakNetworkLossRate": "Kehilangan Paket",
-  "weakNetworkRules": "Aturan URL"
+  "weakNetworkRules": "Aturan URL",
+  "replayTasks": "Tugas Pengulangan",
+  "clearFinished": "Hapus yang selesai",
+  "statusWaiting": "Menunggu",
+  "statusCancelled": "Dibatalkan",
+  "statusPaused": "Dijeda",
+  "pause": "Jeda",
+  "resume": "Lanjutkan",
+  "overview": "Ringkasan"
 }

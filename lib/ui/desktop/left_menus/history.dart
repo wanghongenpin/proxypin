@@ -77,6 +77,7 @@ class HistoryPageWidget extends StatelessWidget {
     var localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: PreferredSize(
             preferredSize: const Size.fromHeight(40),
             child: AppBar(
@@ -154,6 +155,7 @@ class _HistoryListState extends State<_HistoryListWidget> {
     }
 
     return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: PreferredSize(
             preferredSize: const Size.fromHeight(36),
             child: AppBar(

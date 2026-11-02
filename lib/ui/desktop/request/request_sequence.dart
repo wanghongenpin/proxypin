@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -59,8 +58,9 @@ class RequestSequence extends StatefulWidget {
 class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliveClientMixin {
   late Configuration configuration;
 
-  ///显示的请求列表 最新的在前面
-  Queue<HttpRequest> view = Queue();
+  ///显示的请求列表，始终按时间序存储（旧→新）。显示顺序由 itemBuilder 按 sortDesc 倒序映射，
+  ///这样追加 O(1)、按下标取值 O(1)（此前用 Queue，elementAt 每次 O(n)，滚动时整体 O(n²)）
+  List<HttpRequest> view = [];
   final Map<String, VoidCallback> rowRefreshers = <String, VoidCallback>{};
   bool changing = false;
 
@@ -81,7 +81,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   void initState() {
     super.initState();
     configuration = widget.proxyServer.configuration;
-    view.addAll(widget.container.source.reversed);
+    view.addAll(widget.container.source);
 
     highlightListener = () {
       //回调时机在高亮设置页面dispose之后。所以需要在下一帧刷新，否则会报错
@@ -131,12 +131,12 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   Widget build(BuildContext context) {
     super.build(context);
 
-    return ListView.separated(
+    return ListView.builder(
       cacheExtent: 1000,
-      separatorBuilder: (context, index) => Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
       itemCount: view.length,
       itemBuilder: (context, index) {
-        final request = view.elementAt(index);
+        // view 按时间序存储，降序显示时从尾部倒序取下标，O(1)
+        final request = sortDesc ? view[view.length - 1 - index] : view[index];
         return RequestWidget(
           request,
           key: ValueKey(request.requestId),
@@ -190,11 +190,8 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
       return;
     }
 
-    if (sortDesc) {
-      view.addFirst(request);
-    } else {
-      view.addLast(request);
-    }
+    // 始终追加到尾部（时间序），显示顺序由 build 里的倒序映射决定
+    view.add(request);
 
     changeState();
   }
@@ -209,7 +206,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     //搜索视图
     if (searchModel?.filter(response.request!, response) == true) {
       if (!view.contains(response.request)) {
-        view.addFirst(response.request!);
+        view.add(response.request!);
         changeState();
       }
     }
@@ -219,9 +216,9 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   void search(SearchModel searchModel) {
     this.searchModel = searchModel;
     if (searchModel.isEmpty) {
-      view = Queue.of(widget.container.source.reversed);
+      view = List.of(widget.container.source);
     } else {
-      view = Queue.of(widget.container.where((it) => searchModel.filter(it, it.response)).toList().reversed);
+      view = widget.container.where((it) => searchModel.filter(it, it.response)).toList();
     }
     rowRefreshers.removeWhere((requestId, _) => !view.any((request) => request.requestId == requestId));
     selectionController.prune(view.map((request) => request.requestId));
@@ -241,7 +238,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     setState(() {
       view.clear();
       rowRefreshers.clear();
-      view.addAll(widget.container.source.reversed);
+      view.addAll(widget.container.source);
     });
   }
 
@@ -251,12 +248,10 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     });
   }
 
-  ///排序
+  ///排序（存储顺序不变，仅翻转显示映射，无需拷贝列表）
   void sort(bool desc) {
     sortDesc = desc;
-    setState(() {
-      view = Queue.of(view.toList().reversed);
-    });
+    setState(() {});
   }
 
   void _refreshChangedRows(List<String> changedIds) {

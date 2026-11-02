@@ -316,10 +316,16 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
 
     var emptyBody = data.body == null || data.body!.isEmpty;
 
+    // 1xx 信息响应（100 Continue / 103 Early Hints）只是中间响应，之后还有
+    // 最终响应，HEADERS 不能带 END_STREAM（RFC 9110 §15.2），否则客户端会
+    // 认为流已终结，同一 stream 上的最终响应帧就是协议错误。
+    var interimResponse = data is HttpResponse && data.status.code >= 100 && data.status.code < 200;
+
     //headers
     var headers = encodeHeaders(data);
 
-    writeHeadersFrame(bytesBuilder, channelContext, data.streamId!, headers, endStream: emptyBody);
+    writeHeadersFrame(bytesBuilder, channelContext, data.streamId!, headers,
+        endStream: emptyBody && !interimResponse);
 
     //body
     if (!emptyBody) {
@@ -434,6 +440,7 @@ abstract class Http2Codec<T extends HttpMessage> implements Codec<T, T> {
     // Incremental SSE parsing: do not accumulate full body to avoid large memory usage
     final decoder = sseDecoders.putIfAbsent(frameHeader.streamIdentifier, () => SseDecoder());
     final frames = decoder.feed(Uint8List.fromList(data));
+    if (frameHeader.hasEndStreamFlag) frames.addAll(decoder.flush());
     for (final WebSocketFrame frame in frames) {
       frame.isFromClient = false; // server -> client
       message.messages.add(frame);
@@ -656,9 +663,17 @@ class Http2ResponseDecoder extends Http2Codec<HttpResponse> {
   List<Header> encodeHeaders(HttpResponse message) {
     var headers = <Header>[];
     headers.add(Header.ascii(":status", message.status.code.toString()));
+
+    // h1 -> h2 转换时响应头可能带 h2 禁止的 hop-by-hop 头（RFC 7540 §8.1.2.2），
+    // 且 h2 要求头名小写；h1 上游的头名大小写任意，统一转小写。
+    const forbidden = {'connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade'};
+
     message.headers.forEach((key, values) {
+      final lower = key.toLowerCase();
+      if (forbidden.contains(lower)) return;
       for (var value in values) {
-        headers.add(Header.ascii(key, value));
+        headers
+            .add(Header(latin1.encode(lower), Http2RequestDecoder._sanitizeHeaderValue(latin1.encode(value))));
       }
     });
     return headers;

@@ -187,6 +187,7 @@
   "requestRewriteRule": "Quy tắc viết lại yêu cầu",
   "requestRewriteDeleteConfirm": "Xóa {size} quy tắc?",
   "requests": "Bắt gói",
+  "navRequests": "Yêu cầu",
   "reset": "Đặt lại",
   "resetDefaultCA": "Đặt lại chứng chỉ gốc mặc định",
   "resetDefaultCADescribe": "Bạn có chắc muốn đặt lại chứng chỉ gốc mặc định không?",
@@ -263,5 +264,13 @@
   "weakNetworkDownload": "Tải xuống",
   "weakNetworkBandwidth": "Băng thông",
   "weakNetworkLossRate": "Tỷ lệ mất gói",
-  "weakNetworkRules": "Quy tắc URL"
+  "weakNetworkRules": "Quy tắc URL",
+  "replayTasks": "Tác vụ phát lại",
+  "clearFinished": "Xóa tác vụ đã xong",
+  "statusWaiting": "Đang chờ",
+  "statusCancelled": "Đã hủy",
+  "statusPaused": "Đã tạm dừng",
+  "pause": "Tạm dừng",
+  "resume": "Tiếp tục",
+  "overview": "Tổng quan"
 }

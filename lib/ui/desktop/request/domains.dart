@@ -72,12 +72,15 @@ class DomainList extends StatefulWidget {
   }
 }
 
-class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientMixin {
+class DomainWidgetState extends State<DomainList>
+    with AutomaticKeepAliveClientMixin {
   //域名和对应请求列表的映射
-  final LinkedHashMap<String, DomainRequests> containerMap = LinkedHashMap<String, DomainRequests>();
+  final LinkedHashMap<String, DomainRequests> containerMap =
+      LinkedHashMap<String, DomainRequests>();
 
   //搜索视图
-  LinkedHashMap<String, DomainRequests> searchView = LinkedHashMap<String, DomainRequests>();
+  LinkedHashMap<String, DomainRequests> searchView =
+      LinkedHashMap<String, DomainRequests>();
 
   //搜索的内容
   SearchModel? searchModel;
@@ -141,20 +144,23 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    var list = containerMap.values;
+    // values 是惰性 Iterable，elementAt 每次 O(n)；转成 List 保证按下标取值 O(1)
+    var list = containerMap.values.toList();
 
     //根究搜素文本过滤
     if (searchModel?.isNotEmpty == true) {
       searchView = searchFilter(searchModel!);
-      list = searchView.values;
-      selectionController.prune(list.expand((e) => e.body).map((e) => e.request.requestId).toSet());
+      list = searchView.values.toList();
+      selectionController.prune(
+          list.expand((e) => e.body).map((e) => e.request.requestId).toSet());
     } else {
       searchView.clear();
     }
 
     return widget.shrinkWrap
-        ? SingleChildScrollView(child: Column(children: list.toList()))
-        : ListView.builder(itemCount: list.length, itemBuilder: (_, index) => list.elementAt(index));
+        ? SingleChildScrollView(child: Column(children: list))
+        : ListView.builder(
+            itemCount: list.length, itemBuilder: (_, index) => list[index]);
   }
 
   ///搜索
@@ -166,12 +172,14 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 
   ///搜索过滤
   LinkedHashMap<String, DomainRequests> searchFilter(SearchModel searchModel) {
-    LinkedHashMap<String, DomainRequests> result = LinkedHashMap<String, DomainRequests>();
+    LinkedHashMap<String, DomainRequests> result =
+        LinkedHashMap<String, DomainRequests>();
 
     containerMap.forEach((key, domainRequests) {
       var body = domainRequests.search(searchModel);
       if (body.isNotEmpty) {
-        result[key] = domainRequests.copy(body: body, selected: searchView[key]?.currentSelected);
+        result[key] = domainRequests.copy(
+            body: body, selected: searchView[key]?.currentSelected);
       }
     });
 
@@ -181,7 +189,10 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
   ///高亮处理
   void highlightHandler() {
     //获取所有请求Widget
-    List<RequestWidget> requests = containerMap.values.map((e) => e.body).expand((element) => element).toList();
+    List<RequestWidget> requests = containerMap.values
+        .map((e) => e.body)
+        .expand((element) => element)
+        .toList();
     for (RequestWidget request in requests) {
       request.changeState();
     }
@@ -200,7 +211,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 
     domainRequests.addRequest(request.requestId, request, sortDesc);
     //搜索视图
-    if (searchModel?.isNotEmpty == true && searchModel?.filter(request, null) == true) {
+    if (searchModel?.isNotEmpty == true &&
+        searchModel?.filter(request, null) == true) {
       searchView[host]?.addRequest(request.requestId, request, sortDesc);
     }
 
@@ -242,8 +254,10 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 
     return futureWidget(
         processInfo.getIcon(),
-        (data) =>
-            data.isEmpty ? const SizedBox() : Image.memory(data, width: 23, height: Platform.isWindows ? 16 : null));
+        (data) => data.isEmpty
+            ? const SizedBox()
+            : Image.memory(data,
+                width: 23, height: Platform.isWindows ? 16 : null));
   }
 
   ///移除域名
@@ -259,7 +273,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 
   ///添加响应
   void addResponse(ChannelContext channelContext, HttpResponse response) {
-    String domain = response.request?.hostAndPort?.domain ?? channelContext.host!.domain;
+    String domain =
+        response.request?.hostAndPort?.domain ?? channelContext.host!.domain;
     DomainRequests? domainRequests = containerMap[domain];
     var pathRow = domainRequests?.getRequest(response);
     pathRow?.setResponse(response);
@@ -268,7 +283,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     }
 
     //搜索视图
-    if (searchModel?.isNotEmpty == true && searchModel?.filter(pathRow.request, response) == true) {
+    if (searchModel?.isNotEmpty == true &&
+        searchModel?.filter(pathRow.request, response) == true) {
       var requests = searchView[domain];
       if (requests?.getRequest(response) == null) {
         requests?.addRequest(response.requestId, pathRow.request, sortDesc);
@@ -303,11 +319,14 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     if (searchModel?.isNotEmpty == true) {
       container = searchView.values;
     }
-    return container.expand((list) => list.body.map((it) => it.request)).toList();
+    return container
+        .expand((list) => list.body.map((it) => it.request))
+        .toList();
   }
 
   Future<void> exportDomainHar(String domain) async {
-    var requests = containerMap[domain]?.body.map((it) => it.request).toList() ?? [];
+    var requests =
+        containerMap[domain]?.body.map((it) => it.request).toList() ?? [];
     if (requests.isEmpty) {
       if (mounted) FlutterToastr.show(localizations.emptyData, context);
       return;
@@ -323,7 +342,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
       await Har.writeFile(requests, file, title: fileName);
       if (mounted) FlutterToastr.show(localizations.exportSuccess, context);
     } catch (e) {
-      if (mounted) FlutterToastr.show('${localizations.exportFailed} $e', context);
+      if (mounted)
+        FlutterToastr.show('${localizations.exportFailed} $e', context);
     }
   }
 
@@ -354,7 +374,9 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
     if (selectedIds.isEmpty) {
       return [];
     }
-    return currentView().where((request) => selectedIds.contains(request.requestId)).toList();
+    return currentView()
+        .where((request) => selectedIds.contains(request.requestId))
+        .toList();
   }
 
   void selectRange(HttpRequest request) {
@@ -384,7 +406,8 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
 ///标题和内容布局 标题是域名 内容是域名下请求
 class DomainRequests extends StatefulWidget {
   //请求ID和请求的映射
-  final Map<String, RequestWidget> requestMap = HashMap<String, RequestWidget>();
+  final Map<String, RequestWidget> requestMap =
+      HashMap<String, RequestWidget>();
 
   final String domain;
   final ProxyServer proxyServer;
@@ -404,7 +427,8 @@ class DomainRequests extends StatefulWidget {
   final MultiSelectController selectionController;
 
   DomainRequests(this.domain,
-      {this.selected = false,
+      {GlobalKey? key,
+      this.selected = false,
       this.onDelete,
       this.onExportHar,
       required this.proxyServer,
@@ -412,7 +436,7 @@ class DomainRequests extends StatefulWidget {
       required this.selectionHandlers,
       this.trailing,
       required this.selectionController})
-      : super(key: GlobalKey<_DomainRequestsState>());
+      : super(key: key ?? GlobalKey<_DomainRequestsState>());
 
   ///添加请求
   void addRequest(String? requestId, HttpRequest request, bool sortDesc) {
@@ -461,14 +485,15 @@ class DomainRequests extends StatefulWidget {
 
   ///根据文本过滤
   Iterable<RequestWidget> search(SearchModel searchModel) {
-    return body
-        .where((element) => searchModel.filter(element.request, element.response.get() ?? element.request.response));
+    return body.where((element) => searchModel.filter(
+        element.request, element.response.get() ?? element.request.response));
   }
 
   ///复制
   DomainRequests copy({Iterable<RequestWidget>? body, bool? selected}) {
     var state = key as GlobalKey<_DomainRequestsState>;
     var headerBody = DomainRequests(domain,
+        key: state,
         trailing: trailing,
         selected: selected ?? state.currentState?.selected == true,
         onDelete: onDelete,
@@ -500,7 +525,8 @@ class DomainRequests extends StatefulWidget {
 }
 
 class _DomainRequestsState extends State<DomainRequests> {
-  final GlobalKey<ColorTransitionState> transitionState = GlobalKey<ColorTransitionState>();
+  final GlobalKey<ColorTransitionState> transitionState =
+      GlobalKey<ColorTransitionState>();
   late Configuration configuration;
   late bool selected;
   Widget? trailing;
@@ -533,34 +559,51 @@ class _DomainRequestsState extends State<DomainRequests> {
 
   @override
   Widget build(BuildContext context) {
+    // 收起时不构建子行（Offstage 只是不绘制，仍会构建整棵子树——域名下几千个请求会全部常驻）
     return Column(children: [
       _hostWidget(widget.domain),
-      Offstage(offstage: !selected, child: Column(children: widget.body.toList()))
+      if (selected) Column(children: widget.body.toList())
     ]);
   }
 
-  //domain title
+  //domain title（结构沿用旧版：Material 箭头 + 域名 + 右侧 app 图标；无底色无分割线。
+  //Material+InkWell：hover/水波纹由组件自身处理，不再 setState 重建子树）
   Widget _hostWidget(String title) {
-    var host = GestureDetector(
-        onSecondaryTapDown: (details) => menu(details),
-        child: ListTile(
-            minLeadingWidth: 25,
-            leading: Icon(selected ? Icons.arrow_drop_down : Icons.arrow_right, size: 18),
-            trailing: trailing,
-            dense: true,
-            horizontalTitleGap: 0,
-            contentPadding: const EdgeInsets.only(left: 3, right: 8),
-            visualDensity: const VisualDensity(vertical: -3.6),
-            title: Text(title,
-                textAlign: TextAlign.left,
-                style: const TextStyle(fontSize: 14),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+    var theme = Theme.of(context);
+    var host = Material(
+        color: Colors.transparent,
+        child: InkWell(
+            onSecondaryTapDown: (details) => menu(details),
             onTap: () {
               setState(() {
                 selected = !selected;
               });
-            }));
+            },
+            hoverColor: rowHoverColor(theme),
+            child: Container(
+                height: 40,
+                padding: const EdgeInsets.only(left: 6, right: 10),
+                child: Row(children: [
+                  SizedBox(
+                      width: 25,
+                      child: Icon(
+                          selected ? Icons.arrow_drop_down : Icons.arrow_right,
+                          size: 18,
+                          color: theme.colorScheme.onSurfaceVariant)),
+                  Expanded(
+                      child: Text(title,
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.onSurface),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis)),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 8),
+                    trailing!
+                  ],
+                ]))));
 
     return ColorTransition(
         key: transitionState,
@@ -576,17 +619,24 @@ class _DomainRequestsState extends State<DomainRequests> {
       ContextMenuItem.normal(
           label: localizations.copyHost,
           onClick: () {
-            Clipboard.setData(ClipboardData(text: Uri.parse(widget.domain).host));
+            Clipboard.setData(
+                ClipboardData(text: Uri.parse(widget.domain).host));
             FlutterToastr.show(localizations.copied, context);
           }),
       ContextMenuItem.separator(),
-      ContextMenuItem.submenu(label: localizations.domainFilter, submenu: hostFilterMenu()),
+      ContextMenuItem.submenu(
+          label: localizations.domainFilter, submenu: hostFilterMenu()),
       ContextMenuItem.separator(),
-      ContextMenuItem.normal(label: localizations.exportDomainHar, onClick: () => exportDomainHar()),
+      ContextMenuItem.normal(
+          label: localizations.exportDomainHar,
+          onClick: () => exportDomainHar()),
       ContextMenuItem.separator(),
-      ContextMenuItem.normal(label: localizations.repeatDomainRequests, onClick: () => repeatDomainRequests()),
+      ContextMenuItem.normal(
+          label: localizations.repeatDomainRequests,
+          onClick: () => repeatDomainRequests()),
       ContextMenuItem.separator(),
-      ContextMenuItem.normal(label: localizations.delete, onClick: () => _delete()),
+      ContextMenuItem.normal(
+          label: localizations.delete, onClick: () => _delete()),
     ]);
   }
 
@@ -594,13 +644,21 @@ class _DomainRequestsState extends State<DomainRequests> {
   void repeatDomainRequests() async {
     var list = widget.body.toList().reversed;
     for (var requestWidget in list) {
-      var request = requestWidget.request.copy(uri: requestWidget.request.requestUrl);
-      var proxyInfo = widget.proxyServer.isRunning ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port) : null;
+      var request =
+          requestWidget.request.copy(uri: requestWidget.request.requestUrl);
+      var proxyInfo = widget.proxyServer.isRunning
+          ? ProxyInfo.of("127.0.0.1", widget.proxyServer.port)
+          : null;
       try {
-        await HttpClients.proxyRequest(request, proxyInfo: proxyInfo, timeout: const Duration(seconds: 3));
-        if (mounted) FlutterToastr.show(localizations.reSendRequest, rootNavigator: true, context);
+        await HttpClients.proxyRequest(request,
+            proxyInfo: proxyInfo, timeout: const Duration(seconds: 3));
+        if (mounted)
+          FlutterToastr.show(
+              localizations.reSendRequest, rootNavigator: true, context);
       } catch (e) {
-        if (mounted) FlutterToastr.show('${localizations.fail}$e', rootNavigator: true, context);
+        if (mounted)
+          FlutterToastr.show(
+              '${localizations.fail}$e', rootNavigator: true, context);
       }
     }
   }

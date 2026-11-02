@@ -334,7 +334,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
   Widget _statusRow(ColorScheme cs) {
     var color = _running ? const Color(0xFF34C759) : cs.onSurfaceVariant;
     var icon = _running ? Icons.check_circle_rounded : Icons.cancel_outlined;
-    var label = _running ? l.mcpStatusRunning : l.mcpStatusStopped;
+    var label = _running ? l.statusRunning : l.statusStopped;
     return Row(children: [
       Icon(icon, size: 16, color: color),
       const SizedBox(width: 6),

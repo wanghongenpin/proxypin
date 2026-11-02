@@ -58,7 +58,7 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
   /// `_parsed` 对应的源文本快照；
   String? _parsedSource;
 
-  /// 编辑器自动换行；CodeForge 的 lineWrap 是 late final，
+  /// 编辑器自动换行；切换时用新的 key 重建 CodeField。
   bool _wrap = true;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -339,6 +339,7 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
           child: CodeTheme(
             data: CodeThemeData(styles: editorTheme),
             child: CodeField(
+              key: ValueKey('json-editor-wrap-$_wrap'),
               controller: _controller,
               wrap: _wrap,
               expands: true,

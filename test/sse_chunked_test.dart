@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -79,6 +80,49 @@ void main() {
       }
       expect(utf8.decode(frames), 'hello');
       expect(chunk.isDone, isTrue);
+    });
+  });
+
+  group('SseDecoder', () {
+    test('waits for the blank line before emitting a data event', () {
+      final decoder = SseDecoder();
+      expect(decoder.feed(_b('data: hello\n')), isEmpty);
+      expect(decoder.feed(_b('\n')).single.payloadDataAsString, 'hello');
+    });
+
+    test('joins data lines and keeps the event name', () {
+      final frames = SseDecoder().feed(_b('event: message\ndata: hello\ndata: world\n\n'));
+      expect(frames.single.payloadDataAsString, 'event: message\nhello\nworld');
+    });
+
+    test('flush emits a data event that never got a blank line', () {
+      final decoder = SseDecoder();
+      expect(decoder.feed(_b('data: hello\n')), isEmpty);
+      expect(decoder.flush().single.payloadDataAsString, 'hello');
+    });
+
+    test('shows a non-SSE line instead of dropping it', () {
+      final frames = SseDecoder().feed(_b('15:{"json":true}\n'));
+      expect(frames.single.payloadDataAsString, '15:{"json":true}');
+    });
+  });
+
+  group('decodeEncodedEventStream', () {
+    test('inflates gzip before splitting events', () async {
+      final gz = gzip.encode(utf8.encode('data: hello\n\ndata: world\n\n'));
+      final frames = await decodeEncodedEventStream(Uint8List.fromList(gz), 'gzip');
+      expect(frames.map((f) => f.payloadDataAsString), ['hello', 'world']);
+    });
+
+    test('does not surface bytes it failed to inflate', () async {
+      final frames = await decodeEncodedEventStream(_b('data: hello\n\n'), 'gzip');
+      expect(frames, isEmpty);
+    });
+
+    test('plain event streams are not treated as encoded', () {
+      expect(sseBodyIsEncoded(null), isFalse);
+      expect(sseBodyIsEncoded('identity'), isFalse);
+      expect(sseBodyIsEncoded('zstd'), isTrue);
     });
   });
 }

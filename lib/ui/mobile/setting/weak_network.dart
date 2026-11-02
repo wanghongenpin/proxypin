@@ -15,6 +15,7 @@ import 'package:proxypin/network/components/manager/network_condition_manager.da
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 
+
 /// Dropdown 下拉里"新增预设"项使用的哨兵值
 const String _kNewProfileValue = '__new__';
 
@@ -60,7 +61,10 @@ DropdownMenuItem<String> _buildAddProfileItem(BuildContext context) {
       Icon(Icons.add, size: 16, color: theme.colorScheme.primary),
       const SizedBox(width: 6),
       Text('${l10n.add} ${l10n.weakNetworkPreset}',
-          style: TextStyle(fontSize: 14, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
+          style: TextStyle(
+              fontSize: 14,
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600)),
     ]),
   );
 }
@@ -80,7 +84,8 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
 
   NetworkConditionManager get m => widget.manager;
 
-  String _profileLabel(NetworkConditionProfile p) => _profileDisplayName(l10n, p);
+  String _profileLabel(NetworkConditionProfile p) =>
+      _profileDisplayName(l10n, p);
 
   String _profileSummary(NetworkConditionProfile p) {
     final label = _profileLabel(p);
@@ -90,9 +95,12 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
     if (p.requestLatencyMs > 0 && p.requestLatencyMs != p.responseLatencyMs) {
       parts.add('req ${p.requestLatencyMs}ms');
     }
-    if (p.lossRate > 0) parts.add('${(p.lossRate * 100).toStringAsFixed(1)}% Loss');
-    if (p.downloadKbps != null && p.downloadKbps! > 0) parts.add('↓ ${p.downloadKbps}k');
-    if (p.uploadKbps != null && p.uploadKbps! > 0) parts.add('↑ ${p.uploadKbps}k');
+    if (p.lossRate > 0)
+      parts.add('${(p.lossRate * 100).toStringAsFixed(1)}% Loss');
+    if (p.downloadKbps != null && p.downloadKbps! > 0)
+      parts.add('↓ ${p.downloadKbps}k');
+    if (p.uploadKbps != null && p.uploadKbps! > 0)
+      parts.add('↑ ${p.uploadKbps}k');
     return parts.isEmpty ? label : '$label  |  ${parts.join('  |  ')}';
   }
 
@@ -101,7 +109,8 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.weakNetwork, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        title: Text(l10n.weakNetwork,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         actions: [
           // 预设管理入口
           IconButton(
@@ -136,10 +145,14 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded, size: 64, color: _withAlpha(theme.hintColor, 0.3)),
+            Icon(Icons.wifi_off_rounded,
+                size: 64, color: _withAlpha(theme.hintColor, 0.3)),
             const SizedBox(height: 16),
             Text(l10n.emptyData,
-                style: TextStyle(fontSize: 14, color: theme.hintColor, fontWeight: FontWeight.w500)),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: theme.hintColor,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       );
@@ -188,14 +201,18 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
                       children: [
                         Text(
                           r.url.isEmpty ? '—' : r.url,
-                          style: const TextStyle(fontSize: 14, fontFamily: 'monospace', fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _profileSummary(p),
-                          style: TextStyle(fontSize: 12, color: theme.hintColor),
+                          style:
+                              TextStyle(fontSize: 12, color: theme.hintColor),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -203,7 +220,9 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete_outline, size: 20, color: _withAlpha(theme.colorScheme.error, 0.8)),
+                    icon: Icon(Icons.delete_outline,
+                        size: 20,
+                        color: _withAlpha(theme.colorScheme.error, 0.8)),
                     onPressed: () => _confirmDeleteRule(index),
                   ),
                 ],
@@ -225,10 +244,15 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
   }
 
   Future<void> _addRule() async {
-    final r = NetworkConditionRule(enabled: true, url: '', profileId: m.defaultProfile.id);
+    final r = NetworkConditionRule(
+        enabled: true, url: '', profileId: m.defaultProfile.id);
     final saved = await Navigator.of(context).push<NetworkConditionRule>(
       MaterialPageRoute(
-          builder: (_) => _MobileRuleEditPage(manager: m, rule: r, isNew: true, onCreateProfile: _createProfile)),
+          builder: (_) => _MobileRuleEditPage(
+              manager: m,
+              rule: r,
+              isNew: true,
+              onCreateProfile: _createProfile)),
     );
     if (saved != null) {
       setState(() => m.rules.add(saved));
@@ -238,10 +262,15 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
 
   Future<void> _editUrl(int index) async {
     final src = m.rules[index];
-    final draft = NetworkConditionRule(enabled: src.enabled, url: src.url, profileId: src.profileId);
+    final draft = NetworkConditionRule(
+        enabled: src.enabled, url: src.url, profileId: src.profileId);
     final saved = await Navigator.of(context).push<NetworkConditionRule>(
       MaterialPageRoute(
-          builder: (_) => _MobileRuleEditPage(manager: m, rule: draft, isNew: false, onCreateProfile: _createProfile)),
+          builder: (_) => _MobileRuleEditPage(
+              manager: m,
+              rule: draft,
+              isNew: false,
+              onCreateProfile: _createProfile)),
     );
     if (saved != null) {
       setState(() => m.rules[index] = saved);
@@ -250,9 +279,11 @@ class _MobileWeakNetworkState extends State<MobileWeakNetwork> {
   }
 
   Future<NetworkConditionProfile?> _createProfile() async {
-    final draft = NetworkConditionProfile(id: NetworkConditionManager.newCustomId(), name: '');
+    final draft = NetworkConditionProfile(
+        id: NetworkConditionManager.newCustomId(), name: '');
     final saved = await Navigator.of(context).push<NetworkConditionProfile>(
-      MaterialPageRoute(builder: (_) => _MobileProfileEditPage(profile: draft, isNew: true)),
+      MaterialPageRoute(
+          builder: (_) => _MobileProfileEditPage(profile: draft, isNew: true)),
     );
     if (saved != null) {
       await m.upsertCustomProfile(saved);
@@ -325,10 +356,14 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.isNew ? l10n.add : l10n.edit} ${l10n.weakNetworkRules}',
+        title: Text(
+            '${widget.isNew ? l10n.add : l10n.edit} ${l10n.weakNetworkRules}',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         actions: [
-          SwitchWidget(scale: 0.75, value: _enabled, onChanged: (v) => setState(() => _enabled = v)),
+          SwitchWidget(
+              scale: 0.75,
+              value: _enabled,
+              onChanged: (v) => setState(() => _enabled = v)),
           const SizedBox(width: 12),
         ],
       ),
@@ -336,39 +371,47 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: formKey,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             TextFormField(
               controller: _urlCtrl,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
               decoration: InputDecoration(
                 labelText: _kUrlRulePatternLabel,
                 hintText: 'https://example.com/api/*',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              validator: (v) => v == null || v.trim().isEmpty ? l10n.cannotBeEmpty : null,
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? l10n.cannotBeEmpty : null,
             ),
             const SizedBox(height: 24),
             Text(l10n.weakNetworkPreset,
-                style:
-                    TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: _surfaceColor(theme),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: theme.colorScheme.outlineVariant, width: 0.8),
+                border: Border.all(
+                    color: theme.colorScheme.outlineVariant, width: 0.8),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _profileId,
                   isExpanded: true,
-                  icon: Icon(Icons.unfold_more_rounded, size: 18, color: theme.hintColor),
+                  icon: Icon(Icons.unfold_more_rounded,
+                      size: 18, color: theme.hintColor),
                   borderRadius: BorderRadius.circular(12),
                   items: [
                     ...m.allProfiles.map((p) => DropdownMenuItem(
                           value: p.id,
-                          child: Text(_profileDisplayName(l10n, p), style: const TextStyle(fontSize: 14)),
+                          child: Text(_profileDisplayName(l10n, p),
+                              style: const TextStyle(fontSize: 14)),
                         )),
                     _buildAddProfileItem(context),
                   ],
@@ -376,7 +419,8 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
                     if (v == null) return;
                     if (v == _kNewProfileValue) {
                       final created = await widget.onCreateProfile();
-                      if (created != null) setState(() => _profileId = created.id);
+                      if (created != null)
+                        setState(() => _profileId = created.id);
                       return;
                     }
                     setState(() => _profileId = v);
@@ -395,7 +439,8 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
@@ -406,7 +451,8 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
               r.resetCache();
               Navigator.of(context).pop(r);
             },
-            child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(l10n.save,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         ),
       ),
@@ -423,7 +469,8 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
     );
   }
 
-  Widget _previewCard(ThemeData theme, NetworkConditionProfile p, {required bool isUpload}) {
+  Widget _previewCard(ThemeData theme, NetworkConditionProfile p,
+      {required bool isUpload}) {
     final title = isUpload ? l10n.weakNetworkUpload : l10n.weakNetworkDownload;
     final bw = isUpload ? p.uploadKbps : p.downloadKbps;
     final lat = isUpload ? p.requestLatencyMs : p.responseLatencyMs;
@@ -432,7 +479,8 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
     String fmtBw() {
       if (p.offline) return '—';
       if (bw == null || bw <= 0) return '∞';
-      if (bw >= 1000) return '${(bw / 1000).toStringAsFixed(bw % 1000 == 0 ? 0 : 1)} Mbps';
+      if (bw >= 1000)
+        return '${(bw / 1000).toStringAsFixed(bw % 1000 == 0 ? 0 : 1)} Mbps';
       return '$bw kbps';
     }
 
@@ -441,8 +489,13 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: theme.hintColor)),
-              Text(val, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'monospace')),
+              Text(label,
+                  style: TextStyle(fontSize: 12, color: theme.hintColor)),
+              Text(val,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'monospace')),
             ],
           ),
         );
@@ -458,18 +511,33 @@ class _MobileRuleEditPageState extends State<_MobileRuleEditPage> {
         children: [
           Row(
             children: [
-              Icon(isUpload ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                  size: 16, color: accentColor),
+              Icon(
+                  isUpload
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  size: 16,
+                  color: accentColor),
               const SizedBox(width: 6),
-              Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accentColor)),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: accentColor)),
             ],
           ),
           const SizedBox(height: 10),
           row(l10n.weakNetworkBandwidth, fmtBw()),
-          Divider(height: 8, thickness: 0.5, color: _withAlpha(theme.dividerColor, 0.15)),
+          Divider(
+              height: 8,
+              thickness: 0.5,
+              color: _withAlpha(theme.dividerColor, 0.15)),
           row(l10n.weakNetworkLatency, lat <= 0 ? '0 ms' : '$lat ms'),
-          Divider(height: 8, thickness: 0.5, color: _withAlpha(theme.dividerColor, 0.15)),
-          row(l10n.weakNetworkLossRate, '${(p.lossRate * 100).toStringAsFixed(1)}%'),
+          Divider(
+              height: 8,
+              thickness: 0.5,
+              color: _withAlpha(theme.dividerColor, 0.15)),
+          row(l10n.weakNetworkLossRate,
+              '${(p.lossRate * 100).toStringAsFixed(1)}%'),
         ],
       ),
     );
@@ -504,10 +572,13 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
     final p = widget.profile;
     _nameCtrl = TextEditingController(text: p.name);
     _upBwCtrl = TextEditingController(text: p.uploadKbps?.toString() ?? '');
-    _upLatCtrl = TextEditingController(text: p.requestLatencyMs == 0 ? '' : p.requestLatencyMs.toString());
+    _upLatCtrl = TextEditingController(
+        text: p.requestLatencyMs == 0 ? '' : p.requestLatencyMs.toString());
     _dnBwCtrl = TextEditingController(text: p.downloadKbps?.toString() ?? '');
-    _dnLatCtrl = TextEditingController(text: p.responseLatencyMs == 0 ? '' : p.responseLatencyMs.toString());
-    _lossCtrl = TextEditingController(text: p.lossRate == 0 ? '' : (p.lossRate * 100).toStringAsFixed(1));
+    _dnLatCtrl = TextEditingController(
+        text: p.responseLatencyMs == 0 ? '' : p.responseLatencyMs.toString());
+    _lossCtrl = TextEditingController(
+        text: p.lossRate == 0 ? '' : (p.lossRate * 100).toStringAsFixed(1));
   }
 
   @override
@@ -531,7 +602,8 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNew ? '${l10n.add} ${l10n.weakNetworkPreset}' : l10n.edit,
+        title: Text(
+            widget.isNew ? '${l10n.add} ${l10n.weakNetworkPreset}' : l10n.edit,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
       ),
       body: SingleChildScrollView(
@@ -545,9 +617,11 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
                 controller: _nameCtrl,
                 decoration: InputDecoration(
                   labelText: '${l10n.weakNetworkPreset} ${l10n.name}',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
-                validator: (v) => v == null || v.trim().isEmpty ? l10n.cannotBeEmpty : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? l10n.cannotBeEmpty : null,
               ),
               const SizedBox(height: 20),
               _buildSectionCard(theme, isUpload: false),
@@ -560,16 +634,22 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
                 decoration: BoxDecoration(
                   color: _surfaceColor(theme),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _withAlpha(theme.colorScheme.outlineVariant, 0.5)),
+                  border: Border.all(
+                      color: _withAlpha(theme.colorScheme.outlineVariant, 0.5)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.broken_image_outlined, size: 18, color: theme.colorScheme.error),
+                    Icon(Icons.broken_image_outlined,
+                        size: 18, color: theme.colorScheme.error),
                     const SizedBox(width: 8),
                     Text(l10n.weakNetworkLossRate,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                     const Spacer(),
-                    SizedBox(width: 120, child: _buildNumField('', _lossCtrl, '%', isInteger: false)),
+                    SizedBox(
+                        width: 120,
+                        child: _buildNumField('', _lossCtrl, '%',
+                            isInteger: false)),
                   ],
                 ),
               ),
@@ -583,7 +663,8 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
@@ -598,7 +679,8 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
               p.lossRate = (loss / 100).clamp(0.0, 1.0);
               Navigator.of(context).pop(p);
             },
-            child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(l10n.save,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         ),
       ),
@@ -616,25 +698,40 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
       decoration: BoxDecoration(
         color: _surfaceColor(theme),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _withAlpha(theme.colorScheme.outlineVariant, 0.6), width: 0.8),
+        border: Border.all(
+            color: _withAlpha(theme.colorScheme.outlineVariant, 0.6),
+            width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(isUpload ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                  size: 16, color: accentColor),
+              Icon(
+                  isUpload
+                      ? Icons.arrow_upward_rounded
+                      : Icons.arrow_downward_rounded,
+                  size: 16,
+                  color: accentColor),
               const SizedBox(width: 6),
-              Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accentColor)),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: accentColor)),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildNumField(l10n.weakNetworkBandwidth, bwCtrl, 'kbps', isInteger: true)),
+              Expanded(
+                  child: _buildNumField(
+                      l10n.weakNetworkBandwidth, bwCtrl, 'kbps',
+                      isInteger: true)),
               const SizedBox(width: 12),
-              Expanded(child: _buildNumField(l10n.weakNetworkLatency, latCtrl, 'ms', isInteger: true)),
+              Expanded(
+                  child: _buildNumField(l10n.weakNetworkLatency, latCtrl, 'ms',
+                      isInteger: true)),
             ],
           ),
         ],
@@ -642,13 +739,15 @@ class _MobileProfileEditPageState extends State<_MobileProfileEditPage> {
     );
   }
 
-  Widget _buildNumField(String label, TextEditingController ctrl, String suffix, {required bool isInteger}) {
+  Widget _buildNumField(String label, TextEditingController ctrl, String suffix,
+      {required bool isInteger}) {
     return TextField(
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         LengthLimitingTextInputFormatter(7),
-        FilteringTextInputFormatter.allow(RegExp(isInteger ? r'[0-9]' : r'[0-9.]')),
+        FilteringTextInputFormatter.allow(
+            RegExp(isInteger ? r'[0-9]' : r'[0-9.]')),
       ],
       style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
       decoration: InputDecoration(
@@ -677,7 +776,8 @@ class _MobileManageProfilesPage extends StatefulWidget {
   });
 
   @override
-  State<_MobileManageProfilesPage> createState() => _MobileManageProfilesPageState();
+  State<_MobileManageProfilesPage> createState() =>
+      _MobileManageProfilesPageState();
 }
 
 class _MobileManageProfilesPageState extends State<_MobileManageProfilesPage> {
@@ -701,10 +801,14 @@ class _MobileManageProfilesPageState extends State<_MobileManageProfilesPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.layers_clear_outlined, size: 48, color: _withAlpha(theme.hintColor, 0.4)),
+                  Icon(Icons.layers_clear_outlined,
+                      size: 48, color: _withAlpha(theme.hintColor, 0.4)),
                   const SizedBox(height: 12),
                   Text(l10n.emptyData,
-                      style: TextStyle(fontSize: 14, color: theme.hintColor, fontWeight: FontWeight.w500)),
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: theme.hintColor,
+                          fontWeight: FontWeight.w500)),
                 ],
               ),
             )
@@ -719,17 +823,24 @@ class _MobileManageProfilesPageState extends State<_MobileManageProfilesPage> {
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
-                    side: BorderSide(color: _withAlpha(theme.colorScheme.outlineVariant, 0.5)),
+                    side: BorderSide(
+                        color:
+                            _withAlpha(theme.colorScheme.outlineVariant, 0.5)),
                   ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     title: Text(widget.profileLabel(p),
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         widget.profileSummary(p),
-                        style: TextStyle(fontSize: 11, color: theme.hintColor, fontFamily: 'monospace'),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: theme.hintColor,
+                            fontFamily: 'monospace'),
                       ),
                     ),
                     trailing: Row(
@@ -738,8 +849,11 @@ class _MobileManageProfilesPageState extends State<_MobileManageProfilesPage> {
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 18),
                           onPressed: () async {
-                            final saved = await Navigator.of(context).push<NetworkConditionProfile>(
-                              MaterialPageRoute(builder: (_) => _MobileProfileEditPage(profile: p, isNew: false)),
+                            final saved = await Navigator.of(context)
+                                .push<NetworkConditionProfile>(
+                              MaterialPageRoute(
+                                  builder: (_) => _MobileProfileEditPage(
+                                      profile: p, isNew: false)),
                             );
                             if (saved != null) {
                               await m.upsertCustomProfile(saved);
@@ -748,9 +862,12 @@ class _MobileManageProfilesPageState extends State<_MobileManageProfilesPage> {
                           },
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete_outline, size: 18, color: theme.colorScheme.error),
+                          icon: Icon(Icons.delete_outline,
+                              size: 18, color: theme.colorScheme.error),
                           onPressed: () {
-                            showConfirmDialog(context, content: l10n.confirmContent, onConfirm: () async {
+                            showConfirmDialog(context,
+                                content: l10n.confirmContent,
+                                onConfirm: () async {
                               await m.deleteCustomProfile(p.id);
                               if (mounted) setState(() {});
                             });
@@ -765,9 +882,13 @@ class _MobileManageProfilesPageState extends State<_MobileManageProfilesPage> {
       floatingActionButton: FloatingActionButton(
         mini: true,
         onPressed: () async {
-          final draft = NetworkConditionProfile(id: NetworkConditionManager.newCustomId(), name: '');
-          final saved = await Navigator.of(context).push<NetworkConditionProfile>(
-            MaterialPageRoute(builder: (_) => _MobileProfileEditPage(profile: draft, isNew: true)),
+          final draft = NetworkConditionProfile(
+              id: NetworkConditionManager.newCustomId(), name: '');
+          final saved =
+              await Navigator.of(context).push<NetworkConditionProfile>(
+            MaterialPageRoute(
+                builder: (_) =>
+                    _MobileProfileEditPage(profile: draft, isNew: true)),
           );
           if (saved != null) {
             await m.upsertCustomProfile(saved);

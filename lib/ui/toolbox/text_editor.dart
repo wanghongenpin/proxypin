@@ -30,6 +30,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:highlight/highlight_core.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/utils/code_editor_compat.dart';
 import 'package:proxypin/utils/css_formatter.dart';
 import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/highlight_languages.dart';
@@ -38,7 +39,7 @@ import 'package:proxypin/utils/platform.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart';
 
-/// 文本编辑工具：CodeForge 编辑器 + 多语言高亮切换。
+/// 文本编辑工具：CodeField 编辑器 + 多语言高亮切换。
 ///
 /// 跟 [JsonViewerPage] / [XmlViewerPage] 走相同的工具栏 + 控件套路；
 /// 区别是 body 不带格式化（语言种类多，不是每种都通用），多了一个语言选择下拉。
@@ -54,7 +55,7 @@ class TextEditorPage extends StatefulWidget {
   State<TextEditorPage> createState() => _TextEditorPageState();
 }
 
-/// 下拉里的语言项：显示名 + re_highlight Mode；Plain Text 用 null mode。
+/// 下拉里的语言项：显示名 + highlight Mode；Plain Text 用 null mode。
 class _LangOption {
   final String label;
   final Mode? mode;
@@ -82,6 +83,7 @@ final List<_LangOption> _langs = [
 
 class _TextEditorPageState extends State<TextEditorPage> {
   late final CodeController _controller;
+  late final CodeSearchController _findController;
 
   bool _wrap = true;
   _LangOption _lang = _langs.first;
@@ -92,6 +94,9 @@ class _TextEditorPageState extends State<TextEditorPage> {
   void initState() {
     super.initState();
     _controller = CodeController()..text = widget.initialText ?? '';
+    // CodeField owns this controller; using the same instance keeps the toolbar and editor in sync.
+    // ignore: invalid_use_of_internal_member
+    _findController = _controller.searchController;
     if (Platforms.isDesktop() && widget.windowId != null) {
       HardwareKeyboard.instance.addHandler(_onKeyEvent);
     }
@@ -100,6 +105,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
   @override
   void dispose() {
     _controller.dispose();
+    // _findController is owned and disposed by _controller.
     if (Platforms.isDesktop() && widget.windowId != null) {
       HardwareKeyboard.instance.removeHandler(_onKeyEvent);
     }
@@ -311,7 +317,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
             _iconBtn(Icons.folder_open, localizations.selectFile, _openFile),
             _iconBtn(Icons.delete_outline, localizations.clear, _clear),
             _iconBtn(Icons.auto_fix_high, localizations.format, _canFormat ? _format : null),
-            // flutter_code_editor 0.3.5 搜索功能通过内置快捷键触发 (Ctrl+F)
+            _iconBtn(Icons.search, localizations.search, _findController.toggleActive),
             _iconBtn(
               Icons.wrap_text,
               localizations.wordWrap,

@@ -16,14 +16,13 @@
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/ui/component/svg_icon.dart';
+import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/preference.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// Compat helpers (withValues extension)
-import 'package:proxypin/utils/flutter_compat.dart';
-
-///左侧导航栏
+///左侧导航栏（设计稿 .rail / .ritem：宽 64，项 52x48 圆角 9，图标 19 + 标签 10）
 /// @author wanghongen
 /// 2024/8/6
 class LeftNavigationBar extends StatefulWidget {
@@ -35,32 +34,11 @@ class LeftNavigationBar extends StatefulWidget {
       {super.key, required this.appConfiguration, required this.proxyServer, required this.selectIndex});
 
   @override
-  State<StatefulWidget> createState() {
-    return _LeftNavigationBarState();
-  }
+  State<StatefulWidget> createState() => _LeftNavigationBarState();
 }
 
 class _LeftNavigationBarState extends State<LeftNavigationBar> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
-
-  List<NavigationRailDestination> get destinations => [
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.workspaces_outlined),
-            label: Text(localizations.requests, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.favorite_outline_outlined),
-            label: Text(localizations.favorites, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.history_outlined),
-            label: Text(localizations.history, style: Theme.of(context).textTheme.bodySmall)),
-        NavigationRailDestination(
-            padding: const EdgeInsets.only(bottom: 5),
-            icon: Icon(Icons.hardware_outlined),
-            label: Text(localizations.toolbox, style: Theme.of(context).textTheme.bodySmall)),
-      ];
 
   @override
   Widget build(BuildContext context) {
@@ -71,60 +49,97 @@ class _LeftNavigationBarState extends State<LeftNavigationBar> {
             return const SizedBox();
           }
 
+          var items = [
+            (icon: 'list', label: localizations.navRequests),
+            (icon: 'star', label: localizations.favorites),
+            (icon: 'clock', label: localizations.history),
+            (icon: 'wrench', label: localizations.toolbox),
+          ];
+
           return Container(
-            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 57 : 70,
-            decoration:
-                BoxDecoration(border: Border(right: BorderSide(color: Theme.of(context).dividerColor, width: 0.2))),
+            // 设计稿 64，实际观感偏宽收窄到 60；非中文标签长，76 → 72
+            width: (localizations.localeName == 'zh' || localizations.localeName == 'zh_Hant') ? 60 : 72,
+            decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(right: BorderSide(color: chromeBorderColor(Theme.of(context)), width: 1))),
             child: Column(children: <Widget>[
-              SizedBox(
-                height: 320,
-                child: leftNavigation(index),
-              ),
-              Expanded(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Tooltip(
-                      message: localizations.preference,
-                      preferBelow: false,
-                      child: IconButton(
-                          iconSize: 22,
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (_) => Preference(widget.appConfiguration, widget.proxyServer.configuration));
-                          },
-                          icon: Icon(Icons.settings_outlined, color: Colors.grey.shade500))),
-                  const SizedBox(height: 5),
-                  Tooltip(
-                      preferBelow: true,
-                      message: localizations.feedback,
-                      child: IconButton(
-                        iconSize: 22,
-                        onPressed: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin/issues")),
-                        icon: Icon(Icons.feedback_outlined, color: Colors.grey.shade500),
-                      )),
-                  const SizedBox(height: 10),
-                ],
-              ))
+              const SizedBox(height: 10),
+              for (var i = 0; i < items.length; i++)
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: _RailItem(
+                        icon: items[i].icon,
+                        label: items[i].label,
+                        active: index == i,
+                        onTap: () => widget.selectIndex.value = i)),
+              const Spacer(),
+              _RailItem(
+                  icon: 'gear',
+                  label: localizations.preferenceShort,
+                  compact: true,
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (_) => Preference(widget.appConfiguration, widget.proxyServer.configuration));
+                  }),
+              const SizedBox(height: 2),
+              Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _RailItem(
+                      icon: 'chat',
+                      label: localizations.feedback,
+                      compact: true,
+                      onTap: () => launchUrl(Uri.parse("https://github.com/wanghongenpin/proxypin/issues")))),
             ]),
           );
         });
   }
+}
 
-  //left menu eg: requests, favorites, history, toolbox
-  Widget leftNavigation(int index) {
-    return NavigationRail(
-        minWidth: 57,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        selectedIconTheme: IconTheme.of(context).copyWith(color: Theme.of(context).colorScheme.primary, size: 22),
-        unselectedIconTheme:
-            IconTheme.of(context).copyWith(color: IconTheme.of(context).color?.withValues(alpha: 0.55), size: 22),
-        labelType: NavigationRailLabelType.all,
-        destinations: destinations,
-        selectedIndex: index,
-        onDestinationSelected: (int index) {
-          widget.selectIndex.value = index;
-        });
+/// 设计稿 .ritem（52x48 / 图标 19 / 标签 10）基础上略放大：56x52 圆角 9，图标 20px + 标签 10.5px，选中 primary-soft 底 + primary 字
+class _RailItem extends StatelessWidget {
+  final String icon;
+  final String label;
+  final bool active;
+
+  /// 次级入口（底部 偏好/反馈）：纯图标无文案，弱化视觉层级（文案靠 tooltip）
+  final bool compact;
+  final VoidCallback onTap;
+
+  const _RailItem(
+      {required this.icon, required this.label, this.active = false, this.compact = false, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    var theme = Theme.of(context);
+    // 设计稿 .ritem：未选中用 --text-3（暗黑 #6F747D），选中主色
+    var color = active
+        ? theme.colorScheme.primary
+        : (theme.brightness == Brightness.light ? theme.colorScheme.onSurfaceVariant : DarkPalette.text3);
+    return Tooltip(
+        message: label,
+        preferBelow: false,
+        child: InkWell(
+            borderRadius: BorderRadius.circular(9),
+            onTap: onTap,
+            child: Container(
+                width: compact ? 36 : 56,
+                height: compact ? 36 : 52,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(9),
+                    color: active ? primarySoftBg(theme) : null),
+                child: compact
+                    ? Center(child: SvgIcon(icon, size: 18, color: color))
+                    : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        SvgIcon(icon, size: 20, color: color),
+                        const SizedBox(height: 4),
+                        Text(label,
+                            maxLines: 1,
+                            style: TextStyle(
+                                fontSize: 10.5,
+                                height: 1.1,
+                                color: color,
+                                fontWeight: active ? FontWeight.w500 : FontWeight.w400)),
+                      ]))));
   }
 }
