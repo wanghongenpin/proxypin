@@ -100,6 +100,9 @@ class AppConfiguration {
   //桌面window位置
   Offset? windowPosition;
 
+  //Windows保存窗口位置时使用的DPI比例
+  double? windowPositionScale;
+
   //左侧面板占比
   double panelRatio = 0.3;
 
@@ -237,6 +240,8 @@ class AppConfiguration {
       windowPosition = config['windowPosition'] == null
           ? null
           : Offset(config['windowPosition']['dx'], config['windowPosition']['dy']);
+      final positionScale = config['windowPositionScale'];
+      windowPositionScale = positionScale is num ? positionScale.toDouble() : null;
       if (config['panelRatio'] != null) {
         panelRatio = config['panelRatio'];
       }
@@ -294,6 +299,7 @@ class AppConfiguration {
         "windowSize": windowSize == null ? null : {"width": windowSize?.width, "height": windowSize?.height},
       if (Platforms.isDesktop())
         "windowPosition": windowPosition == null ? null : {"dx": windowPosition?.dx, "dy": windowPosition?.dy},
+      if (Platform.isWindows) 'windowPositionScale': windowPositionScale,
       if (Platforms.isDesktop()) 'panelRatio': panelRatio,
       if (Platforms.isDesktop()) 'minimizeToTray': minimizeToTray,
       if (Platforms.isDesktop()) 'toolbarPins': toolbarPins.value,

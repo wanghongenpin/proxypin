@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import 'dart:io';
+
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:window_manager/window_manager.dart';
@@ -34,9 +36,11 @@ class WindowChangeListener extends WindowListener {
 
   @override
   void onWindowMoved() async {
+    final positionScale = Platform.isWindows ? windowManager.getDevicePixelRatio() : null;
     final windowPosition = await windowManager.getPosition();
-    logger.d("windowPosition: $windowPosition");
+    logger.d("windowPosition: $windowPosition, scale: $positionScale");
     appConfiguration.windowPosition = windowPosition;
+    appConfiguration.windowPositionScale = positionScale;
     appConfiguration.flushConfig();
   }
 }
