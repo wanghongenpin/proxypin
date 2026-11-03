@@ -744,14 +744,10 @@ Widget overviewRow(BuildContext context, String label, String? value, {Color? va
   var theme = Theme.of(context);
   return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SizedBox(
             width: 130,
-            child: Text(label,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.visible,
-                style: TextStyle(fontSize: 13, height: 1.5, color: text3Color(theme)))),
+            child: Text(label, style: TextStyle(fontSize: 13, height: 1.5, color: text3Color(theme)))),
         Expanded(
             child: SelectableText(value ?? '',
                 contextMenuBuilder: contextMenu,
