@@ -145,6 +145,7 @@ class SearchState extends State<Search> {
                                     style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
                                     child: SearchConditions(
                                         searchModel: searchModel,
+                                        onClose: () => entry.remove(),
                                         onSearch: (val) {
                                           setState(() {
                                             searchModel = val;

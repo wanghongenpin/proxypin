@@ -28,9 +28,10 @@ import 'model/search_model.dart';
 class SearchConditions extends StatefulWidget {
   final SearchModel searchModel;
   final Function(SearchModel searchModel)? onSearch;
+  final VoidCallback? onClose;
   final EdgeInsetsGeometry? padding;
 
-  const SearchConditions({super.key, required this.searchModel, this.onSearch, this.padding});
+  const SearchConditions({super.key, required this.searchModel, this.onSearch, this.onClose, this.padding});
 
   @override
   State<StatefulWidget> createState() {
@@ -64,6 +65,14 @@ class SearchConditionsState extends State<SearchConditions> {
   void initState() {
     super.initState();
     searchModel = widget.searchModel.clone();
+  }
+
+  void _close() {
+    if (widget.onClose != null) {
+      widget.onClose!();
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -216,20 +225,20 @@ class SearchConditionsState extends State<SearchConditions> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => _close(),
                 child: Text(localizations.cancel, style: const TextStyle(fontSize: 14)),
               ),
               TextButton(
                 onPressed: () {
                   widget.onSearch?.call(SearchModel());
-                  Navigator.pop(context);
+                  _close();
                 },
                 child: Text(localizations.clearSearch, style: const TextStyle(fontSize: 14)),
               ),
               TextButton(
                 onPressed: () {
                   widget.onSearch?.call(searchModel);
-                  Navigator.pop(context);
+                  _close();
                 },
                 child: Text(localizations.confirm, style: const TextStyle(fontSize: 14)),
               ),
