@@ -67,6 +67,7 @@ void main(List<String> args) async {
     if (appConfiguration.themeMode != ThemeMode.system) {
       windowManager.setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
     }
+    DesktopMultiWindow.prepareWindow();
     runApp(FluentApp(multiWindow(windowId, argument), appConfiguration));
     return;
   }

@@ -39,7 +39,6 @@ import 'package:proxypin/ui/desktop/setting/request_rewrite.dart';
 import 'package:proxypin/ui/desktop/setting/script.dart';
 import 'package:proxypin/ui/toolbox/aes_page.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:window_manager/window_manager.dart';
 
 import '../desktop/setting/request_breakpoint.dart';
 import '../desktop/setting/request_crypto.dart';
@@ -238,23 +237,12 @@ class MultiWindow {
     }
 
     try {
-      var ratio = 1.0;
-      if (Platform.isWindows) {
-        ratio = WindowManager.instance.getDevicePixelRatio();
-      }
       registerMethodHandler();
-      final window = await DesktopMultiWindow.createWindow(jsonEncode(
-        {'name': widgetName, ...?args},
-      ));
-
-      if (!Platform.isMacOS) {
-        window.setTitle(title);
-      }
-      await window.center();
-      await window.setSize(Size(size.width * ratio, size.height * ratio));
-      await window.show();
-
-      return window;
+      return DesktopMultiWindow.createWindow(
+        jsonEncode({'name': widgetName, ...?args}),
+        title: Platform.isMacOS ? null : title,
+        size: size,
+      );
     } finally {
       _openingWidgets.remove(widgetName);
     }
@@ -276,12 +264,11 @@ class MultiWindow {
         }
         if (name != widgetName) continue;
         try {
-          await DesktopMultiWindow.invokeMethod(window.windowId, 'window_focus');
+          await window.focus();
           return window;
         } catch (e) {
-          // 窗口刚销毁、原生注册表残留（channel 已注销）：跳过继续扫描，
-          // 否则异常中断循环会导致已存在的单例窗口被重复创建
-          logger.d('skip focusing stale window ${window.windowId} (likely closed): $e');
+          // focus 已等待启动中的 channel 就绪；仍失败说明窗口已关闭或启动失败，跳过继续扫描。
+          logger.d('skip focusing unavailable window ${window.windowId}: $e');
           continue;
         }
       }
@@ -429,18 +416,13 @@ Future<void> encodeWindow(EncoderType type, BuildContext context, [String? text]
     return;
   }
 
-  var ratio = 1.0;
-  if (Platform.isWindows) {
-    ratio = WindowManager.instance.getDevicePixelRatio();
-  }
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'EncoderWidget', 'type': type.name, 'text': text},
-  ));
   if (!context.mounted) return;
-  await window.setTitle(AppLocalizations.of(context)!.encode);
-  await window.setSize(Size(900 * ratio, 600 * ratio));
-  await window.center();
-  await window.show();
+  final title = AppLocalizations.of(context)!.encode;
+  await DesktopMultiWindow.createWindow(
+    jsonEncode({'name': 'EncoderWidget', 'type': type.name, 'text': text}),
+    title: title,
+    size: const Size(900, 600),
+  );
 }
 
 ///打开 AES 窗口
@@ -450,17 +432,11 @@ Future<void> openAesWindow(BuildContext context, String text) async {
     return;
   }
 
-  var ratio = 1.0;
-  if (Platform.isWindows) {
-    ratio = WindowManager.instance.getDevicePixelRatio();
-  }
-  final window = await DesktopMultiWindow.createWindow(jsonEncode(
-    {'name': 'AesPage', 'text': text},
-  ));
-  await window.setTitle('AES');
-  await window.setSize(Size(700 * ratio, 672 * ratio));
-  await window.center();
-  await window.show();
+  await DesktopMultiWindow.createWindow(
+    jsonEncode({'name': 'AesPage', 'text': text}),
+    title: 'AES',
+    size: const Size(700, 672),
+  );
 }
 
 Future<void> openScriptConsoleWindow() async {
@@ -470,17 +446,11 @@ Future<void> openScriptConsoleWindow() async {
   if (!MultiWindow._openingWidgets.add('ScriptConsoleWidget')) return;
 
   try {
-    var ratio = 1.0;
-    if (Platform.isWindows) {
-      ratio = WindowManager.instance.getDevicePixelRatio();
-    }
-    final window = await DesktopMultiWindow.createWindow(jsonEncode(
-      {'name': 'ScriptConsoleWidget'},
-    ));
-    await window.setTitle('Script Console');
-    await window.setSize(Size(900 * ratio, 650 * ratio));
-    await window.center();
-    await window.show();
+    await DesktopMultiWindow.createWindow(
+      jsonEncode({'name': 'ScriptConsoleWidget'}),
+      title: 'Script Console',
+      size: const Size(900, 650),
+    );
   } finally {
     MultiWindow._openingWidgets.remove('ScriptConsoleWidget');
   }

@@ -46,7 +46,6 @@ import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/num.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/xml_formatter.dart';
-import 'package:window_manager/window_manager.dart';
 
 import '../component/json/json_text.dart';
 import '../component/search/highlight_text.dart';
@@ -590,18 +589,11 @@ class HttpBodyState extends State<HttpBodyWidget> {
   void openNew() async {
     if (Platforms.isDesktop()) {
       var size = MediaQuery.of(context).size;
-      var ratio = 1.0;
-      if (Platform.isWindows) {
-        ratio = WindowManager.instance.getDevicePixelRatio();
-      }
-      final window = await DesktopMultiWindow.createWindow(jsonEncode(
-        {'name': 'HttpBodyWidget', 'httpMessage': widget.httpMessage, 'inNewWindow': true},
-      ));
-      window
-        ..setTitle(widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody)
-        ..setSize(Size(800 * ratio, size.height * ratio))
-        ..center()
-        ..show();
+      await DesktopMultiWindow.createWindow(
+        jsonEncode({'name': 'HttpBodyWidget', 'httpMessage': widget.httpMessage, 'inNewWindow': true}),
+        title: widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody,
+        size: Size(800, size.height),
+      );
       return;
     }
 

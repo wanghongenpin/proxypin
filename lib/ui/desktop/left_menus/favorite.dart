@@ -16,7 +16,6 @@
 
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:date_format/date_format.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
@@ -42,7 +41,6 @@ import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/python.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:window_manager/window_manager.dart';
 
 import '../common.dart';
 
@@ -288,19 +286,12 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   ///请求编辑
   Future<void> requestEdit(HttpRequest request) async {
     var size = MediaQuery.of(context).size;
-    var ratio = 1.0;
-    if (Platform.isWindows) {
-      ratio = WindowManager.instance.getDevicePixelRatio();
-    }
 
-    final window = await DesktopMultiWindow.createWindow(jsonEncode(
-      {'name': 'RequestEditor', 'request': request},
-    ));
-    window.setTitle(localizations.requestEdit);
-    window
-      ..setSize(Size(960 * ratio, size.height * ratio))
-      ..center()
-      ..show();
+    await DesktopMultiWindow.createWindow(
+      jsonEncode({'name': 'RequestEditor', 'request': request}),
+      title: localizations.requestEdit,
+      size: Size(960, size.height),
+    );
   }
 
   //点击事件
