@@ -13,6 +13,11 @@ set(APPLICATION_ID "com.network.proxy")
 # versions of CMake.
 cmake_policy(SET CMP0063 NEW)
 
+# Newer libayatana-appindicator (Arch / clang 19+ / gcc 15+ toolchains) marks the
+# legacy app_indicator_* API as deprecated; the bundled tray_manager plugin still
+# uses it, so do not let -Werror abort the build there.
+add_compile_options(-Wno-error=deprecated-declarations)
+
 # Load bundled libraries from the lib/ directory relative to the binary.
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
@@ -56,6 +61,30 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
+# Dart API dynamic-lookup symbols for FFI plugins (code_forge / flutter_rust_bridge).
+# Current Flutter engines no longer export Dart_* from libflutter_linux_gtk.so, so
+# plugins such as libcode_forge.so cannot resolve Dart_InitializeApiDL and are
+# silently disabled unless the host executable provides those symbols. Compile
+# dart_api_dl.c from the Dart SDK into the app and export the dynamic symbol table.
+set(DART_API_DL_SOURCE "")
+if(NOT "$ENV{PROXYPIN_DART_API_DL_C}" STREQUAL "")
+  set(DART_API_DL_SOURCE "$ENV{PROXYPIN_DART_API_DL_C}")
+else()
+  find_program(_FLUTTER_EXECUTABLE NAMES flutter)
+  if(_FLUTTER_EXECUTABLE)
+    get_filename_component(_FLUTTER_BIN_DIR "${_FLUTTER_EXECUTABLE}" PATH)
+    get_filename_component(_FLUTTER_SDK_DIR "${_FLUTTER_BIN_DIR}" PATH)
+    set(DART_API_DL_SOURCE "${_FLUTTER_SDK_DIR}/bin/cache/dart-sdk/include/dart_api_dl.c")
+  endif()
+endif()
+if(EXISTS "${DART_API_DL_SOURCE}")
+  enable_language(C)
+  set_source_files_properties("${DART_API_DL_SOURCE}" PROPERTIES COMPILE_OPTIONS "-Wno-error")
+else()
+  message(WARNING "dart_api_dl.c not found: FFI plugins (code_forge) may fail to load")
+  set(DART_API_DL_SOURCE "")
+endif()
+
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
 #
@@ -64,11 +93,17 @@ add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
+  ${DART_API_DL_SOURCE}
 )
 
 # Apply the standard set of build settings. This can be removed for applications
 # that need different build settings.
 apply_standard_settings(${BINARY_NAME})
+
+# Export the Dart API DL symbols compiled above so FFI plugins can resolve them.
+if(DART_API_DL_SOURCE)
+  set_property(TARGET ${BINARY_NAME} APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--export-dynamic")
+endif()
 
 # Add dependency libraries. Add any application-specific dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter)
