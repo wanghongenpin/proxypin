@@ -31,6 +31,7 @@ import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/ui/component/json/json_viewer.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -589,10 +590,11 @@ class HttpBodyState extends State<HttpBodyWidget> {
   void openNew() async {
     if (Platforms.isDesktop()) {
       var size = MediaQuery.of(context).size;
-      await DesktopMultiWindow.createWindow(
-        jsonEncode({'name': 'HttpBodyWidget', 'httpMessage': widget.httpMessage, 'inNewWindow': true}),
-        title: widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody,
+      await MultiWindow.openWindow(
+        widget.httpMessage is HttpRequest ? localizations.requestBody : localizations.responseBody,
+        'HttpBodyWidget',
         size: Size(800, size.height),
+        args: {'httpMessage': widget.httpMessage, 'inNewWindow': true},
       );
       return;
     }
@@ -794,6 +796,7 @@ class _BodyState extends State<_Body> {
     if (type == ViewType.formUrl) {
       return HighlightTextWidget(
           text: _formatTextBodyIsolate({'type': type.name, 'body': message.getBodyString()}),
+          style: codeTextStyle(),
           searchController: widget.searchController,
           contextMenuBuilder: bodyContextMenu);
     }
@@ -808,12 +811,13 @@ class _BodyState extends State<_Body> {
               colorTheme: ColorTheme.of(context),
               searchController: widget.searchController,
               scrollController: widget.scrollController,
-              contextMenuBuilder: bodyContextMenu);
+              contextMenuBuilder: bodyContextMenu,
+              textStyle: codeTextStyle());
         }
 
         if (type == ViewType.json) {
           return JsonViewer(json.decode(body),
-              colorTheme: ColorTheme.of(context), searchController: widget.searchController);
+              colorTheme: ColorTheme.of(context), searchController: widget.searchController, textStyle: codeTextStyle());
         }
 
         return _buildTextBodyViewer(type, body, message: message);
@@ -822,7 +826,10 @@ class _BodyState extends State<_Body> {
       }
 
       return HighlightTextWidget(
-          text: body, searchController: widget.searchController, contextMenuBuilder: bodyContextMenu);
+          text: body,
+          style: codeTextStyle(),
+          searchController: widget.searchController,
+          contextMenuBuilder: bodyContextMenu);
     });
   }
 
@@ -863,6 +870,7 @@ class _BodyState extends State<_Body> {
           return VirtualizedHighlightText(
             text: formattedText,
             language: language,
+            style: codeTextStyle(),
             searchController: widget.searchController,
             scrollController: widget.scrollController,
           );
@@ -871,6 +879,7 @@ class _BodyState extends State<_Body> {
         return HighlightTextWidget(
             language: language,
             text: formattedText,
+            style: codeTextStyle(),
             searchController: widget.searchController,
             contextMenuBuilder: bodyContextMenu);
       },

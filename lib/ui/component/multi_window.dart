@@ -228,6 +228,20 @@ class MultiWindow {
       return WindowController.fromWindowId('0'); // Dummy controller
     }
 
+    // Linux：Impeller 后端下同一进程里的第二个 FlutterEngine 拿不到 GL 上下文
+    // （子窗口空白，关闭时 GLX 报 BadAccess 直接把进程干掉），所以改成在主窗口里
+    // 用路由打开同样的页面，顺带也去掉了“GTK 标题栏 + 页面标题栏”的双标题栏。
+    if (Platform.isLinux) {
+      if (onOpenWindow != null) {
+        // 子窗口路径是 jsonEncode 后传给新 engine 的，内嵌路径同样先归一化，
+        // 免得多窗口页面收到的是 HttpRequest/HttpMessage 对象而不是 Map。
+        onOpenWindow!(widgetName, args == null ? null : jsonDecode(jsonEncode(args)) as Map<String, dynamic>);
+      } else {
+        logger.w('MultiWindow.onOpenWindow not registered, cannot open $widgetName');
+      }
+      return WindowController.fromWindowId('0');
+    }
+
     if (_singletonWidgets.contains(widgetName)) {
       var existing = await _focusSingletonWindow(widgetName);
       if (existing != null) return existing;
@@ -418,11 +432,8 @@ Future<void> encodeWindow(EncoderType type, BuildContext context, [String? text]
 
   if (!context.mounted) return;
   final title = AppLocalizations.of(context)!.encode;
-  await DesktopMultiWindow.createWindow(
-    jsonEncode({'name': 'EncoderWidget', 'type': type.name, 'text': text}),
-    title: title,
-    size: const Size(900, 600),
-  );
+  await MultiWindow.openWindow(title, 'EncoderWidget',
+      size: const Size(900, 600), args: {'type': type.name, 'text': text});
 }
 
 ///打开 AES 窗口
@@ -432,26 +443,10 @@ Future<void> openAesWindow(BuildContext context, String text) async {
     return;
   }
 
-  await DesktopMultiWindow.createWindow(
-    jsonEncode({'name': 'AesPage', 'text': text}),
-    title: 'AES',
-    size: const Size(700, 672),
-  );
+  await MultiWindow.openWindow('AES', 'AesPage', size: const Size(700, 672), args: {'text': text});
 }
 
 Future<void> openScriptConsoleWindow() async {
-  // 单例窗口：已存在则前置；查询/前置异常或正在创建中，按新窗口处理/忽略
-  var existing = await MultiWindow._focusSingletonWindow('ScriptConsoleWidget');
-  if (existing != null) return;
-  if (!MultiWindow._openingWidgets.add('ScriptConsoleWidget')) return;
-
-  try {
-    await DesktopMultiWindow.createWindow(
-      jsonEncode({'name': 'ScriptConsoleWidget'}),
-      title: 'Script Console',
-      size: const Size(900, 650),
-    );
-  } finally {
-    MultiWindow._openingWidgets.remove('ScriptConsoleWidget');
-  }
+  // 单例：WindowController.openWindow 内部会去重（_singletonWidgets），Linux 上退化成内嵌路由
+  await MultiWindow.openWindow('Script Console', 'ScriptConsoleWidget', size: const Size(900, 650));
 }
