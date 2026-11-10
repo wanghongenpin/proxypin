@@ -5,6 +5,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/utils/navigator.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -340,6 +341,17 @@ class DesktopMultiWindow {
 
 extension WindowControllerCompat on WindowController {
   Future<void> close() {
+    // windowId == '0' 表示“没有真实子窗口”（Linux 内嵌打开 / 移动端）：
+    // 直接关掉当前路由，页面里的关闭按钮才有反应。
+    if (windowId == '0') {
+      // 内嵌路由：直接关闭当前路由；没有可关的页面时静默忽略（不要走 platform channel，
+      // 否则会抛 WindowChannelException: CHANNEL_UNREGISTERED）。
+      final navigator = navigatorHelper.navigatorKey.currentState;
+      if (navigator != null && navigator.canPop()) {
+        navigator.pop();
+      }
+      return Future.value();
+    }
     return _invokeWindowMethod('window_close');
   }
 
