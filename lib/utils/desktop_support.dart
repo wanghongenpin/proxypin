@@ -30,6 +30,9 @@ class DesktopSupport {
             .setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
       }
 
+      // 无边框窗口：显式保证可缩放，配合 WindowResizeBorder 的边缘热区
+      await windowManager.setResizable(true);
+
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
         if (Platform.isWindows) {
           await _restoreWindowsPosition(appConfiguration, windowSize);
