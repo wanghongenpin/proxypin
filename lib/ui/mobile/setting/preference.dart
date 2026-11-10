@@ -7,6 +7,8 @@ import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/component/app_appearance_setting.dart';
+import 'package:proxypin/ui/component/code_font_setting.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/mobile/setting/theme.dart';
 
@@ -140,6 +142,18 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.clearConfirm = value;
                         appConfiguration.flushConfig();
                       })),
+            ]),
+            const SizedBox(height: 12),
+            section([
+              CaptureDensityTile(showSubtitle: true),
+              AppFontFamilyTile(),
+              AppFontScaleTile(),
+              UiDensityTile(),
+            ]),
+            const SizedBox(height: 12),
+            section([
+              CodeFontFamilyTile(),
+              CodeFontSizeTile(),
             ]),
             const SizedBox(height: 12),
             section([

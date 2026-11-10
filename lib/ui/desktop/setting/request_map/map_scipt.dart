@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:code_forge/code_forge.dart';
 import 'package:re_highlight/styles/monokai-sublime.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/ui/component/search/finder.dart';
 import 'package:re_highlight/languages/javascript.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -62,7 +63,7 @@ async function onRequest(context, request) {
           language: langJavascript,
           editorTheme: monokaiSublimeTheme,
           finderBuilder: (c, controller) => FindPanelView(controller: controller),
-          textStyle: const TextStyle(fontSize: 13),
+          textStyle: codeTextStyle(size: 13),
         ));
   }
 }
