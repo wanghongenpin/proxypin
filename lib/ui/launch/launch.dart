@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -65,6 +66,9 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   bool started = false;
 
+  /// 防止重复退出（onWindowClose / 托盘退出 / didRequestAppExit 可能同时触发）
+  bool _exiting = false;
+
   @override
   void initState() {
     super.initState();
@@ -72,9 +76,14 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
       windowManager.addListener(this);
       windowManager.setPreventClose(true);
       DesktopTrayManager.instance.setQuitHandler(appExit);
+
+      /// 桌面端启动时就注册托盘图标：上游只在“关闭时最小化到托盘”那一刻才初始化，
+      /// 正常启动后右上角没有任何图标，用户找不到入口（也看不到“退出”菜单）。
+      DesktopTrayManager.instance.ensureInitialized().ignore();
     }
 
     WidgetsBinding.instance.addObserver(this);
+
     //启动代理服务器
     if (widget.startup) {
       start();
@@ -108,27 +117,32 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
 
   Future<void> _handleWindowClose() async {
     final appConfiguration = AppConfiguration.current;
-    if (Platforms.isDesktop() && appConfiguration?.minimizeToTray == null || appConfiguration?.minimizeToTray == true) {
-      if (appConfiguration?.minimizeToTray == null) {
-        final minimize = await _showTrayClosePrompt();
+    final desktop = Platforms.isDesktop();
+    final minimizeToTray = appConfiguration?.minimizeToTray;
+
+    // 只有“桌面端 + 用户确实选了最小化到托盘”才隐藏窗口。
+    if (desktop && (minimizeToTray == null || minimizeToTray)) {
+      var minimize = minimizeToTray;
+      if (minimize == null) {
+        minimize = await _showTrayClosePrompt();
         if (!mounted) {
           return;
         }
 
         appConfiguration?.minimizeToTray = minimize;
         await appConfiguration?.flushConfig();
-
-        if (!minimize) {
-          await appExit();
-          return;
-        }
       }
 
-      try {
-        await DesktopTrayManager.instance.showToTray();
-        return;
-      } catch (e) {
-        logger.e('show to tray failed, fallback to exit', error: e);
+      if (minimize) {
+        try {
+          // 托盘初始化失败时不要把窗口藏起来，否则 Linux 上会变成“点了关闭没反应、也没法退出”。
+          if (await DesktopTrayManager.instance.showToTray()) {
+            return;
+          }
+          logger.w('tray unavailable, exit on window close instead');
+        } catch (e) {
+          logger.e('show to tray failed, fallback to exit', error: e);
+        }
       }
     }
 
@@ -160,13 +174,36 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   }
 
   Future<void> appExit() async {
+    if (_exiting) {
+      return;
+    }
+    _exiting = true;
     logger.d("appExit");
-    await widget.proxyServer.stop();
+
+    // 停止代理可能因为还有活跃连接而卡住；加超时保证“退出”一定能退。
+    try {
+      await widget.proxyServer.stop().timeout(const Duration(seconds: 3));
+    } catch (e) {
+      logger.w('stop proxy server failed or timed out, force exit: $e');
+    }
+
     started = false;
     if (Platforms.isDesktop()) {
-      await DesktopTrayManager.instance.exitApp();
-      windowManager.setPreventClose(false);
-      await windowManager.destroy();
+      try {
+        await DesktopTrayManager.instance.exitApp();
+      } catch (e) {
+        logger.w('tray cleanup failed during exit: $e');
+      }
+
+      // 注意：不要 await windowManager.destroy()。GTK 下（KDE Wayland 等组合）
+      // 关闭窗口后这个 Future 可能永远不返回，进程就变成“窗口没了但退不掉”，
+      // 只能靠 pkill。这里让它自生自灭，直接退出进程。
+      try {
+        unawaited(windowManager.setPreventClose(false));
+        unawaited(windowManager.destroy());
+      } catch (e) {
+        logger.w('window destroy failed during exit: $e');
+      }
     }
 
     if (!Platform.isWindows && !Platform.isLinux) {
