@@ -204,6 +204,17 @@ class FluentApp extends StatelessWidget {
       themeData = themeData.useSystemChineseFont();
     }
 
+    // 整体界面字体 / 字号缩放 / 密度（代码窗口用的是 editorFontFamily，不受这里影响）
+    final appFontFamily = appConfiguration.appFontFamily;
+    final appFontScale = appConfiguration.appFontScale;
+    final hasFamily = appFontFamily != null && appFontFamily.isNotEmpty;
+    if (hasFamily || appFontScale != 1.0) {
+      TextTheme apply(TextTheme textTheme) =>
+          textTheme.apply(fontFamily: hasFamily ? appFontFamily : null, fontSizeFactor: appFontScale);
+      themeData = themeData.copyWith(
+          textTheme: apply(themeData.textTheme), primaryTextTheme: apply(themeData.primaryTextTheme));
+    }
+
     if (useAmoled) {
       themeData = themeData.copyWith(
         canvasColor: Colors.black,
@@ -223,6 +234,7 @@ class FluentApp extends StatelessWidget {
     }
 
     return themeData.copyWith(
+        visualDensity: appConfiguration.visualDensity,
         dialogTheme: themeData.dialogTheme.copyWith(
             backgroundColor: useAmoled ? Colors.black : null,
             surfaceTintColor: useAmoled ? Colors.black : null,

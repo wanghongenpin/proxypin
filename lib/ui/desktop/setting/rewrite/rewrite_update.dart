@@ -18,6 +18,7 @@ import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -298,7 +299,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                         editorTheme:
                             Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
                         enableGuideLines: false,
-                        textStyle: const TextStyle(fontSize: 14),
+                        textStyle: codeTextStyle(size: 14),
                       )),
                 ]))));
   }
