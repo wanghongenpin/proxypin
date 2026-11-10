@@ -272,5 +272,15 @@
   "statusPaused": "หยุดชั่วคราว",
   "pause": "หยุดชั่วคราว",
   "resume": "ทำงานต่อ",
-  "overview": "ภาพรวม"
+  "overview": "ภาพรวม",
+  "captureListDensity": "ความหนาแน่นของรายการ",
+  "densityComfortable": "สบายตา",
+  "densityCompact": "กะทัดรัด",
+  "densityDense": "แน่น",
+  "codeFont": "ฟอนต์โค้ด",
+  "codeFontFollowUi": "ใช้ฟอนต์ของหน้าจอ",
+  "codeFontSystemMono": "ฟอนต์โมโนของระบบ",
+  "codeFontCustom": "ฟอนต์กำหนดเอง…",
+  "codeFontFamily": "ชื่อฟอนต์",
+  "codeFontSize": "ขนาดฟอนต์โค้ด"
 }

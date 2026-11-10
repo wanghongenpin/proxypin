@@ -1470,4 +1470,67 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get filtered => 'Filtered';
+
+  @override
+  String get captureListDensity => 'ความหนาแน่นของรายการ';
+
+  @override
+  String get captureListDensitySubtitle => 'Row height of captured requests';
+
+  @override
+  String get densityComfortable => 'สบายตา';
+
+  @override
+  String get densityCompact => 'กะทัดรัด';
+
+  @override
+  String get densityDense => 'แน่น';
+
+  @override
+  String get codeFont => 'ฟอนต์โค้ด';
+
+  @override
+  String get codeFontSubtitle => 'Font used by request/response body and script editors';
+
+  @override
+  String get codeFontFollowUi => 'ใช้ฟอนต์ของหน้าจอ';
+
+  @override
+  String get codeFontSystemMono => 'ฟอนต์โมโนของระบบ';
+
+  @override
+  String get codeFontCustom => 'ฟอนต์กำหนดเอง…';
+
+  @override
+  String get codeFontFamily => 'ชื่อฟอนต์';
+
+  @override
+  String get codeFontSize => 'ขนาดฟอนต์โค้ด';
+
+  @override
+  String get codeFontSizeSubtitle => 'Font size of code editors';
+
+  @override
+  String get appFont => 'Interface font';
+
+  @override
+  String get appFontSubtitle => 'Font used by the whole UI (code windows use their own setting)';
+
+  @override
+  String get appFontSystem => 'System default';
+
+  @override
+  String get appFontScale => 'Interface font scale';
+
+  @override
+  String get appFontScaleSubtitle => 'Scale the whole UI text up or down';
+
+  @override
+  String get uiDensity => 'Interface density';
+
+  @override
+  String get uiDensitySubtitle => 'Spacing of buttons, lists and menus';
+
+  @override
+  String get noOutputHint => 'Click Run to see output here';
 }

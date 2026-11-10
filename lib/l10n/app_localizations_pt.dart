@@ -1476,6 +1476,69 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get filtered => 'Filtered';
+
+  @override
+  String get captureListDensity => 'Densidade da lista';
+
+  @override
+  String get captureListDensitySubtitle => 'Row height of captured requests';
+
+  @override
+  String get densityComfortable => 'Confortável';
+
+  @override
+  String get densityCompact => 'Compacta';
+
+  @override
+  String get densityDense => 'Densa';
+
+  @override
+  String get codeFont => 'Fonte do código';
+
+  @override
+  String get codeFontSubtitle => 'Font used by request/response body and script editors';
+
+  @override
+  String get codeFontFollowUi => 'Seguir a fonte da interface';
+
+  @override
+  String get codeFontSystemMono => 'Monoespaçada do sistema';
+
+  @override
+  String get codeFontCustom => 'Fonte personalizada…';
+
+  @override
+  String get codeFontFamily => 'Família da fonte';
+
+  @override
+  String get codeFontSize => 'Tamanho da fonte do código';
+
+  @override
+  String get codeFontSizeSubtitle => 'Font size of code editors';
+
+  @override
+  String get appFont => 'Interface font';
+
+  @override
+  String get appFontSubtitle => 'Font used by the whole UI (code windows use their own setting)';
+
+  @override
+  String get appFontSystem => 'System default';
+
+  @override
+  String get appFontScale => 'Interface font scale';
+
+  @override
+  String get appFontScaleSubtitle => 'Scale the whole UI text up or down';
+
+  @override
+  String get uiDensity => 'Interface density';
+
+  @override
+  String get uiDensitySubtitle => 'Spacing of buttons, lists and menus';
+
+  @override
+  String get noOutputHint => 'Click Run to see output here';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).

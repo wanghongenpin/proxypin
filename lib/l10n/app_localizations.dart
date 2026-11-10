@@ -2943,6 +2943,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filtered'**
   String get filtered;
+
+  /// No description provided for @captureListDensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture list density'**
+  String get captureListDensity;
+
+  /// No description provided for @captureListDensitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Row height of captured requests'**
+  String get captureListDensitySubtitle;
+
+  /// No description provided for @densityComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get densityComfortable;
+
+  /// No description provided for @densityCompact.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get densityCompact;
+
+  /// No description provided for @densityDense.
+  ///
+  /// In en, this message translates to:
+  /// **'Dense'**
+  String get densityDense;
+
+  /// No description provided for @codeFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Code font'**
+  String get codeFont;
+
+  /// No description provided for @codeFontSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Font used by request/response body and script editors'**
+  String get codeFontSubtitle;
+
+  /// No description provided for @codeFontFollowUi.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow UI font'**
+  String get codeFontFollowUi;
+
+  /// No description provided for @codeFontSystemMono.
+  ///
+  /// In en, this message translates to:
+  /// **'System monospace'**
+  String get codeFontSystemMono;
+
+  /// No description provided for @codeFontCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom font…'**
+  String get codeFontCustom;
+
+  /// No description provided for @codeFontFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Font family'**
+  String get codeFontFamily;
+
+  /// No description provided for @codeFontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Code font size'**
+  String get codeFontSize;
+
+  /// No description provided for @codeFontSizeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Font size of code editors'**
+  String get codeFontSizeSubtitle;
+
+  /// No description provided for @appFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface font'**
+  String get appFont;
+
+  /// No description provided for @appFontSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Font used by the whole UI (code windows use their own setting)'**
+  String get appFontSubtitle;
+
+  /// No description provided for @appFontSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get appFontSystem;
+
+  /// No description provided for @appFontScale.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface font scale'**
+  String get appFontScale;
+
+  /// No description provided for @appFontScaleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale the whole UI text up or down'**
+  String get appFontScaleSubtitle;
+
+  /// No description provided for @uiDensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface density'**
+  String get uiDensity;
+
+  /// No description provided for @uiDensitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Spacing of buttons, lists and menus'**
+  String get uiDensitySubtitle;
+
+  /// No description provided for @noOutputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Click Run to see output here'**
+  String get noOutputHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

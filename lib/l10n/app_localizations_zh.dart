@@ -1461,6 +1461,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get filtered => '过滤';
+
+  @override
+  String get captureListDensity => '抓包列表密度';
+
+  @override
+  String get captureListDensitySubtitle => '抓包列表每行的高度';
+
+  @override
+  String get densityComfortable => '宽松';
+
+  @override
+  String get densityCompact => '紧凑';
+
+  @override
+  String get densityDense => '极紧凑';
+
+  @override
+  String get codeFont => '代码字体';
+
+  @override
+  String get codeFontSubtitle => '请求体/响应体、脚本编辑器等代码窗口使用的字体';
+
+  @override
+  String get codeFontFollowUi => '跟随界面字体';
+
+  @override
+  String get codeFontSystemMono => '系统等宽';
+
+  @override
+  String get codeFontCustom => '自定义字体…';
+
+  @override
+  String get codeFontFamily => '字体名称';
+
+  @override
+  String get codeFontSize => '代码字号';
+
+  @override
+  String get codeFontSizeSubtitle => '代码编辑器字号';
+
+  @override
+  String get appFont => '界面字体';
+
+  @override
+  String get appFontSubtitle => '整个界面使用的字体（代码窗口用单独的「代码字体」）';
+
+  @override
+  String get appFontSystem => '系统默认';
+
+  @override
+  String get appFontScale => '界面字号';
+
+  @override
+  String get appFontScaleSubtitle => '整体界面文字放大/缩小';
+
+  @override
+  String get uiDensity => '界面密度';
+
+  @override
+  String get uiDensitySubtitle => '按钮、列表与菜单的间距';
+
+  @override
+  String get noOutputHint => '点「Run」运行后，输出会显示在这里';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

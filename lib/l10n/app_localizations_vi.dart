@@ -1470,4 +1470,67 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get filtered => 'Filtered';
+
+  @override
+  String get captureListDensity => 'Mật độ danh sách';
+
+  @override
+  String get captureListDensitySubtitle => 'Row height of captured requests';
+
+  @override
+  String get densityComfortable => 'Thoáng';
+
+  @override
+  String get densityCompact => 'Gọn';
+
+  @override
+  String get densityDense => 'Dày';
+
+  @override
+  String get codeFont => 'Phông chữ mã';
+
+  @override
+  String get codeFontSubtitle => 'Font used by request/response body and script editors';
+
+  @override
+  String get codeFontFollowUi => 'Theo phông giao diện';
+
+  @override
+  String get codeFontSystemMono => 'Monospace hệ thống';
+
+  @override
+  String get codeFontCustom => 'Phông tùy chỉnh…';
+
+  @override
+  String get codeFontFamily => 'Tên phông';
+
+  @override
+  String get codeFontSize => 'Cỡ chữ mã';
+
+  @override
+  String get codeFontSizeSubtitle => 'Font size of code editors';
+
+  @override
+  String get appFont => 'Interface font';
+
+  @override
+  String get appFontSubtitle => 'Font used by the whole UI (code windows use their own setting)';
+
+  @override
+  String get appFontSystem => 'System default';
+
+  @override
+  String get appFontScale => 'Interface font scale';
+
+  @override
+  String get appFontScaleSubtitle => 'Scale the whole UI text up or down';
+
+  @override
+  String get uiDensity => 'Interface density';
+
+  @override
+  String get uiDensitySubtitle => 'Spacing of buttons, lists and menus';
+
+  @override
+  String get noOutputHint => 'Click Run to see output here';
 }

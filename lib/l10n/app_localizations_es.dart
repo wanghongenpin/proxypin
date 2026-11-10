@@ -1471,4 +1471,67 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get filtered => 'Filtered';
+
+  @override
+  String get captureListDensity => 'Densidad de la lista';
+
+  @override
+  String get captureListDensitySubtitle => 'Altura de cada fila capturada';
+
+  @override
+  String get densityComfortable => 'Cómoda';
+
+  @override
+  String get densityCompact => 'Compacta';
+
+  @override
+  String get densityDense => 'Densa';
+
+  @override
+  String get codeFont => 'Fuente de código';
+
+  @override
+  String get codeFontSubtitle => 'Fuente del cuerpo de petición/respuesta y editores de script';
+
+  @override
+  String get codeFontFollowUi => 'Seguir la fuente de la interfaz';
+
+  @override
+  String get codeFontSystemMono => 'Monoespaciada del sistema';
+
+  @override
+  String get codeFontCustom => 'Fuente personalizada…';
+
+  @override
+  String get codeFontFamily => 'Familia tipográfica';
+
+  @override
+  String get codeFontSize => 'Tamaño de fuente del código';
+
+  @override
+  String get codeFontSizeSubtitle => 'Tamaño de fuente de los editores de código';
+
+  @override
+  String get appFont => 'Fuente de la interfaz';
+
+  @override
+  String get appFontSubtitle => 'Fuente de toda la interfaz (las ventanas de código usan su propio ajuste)';
+
+  @override
+  String get appFontSystem => 'Predeterminada del sistema';
+
+  @override
+  String get appFontScale => 'Escala de fuente de la interfaz';
+
+  @override
+  String get appFontScaleSubtitle => 'Escala el texto de toda la interfaz';
+
+  @override
+  String get uiDensity => 'Densidad de la interfaz';
+
+  @override
+  String get uiDensitySubtitle => 'Espaciado de botones, listas y menús';
+
+  @override
+  String get noOutputHint => 'Click Run to see output here';
 }

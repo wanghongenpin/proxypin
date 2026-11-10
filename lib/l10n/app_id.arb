@@ -272,5 +272,15 @@
   "statusPaused": "Dijeda",
   "pause": "Jeda",
   "resume": "Lanjutkan",
-  "overview": "Ringkasan"
+  "overview": "Ringkasan",
+  "captureListDensity": "Kepadatan daftar",
+  "densityComfortable": "Longgar",
+  "densityCompact": "Ringkas",
+  "densityDense": "Padat",
+  "codeFont": "Font kode",
+  "codeFontFollowUi": "Ikuti font antarmuka",
+  "codeFontSystemMono": "Monospace sistem",
+  "codeFontCustom": "Font khusus…",
+  "codeFontFamily": "Nama font",
+  "codeFontSize": "Ukuran font kode"
 }
