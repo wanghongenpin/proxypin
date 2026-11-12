@@ -121,6 +121,8 @@ class RequestRewriteInterceptor extends Interceptor {
 
     var rewriteItems = await manager.getRewriteItems(rewriteRule);
     var redirectUrl = rewriteItems?.firstWhereOrNull((element) => element.enabled)?.redirectUrl;
+    logger.d('getRedirectRule: $url => $redirectUrl');
+
     // 先做通配符替换(基于模板中的字面 `*`),再做环境变量渲染;
     // 顺序反过来会把变量值中的 `*` 也当成通配符替换,破坏 URL。
     if (rewriteRule.url.contains("*") && redirectUrl?.contains("*") == true) {

@@ -32,18 +32,23 @@ class RequestRewriteManager {
   //重写规则
   final Map<RequestRewriteRule, List<RewriteItem>> rewriteItemsCache = {};
 
-  //单例
-  static RequestRewriteManager? _instance;
+  // 共享初始化 Future，避免并发调用在配置加载完成前创建多个实例。
+  static Future<RequestRewriteManager>? _instanceFuture;
 
   RequestRewriteManager._();
 
-  static Future<RequestRewriteManager> get instance async {
-    if (_instance == null) {
-      var config = await _loadRequestRewriteConfig();
-      _instance = RequestRewriteManager._();
-      await _instance!.reload(config);
+  static Future<RequestRewriteManager> get instance => _instanceFuture ??= _createInstance();
+
+  static Future<RequestRewriteManager> _createInstance() async {
+    try {
+      final config = await _loadRequestRewriteConfig();
+      final manager = RequestRewriteManager._();
+      await manager.reload(config);
+      return manager;
+    } catch (_) {
+      _instanceFuture = null;
+      rethrow;
     }
-    return _instance!;
   }
 
   bool enabled = true;

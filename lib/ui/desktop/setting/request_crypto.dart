@@ -64,7 +64,11 @@ class _RequestCryptoPageState extends State<RequestCryptoPage> {
   }
 
   bool _onKeyEvent(KeyEvent event) {
-    if (HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.escape) && Navigator.canPop(context)) {
+    if (!mounted || event is! KeyDownEvent) {
+      return false;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.escape && Navigator.canPop(context)) {
       Navigator.maybePop(context);
       return true;
     }
