@@ -2614,6 +2614,18 @@ abstract class AppLocalizations {
   /// **'MCP Endpoint'**
   String get mcpEndpoint;
 
+  /// No description provided for @mcpListenAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen address'**
+  String get mcpListenAddress;
+
+  /// No description provided for @mcpListenAddressDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'127.0.0.1 allows only clients on this device; 0.0.0.0 allows clients on this device and the local network.'**
+  String get mcpListenAddressDescribe;
+
   /// No description provided for @mcpPortInvalid.
   ///
   /// In en, this message translates to:

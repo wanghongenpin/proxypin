@@ -424,6 +424,8 @@
   "mcpAboutText": "MCP (Model Context Protocol) 允许像 Claude 这样的 AI 助手与 ProxyPin 交互。AI 可以读取捕获的 HTTP 流量、创建调试规则（Map Local、Map Remote、断点），并帮助分析网络问题。",
   "mcpLearnMore": "了解有关 MCP 的更多信息",
   "mcpEndpoint": "MCP 服务地址",
+  "mcpListenAddress": "监听地址",
+  "mcpListenAddressDescribe": "127.0.0.1 仅允许本设备连接；0.0.0.0 允许本设备及局域网内的客户端连接。",
   "mcpPortInvalid": "请输入 1024-65535 之间的有效端口",
   "mcpAccessToken": "访问令牌",
   "mcpLanGuide": "保持手机与电脑连接同一 Wi-Fi，在电脑终端运行下面任一命令，或将配置粘贴到 AI 客户端的 MCP 设置中。",

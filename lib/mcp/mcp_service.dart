@@ -20,6 +20,7 @@ import 'dart:math';
 import 'package:proxypin/mcp/capture/cert_status.dart';
 import 'package:proxypin/mcp/capture/flow_store.dart';
 import 'package:proxypin/mcp/capture/history_provider.dart';
+import 'package:proxypin/mcp/mcp_listen_options.dart';
 import 'package:proxypin/mcp/protocol/mcp_actions.dart';
 import 'package:proxypin/mcp/protocol/mcp_server.dart';
 import 'package:proxypin/mcp/transport/mcp_http_server.dart';
@@ -33,8 +34,8 @@ import 'package:proxypin/ui/configuration.dart';
 ///
 /// 作为 [EventListener] 挂到 [ProxyServer.listeners]，与 UI 同源接收流量，
 /// 因而平台无关且不依赖具体列表容器。桌面端仅绑定 127.0.0.1、不做鉴权；
-/// 移动端绑定 0.0.0.0 并要求 Bearer token。所有平台都优先固定 [defaultPort]
-/// （移动端可经 cfg.mcpPort 自定义），被占用时才回退到系统随机端口，
+/// 移动端可选绑定 127.0.0.1 或 0.0.0.0，两种模式都要求 Bearer token。所有平台都优先固定
+/// [defaultPort]（可经 cfg.mcpPort 自定义），被占用时才回退到系统随机端口，
 /// 保证 AI 客户端一次配置、重启 App 后无需改动。AI 客户端直接以 HTTP 连接，无需额外桥进程。
 ///
 /// @author wanghongen
@@ -43,7 +44,7 @@ class McpService {
 
   McpService._();
 
-  /// 默认监听端口；移动端可经 cfg.mcpPort 自定义，被占用时回退随机端口。
+  /// 默认监听端口；可经 cfg.mcpPort 自定义，被占用时回退随机端口。
   static const int defaultPort = 9127;
 
   FlowStore? _store;
@@ -74,11 +75,13 @@ class McpService {
 
   int? get port => _http?.port;
 
-  /// 移动端 LAN 模式的访问 token；桌面 loopback 模式为 null
+  /// 移动端仅本机和局域网模式的访问 token；桌面 loopback 模式为 null
   String? get token => _http?.token;
 
-  /// 当前绑定地址：移动端 0.0.0.0（LAN），桌面 127.0.0.1
-  bool get lanMode => Platform.isAndroid || Platform.isIOS;
+  String? get bindAddress => _http?.address.address;
+
+  /// 实际绑定 0.0.0.0 时为局域网模式，停止时为 false。
+  bool get lanMode => bindAddress == McpListenOptions.anyAddress;
 
   /// 生成 48 位十六进制随机 token
   static String generateToken() {
@@ -121,15 +124,17 @@ class McpService {
       redactEnabled: () => cfg.mcpRedactEnabled,
       extraTools: actions.tools(),
     );
-    // 移动端绑 0.0.0.0 供局域网 AI 客户端连接，并要求 Bearer token；桌面仅 loopback。
+    // 移动端可选仅本机或局域网访问，两种模式都要求 Bearer token；桌面仅 loopback。
+    var listen = McpListenOptions.resolve(
+      isMobile: Platform.isAndroid || Platform.isIOS,
+      configuredAddress: cfg.mcpBindAddress,
+    );
     String? token;
-    InternetAddress bindAddress = InternetAddress.loopbackIPv4;
-    if (lanMode) {
-      bindAddress = InternetAddress.anyIPv4;
+    if (listen.requiresBearerToken) {
       token = (cfg.mcpToken?.isNotEmpty ?? false) ? cfg.mcpToken : generateToken();
       cfg.mcpToken = token;
     }
-    _http = McpHttpServer(mcp: _mcp!, address: bindAddress, token: token);
+    _http = McpHttpServer(mcp: _mcp!, address: listen.address, token: token);
 
     // 所有平台都优先固定端口，便于 AI 客户端一次配置、重启后无需改动；
     // 端口被占用时回退到系统分配的空闲端口。桌面与移动端均可经 cfg.mcpPort 自定义。
@@ -141,7 +146,7 @@ class McpService {
         logger.w('MCP port $preferredPort unavailable, falling back to a random port: $e');
         await _http!.start(0);
       }
-      logger.i('MCP service started on ${bindAddress.address}:${_http!.port}');
+      logger.i('MCP service started on ${listen.address.address}:${_http!.port}');
     } catch (e) {
       logger.e('MCP service start failed: $e');
       _http = null;

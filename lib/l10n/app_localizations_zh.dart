@@ -1286,6 +1286,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpEndpoint => 'MCP 服务地址';
 
   @override
+  String get mcpListenAddress => '监听地址';
+
+  @override
+  String get mcpListenAddressDescribe => '127.0.0.1 仅允许本设备连接；0.0.0.0 允许本设备及局域网内的客户端连接。';
+
+  @override
   String get mcpPortInvalid => '请输入 1024-65535 之间的有效端口';
 
   @override

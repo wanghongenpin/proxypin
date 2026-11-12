@@ -434,6 +434,8 @@
   "mcpAboutText": "MCP (Model Context Protocol) lets AI assistants like Claude interact with ProxyPin. AI can read captured HTTP traffic, create debugging rules (Map Local, Map Remote, Breakpoints), and help analyze network issues.",
   "mcpLearnMore": "Learn more about MCP",
   "mcpEndpoint": "MCP Endpoint",
+  "mcpListenAddress": "Listen address",
+  "mcpListenAddressDescribe": "127.0.0.1 allows only clients on this device; 0.0.0.0 allows clients on this device and the local network.",
   "mcpPortInvalid": "Please enter a valid port between 1024 and 65535",
   "mcpAccessToken": "Access Token",
   "mcpLanGuide": "Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer's terminal, or paste the configuration into your AI client's MCP settings.",

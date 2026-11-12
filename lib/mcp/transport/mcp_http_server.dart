@@ -27,7 +27,7 @@ import 'setup_script.dart';
 /// MCP Streamable HTTP 传输（无状态，单 JSON 响应）。
 ///
 /// 桌面仅绑定 loopback 且不鉴权，AI 客户端直接以 HTTP 连接（无额外桥进程）；
-/// 移动端绑定所有网卡并要求 Bearer token，供同一局域网内电脑上的 AI 客户端远程连接。
+/// 移动端可绑定 loopback 或所有网卡，两种模式都要求 Bearer token。
 ///
 /// @author wanghongen
 class McpHttpServer {
@@ -35,7 +35,7 @@ class McpHttpServer {
 
   final McpServer mcp;
 
-  /// 绑定地址：loopback（桌面）或 0.0.0.0（移动端 LAN）
+  /// 绑定地址：loopback（桌面或移动端仅本机）或 0.0.0.0（移动端 LAN）
   final InternetAddress address;
 
   /// 非空时 /mcp 请求必须携带 `Authorization: Bearer <token>`
@@ -58,13 +58,15 @@ class McpHttpServer {
   }
 
   Future<void> stop() async {
-    await _server?.close(force: true);
+    // 先清除状态：close 等待期间，UI 不能再读取已解绑 socket 的 port。
+    final server = _server;
     _server = null;
+    await server?.close(force: true);
   }
 
   void _handle(HttpRequest req) async {
     try {
-      if (req.method == 'GET' && req.uri.path == '/' ) {
+      if (req.method == 'GET' && req.uri.path == '/') {
         if (!_authorized(req)) return;
         req.response.headers.contentType = ContentType.json;
         req.response.statusCode = HttpStatus.ok;
@@ -85,7 +87,7 @@ class McpHttpServer {
         return;
       }
 
-      // LAN 模式鉴权：Bearer token 不匹配直接 401
+      // 配置 token 时校验 Bearer token，不匹配直接 401
       if (!_authorized(req)) return;
 
       var body = await req.cast<List<int>>().transform(utf8.decoder).join();
@@ -97,8 +99,8 @@ class McpHttpServer {
         }
         message = decoded;
       } catch (e) {
-        await _writeJson(req, JsonRpcResponse.error(null,
-            JsonRpcError(JsonRpcError.parseError, 'Parse error: $e')), HttpStatus.badRequest);
+        await _writeJson(req, JsonRpcResponse.error(null, JsonRpcError(JsonRpcError.parseError, 'Parse error: $e')),
+            HttpStatus.badRequest);
         return;
       }
 
@@ -125,7 +127,7 @@ class McpHttpServer {
     }
   }
 
-  /// LAN 模式下校验 Bearer token；不通过时直接写 401 并返回 false。
+  /// 配置 token 时校验 Bearer token；不通过时直接写 401 并返回 false。
   bool _authorized(HttpRequest req) {
     if (token == null || req.headers.value(HttpHeaders.authorizationHeader) == 'Bearer $token') {
       return true;
@@ -138,7 +140,7 @@ class McpHttpServer {
 
   /// 下发一键配置脚本。endpoint 取自请求 Host 头，保证脚本里的地址就是电脑访问手机的地址。
   Future<void> _handleSetupScript(HttpRequest req) async {
-    // LAN 模式同样要求 Bearer token，避免脚本和服务地址被局域网内他人随意拉取。
+    // 配置脚本同样要求 Bearer token，避免被其他客户端随意拉取。
     if (!_authorized(req)) return;
     // Host 头由客户端按实际访问地址（手机 LAN IP:端口）发送，curl/irm 一定会携带。
     // 回退到绑定地址只会拼出电脑不可达的 0.0.0.0，因此缺失/非法时直接 400；

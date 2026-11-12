@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/mcp/mcp_listen_options.dart';
 import 'package:proxypin/mcp/mcp_names.dart';
 import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -28,8 +29,7 @@ import 'package:proxypin/ui/component/port_edit_dialog.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
 import 'package:proxypin/utils/ip.dart';
 
-/// 移动端 MCP 设置：在局域网内暴露 MCP HTTP 服务，电脑上的 AI 客户端
-/// （Claude Code / Codex 等）通过 Bearer token 远程连接。
+/// 移动端 MCP 设置：仅本机或局域网内的 AI 客户端通过 Bearer token 连接。
 ///
 /// @author wanghongen
 class MobileMcpSetting extends StatefulWidget {
@@ -55,7 +55,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
   @override
   void initState() {
     super.initState();
-    _refreshIp();
+    if (cfg.mcpBindAddress == McpListenOptions.anyAddress) _refreshIp();
   }
 
   Future<void> _refreshIp() async {
@@ -65,12 +65,21 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
 
   bool get _running => McpService.instance.isRunning;
 
-  String? get _endpoint {
+  bool get _lanMode => _running ? McpService.instance.lanMode : cfg.mcpBindAddress == McpListenOptions.anyAddress;
+
+  String? get _loopbackEndpoint {
+    var port = McpService.instance.port;
+    return port == null ? null : 'http://${McpListenOptions.loopbackAddress}:$port/mcp';
+  }
+
+  String? get _lanEndpoint {
     var ip = _lanIp;
     var port = McpService.instance.port;
     if (ip == null || port == null) return null;
     return 'http://$ip:$port/mcp';
   }
+
+  String? get _endpoint => _lanMode ? _lanEndpoint : _loopbackEndpoint;
 
   Future<void> _toggle(bool enabled) async {
     setState(() {
@@ -94,8 +103,33 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     cfg.flushConfig();
     if (mounted) {
       setState(() => _busy = false);
-      // 启动后实际端口才可用，刷新一次 IP 展示
-      _refreshIp();
+      // 启动后实际端口才可用，局域网模式下刷新一次 IP 展示
+      if (_lanMode) _refreshIp();
+    }
+  }
+
+  /// 修改监听地址：停止时仅保存，运行中重启服务使新地址生效。
+  Future<void> _changeBindAddress(String address) async {
+    if (address == cfg.mcpBindAddress) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    cfg.mcpBindAddress = address;
+    cfg.flushConfig();
+    try {
+      if (_running) {
+        await McpService.instance.stop();
+        // stop() 会清空抓包索引，重启前回填当前列表。
+        McpService.instance.attach(widget.proxyServer, existing: MobileApp.container.source);
+        await McpService.instance.start(cfg);
+      }
+    } catch (e) {
+      _error = '${l.mcpStartFailed}: $e';
+    }
+    if (mounted) {
+      setState(() => _busy = false);
+      if (_lanMode) _refreshIp();
     }
   }
 
@@ -147,7 +181,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     }
     if (mounted) {
       setState(() => _busy = false);
-      _refreshIp();
+      if (_lanMode) _refreshIp();
     }
   }
 
@@ -156,7 +190,6 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(l.mcpCopied), duration: const Duration(seconds: 2)));
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -178,8 +211,8 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
             onChanged: _busy ? null : _toggle,
             activeThumbColor: cs.primary,
             title: Text(l.mcpEnable),
-            subtitle: Text(l.mcpServiceDescribe,
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
+            subtitle:
+                Text(l.mcpServiceDescribe, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
           ),
           if (_busy) const LinearProgressIndicator(minHeight: 2),
           Padding(
@@ -188,11 +221,44 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           ),
         ]),
         const SizedBox(height: 12),
+        _card([
+          ListTile(
+            dense: true,
+            leading: Icon(Icons.settings_ethernet_rounded, color: cs.primary),
+            title: Text(l.mcpListenAddress, style: const TextStyle(fontSize: 14)),
+            subtitle: Text(
+              l.mcpListenAddressDescribe,
+              style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant, height: 1.4),
+            ),
+            trailing: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: cfg.mcpBindAddress,
+                isDense: true,
+                items: const [
+                  DropdownMenuItem(
+                    value: McpListenOptions.loopbackAddress,
+                    child: Text(McpListenOptions.loopbackAddress),
+                  ),
+                  DropdownMenuItem(
+                    value: McpListenOptions.anyAddress,
+                    child: Text(McpListenOptions.anyAddress),
+                  ),
+                ],
+                onChanged: _busy
+                    ? null
+                    : (address) {
+                        if (address != null) _changeBindAddress(address);
+                      },
+              ),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 12),
         if (_running) ...[
           _card([
             ListTile(
               dense: true,
-              leading: Icon(Icons.lan_outlined, color: cs.primary),
+              leading: Icon(_lanMode ? Icons.lan_outlined : Icons.smartphone_rounded, color: cs.primary),
               title: Text(l.mcpEndpoint, style: const TextStyle(fontSize: 14)),
               subtitle: SelectableText(
                 _endpoint ?? '…',
@@ -237,30 +303,29 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           ]),
           const SizedBox(height: 12),
           _card([
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Text(l.mcpLanGuide,
-                  style: TextStyle(fontSize: 12.5, height: 1.5, color: cs.onSurfaceVariant)),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
-              child: Text(l.mcpOneClick,
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: cs.primary)),
-            ),
-            _commandBlock(cs, 'macOS / Linux', _oneClickSh()),
-            _commandBlock(cs, 'Windows (PowerShell)', _oneClickPs1()),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Text(l.mcpOneClickHint,
-                  style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
-            ),
+            if (_lanMode) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Text(l.mcpLanGuide, style: TextStyle(fontSize: 12.5, height: 1.5, color: cs.onSurfaceVariant)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+                child: Text(l.mcpOneClick,
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: cs.primary)),
+              ),
+              _commandBlock(cs, 'macOS / Linux', _oneClickSh()),
+              _commandBlock(cs, 'Windows (PowerShell)', _oneClickPs1()),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(l.mcpOneClickHint, style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
+              ),
+            ],
             _commandBlock(cs, 'Claude Code', _claudeCommand()),
             _commandBlock(cs, 'Codex', _codexCommand()),
             _otherClientsBlock(cs),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-              child: Text(l.mcpLanTokenNote,
-                  style: TextStyle(fontSize: 11.5, height: 1.5, color: cs.onSurfaceVariant)),
+              child: Text(l.mcpLanTokenNote, style: TextStyle(fontSize: 11.5, height: 1.5, color: cs.onSurfaceVariant)),
             ),
           ]),
           const SizedBox(height: 12),
@@ -274,21 +339,20 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
               cfg.flushConfig();
             },
             title: Text(l.mcpRedact, style: const TextStyle(fontSize: 14)),
-            subtitle: Text(l.mcpRedactDescribe,
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
+            subtitle:
+                Text(l.mcpRedactDescribe, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
           ),
         ]),
         const SizedBox(height: 12),
         _card([
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-            child: Text(l.mcpAboutTitle,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface)),
+            child:
+                Text(l.mcpAboutTitle, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface)),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
-            child: Text(l.mcpAboutText,
-                style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
+            child: Text(l.mcpAboutText, style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
           ),
         ]),
         const SizedBox(height: 12),
@@ -320,9 +384,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Icon(Icons.error_outline_rounded, size: 17, color: cs.error),
               const SizedBox(width: 8),
-              Expanded(
-                  child: Text(_error!,
-                      style: TextStyle(fontSize: 12, color: cs.onErrorContainer, height: 1.4))),
+              Expanded(child: Text(_error!, style: TextStyle(fontSize: 12, color: cs.onErrorContainer, height: 1.4))),
             ]),
           ),
         ],
@@ -347,8 +409,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
       color: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(
-          side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.13)),
-          borderRadius: BorderRadius.circular(10)),
+          side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.13)), borderRadius: BorderRadius.circular(10)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
@@ -372,19 +433,15 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
   /// 自动探测并配置已安装的 Claude Code / Codex / Cursor / Gemini CLI。
   String _oneClickSh() {
     var token = McpService.instance.token ?? '';
-    var ip = _lanIp ?? '';
-    var port = McpService.instance.port;
     return 'curl -s -H "Authorization: Bearer $token" '
-        'http://$ip:$port/mcp/setup.sh | sh';
+        '${_lanEndpoint ?? ''}/setup.sh | sh';
   }
 
   /// 电脑端一键配置（Windows PowerShell）
   String _oneClickPs1() {
     var token = McpService.instance.token ?? '';
-    var ip = _lanIp ?? '';
-    var port = McpService.instance.port;
     return 'irm -Headers @{ Authorization = "Bearer $token" } '
-        'http://$ip:$port/mcp/setup.ps1 | iex';
+        '${_lanEndpoint ?? ''}/setup.ps1 | iex';
   }
 
   /// 通用 Streamable HTTP 配置（mcpServers JSON），覆盖 Cursor / Cline / Gemini CLI /
@@ -422,8 +479,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
             color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: SelectableText(command,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.4)),
+          child: SelectableText(command, style: const TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.4)),
         ),
       ]),
     );
@@ -435,8 +491,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
       padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text(l.mcpOtherClients,
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: cs.primary)),
+          Text(l.mcpOtherClients, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: cs.primary)),
           const Spacer(),
           TextButton.icon(
             onPressed: () => _copy(_genericHttpConfig()),
@@ -456,8 +511,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
         ),
         Padding(
           padding: const EdgeInsets.only(top: 6, right: 8),
-          child: Text(l.mcpOtherClientsHint,
-              style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
+          child: Text(l.mcpOtherClientsHint, style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
         ),
       ]),
     );

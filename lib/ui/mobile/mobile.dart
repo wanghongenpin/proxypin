@@ -92,6 +92,8 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
   StreamSubscription<HistoryItem>? _remoteHistorySubscription;
 
+  Route<void>? _pictureInPictureRoute;
+
   late ProxyServer proxyServer;
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
@@ -335,26 +337,31 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
   }
 
   @override
-  onPictureInPictureModeChanged(bool isInPictureInPictureMode) async {
+  void onPictureInPictureModeChanged(bool isInPictureInPictureMode) {
     if (isInPictureInPictureMode) {
-      Navigator.push(
-          context,
-          PageRouteBuilder(
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
-              pageBuilder: (context, animation, secondaryAnimation) {
-                return PictureInPictureWindow(MobileApp.container);
-              }));
+      if (_pictureInPictureRoute?.isActive ?? false) return;
+
+      final route = PageRouteBuilder<void>(
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+          pageBuilder: (context, animation, secondaryAnimation) {
+            return PictureInPictureWindow(MobileApp.container);
+          });
+      _pictureInPictureRoute = route;
+      Navigator.of(context).push(route);
       return;
     }
 
-    if (!isInPictureInPictureMode) {
-      Navigator.maybePop(context);
-      Vpn.isRunning().then((value) {
-        Vpn.isVpnStarted = value;
-        SocketLaunch.startStatus.value = ValueWrap.of(value);
-      });
+    final route = _pictureInPictureRoute;
+    _pictureInPictureRoute = null;
+    if (route?.isActive ?? false) {
+      // 系统退出画中画时直接移除对应路由，避免 maybePop 检查尚未初始化的 PopScope。
+      Navigator.of(context).removeRoute(route!);
     }
+    Vpn.isRunning().then((value) {
+      Vpn.isVpnStarted = value;
+      SocketLaunch.startStatus.value = ValueWrap.of(value);
+    });
   }
 
   void showUpgradeNotice() {

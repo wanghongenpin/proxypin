@@ -46,69 +46,69 @@ void main() {
       '${Directory.systemTemp.path}${Platform.pathSeparator}mcp_test_${DateTime.now().millisecondsSinceEpoch}';
 
   test('mcp flow store/view/curl behavior', () async {
-  // ---- summary has no body/header leakage ----
-  var big = buildFlow(responseSize: 20000);
-  var store = FlowStore();
-  store.backfill([big]);
-  var listed = store.query(limit: 20);
-  check(listed.length == 1, 'query returns one');
-  var summary = FlowView.summary(listed.first);
-  check(!summary.containsKey('headers'), 'summary has no headers');
-  check(!summary.containsKey('body'), 'summary has no body');
-  check(summary['status'] == 200, 'summary status');
-  check(summary['id'] == big.requestId, 'summary id');
+    // ---- summary has no body/header leakage ----
+    var big = buildFlow(responseSize: 20000);
+    var store = FlowStore();
+    store.backfill([big]);
+    var listed = store.query(limit: 20);
+    check(listed.length == 1, 'query returns one');
+    var summary = FlowView.summary(listed.first);
+    check(!summary.containsKey('headers'), 'summary has no headers');
+    check(!summary.containsKey('body'), 'summary has no body');
+    check(summary['status'] == 200, 'summary status');
+    check(summary['id'] == big.requestId, 'summary id');
 
-  // ---- detail redacts by default + previews body ----
-  var detail = await FlowView.detail(big, redact: true, previewBytes: 8192);
-  var reqHeaders = (detail['request']['headers'] as List).map((e) => e as Map).toList();
-  var auth = reqHeaders.firstWhere((h) => h['name'].toLowerCase() == 'authorization');
-  check(auth['value'] == '***redacted***', 'authorization redacted');
-  var cookie = reqHeaders.firstWhere((h) => h['name'].toLowerCase() == 'cookie');
-  check(cookie['value'] == '***redacted***', 'cookie redacted');
+    // ---- detail redacts by default + previews body ----
+    var detail = await FlowView.detail(big, redact: true, previewBytes: 8192);
+    var reqHeaders = (detail['request']['headers'] as List).map((e) => e as Map).toList();
+    var auth = reqHeaders.firstWhere((h) => h['name'].toLowerCase() == 'authorization');
+    check(auth['value'] == '***redacted***', 'authorization redacted');
+    var cookie = reqHeaders.firstWhere((h) => h['name'].toLowerCase() == 'cookie');
+    check(cookie['value'] == '***redacted***', 'cookie redacted');
 
-  var respBody = detail['response']['body'] as Map;
-  check(respBody['truncated'] == true, 'preview truncated for >8KB body');
-  check((respBody['text'] as String).length <= 8192, 'preview within 8KB');
-  check(respBody['total'] > 8192, 'total reported');
+    var respBody = detail['response']['body'] as Map;
+    check(respBody['truncated'] == true, 'preview truncated for >8KB body');
+    check((respBody['text'] as String).length <= 8192, 'preview within 8KB');
+    check(respBody['total'] > 8192, 'total reported');
 
-  // ---- bodySlice pagination + hard cap ----
-  var page1 = await FlowView.bodySlice(big.response, offset: 0, limit: 4096);
-  check(page1['offset'] == 0 && page1['returned'] == 4096, 'first page 4096');
-  check(page1['truncated'] == true, 'page1 truncated');
-  var page2 = await FlowView.bodySlice(big.response, offset: 4096, limit: 1000000);
-  check(page2['returned'] <= FlowView.maxBodySliceBytes, 'hard cap 64KB');
-  check(page2['offset'] == 4096, 'page2 offset');
+    // ---- bodySlice pagination + hard cap ----
+    var page1 = await FlowView.bodySlice(big.response, offset: 0, limit: 4096);
+    check(page1['offset'] == 0 && page1['returned'] == 4096, 'first page 4096');
+    check(page1['truncated'] == true, 'page1 truncated');
+    var page2 = await FlowView.bodySlice(big.response, offset: 4096, limit: 1000000);
+    check(page2['returned'] <= FlowView.maxBodySliceBytes, 'hard cap 64KB');
+    check(page2['offset'] == 4096, 'page2 offset');
 
-  // ---- binary is never inlined ----
-  var img = buildFlow(responseSize: 0, binary: true);
-  var binSlice = await FlowView.bodySlice(img.response);
-  check(binSlice['binary'] == true, 'binary flagged');
-  check(binSlice['mimeType'] == 'image/png', 'binary mime');
-  check(!binSlice.containsKey('text'), 'binary has no text');
-  check((binSlice['sha256'] as String).length == 64, 'binary sha256');
+    // ---- binary is never inlined ----
+    var img = buildFlow(responseSize: 0, binary: true);
+    var binSlice = await FlowView.bodySlice(img.response);
+    check(binSlice['binary'] == true, 'binary flagged');
+    check(binSlice['mimeType'] == 'image/png', 'binary mime');
+    check(!binSlice.containsKey('text'), 'binary has no text');
+    check((binSlice['sha256'] as String).length == 64, 'binary sha256');
 
-  // ---- redact=false exposes real value ----
-  var rawDetail = await FlowView.detail(big, redact: false, previewBytes: 256);
-  var rawAuth = (rawDetail['request']['headers'] as List)
-      .map((e) => e as Map)
-      .firstWhere((h) => h['name'].toLowerCase() == 'authorization');
-  check(rawAuth['value'] == 'Bearer secret-token', 'unredacted exposes token');
+    // ---- redact=false exposes real value ----
+    var rawDetail = await FlowView.detail(big, redact: false, previewBytes: 256);
+    var rawAuth = (rawDetail['request']['headers'] as List)
+        .map((e) => e as Map)
+        .firstWhere((h) => h['name'].toLowerCase() == 'authorization');
+    check(rawAuth['value'] == 'Bearer secret-token', 'unredacted exposes token');
 
-  // ---- curl export ----
-  var curlRedacted = CurlBuilder.build(big, redact: true);
-  check(curlRedacted.contains('***redacted***'), 'curl redacted');
-  check(!curlRedacted.contains('secret-token'), 'curl leaks no token');
-  check(!curlRedacted.contains('abc123'), 'curl leaks no cookie');
-  var curlRaw = CurlBuilder.build(big, redact: false);
-  check(curlRaw.contains('secret-token'), 'curl raw contains token');
+    // ---- curl export ----
+    var curlRedacted = CurlBuilder.build(big, redact: true);
+    check(curlRedacted.contains('***redacted***'), 'curl redacted');
+    check(!curlRedacted.contains('secret-token'), 'curl leaks no token');
+    check(!curlRedacted.contains('abc123'), 'curl leaks no cookie');
+    var curlRaw = CurlBuilder.build(big, redact: false);
+    check(curlRaw.contains('secret-token'), 'curl raw contains token');
 
-  // ---- filters ----
-  var other = buildFlow(responseSize: 10);
-  other.uri = 'https://other.test/path';
-  store.backfill([other]);
-  check(store.query(host: 'other').length == 1, 'host filter');
-  check(store.query(method: 'POST').length == 2, 'method filter');
-  check(store.query(host: 'nomatch').isEmpty, 'no match filter');
+    // ---- filters ----
+    var other = buildFlow(responseSize: 10);
+    other.uri = 'https://other.test/path';
+    store.backfill([other]);
+    check(store.query(host: 'other').length == 1, 'host filter');
+    check(store.query(method: 'POST').length == 2, 'method filter');
+    check(store.query(host: 'nomatch').isEmpty, 'no match filter');
   });
 
   test('mcp json-rpc initialize / tools / call', () async {
@@ -134,7 +134,10 @@ void main() {
       'jsonrpc': '2.0',
       'id': 3,
       'method': 'tools/call',
-      'params': {'name': 'list_flows', 'arguments': {'limit': 5}}
+      'params': {
+        'name': 'list_flows',
+        'arguments': {'limit': 5}
+      }
     });
     var content = call!['result']['content'][0]['text'] as String;
     var payload = jsonDecode(content) as Map;
@@ -145,7 +148,10 @@ void main() {
       'jsonrpc': '2.0',
       'id': 4,
       'method': 'tools/call',
-      'params': {'name': 'get_flow_detail', 'arguments': {'id': 'does-not-exist'}}
+      'params': {
+        'name': 'get_flow_detail',
+        'arguments': {'id': 'does-not-exist'}
+      }
     });
     check(missing!['result']['isError'] == true, 'unknown id returns tool error, not crash');
 
@@ -194,7 +200,10 @@ void main() {
       'jsonrpc': '2.0',
       'id': 9,
       'method': 'tools/call',
-      'params': {'name': 'search_flows', 'arguments': {'keyword': 'ERROR-42', 'limit': 10}}
+      'params': {
+        'name': 'search_flows',
+        'arguments': {'keyword': 'ERROR-42', 'limit': 10}
+      }
     });
     var content = call!['result']['content'][0]['text'] as String;
     var payload = jsonDecode(content) as Map;
@@ -274,8 +283,7 @@ void main() {
 
   test('mcp http transport: loopback initialize', () async {
     var flow = buildFlow(responseSize: 10);
-    var mcp = McpServer(
-        store: FlowStore()..backfill([flow]), redactEnabled: () => true);
+    var mcp = McpServer(store: FlowStore()..backfill([flow]), redactEnabled: () => true);
     var http = McpHttpServer(mcp: mcp);
     await http.start(0); // ephemeral port
     var port = http.port!;
@@ -295,47 +303,61 @@ void main() {
     await http.stop();
   });
 
-  test('mcp http transport: LAN token auth', () async {
-    var flow = buildFlow(responseSize: 10);
-    var mcp = McpServer(store: FlowStore()..backfill([flow]), redactEnabled: () => true);
-    var http = McpHttpServer(mcp: mcp, address: InternetAddress.loopbackIPv4, token: 'secret-token');
+  test('mcp http transport: stop invalidates state before close completes', () async {
+    var mcp = McpServer(store: FlowStore(), redactEnabled: () => true);
+    var http = McpHttpServer(mcp: mcp);
     await http.start(0);
-    var port = http.port!;
-    final client = HttpClient();
+    check(http.isRunning, 'server is running after start');
+    check(http.port != null, 'server exposes its bound port');
 
-    Future<HttpClientResponse> post({String? auth}) async {
-      final req = await client.postUrl(Uri.parse('http://127.0.0.1:$port/mcp'));
-      req.headers.contentType = ContentType.json;
-      if (auth != null) req.headers.set(HttpHeaders.authorizationHeader, auth);
-      req.write(jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}}));
-      return req.close();
-    }
-
-    // 无 token -> 401
-    final denied = await post();
-    check(denied.statusCode == 401, 'missing token rejected');
-    await denied.drain<void>();
-
-    // 错误 token -> 401
-    final wrong = await post(auth: 'Bearer nope');
-    check(wrong.statusCode == 401, 'wrong token rejected');
-    await wrong.drain<void>();
-
-    // 正确 token -> 200
-    final ok = await post(auth: 'Bearer secret-token');
-    final text = await ok.transform(utf8.decoder).join();
-    check(ok.statusCode == 200, 'valid token accepted');
-    check(jsonDecode(text)['result']['serverInfo']['name'] == 'proxypin', 'authenticated initialize ok');
-
-    client.close(force: true);
-    await http.stop();
+    final stopping = http.stop();
+    check(!http.isRunning, 'server stops reporting running before close completes');
+    check(http.port == null, 'closed socket port is never read');
+    await stopping;
   });
+
+  for (var address in [InternetAddress.loopbackIPv4, InternetAddress.anyIPv4]) {
+    test('mcp http transport: token auth on ${address.address}', () async {
+      var flow = buildFlow(responseSize: 10);
+      var mcp = McpServer(store: FlowStore()..backfill([flow]), redactEnabled: () => true);
+      var http = McpHttpServer(mcp: mcp, address: address, token: 'secret-token');
+      await http.start(0);
+      var port = http.port!;
+      final client = HttpClient();
+
+      Future<HttpClientResponse> post({String? auth}) async {
+        final req = await client.postUrl(Uri.parse('http://127.0.0.1:$port/mcp'));
+        req.headers.contentType = ContentType.json;
+        if (auth != null) req.headers.set(HttpHeaders.authorizationHeader, auth);
+        req.write(jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}}));
+        return req.close();
+      }
+
+      // 无 token -> 401
+      final denied = await post();
+      check(denied.statusCode == 401, 'missing token rejected');
+      await denied.drain<void>();
+
+      // 错误 token -> 401
+      final wrong = await post(auth: 'Bearer nope');
+      check(wrong.statusCode == 401, 'wrong token rejected');
+      await wrong.drain<void>();
+
+      // 正确 token -> 200
+      final ok = await post(auth: 'Bearer secret-token');
+      final text = await ok.transform(utf8.decoder).join();
+      check(ok.statusCode == 200, 'valid token accepted');
+      check(jsonDecode(text)['result']['serverInfo']['name'] == 'proxypin', 'authenticated initialize ok');
+
+      client.close(force: true);
+      await http.stop();
+    });
+  }
 
   test('mcp write tools: rewrite rules', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
-    var mcp = McpServer(
-        store: store, redactEnabled: () => true, extraTools: actions.tools());
+    var mcp = McpServer(store: store, redactEnabled: () => true, extraTools: actions.tools());
 
     Future<Map?> call(String name, Map args) async {
       var res = await mcp.handle({
@@ -368,7 +390,8 @@ void main() {
       var detail = await call('get_rewrite_detail', {'index': index});
       var ops = ((detail!['payload'] as Map)['operations'] as List).cast<Map>();
       check(ops.length == 2, 'detail has 2 ops');
-      check(ops.any((o) => o['op'] == 'addHeader' && o['key'] == 'X-Debug' && o['value'] == '1'), 'addHeader op present');
+      check(
+          ops.any((o) => o['op'] == 'addHeader' && o['key'] == 'X-Debug' && o['value'] == '1'), 'addHeader op present');
 
       // update：改 url + 禁用
       var updated = await call('update_rewrite', {'index': index, 'url': '*.new.example.com', 'enabled': false});
@@ -427,8 +450,7 @@ void main() {
   test('mcp write tools: host filter', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
-    var mcp = McpServer(
-        store: store, redactEnabled: () => true, extraTools: actions.tools());
+    var mcp = McpServer(store: store, redactEnabled: () => true, extraTools: actions.tools());
 
     Future<Map?> call(String name, Map args) async {
       var res = await mcp.handle({
@@ -573,7 +595,10 @@ void main() {
       'jsonrpc': '2.0',
       'id': 2,
       'method': 'tools/call',
-      'params': {'name': 'list_flows', 'arguments': {'history_id': 99}}
+      'params': {
+        'name': 'list_flows',
+        'arguments': {'history_id': 99}
+      }
     });
     check(bad!['result']['isError'] == true, 'invalid history_id rejected');
 
@@ -582,7 +607,10 @@ void main() {
       'jsonrpc': '2.0',
       'id': 3,
       'method': 'tools/call',
-      'params': {'name': 'get_flow_detail', 'arguments': {'id': histFlow.requestId}}
+      'params': {
+        'name': 'get_flow_detail',
+        'arguments': {'id': histFlow.requestId}
+      }
     });
     check(notLive!['result']['isError'] == true, 'history id not resolvable from live buffer');
   });
@@ -616,8 +644,7 @@ void main() {
   test('mcp script template is available without runtime', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);
-    var mcp = McpServer(
-        store: store, redactEnabled: () => true, extraTools: actions.tools());
+    var mcp = McpServer(store: store, redactEnabled: () => true, extraTools: actions.tools());
     var res = await mcp.handle({
       'jsonrpc': '2.0',
       'id': 1,

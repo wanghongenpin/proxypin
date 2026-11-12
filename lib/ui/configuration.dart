@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:proxypin/mcp/mcp_listen_options.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:path_provider/path_provider.dart';
@@ -115,8 +116,11 @@ class AppConfiguration {
   /// 导出给 AI 时是否脱敏 Authorization/Cookie
   bool mcpRedactEnabled = true;
 
-  /// 移动端 LAN 模式的访问 token（桌面 loopback 不用，留空即可）
+  /// 移动端仅本机和局域网模式的访问 token（桌面 loopback 不用，留空即可）
   String? mcpToken;
+
+  /// 移动端监听地址，仅支持 127.0.0.1 和 0.0.0.0；桌面端忽略此配置。
+  String mcpBindAddress = McpListenOptions.anyAddress;
 
   /// MCP 服务监听端口。为 null/非法时使用默认端口 9127，
   /// 被占用时由服务回退到系统随机端口。
@@ -250,6 +254,7 @@ class AppConfiguration {
       mcpEnabled = config['mcpEnabled'] ?? false;
       mcpRedactEnabled = config['mcpRedactEnabled'] ?? true;
       mcpToken = config['mcpToken'] as String?;
+      mcpBindAddress = McpListenOptions.normalizeAddress(config['mcpBindAddress']);
       var port = config['mcpPort'];
       mcpPort = port is int && port > 0 && port <= 65535 ? port : null;
       var pins = config['toolbarPins'];
@@ -307,6 +312,7 @@ class AppConfiguration {
       'mcpEnabled': mcpEnabled,
       'mcpRedactEnabled': mcpRedactEnabled,
       if (mcpToken != null) 'mcpToken': mcpToken,
+      'mcpBindAddress': mcpBindAddress,
       if (mcpPort != null) 'mcpPort': mcpPort,
     };
   }
