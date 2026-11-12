@@ -1156,6 +1156,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get sponsorAfdian => 'AFDIAN';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
   String get privacyPolicy => 'นโยบายความเป็นส่วนตัว';
 
   @override
@@ -1257,7 +1260,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get mcpServiceDescribe =>
-      'Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.';
+      'เริ่มเซิร์ฟเวอร์ HTTP ในเครื่องสำหรับการสื่อสารของ Model Context Protocol (MCP) กับเครื่องมือ AI เช่น Claude';
 
   @override
   String get mcpEnable => 'Enable MCP Server';
@@ -1373,12 +1376,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get mcpUnsupported => 'This client does not support auto setup, configure it manually.';
-
-  @override
-  String get mcpCopy => 'Copy';
-
-  @override
-  String get mcpCopied => 'Copied';
 
   @override
   String get mcpStartFailed => 'MCP service failed to start';

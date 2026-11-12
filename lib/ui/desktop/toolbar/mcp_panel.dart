@@ -425,7 +425,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
 
   void _copy(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    _toast(l.mcpCopied);
+    _toast(l.copied);
   }
 
   // ====================================================================== UI
@@ -493,7 +493,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
                 const SizedBox(height: 16),
 
                 // ===== Privacy =====
-                Text('Privacy', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                Text(l.privacy, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 10),
                 _checkRow(
                   cs,
@@ -597,10 +597,8 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
   Widget _portRow(ColorScheme cs) {
     var current = McpService.instance.port ?? cfg.mcpPort ?? McpService.defaultPort;
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      Text('${l.mcpPort}: ',
-          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-      Text('$current',
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+      Text('${l.mcpPort}: ', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+      Text('$current', style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
       IconButton(
         tooltip: l.edit,
         visualDensity: VisualDensity.compact,
@@ -682,7 +680,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
 
   /// 分段控件：Claude Code / Codex / Manual，选中段为主题色填充（对齐 Proxyman）
   Widget _modeSegmented(ColorScheme cs) {
-    final tabs = const [('claude', 'Claude Code'), ('codex', 'Codex'), ('manual', 'Manual')];
+    final tabs = [('claude', 'Claude Code'), ('codex', 'Codex'), ('manual', l.manual)];
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
       child: Container(
@@ -782,7 +780,7 @@ class _McpServiceDialogState extends State<McpServiceDialog> {
 
   Widget _copyButton(ColorScheme cs) {
     return IconButton(
-      tooltip: l.mcpCopy,
+      tooltip: l.copy,
       visualDensity: VisualDensity.compact,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 26, minHeight: 26),

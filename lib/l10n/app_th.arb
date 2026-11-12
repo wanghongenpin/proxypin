@@ -265,6 +265,7 @@
   "weakNetworkBandwidth": "แบนด์วิดท์",
   "weakNetworkLossRate": "อัตราแพ็กเก็ตหาย",
   "weakNetworkRules": "กฎ URL",
+  "mcpServiceDescribe": "เริ่มเซิร์ฟเวอร์ HTTP ในเครื่องสำหรับการสื่อสารของ Model Context Protocol (MCP) กับเครื่องมือ AI เช่น Claude",
   "replayTasks": "งานส่งซ้ำ",
   "clearFinished": "ล้างรายการที่เสร็จสิ้น",
   "statusWaiting": "รออยู่",

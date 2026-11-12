@@ -383,6 +383,7 @@
   "weakNetworkBandwidth": "頻寬",
   "weakNetworkLossRate": "遺失率",
   "weakNetworkRules": "URL 規則",
+  "mcpServiceDescribe": "啟動本機 HTTP 伺服器，讓 Model Context Protocol (MCP) 與 Claude 等 AI 工具通訊。",
   "replayTasks": "重放任務",
   "clearFinished": "清除已完成",
   "statusRunning": "執行中",

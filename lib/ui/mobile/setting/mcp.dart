@@ -187,8 +187,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
 
   void _copy(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l.mcpCopied), duration: const Duration(seconds: 2)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied), duration: const Duration(seconds: 2)));
   }
 
   @override
@@ -469,7 +468,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           TextButton.icon(
             onPressed: () => _copy(command),
             icon: const Icon(Icons.copy_all_rounded, size: 15),
-            label: Text(l.mcpCopy, style: const TextStyle(fontSize: 12.5)),
+            label: Text(l.copy, style: const TextStyle(fontSize: 12.5)),
           ),
         ]),
         Container(
@@ -496,7 +495,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           TextButton.icon(
             onPressed: () => _copy(_genericHttpConfig()),
             icon: const Icon(Icons.copy_all_rounded, size: 15),
-            label: Text(l.mcpCopy, style: const TextStyle(fontSize: 12.5)),
+            label: Text(l.copy, style: const TextStyle(fontSize: 12.5)),
           ),
         ]),
         Container(

@@ -265,6 +265,7 @@
   "weakNetworkBandwidth": "Băng thông",
   "weakNetworkLossRate": "Tỷ lệ mất gói",
   "weakNetworkRules": "Quy tắc URL",
+  "mcpServiceDescribe": "Khởi động máy chủ HTTP cục bộ để Model Context Protocol (MCP) giao tiếp với các công cụ AI như Claude.",
   "replayTasks": "Tác vụ phát lại",
   "clearFinished": "Xóa tác vụ đã xong",
   "statusWaiting": "Đang chờ",

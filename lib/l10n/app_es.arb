@@ -265,6 +265,7 @@
   "weakNetworkBandwidth": "Ancho de banda",
   "weakNetworkLossRate": "Pérdida de paquetes",
   "weakNetworkRules": "Reglas URL",
+  "mcpServiceDescribe": "Inicia un servidor HTTP local para la comunicación del Model Context Protocol (MCP) con herramientas de IA como Claude.",
   "replayTasks": "Tareas de repetición",
   "clearFinished": "Borrar finalizadas",
   "statusWaiting": "En espera",

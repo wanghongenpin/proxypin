@@ -265,6 +265,7 @@
   "weakNetworkBandwidth": "Bandwidth",
   "weakNetworkLossRate": "Kehilangan Paket",
   "weakNetworkRules": "Aturan URL",
+  "mcpServiceDescribe": "Menjalankan server HTTP lokal untuk komunikasi Model Context Protocol (MCP) dengan alat AI seperti Claude.",
   "replayTasks": "Tugas Pengulangan",
   "clearFinished": "Hapus yang selesai",
   "statusWaiting": "Menunggu",

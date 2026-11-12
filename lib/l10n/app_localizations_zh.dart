@@ -1150,6 +1150,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sponsorAfdian => '爱发电赞助';
 
   @override
+  String get privacy => '隐私';
+
+  @override
   String get privacyPolicy => '隐私协议';
 
   @override
@@ -1363,12 +1366,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpUnsupported => '该客户端不支持一键配置，请手动配置。';
-
-  @override
-  String get mcpCopy => '复制';
-
-  @override
-  String get mcpCopied => '已复制';
 
   @override
   String get mcpStartFailed => 'MCP 服务启动失败';
@@ -2640,6 +2637,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get weakNetworkRules => 'URL 規則';
+
+  @override
+  String get mcpServiceDescribe => '啟動本機 HTTP 伺服器，讓 Model Context Protocol (MCP) 與 Claude 等 AI 工具通訊。';
 
   @override
   String get statusRunning => '執行中';
