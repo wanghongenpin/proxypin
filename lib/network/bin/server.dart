@@ -108,7 +108,10 @@ class ProxyServer {
       logger.i("listen on $port");
       this.server = server;
       if (configuration.enableSystemProxy) {
-        setSystemProxyEnable(true);
+        // 设置系统代理失败（如桌面环境不支持/命令缺失）不应影响代理本体是否可用。
+        setSystemProxyEnable(true).catchError((Object e) {
+          logger.w('enable system proxy failed: $e');
+        });
       }
 
       //初始化证书
@@ -125,7 +128,12 @@ class ProxyServer {
     }
 
     if (configuration.enableSystemProxy) {
-      await setSystemProxyEnable(false);
+      // 恢复系统代理失败也要继续关闭监听，否则会出现「界面显示已停止、端口还在监听」。
+      try {
+        await setSystemProxyEnable(false);
+      } catch (e) {
+        logger.w('restore system proxy failed, stopping listener anyway: $e');
+      }
     }
     logger.i("stop on $port");
     await server?.stop();
