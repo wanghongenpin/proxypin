@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -638,7 +639,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
                   enableGuideLines: false,
                   selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
                   editorTheme: editorTheme,
-                  textStyle: const TextStyle(fontSize: 13),
+                  textStyle: codeTextStyle(size: 13),
                   finderBuilder: (c, controller) => FindPanelView(controller: controller),
                 ),
               ),

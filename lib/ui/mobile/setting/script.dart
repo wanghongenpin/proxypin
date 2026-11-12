@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:code_forge/code_forge.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:re_highlight/styles/monokai-sublime.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
@@ -761,7 +762,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                         editorTheme: monokaiSublimeTheme,
                                         readOnly: _useRemote,
                                         enableGuideLines: false,
-                                        textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                        textStyle: codeTextStyle(size: 13, color: Colors.white),
                                       )),
                                   if (_useRemote && script.text.trim().isEmpty)
                                     Positioned.fill(

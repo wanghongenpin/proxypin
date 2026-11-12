@@ -17,6 +17,7 @@
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -460,7 +461,7 @@ class _TextDiffPageState extends State<TextDiffPage> {
             lineWrap: _wrap,
             enableGuideLines: false,
             editorTheme: editorTheme,
-            textStyle: const TextStyle(fontSize: 14.5),
+            textStyle: codeTextStyle(size: 14.5),
             matchHighlightStyle: matchStyle,
             finderBuilder: (c, controller) => FindPanelView(controller: controller),
             selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),

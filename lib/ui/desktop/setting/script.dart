@@ -17,6 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
@@ -674,7 +675,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                     autoFocus: true,
                                     enableGuideLines: false,
                                     finderBuilder: (c, controller) => FindPanelView(controller: controller),
-                                    textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                    textStyle: codeTextStyle(size: 13, color: Colors.white),
                                   ),
                                   if (_useRemote && script.text.trim().isEmpty)
                                     Positioned.fill(

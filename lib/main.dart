@@ -26,6 +26,7 @@ import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/window_resize_border.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
@@ -111,6 +112,8 @@ class FluentApp extends StatelessWidget {
             locale: appConfiguration.language,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
+            // 无边框窗口（TitleBarStyle.hidden）没有系统 resize 热区，这里补一圈
+            builder: (context, child) => WindowResizeBorder(child: child ?? const SizedBox.shrink()),
             home: home,
           );
         });
@@ -195,7 +198,19 @@ class FluentApp extends StatelessWidget {
       themeData = themeData.useSystemChineseFont();
     }
 
+    // 整体界面字体 / 字号缩放 / 密度（代码窗口用的是 editorFontFamily，不受这里影响）
+    final appFontFamily = appConfiguration.appFontFamily;
+    final appFontScale = appConfiguration.appFontScale;
+    final hasFamily = appFontFamily != null && appFontFamily.isNotEmpty;
+    if (hasFamily || appFontScale != 1.0) {
+      TextTheme apply(TextTheme textTheme) =>
+          textTheme.apply(fontFamily: hasFamily ? appFontFamily : null, fontSizeFactor: appFontScale);
+      themeData = themeData.copyWith(
+          textTheme: apply(themeData.textTheme), primaryTextTheme: apply(themeData.primaryTextTheme));
+    }
+
     return themeData.copyWith(
+        visualDensity: appConfiguration.visualDensity,
         dialogTheme:
             themeData.dialogTheme.copyWith(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
   }

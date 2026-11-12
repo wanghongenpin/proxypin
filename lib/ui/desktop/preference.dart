@@ -18,6 +18,8 @@ import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/app_appearance_setting.dart';
+import 'package:proxypin/ui/component/code_font_setting.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
 
@@ -158,6 +160,18 @@ class _PreferenceState extends State<Preference> {
                         appConfiguration.clearConfirm = value;
                         appConfiguration.flushConfig();
                       })),
+              const Divider(),
+              // 抓包列表行密度：宽松 / 紧凑 / 极紧凑
+              CaptureDensityTile(titleStyle: titleStyle, subtitleStyle: subtitleStyle),
+              // 代码窗口字体（请求体/响应体/脚本编辑器共用）
+              CodeFontFamilyTile(titleStyle: titleStyle, subtitleStyle: subtitleStyle),
+              CodeFontSizeTile(titleStyle: titleStyle, subtitleStyle: subtitleStyle),
+              const Divider(),
+              // 整体界面字体 / 字号 / 密度（不含代码窗口）
+              AppFontFamilyTile(titleStyle: titleStyle, subtitleStyle: subtitleStyle),
+              AppFontScaleTile(titleStyle: titleStyle, subtitleStyle: subtitleStyle),
+              UiDensityTile(titleStyle: titleStyle, subtitleStyle: subtitleStyle),
+              const Divider(),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(localizations.memoryCleanup, style: titleStyle),

@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -319,7 +320,7 @@ class _JsonViewerPageState extends State<JsonViewerPage> with SingleTickerProvid
           language: HighlightLanguages.getLanguage(ContentType.json),
           enableGuideLines: false,
           editorTheme: editorTheme,
-          textStyle: const TextStyle(fontSize: 13),
+          textStyle: codeTextStyle(size: 13),
           finderBuilder: (c, controller) => FindPanelView(controller: controller),
           selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
         ),

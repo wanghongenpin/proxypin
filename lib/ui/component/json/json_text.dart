@@ -34,6 +34,9 @@ class JsonText extends StatefulWidget {
   final SearchTextController? searchController;
   final EditableTextContextMenuBuilder? contextMenuBuilder;
 
+  /// 基础字体（来自偏好设置里的「代码字体」），为空时用默认等宽字体
+  final TextStyle? textStyle;
+
   const JsonText({
     super.key,
     required this.json,
@@ -42,6 +45,7 @@ class JsonText extends StatefulWidget {
     this.scrollController,
     this.searchController,
     this.contextMenuBuilder,
+    this.textStyle,
   });
 
   @override
@@ -115,7 +119,7 @@ class _JsonTextState extends State<JsonText> {
                 textHeightBehavior:
                     const TextHeightBehavior(applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
                 strutStyle: const StrutStyle(forceStrutHeight: true, height: 1.393),
-                style: TextStyle(fontFamily: fonts.regular),
+                style: widget.textStyle ?? TextStyle(fontFamily: fonts.regular),
               );
             },
           )));

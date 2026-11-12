@@ -95,6 +95,24 @@ class AppConfiguration {
   /// 清空抓包前确认
   bool clearConfirm = false;
 
+  /// 抓包列表行密度：comfortable(宽松，默认) / compact(紧凑) / dense(极紧凑)
+  String captureListDensity = "comfortable";
+
+  /// 代码窗口字体族（请求体/响应体/脚本编辑器等），null 或空表示跟随界面字体
+  String? editorFontFamily;
+
+  /// 代码窗口字号
+  double editorFontSize = 13;
+
+  /// 整体界面字体（不含代码窗口），null/空表示跟随系统默认字体
+  String? appFontFamily;
+
+  /// 整体界面字号缩放（0.85 - 1.25，1.0 = 原样）
+  double appFontScale = 1.0;
+
+  /// 整体界面密度：comfortable(默认) / compact / dense
+  String uiDensity = "comfortable";
+
   //桌面window大小
   Size? windowSize;
 
@@ -130,6 +148,85 @@ class AppConfiguration {
   static const List<String> defaultToolbarPins = ['requestRewrite', 'requestMap', 'script'];
 
   final ValueNotifier<List<String>> toolbarPins = ValueNotifier(defaultToolbarPins);
+
+  /// 抓包列表可选的密度
+  static const List<String> captureDensities = ["comfortable", "compact", "dense"];
+
+  /// 抓包列表行的尺寸参数：由 [captureListDensity] 推导
+  CaptureRowMetrics get captureRowMetrics {
+    switch (captureListDensity) {
+      case "compact":
+        return const CaptureRowMetrics(
+            leftWithDomain: 10,
+            leftIndent: 22,
+            leftSelection: 4,
+            right: 8,
+            top: 3,
+            bottom: 3,
+            titleSize: 12.5,
+            metaSize: 10.5,
+            titleMaxLines: 1,
+            showMeta: true,
+            gap: 1,
+            iconGap: 8,
+            iconWidth: 16,
+            iconSize: 14,
+            imageSize: 16);
+      case "dense":
+        return const CaptureRowMetrics(
+            leftWithDomain: 8,
+            leftIndent: 18,
+            leftSelection: 3,
+            right: 6,
+            top: 1.5,
+            bottom: 1.5,
+            titleSize: 12,
+            metaSize: 10,
+            titleMaxLines: 1,
+            showMeta: false,
+            gap: 0,
+            iconGap: 6,
+            iconWidth: 14,
+            iconSize: 12,
+            imageSize: 14);
+      default:
+        return const CaptureRowMetrics(
+            leftWithDomain: 12,
+            leftIndent: 26,
+            leftSelection: 6,
+            right: 10,
+            top: 7,
+            bottom: 7,
+            titleSize: 13,
+            metaSize: 11,
+            titleMaxLines: 2,
+            showMeta: true,
+            gap: 3,
+            iconGap: 10,
+            iconWidth: 18,
+            iconSize: 16,
+            imageSize: 19);
+    }
+  }
+
+  /// 整体界面密度 → Flutter 的 VisualDensity
+  VisualDensity get visualDensity {
+    switch (uiDensity) {
+      case "compact":
+        return const VisualDensity(horizontal: -1, vertical: -1);
+      case "dense":
+        return const VisualDensity(horizontal: -2, vertical: -2);
+      default:
+        return VisualDensity.standard;
+    }
+  }
+
+  /// 修改显示类配置后立即重建界面并落盘
+  void applyDisplaySetting(VoidCallback mutate) {
+    mutate();
+    globalChange.value = !globalChange.value;
+    flushConfig();
+  }
 
   AppConfiguration._();
 
@@ -239,6 +336,21 @@ class AppConfiguration {
       autoReadEnabled = config['autoReadEnabled'] ?? true;
       clearConfirm = config['clearConfirm'] ?? false;
 
+      var density = config['captureListDensity'];
+      captureListDensity = density is String && captureDensities.contains(density) ? density : "comfortable";
+
+      var fontFamily = config['editorFontFamily'];
+      editorFontFamily = fontFamily is String && fontFamily.trim().isNotEmpty ? fontFamily.trim() : null;
+      var fontSize = config['editorFontSize'];
+      editorFontSize = fontSize is num && fontSize >= 8 && fontSize <= 32 ? fontSize.toDouble() : 13;
+
+      var appFont = config['appFontFamily'];
+      appFontFamily = appFont is String && appFont.trim().isNotEmpty ? appFont.trim() : null;
+      var appScale = config['appFontScale'];
+      appFontScale = appScale is num && appScale >= 0.85 && appScale <= 1.25 ? appScale.toDouble() : 1.0;
+      var uiDensityValue = config['uiDensity'];
+      uiDensity = uiDensityValue is String && captureDensities.contains(uiDensityValue) ? uiDensityValue : "comfortable";
+
       windowSize =
           config['windowSize'] == null ? null : Size(config['windowSize']['width'], config['windowSize']['height']);
       windowPosition = config['windowPosition'] == null
@@ -296,6 +408,12 @@ class AppConfiguration {
       "headerViewMode": headerViewMode,
       "autoReadEnabled": autoReadEnabled,
       "clearConfirm": clearConfirm,
+      "captureListDensity": captureListDensity,
+      "editorFontFamily": editorFontFamily,
+      "editorFontSize": editorFontSize,
+      "appFontFamily": appFontFamily,
+      "appFontScale": appFontScale,
+      "uiDensity": uiDensity,
       if (memoryCleanupThreshold != null) 'memoryCleanupThreshold': memoryCleanupThreshold,
       if (Platforms.isMobile()) 'pipEnabled': pipEnabled.value,
       if (Platforms.isMobile()) 'pipIcon': pipIcon.value ? true : null,
@@ -315,5 +433,47 @@ class AppConfiguration {
       'mcpBindAddress': mcpBindAddress,
       if (mcpPort != null) 'mcpPort': mcpPort,
     };
+  }
+}
+
+/// 抓包列表行的尺寸参数（由 [AppConfiguration.captureListDensity] 推导）
+class CaptureRowMetrics {
+  final double leftWithDomain;
+  final double leftIndent;
+  final double leftSelection;
+  final double right;
+  final double top;
+  final double bottom;
+  final double titleSize;
+  final double metaSize;
+  final int titleMaxLines;
+  final bool showMeta;
+  final double gap;
+  final double iconGap;
+  final double iconWidth;
+  final double iconSize;
+  final double imageSize;
+
+  const CaptureRowMetrics({
+    required this.leftWithDomain,
+    required this.leftIndent,
+    required this.leftSelection,
+    required this.right,
+    required this.top,
+    required this.bottom,
+    required this.titleSize,
+    required this.metaSize,
+    required this.titleMaxLines,
+    required this.showMeta,
+    required this.gap,
+    required this.iconGap,
+    required this.iconWidth,
+    required this.iconSize,
+    required this.imageSize,
+  });
+
+  EdgeInsets padding({required bool displayDomain, required bool selectedInSelectionMode}) {
+    final left = selectedInSelectionMode ? leftSelection : (displayDomain ? leftWithDomain : leftIndent);
+    return EdgeInsets.only(left: left, right: right, top: top, bottom: bottom);
   }
 }

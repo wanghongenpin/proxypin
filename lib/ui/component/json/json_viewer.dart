@@ -31,14 +31,17 @@ class JsonViewer extends StatelessWidget {
   final ColorTheme colorTheme;
   final SearchTextController? searchController;
 
-  const JsonViewer(this.jsonObj, {super.key, required this.colorTheme, this.searchController});
+  /// 基础字体（来自偏好设置里的「代码字体」）
+  final TextStyle? textStyle;
+
+  const JsonViewer(this.jsonObj, {super.key, required this.colorTheme, this.searchController, this.textStyle});
 
   @override
   Widget build(BuildContext context) {
     final matchKeys = <GlobalKey>[];
     if (searchController == null) {
       return DefaultTextStyle.merge(
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(fontWeight: FontWeight.w600).merge(textStyle),
           child: getContentWidget(jsonObj, matchTotalCount: ValueWrap.of(0), matchKeys: matchKeys));
     }
     return AnimatedBuilder(
@@ -47,7 +50,7 @@ class JsonViewer extends StatelessWidget {
           final matchTotalCount = ValueWrap.of(0);
           matchKeys.clear();
           final contentWidget = DefaultTextStyle.merge(
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(fontWeight: FontWeight.w600).merge(textStyle),
               child: getContentWidget(jsonObj, matchTotalCount: matchTotalCount, matchKeys: matchKeys));
           WidgetsBinding.instance.addPostFrameCallback((_) {
             searchController?.updateMatchCount(matchTotalCount.get()!);
