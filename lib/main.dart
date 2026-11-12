@@ -26,6 +26,7 @@ import 'package:proxypin/ui/component/chinese_font.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
+import 'package:proxypin/ui/component/window_resize_border.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/desktop/desktop.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
@@ -111,6 +112,8 @@ class FluentApp extends StatelessWidget {
             locale: appConfiguration.language,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
+            // 无边框窗口（TitleBarStyle.hidden）没有系统 resize 热区，这里补一圈
+            builder: (context, child) => WindowResizeBorder(child: child ?? const SizedBox.shrink()),
             home: home,
           );
         });

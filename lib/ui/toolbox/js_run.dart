@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:code_forge/code_forge.dart';
+import 'package:proxypin/ui/component/code_style.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:re_highlight/styles/monokai-sublime.dart';
 import 'package:flutter_js/flutter_js.dart';
@@ -142,7 +143,7 @@ class _JavaScriptState extends State<JavaScript> {
                     autoFocus: true,
                     enableGuideLines: false,
                     finderBuilder: (c, controller) => FindPanelView(controller: controller),
-                    textStyle: const TextStyle(fontSize: 13),
+                    textStyle: codeTextStyle(size: 13),
                   )),
               Row(children: [
                 const SizedBox(width: 10),
@@ -161,15 +162,19 @@ class _JavaScriptState extends State<JavaScript> {
                   child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
-                      color: Colors.grey.shade800,
-                      child: Scrollbar(
-                          controller: outputScrollController,
-                          thumbVisibility: true,
-                          trackVisibility: true,
-                          child: SingleChildScrollView(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: outLines.isEmpty
+                          ? Text(localizations.noOutputHint,
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant))
+                          : Scrollbar(
                               controller: outputScrollController,
-                              child: SelectionArea(
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: outLines)))))),
+                              thumbVisibility: true,
+                              trackVisibility: true,
+                              child: SingleChildScrollView(
+                                  controller: outputScrollController,
+                                  child: SelectionArea(
+                                      child:
+                                          Column(crossAxisAlignment: CrossAxisAlignment.start, children: outLines)))))),
             ])));
   }
 }

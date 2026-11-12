@@ -273,5 +273,15 @@
   "statusPaused": "Đã tạm dừng",
   "pause": "Tạm dừng",
   "resume": "Tiếp tục",
-  "overview": "Tổng quan"
+  "overview": "Tổng quan",
+  "captureListDensity": "Mật độ danh sách",
+  "densityComfortable": "Thoáng",
+  "densityCompact": "Gọn",
+  "densityDense": "Dày",
+  "codeFont": "Phông chữ mã",
+  "codeFontFollowUi": "Theo phông giao diện",
+  "codeFontSystemMono": "Monospace hệ thống",
+  "codeFontCustom": "Phông tùy chỉnh…",
+  "codeFontFamily": "Tên phông",
+  "codeFontSize": "Cỡ chữ mã"
 }

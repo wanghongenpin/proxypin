@@ -137,3 +137,13 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# flutter_js 依赖的 quickjs 桥接库是 pub 包里预编译的 .so，由插件自己的 install
+# 规则安装；不同构建组合下它会落到错误前缀（干净构建时 bundle 里就没有它，
+# 运行时报 “Failed to load dynamic library 'libquickjs_c_bridge_plugin.so'”，
+# JS 工具与脚本拦截器全部不可用）。这里在 prefix 已经确定之后再兜底装一次。
+set(QUICKJS_BRIDGE
+  "${CMAKE_CURRENT_SOURCE_DIR}/flutter/ephemeral/.plugin_symlinks/flutter_js/linux/shared/libquickjs_c_bridge_plugin.so")
+if(EXISTS "${QUICKJS_BRIDGE}")
+  install(FILES "${QUICKJS_BRIDGE}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
+endif()
