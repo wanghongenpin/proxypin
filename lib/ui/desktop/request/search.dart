@@ -107,29 +107,26 @@ class SearchState extends State<Search> {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
-    // 搜索框在列表底部，条件面板需向上弹出。showMenu 只按 position.top 向下排（SDK 无自动上翻），
-    // 故用 OverlayEntry 按底边锚定：面板底贴搜索框顶，与面板实际高度无关；窗口过矮时内部滚动。
+    // 搜索框在列表底部，条件面板需按底边锚定向上展开；与内部菜单使用同一 Navigator，避免菜单被面板遮挡。
     var theme = Theme.of(context);
     var box = context.findRenderObject() as RenderBox;
-    var offset = box.localToGlobal(Offset.zero);
-    var screen = MediaQuery.of(context).size;
+    var overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    var offset = box.localToGlobal(Offset.zero, ancestor: overlay);
     var width = (box.size.width - 24).clamp(260.0, 330.0);
 
-    late OverlayEntry entry;
-    entry = OverlayEntry(builder: (overlayContext) {
-      return Stack(children: [
-        // 点击空白处关闭
-        Positioned.fill(
-            child: GestureDetector(
-                behavior: HitTestBehavior.opaque, onTap: () => entry.remove(), child: const SizedBox.shrink())),
-        Positioned(
-            left: offset.dx + 12,
-            bottom: screen.height - offset.dy + 4,
-            width: width,
-            child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 120),
-                builder: (context, value, child) => Opacity(opacity: value, child: child),
+    showGeneralDialog<void>(
+        context: context,
+        useRootNavigator: false,
+        barrierDismissible: true,
+        barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        barrierColor: Colors.transparent,
+        transitionDuration: const Duration(milliseconds: 120),
+        pageBuilder: (dialogContext, animation, secondaryAnimation) {
+          return Stack(children: [
+            Positioned(
+                left: offset.dx + 12,
+                bottom: overlay.size.height - offset.dy + 4,
+                width: width,
                 child: Material(
                     elevation: 8,
                     borderRadius: BorderRadius.circular(8),
@@ -145,7 +142,7 @@ class SearchState extends State<Search> {
                                     style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
                                     child: SearchConditions(
                                         searchModel: searchModel,
-                                        onClose: () => entry.remove(),
+                                        onClose: () => Navigator.of(dialogContext).pop(),
                                         onSearch: (val) {
                                           setState(() {
                                             searchModel = val;
@@ -153,10 +150,9 @@ class SearchState extends State<Search> {
                                             keywordController.text = searchModel.keyword ?? '';
                                             widget.onSearch?.call(searchModel);
                                           });
-                                        })))))))),
-      ]);
-    });
-    Overlay.of(context).insert(entry);
+                                        }))))))),
+          ]);
+        });
   }
 }
 
