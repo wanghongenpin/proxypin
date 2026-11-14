@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/component/search_condition.dart';
 
 import '../../component/model/search_model.dart';
@@ -34,7 +37,7 @@ class MobileSearchState extends State<MobileSearch> {
   SearchModel searchModel = SearchModel();
   bool _searched = false;
   final TextEditingController _keywordController = TextEditingController();
-  bool _changing = false;
+  Timer? _searchTimer;
 
   @override
   void initState() {
@@ -49,8 +52,24 @@ class MobileSearchState extends State<MobileSearch> {
 
   @override
   dispose() {
+    _searchTimer?.cancel();
     _keywordController.dispose();
     super.dispose();
+  }
+
+  void _submitKeyword() {
+    _searchTimer = null;
+    if (!_searched) {
+      searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
+    }
+    widget.onSearch?.call(searchModel);
+  }
+
+  void _clearKeyword() {
+    _searchTimer?.cancel();
+    _keywordController.clear();
+    setState(() => searchModel.keyword = '');
+    _submitKeyword();
   }
 
   @override
@@ -64,23 +83,20 @@ class MobileSearchState extends State<MobileSearch> {
             keyboardType: TextInputType.url,
             onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
             onChanged: (val) {
-              searchModel.keyword = val;
-              if (!_changing) {
-                _changing = true;
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  _changing = false;
-                  if (!_searched) {
-                    searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
-                  }
-                  widget.onSearch?.call(searchModel);
-                });
-              }
+              setState(() => searchModel.keyword = val);
+              _searchTimer ??= Timer(const Duration(milliseconds: 500), _submitKeyword);
             },
             decoration: InputDecoration(
                 border: InputBorder.none,
                 prefixIcon: InkWell(
                     onTap: showSearch,
                     child: Icon(Icons.search, color: _searched ? Colors.green : Theme.of(context).colorScheme.primary)),
+                suffixIcon: _keywordController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: AppLocalizations.of(context)?.clearSearch,
+                        onPressed: _clearKeyword,
+                        icon: const Icon(Icons.close)),
                 hintText: 'Search')));
   }
 
