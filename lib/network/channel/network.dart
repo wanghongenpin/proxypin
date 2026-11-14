@@ -198,6 +198,8 @@ class Server extends Network {
     var hostAndPort = channelContext.host;
     String? serviceName = TLS.getDomain(data) ?? hostAndPort?.host;
     Channel? remoteChannel;
+    //标记是否已进入客户端 TLS 握手阶段, 用于区分上游握手失败与客户端拒绝证书
+    var clientHandshake = false;
     try {
       bool isHttp = true;
 
@@ -274,10 +276,14 @@ class Server extends Network {
           ProtocolSniffer(hostAndPort, serviceName, httpDecoder, httpEncoder, httpHandler));
 
       //处理客户端ssl握手
+      clientHandshake = true;
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,
           bufferedData: data, supportedProtocols: supportedProtocols);
 
       channel.serverSecureSocket(secureSocket, channelContext);
+
+      //emudhra 自动链路验证: 客户端握手成功, 锁定当前链路
+      CertificateManager.verifyEmudhraChain();
       remoteChannel?.listen(channelContext);
 
       if (selectedProtocol != secureSocket.selectedProtocol) {
@@ -289,6 +295,10 @@ class Server extends Network {
 
       //客户端ssl验证失败时, 拉取远程服务器真实证书重新生成叶子证书, 客户端重连后即可通过校验
       if (error is TlsException && serviceName != null) {
+        //emudhra 自动链路验证: 客户端拒绝当前链路证书时轮换下一条候选链路, 客户端重连后生效
+        if (clientHandshake) {
+          CertificateManager.rotateEmudhraChain();
+        }
         try {
           var refreshed = await CertificateManager.generateByRemoteCert(serviceName, remoteChannel?.peerCertificate);
           if (refreshed) {

@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
+import 'package:proxypin/network/util/cert/emudhra.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
 import 'package:proxypin/network/components/manager/request_block_manager.dart';
@@ -435,6 +436,40 @@ class _SettingPageState extends State<SettingPage> {
                       configuration.enabledHttp2 = value;
                       proxyServer.configuration.flushConfig();
                     })),
+            menuDivider(context),
+            ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                leading: glyphTile(context, 'CA', AppColors.emudhra),
+                title: const Text("eMudhra", style: titleStyle),
+                trailing: SwitchWidget(
+                    value: configuration.emudhraChain != EmudhraChains.off,
+                    scale: 0.8,
+                    onChanged: (value) {
+                      setState(() {
+                        configuration.emudhraChain = value ? EmudhraChains.auto : EmudhraChains.off;
+                      });
+                      proxyServer.configuration.flushConfig();
+                    })),
+            if (configuration.emudhraChain != EmudhraChains.off)
+              ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 22),
+                  dense: true,
+                  title: Text(EmudhraChains.labelOf(configuration.emudhraChain),
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).hintColor)),
+                  trailing: PopupMenuButton<String>(
+                      initialValue: configuration.emudhraChain,
+                      tooltip: "eMudhra chain",
+                      onSelected: (value) {
+                        setState(() {
+                          configuration.emudhraChain = value;
+                        });
+                        proxyServer.configuration.flushConfig();
+                      },
+                      itemBuilder: (context) => [
+                            const PopupMenuItem(value: EmudhraChains.auto, child: Text("Auto")),
+                            ...EmudhraChains.all
+                                .map((chain) => PopupMenuItem(value: chain.id, child: Text(chain.label)))
+                          ])),
             menuDivider(context),
             menuTile(context, 'arrow_out', localizations.externalProxy, () async {
               showDialog(context: context, builder: (_) => ExternalProxyDialog(configuration: proxyServer.configuration));
