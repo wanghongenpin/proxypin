@@ -135,6 +135,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get amoledBlack => 'AMOLED Black';
+
+  @override
   String get language => 'Português';
 
   @override
@@ -1605,6 +1608,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get themeDark => 'Escuro';
+
+  @override
+  String get amoledBlack => 'Preto AMOLED';
 
   @override
   String get language => 'Idioma';

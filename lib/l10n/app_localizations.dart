@@ -358,6 +358,12 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @amoledBlack.
+  ///
+  /// In en, this message translates to:
+  /// **'AMOLED Black'**
+  String get amoledBlack;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

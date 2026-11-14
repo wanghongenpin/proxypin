@@ -135,6 +135,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeDark => '深色';
 
   @override
+  String get amoledBlack => '纯黑模式';
+
+  @override
   String get language => '语言';
 
   @override
@@ -1592,6 +1595,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get themeDark => '深色';
+
+  @override
+  String get amoledBlack => '純黑模式';
 
   @override
   String get language => '語言';

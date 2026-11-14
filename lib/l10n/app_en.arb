@@ -41,6 +41,7 @@
   "themeColor": "Theme Color",
   "themeLight": "Light",
   "themeDark": "Dark",
+  "amoledBlack": "AMOLED Black",
   "language": "Language",
   "autoStartup": "Auto Start Recording Traffic",
   "autoStartupDescribe": "Automatically start recording traffic when the program starts",

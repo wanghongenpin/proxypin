@@ -51,13 +51,15 @@ class ColorMapping {
 class ThemeModel {
   ThemeMode mode;
   bool useMaterial3;
+  bool useAmoled;
   String color = "Blue";
 
-  ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true});
+  ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true, this.useAmoled = false});
 
-  ThemeModel copy({ThemeMode? mode, bool? useMaterial3}) => ThemeModel(
+  ThemeModel copy({ThemeMode? mode, bool? useMaterial3, bool? useAmoled}) => ThemeModel(
         mode: mode ?? this.mode,
         useMaterial3: useMaterial3 ?? this.useMaterial3,
+        useAmoled: useAmoled ?? this.useAmoled,
       );
 
   Color get themeColor => ColorMapping.colors[color] ?? Colors.blue;
@@ -171,6 +173,16 @@ class AppConfiguration {
     flushConfig();
   }
 
+  /// 深色模式下使用 AMOLED 纯黑背景
+  bool get useAmoled => _theme.useAmoled;
+
+  set useAmoled(bool value) {
+    if (value == useAmoled) return;
+    _theme.useAmoled = value;
+    globalChange.value = !globalChange.value;
+    flushConfig();
+  }
+
   Color get themeColor => _theme.themeColor;
 
   set setThemeColor(String colorName) {
@@ -224,7 +236,8 @@ class AppConfiguration {
       Map<String, dynamic> config = jsonDecode(json);
       var mode =
           ThemeMode.values.firstWhere((element) => element.name == config['mode'], orElse: () => ThemeMode.system);
-      _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
+      _theme =
+          ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true, useAmoled: config['useAmoled'] ?? false);
       _theme.color = config['themeColor'] ?? "Blue";
 
       upgradeNoticeV40 = config['upgradeNoticeV40'] ?? true;
@@ -290,6 +303,7 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
+      'useAmoled': _theme.useAmoled,
       'upgradeNoticeV40': upgradeNoticeV40,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,

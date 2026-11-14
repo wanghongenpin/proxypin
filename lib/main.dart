@@ -119,6 +119,7 @@ class FluentApp extends StatelessWidget {
   ThemeData theme(Brightness brightness) {
     bool useMaterial3 = appConfiguration.useMaterial3;
     bool isDark = brightness == Brightness.dark;
+    bool useAmoled = isDark && appConfiguration.useAmoled;
 
     Color? themeColor = isDark ? appConfiguration.themeColor : appConfiguration.themeColor;
     Color? cardColor = isDark ? Color(0XFF3C3C3C) : Colors.white;
@@ -154,13 +155,17 @@ class FluentApp extends StatelessWidget {
       colorScheme = colorScheme.copyWith(
         // 默认蓝（设计稿 #4A6CF7）在深底上偏暗，切换为暗黑设计稿 --primary #5D7CFA；用户自选主题色不干预
         primary: appConfiguration.themeColor == const Color(0xFF4A6CF7) ? DarkPalette.primary : null,
-        surface: DarkPalette.panel,
+        surface: useAmoled ? Colors.black : DarkPalette.panel,
         onSurface: DarkPalette.text1,
         onSurfaceVariant: DarkPalette.text2,
         outlineVariant: DarkPalette.border,
-        surfaceContainer: DarkPalette.panel,
-        surfaceContainerHigh: DarkPalette.panel,
-        surfaceContainerLow: DarkPalette.bg,
+        surfaceDim: useAmoled ? Colors.black : null,
+        surfaceBright: useAmoled ? Colors.black : null,
+        surfaceContainerLowest: useAmoled ? Colors.black : null,
+        surfaceContainerLow: useAmoled ? Colors.black : DarkPalette.bg,
+        surfaceContainer: useAmoled ? Colors.black : DarkPalette.panel,
+        surfaceContainerHigh: useAmoled ? Colors.black : DarkPalette.panel,
+        surfaceContainerHighest: useAmoled ? Colors.black : DarkPalette.panel,
       );
     }
 
@@ -172,7 +177,8 @@ class FluentApp extends StatelessWidget {
           scaffoldBackgroundColor: Platforms.isMobile() ? Colors.white : const Color(0xFFF5F6F8),
           dividerColor: const Color(0xFFE4E6EB));
     } else {
-      themeData = themeData.copyWith(scaffoldBackgroundColor: DarkPalette.bg, dividerColor: DarkPalette.border);
+      themeData = themeData.copyWith(
+          scaffoldBackgroundColor: useAmoled ? Colors.black : DarkPalette.bg, dividerColor: DarkPalette.border);
     }
 
     if (!appConfiguration.useMaterial3) {
@@ -195,8 +201,28 @@ class FluentApp extends StatelessWidget {
       themeData = themeData.useSystemChineseFont();
     }
 
+    if (useAmoled) {
+      themeData = themeData.copyWith(
+        canvasColor: Colors.black,
+        cardColor: Colors.black,
+        appBarTheme: themeData.appBarTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
+        cardTheme: themeData.cardTheme.copyWith(color: Colors.black, surfaceTintColor: Colors.black),
+        bottomAppBarTheme: themeData.bottomAppBarTheme.copyWith(color: Colors.black, surfaceTintColor: Colors.black),
+        bottomSheetTheme:
+            themeData.bottomSheetTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
+        drawerTheme: themeData.drawerTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
+        popupMenuTheme:
+            themeData.popupMenuTheme.copyWith(color: Colors.black, surfaceTintColor: Colors.black),
+        navigationBarTheme:
+            themeData.navigationBarTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
+        navigationRailTheme: themeData.navigationRailTheme.copyWith(backgroundColor: Colors.black),
+      );
+    }
+
     return themeData.copyWith(
-        dialogTheme:
-            themeData.dialogTheme.copyWith(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+        dialogTheme: themeData.dialogTheme.copyWith(
+            backgroundColor: useAmoled ? Colors.black : null,
+            surfaceTintColor: useAmoled ? Colors.black : null,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
   }
 }

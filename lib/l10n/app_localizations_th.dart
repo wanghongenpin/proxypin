@@ -135,6 +135,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get themeDark => 'มืด';
 
   @override
+  String get amoledBlack => 'สีดำ AMOLED';
+
+  @override
   String get language => 'ภาษา';
 
   @override

@@ -135,6 +135,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get themeDark => 'Tối';
 
   @override
+  String get amoledBlack => 'Đen AMOLED';
+
+  @override
   String get language => 'Ngôn ngữ';
 
   @override

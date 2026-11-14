@@ -225,6 +225,7 @@
   "theme": "Tema",
   "themeColor": "Cor do tema",
   "themeDark": "Escuro",
+  "amoledBlack": "Preto AMOLED",
   "themeLight": "Claro",
   "time": "Hora",
   "timeAsc": "Crescente por tempo",

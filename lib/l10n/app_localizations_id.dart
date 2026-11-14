@@ -135,6 +135,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get themeDark => 'Gelap';
 
   @override
+  String get amoledBlack => 'Hitam AMOLED';
+
+  @override
   String get language => 'Bahasa';
 
   @override

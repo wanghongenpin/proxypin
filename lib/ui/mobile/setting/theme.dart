@@ -48,14 +48,30 @@ class MobileThemeSetting extends StatelessWidget {
             PopupMenuItem(
                 child:
                     ListTile(trailing: const Icon(Icons.cached), dense: true, title: Text(localizations.followSystem)),
-                onTap: () => appConfiguration.themeMode = ThemeMode.system),
+                onTap: () {
+                  appConfiguration.useAmoled = false;
+                  appConfiguration.themeMode = ThemeMode.system;
+                }),
             PopupMenuItem(
                 child: ListTile(trailing: const Icon(Icons.sunny), dense: true, title: Text(localizations.themeLight)),
-                onTap: () => appConfiguration.themeMode = ThemeMode.light),
+                onTap: () {
+                  appConfiguration.useAmoled = false;
+                  appConfiguration.themeMode = ThemeMode.light;
+                }),
             PopupMenuItem(
                 child: ListTile(
                     trailing: const Icon(Icons.nightlight_outlined), dense: true, title: Text(localizations.themeDark)),
-                onTap: () => appConfiguration.themeMode = ThemeMode.dark),
+                onTap: () {
+                  appConfiguration.useAmoled = false;
+                  appConfiguration.themeMode = ThemeMode.dark;
+                }),
+            PopupMenuItem(
+                child: ListTile(
+                    trailing: const Icon(Icons.brightness_2), dense: true, title: Text(localizations.amoledBlack)),
+                onTap: () {
+                  appConfiguration.useAmoled = true;
+                  appConfiguration.themeMode = ThemeMode.dark;
+                }),
           ];
         },
         child: ListTile(

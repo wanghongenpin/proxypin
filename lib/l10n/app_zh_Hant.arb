@@ -39,6 +39,7 @@
   "followSystem": "跟隨系統",
   "themeLight": "淺色",
   "themeDark": "深色",
+  "amoledBlack": "純黑模式",
   "language": "語言",
   "autoStartup": "自動開啟抓包",
   "autoStartupDescribe": "程式啟動時自動開始記錄流量",
