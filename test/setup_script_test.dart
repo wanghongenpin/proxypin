@@ -91,8 +91,7 @@ command = "xxx"
       expect(toml, contains('[mcp_servers.proxypin]'), reason: 'desktop section preserved');
       expect(toml, contains('/Applications/ProxyPin.app'), reason: 'desktop command preserved');
       expect(toml, contains('[mcp_servers.other]'), reason: 'unrelated section preserved');
-      expect('[mcp_servers.proxypin_mobile]'.allMatches(toml).length, 1,
-          reason: 'mobile section unique across reruns');
+      expect('[mcp_servers.proxypin_mobile]'.allMatches(toml).length, 1, reason: 'mobile section unique across reruns');
       expect(toml, contains('url = "$endpoint"'));
       expect(toml, contains('Authorization = "Bearer $token"'));
 
@@ -110,10 +109,63 @@ command = "xxx"
         expect(mobile['url'], endpoint);
         expect((mobile['headers'] as Map)['Authorization'], 'Bearer $token');
 
-        var gemini = jsonDecode(await File(
-                '$home${Platform.pathSeparator}.gemini${Platform.pathSeparator}settings.json')
-            .readAsString()) as Map<String, dynamic>;
+        var gemini = jsonDecode(
+            await File('$home${Platform.pathSeparator}.gemini${Platform.pathSeparator}settings.json')
+                .readAsString()) as Map<String, dynamic>;
         expect((gemini['mcpServers'] as Map).containsKey('proxypin_mobile'), isTrue);
+      }
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test('shell script configures clients without credentials when token is empty', () async {
+    var tmp = await Directory.systemTemp.createTemp('proxypin_setup_no_auth');
+    try {
+      var home = '${tmp.path}${Platform.pathSeparator}home';
+      var bin = '${tmp.path}${Platform.pathSeparator}bin';
+      await Directory(home).create(recursive: true);
+      await Directory(bin).create(recursive: true);
+      var cliLog = '${tmp.path}${Platform.pathSeparator}cli.log';
+      await _writeExec('$bin/claude', '''
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$cliLog"
+exit 0
+''');
+      await _writeExec('$bin/codex', '#!/bin/sh\nexit 0\n');
+      var codexToml = File('$home${Platform.pathSeparator}.codex${Platform.pathSeparator}config.toml');
+      await codexToml.parent.create();
+      await codexToml.writeAsString('''
+[mcp_servers.proxypin_mobile]
+url = "http://old"
+[mcp_servers.proxypin_mobile.http_headers]
+Authorization = "Bearer old"
+''');
+      var cursorJson = File('$home${Platform.pathSeparator}.cursor${Platform.pathSeparator}mcp.json');
+      await cursorJson.parent.create();
+      await cursorJson.writeAsString('{}');
+      const endpoint = 'http://192.168.1.23:9127/mcp';
+      var scriptFile = File('${tmp.path}${Platform.pathSeparator}setup.sh');
+      await scriptFile.writeAsString(McpSetupScript.shell(endpoint: endpoint, token: null));
+      var env = {'HOME': home, 'PATH': '$bin:${Platform.environment['PATH']}'};
+      for (var i = 0; i < 2; i++) {
+        var result = await Process.run('sh', [scriptFile.path], environment: env);
+        expect(result.exitCode, 0, reason: result.stderr.toString());
+      }
+
+      var log = await File(cliLog).readAsString();
+      expect(log, contains('mcp add proxypin_mobile -s user --transport http $endpoint'));
+      expect(log, isNot(contains('--header')));
+      var toml = await codexToml.readAsString();
+      expect('[mcp_servers.proxypin_mobile]'.allMatches(toml).length, 1);
+      expect(toml, contains('url = "$endpoint"'));
+      expect(toml, isNot(contains('http_headers')));
+      expect(toml, isNot(contains('Authorization')));
+      if (await _hasCommand('python3')) {
+        var cursor = jsonDecode(await cursorJson.readAsString());
+        var mobile = cursor['mcpServers']['proxypin_mobile'];
+        expect(mobile['url'], endpoint);
+        expect(mobile.containsKey('headers'), isFalse);
       }
     } finally {
       await tmp.delete(recursive: true);
@@ -126,6 +178,11 @@ command = "xxx"
     expect(ps, contains("'proxypin_mobile'"));
     expect(ps, contains('http://1.2.3.4:9/mcp'));
     expect(ps, contains('t0ken'));
+
+    var noAuth = McpSetupScript.powershell(endpoint: 'http://1.2.3.4:9/mcp', token: null);
+    expect(noAuth, contains("\$Token = ''"));
+    expect(noAuth, contains('if (\$Token)'));
+    expect(noAuth, isNot(contains('Bearer null')));
   });
 }
 

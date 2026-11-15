@@ -2650,6 +2650,18 @@ abstract class AppLocalizations {
   /// **'Access Token'**
   String get mcpAccessToken;
 
+  /// No description provided for @mcpAuthEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Require access token'**
+  String get mcpAuthEnabled;
+
+  /// No description provided for @mcpAuthEnabledDescribe.
+  ///
+  /// In en, this message translates to:
+  /// **'When disabled, clients can connect without credentials. Disable only on a trusted device or network.'**
+  String get mcpAuthEnabledDescribe;
+
   /// No description provided for @mcpLanGuide.
   ///
   /// In en, this message translates to:

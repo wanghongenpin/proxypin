@@ -26,12 +26,12 @@ class McpListenOptions {
 
   McpListenOptions._(this.address, this.requiresBearerToken);
 
-  factory McpListenOptions.resolve({required bool isMobile, Object? configuredAddress}) {
+  factory McpListenOptions.resolve({required bool isMobile, Object? configuredAddress, bool authEnabled = true}) {
     if (!isMobile) return McpListenOptions._(InternetAddress.loopbackIPv4, false);
 
     return McpListenOptions._(
       normalizeAddress(configuredAddress) == loopbackAddress ? InternetAddress.loopbackIPv4 : InternetAddress.anyIPv4,
-      true,
+      authEnabled,
     );
   }
 

@@ -42,12 +42,26 @@ void main() {
       expect(options.requiresBearerToken, isTrue);
     });
 
+    test('mobile can disable bearer authentication for both bind addresses', () {
+      for (var address in [McpListenOptions.loopbackAddress, McpListenOptions.anyAddress]) {
+        var options = McpListenOptions.resolve(isMobile: true, configuredAddress: address, authEnabled: false);
+
+        expect(options.requiresBearerToken, isFalse);
+      }
+    });
+
     test('desktop always uses unauthenticated loopback', () {
       for (var address in [McpListenOptions.loopbackAddress, McpListenOptions.anyAddress, 'invalid']) {
-        var options = McpListenOptions.resolve(isMobile: false, configuredAddress: address);
+        for (var authEnabled in [true, false]) {
+          var options = McpListenOptions.resolve(
+            isMobile: false,
+            configuredAddress: address,
+            authEnabled: authEnabled,
+          );
 
-        expect(options.address.address, InternetAddress.loopbackIPv4.address);
-        expect(options.requiresBearerToken, isFalse);
+          expect(options.address.address, InternetAddress.loopbackIPv4.address);
+          expect(options.requiresBearerToken, isFalse);
+        }
       }
     });
   });

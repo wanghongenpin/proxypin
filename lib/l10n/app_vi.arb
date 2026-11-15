@@ -226,6 +226,7 @@
   "themeColor": "Màu giao diện",
   "themeDark": "Tối",
   "amoledBlack": "Đen AMOLED",
+  "mcpAuthEnabled": "Yêu cầu mã truy cập",
   "themeLight": "Sáng",
   "time": "Thời gian",
   "timeAsc": "Tăng dần theo thời gian",

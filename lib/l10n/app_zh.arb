@@ -430,6 +430,8 @@
   "mcpListenAddressDescribe": "127.0.0.1 仅允许本设备连接；0.0.0.0 允许本设备及局域网内的客户端连接。",
   "mcpPortInvalid": "请输入 1024-65535 之间的有效端口",
   "mcpAccessToken": "访问令牌",
+  "mcpAuthEnabled": "启用访问令牌鉴权",
+  "mcpAuthEnabledDescribe": "关闭后客户端无需凭据即可连接，请仅在可信设备或网络环境中关闭。",
   "mcpLanGuide": "保持手机与电脑连接同一 Wi-Fi，在电脑终端运行下面任一命令，或将配置粘贴到 AI 客户端的 MCP 设置中。",
   "mcpLanTokenNote": "该令牌拥有 MCP 工具的完整访问权限。点击令牌旁的刷新按钮可吊销并重新生成。",
   "mcpOtherClients": "其他 AI 客户端",

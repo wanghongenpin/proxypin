@@ -48,6 +48,30 @@ void main() {
       await server.stop();
     }
   });
+  test('no-token setup scripts allow unauthenticated download without empty credentials', () async {
+    var server = McpHttpServer(
+      mcp: McpServer(store: FlowStore(), redactEnabled: () => true),
+      address: InternetAddress.loopbackIPv4,
+    );
+    await server.start(0);
+    final client = HttpClient();
+    try {
+      for (var script in ['setup.sh', 'setup.ps1']) {
+        var request = await client.getUrl(Uri.parse('http://127.0.0.1:${server.port}/mcp/$script'));
+        var response = await request.close();
+        var body = await response.transform(utf8.decoder).join();
+        expect(response.statusCode, 200);
+        if (script == 'setup.sh') {
+          expect(body, contains('if [ -n "\$TOKEN" ]'));
+          expect(body, contains('TOKEN=""'));
+        } else {
+          expect(body, contains('if (\$Token)'));
+          expect(body, contains("\$Token = ''"));
+        }
+      }
+    } finally {
+      client.close(force: true);
+      await server.stop();
+    }
+  });
 }
-
-int math_min(int a, int b) => a < b ? a : b;

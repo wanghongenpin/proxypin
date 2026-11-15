@@ -385,6 +385,8 @@
   "weakNetworkLossRate": "遺失率",
   "weakNetworkRules": "URL 規則",
   "mcpServiceDescribe": "啟動本機 HTTP 伺服器，讓 Model Context Protocol (MCP) 與 Claude 等 AI 工具通訊。",
+  "mcpAuthEnabled": "啟用存取權杖驗證",
+  "mcpAuthEnabledDescribe": "關閉後用戶端無需憑證即可連線，請僅在可信裝置或網路環境中關閉。",
   "replayTasks": "重放任務",
   "clearFinished": "清除已完成",
   "statusRunning": "執行中",

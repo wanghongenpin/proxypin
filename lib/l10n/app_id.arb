@@ -226,6 +226,7 @@
   "themeColor": "Warna tema",
   "themeDark": "Gelap",
   "amoledBlack": "Hitam AMOLED",
+  "mcpAuthEnabled": "Wajibkan token akses",
   "themeLight": "Terang",
   "time": "Waktu",
   "timeAsc": "Menaik berdasarkan waktu",

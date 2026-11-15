@@ -354,6 +354,26 @@ void main() {
     });
   }
 
+  test('mcp http transport: LAN accepts requests when authentication is disabled', () async {
+    var http = McpHttpServer(
+      mcp: McpServer(store: FlowStore(), redactEnabled: () => true),
+      address: InternetAddress.anyIPv4,
+    );
+    await http.start(0);
+    final client = HttpClient();
+    try {
+      final req = await client.postUrl(Uri.parse('http://127.0.0.1:${http.port}/mcp'));
+      req.headers.contentType = ContentType.json;
+      req.write(jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize', 'params': {}}));
+      final resp = await req.close();
+      await resp.drain<void>();
+      check(resp.statusCode == 200, 'LAN http returns 200 without token when auth is disabled');
+    } finally {
+      client.close(force: true);
+      await http.stop();
+    }
+  });
+
   test('mcp write tools: rewrite rules', () async {
     var store = FlowStore();
     var actions = McpActions(store: store);

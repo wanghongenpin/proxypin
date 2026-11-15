@@ -27,7 +27,7 @@ import 'setup_script.dart';
 /// MCP Streamable HTTP 传输（无状态，单 JSON 响应）。
 ///
 /// 桌面仅绑定 loopback 且不鉴权，AI 客户端直接以 HTTP 连接（无额外桥进程）；
-/// 移动端可绑定 loopback 或所有网卡，两种模式都要求 Bearer token。
+/// 移动端可绑定 loopback 或所有网卡，可选择是否要求 Bearer token。
 ///
 /// @author wanghongen
 class McpHttpServer {
@@ -158,8 +158,8 @@ class McpHttpServer {
     var endpoint = 'http://$host$path';
     var isShell = req.uri.path.endsWith('.sh');
     var script = isShell
-        ? McpSetupScript.shell(endpoint: endpoint, token: token ?? '')
-        : McpSetupScript.powershell(endpoint: endpoint, token: token ?? '');
+        ? McpSetupScript.shell(endpoint: endpoint, token: token)
+        : McpSetupScript.powershell(endpoint: endpoint, token: token);
     req.response.statusCode = HttpStatus.ok;
     // 显式 utf-8 charset，并直接写字节：HttpResponse.write 默认按 Latin-1 编码，
     // 脚本中一旦出现非 ASCII 字符（注释）会抛异常导致 500 空响应。

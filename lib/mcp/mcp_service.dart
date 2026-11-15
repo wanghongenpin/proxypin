@@ -34,7 +34,7 @@ import 'package:proxypin/ui/configuration.dart';
 ///
 /// 作为 [EventListener] 挂到 [ProxyServer.listeners]，与 UI 同源接收流量，
 /// 因而平台无关且不依赖具体列表容器。桌面端仅绑定 127.0.0.1、不做鉴权；
-/// 移动端可选绑定 127.0.0.1 或 0.0.0.0，两种模式都要求 Bearer token。所有平台都优先固定
+/// 移动端可选绑定 127.0.0.1 或 0.0.0.0，默认要求 Bearer token，也可由用户关闭鉴权。所有平台都优先固定
 /// [defaultPort]（可经 cfg.mcpPort 自定义），被占用时才回退到系统随机端口，
 /// 保证 AI 客户端一次配置、重启 App 后无需改动。AI 客户端直接以 HTTP 连接，无需额外桥进程。
 ///
@@ -75,7 +75,7 @@ class McpService {
 
   int? get port => _http?.port;
 
-  /// 移动端仅本机和局域网模式的访问 token；桌面 loopback 模式为 null
+  /// 移动端仅本机和局域网模式的访问 token；桌面或关闭鉴权时为 null。
   String? get token => _http?.token;
 
   String? get bindAddress => _http?.address.address;
@@ -124,10 +124,11 @@ class McpService {
       redactEnabled: () => cfg.mcpRedactEnabled,
       extraTools: actions.tools(),
     );
-    // 移动端可选仅本机或局域网访问，两种模式都要求 Bearer token；桌面仅 loopback。
+    // 移动端可选仅本机或局域网访问，并默认要求 Bearer token；桌面仅 loopback。
     var listen = McpListenOptions.resolve(
       isMobile: Platform.isAndroid || Platform.isIOS,
       configuredAddress: cfg.mcpBindAddress,
+      authEnabled: cfg.mcpAuthEnabled,
     );
     String? token;
     if (listen.requiresBearerToken) {

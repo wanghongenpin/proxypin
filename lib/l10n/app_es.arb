@@ -226,6 +226,7 @@
   "themeColor": "Color del tema",
   "themeDark": "Oscuro",
   "amoledBlack": "Negro AMOLED",
+  "mcpAuthEnabled": "Requerir token de acceso",
   "themeLight": "Claro",
   "time": "Hora",
   "timeAsc": "Ascendente por tiempo",

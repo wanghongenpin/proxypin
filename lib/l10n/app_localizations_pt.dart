@@ -1318,6 +1318,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get mcpAccessToken => 'Access Token';
 
   @override
+  String get mcpAuthEnabled => 'Exigir token de acesso';
+
+  @override
+  String get mcpAuthEnabledDescribe =>
+      'When disabled, clients can connect without credentials. Disable only on a trusted device or network.';
+
+  @override
   String get mcpLanGuide =>
       'Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer\'s terminal, or paste the configuration into your AI client\'s MCP settings.';
 

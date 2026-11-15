@@ -226,6 +226,7 @@
   "themeColor": "สีธีม",
   "themeDark": "มืด",
   "amoledBlack": "สีดำ AMOLED",
+  "mcpAuthEnabled": "ต้องใช้โทเค็นการเข้าถึง",
   "themeLight": "สว่าง",
   "time": "เวลา",
   "timeAsc": "เวลาเพิ่มขึ้น",
