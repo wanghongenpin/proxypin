@@ -247,6 +247,41 @@ void main() {
     check(names.length == 9 + actionNames.length, 'exposes builtin + action tools, got ${names.length}');
   });
 
+  test('flow exports honor the redaction setting and explicit tool argument', () async {
+    var flow = buildFlow(responseSize: 10);
+    var store = FlowStore()..backfill([flow]);
+
+    Future<String> export(String tool, {required bool setting, bool? redact}) async {
+      var mcp = McpServer(store: store, redactEnabled: () => setting);
+      var res = await mcp.handle({
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'tools/call',
+        'params': {
+          'name': tool,
+          'arguments': {'id': flow.requestId, if (redact != null) 'redact': redact},
+        },
+      });
+      var payload = jsonDecode(res!['result']['content'][0]['text'] as String) as Map;
+      return tool == 'get_flow_detail' ? jsonEncode(payload['request']['headers']) : payload['curl'] as String;
+    }
+
+    for (var tool in ['get_flow_detail', 'export_flow_curl']) {
+      var forced = await export(tool, setting: true, redact: false);
+      check(!forced.contains('secret-token'), '$tool: enabled setting cannot be bypassed');
+
+      var raw = await export(tool, setting: false);
+      check(raw.contains('Bearer secret-token'), '$tool: disabled setting returns original headers');
+
+      var explicitRaw = await export(tool, setting: false, redact: false);
+      check(explicitRaw.contains('Bearer secret-token'), '$tool: explicit redact:false returns original headers');
+
+      var explicitRedacted = await export(tool, setting: false, redact: true);
+      check(explicitRedacted.contains('***redacted***'), '$tool: explicit redact:true still redacts');
+      check(!explicitRedacted.contains('secret-token'), '$tool: explicit redact:true hides token');
+    }
+  });
+
   test('generate_code honors redaction hard gate like other tools', () async {
     var flow = buildFlow(responseSize: 10);
     var store = FlowStore()..backfill([flow]);
@@ -276,9 +311,49 @@ void main() {
     var raw = await generatedCode(setting: false, arg: null);
     check(raw.contains('secret-token'), 'user-disabled redaction exposes token');
 
+    // 设置关闭但显式 redact:false：明确请求原文时也返回原文
+    var explicitRaw = await generatedCode(setting: false, arg: false);
+    check(explicitRaw.contains('secret-token'), 'explicit redact:false exposes token');
+
     // 设置关闭但显式 redact:true：仍脱敏
     var explicit = await generatedCode(setting: false, arg: true);
     check(!explicit.contains('secret-token'), 'explicit redact:true honored');
+  });
+
+  test('send_request response headers follow the redaction setting', () async {
+    var server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) {
+      request.response.headers.set('Set-Cookie', 'session=secret-cookie');
+      request.response.write('ok');
+      request.response.close();
+    });
+
+    Future<Map> send({required bool setting}) async {
+      var store = FlowStore();
+      var actions = McpActions(store: store, redactEnabled: () => setting);
+      var mcp = McpServer(store: store, redactEnabled: () => setting, extraTools: actions.tools());
+      var res = await mcp.handle({
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'tools/call',
+        'params': {
+          'name': 'send_request',
+          'arguments': {'url': 'http://127.0.0.1:${server.port}/'},
+        },
+      });
+      var payload = jsonDecode(res!['result']['content'][0]['text'] as String) as Map;
+      check(res['result']['isError'] == false, 'send_request succeeds');
+      return payload['headers'] as Map;
+    }
+
+    try {
+      var redacted = await send(setting: true);
+      check(!jsonEncode(redacted).contains('secret-cookie'), 'enabled setting redacts fresh response cookies');
+      var raw = await send(setting: false);
+      check(jsonEncode(raw).contains('secret-cookie'), 'disabled setting preserves fresh response cookies');
+    } finally {
+      await server.close(force: true);
+    }
   });
 
   test('mcp http transport: loopback initialize', () async {

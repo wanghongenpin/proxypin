@@ -480,21 +480,20 @@ class RequestPageState extends State<RequestPage> {
     ]);
   }
 
-  /// 设计稿：运行中 = 绿底白 ⏹，已停止 = 灰底白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
+  /// 主题色底，运行中 = 白 ⏹，已停止 = 白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
   Widget _launchActionButton() {
     return ValueListenableBuilder<ValueWrap<bool>>(
         valueListenable: SocketLaunch.startStatus,
         builder: (context, status, _) {
-          var running = status.get() == true;
           var theme = Theme.of(context);
-          // 46px 正圆右下悬浮（设计稿 .p-fab）；配色用户拍板：运行=绿 #1F8B4C / 停止=主题主色，图标恒白
+          // 46px 正圆右下悬浮（设计稿 .p-fab）；启停统一主题主色，图标恒白，以图标区分状态
           return SizedBox(
             width: 46,
             height: 46,
             child: FloatingActionButton(
               onPressed: null,
               shape: const CircleBorder(),
-              backgroundColor: running ? okColor(theme) : theme.colorScheme.primary,
+              backgroundColor: theme.colorScheme.primary,
               child: SocketLaunch(
                 proxyServer: proxyServer,
                 size: 22,
