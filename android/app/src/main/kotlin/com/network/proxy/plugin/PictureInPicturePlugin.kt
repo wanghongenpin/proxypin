@@ -26,6 +26,7 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
     var proxyPort: Int? = null
     var allowApps: ArrayList<String>? = null
     var disallowApps: ArrayList<String>? = null
+    var setSystemProxy = true
 
     ///广播事件接受者
     private val vpnBroadcastReceiver = object : BroadcastReceiver() {
@@ -45,7 +46,14 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
             if (isRunning) {
                 activity.startService(ProxyVpnService.stopVpnIntent(activity))
             } else {
-                val prepareVpn = ProxyVpnService.prepareVpn(activity, proxyHost!!, proxyPort!!, allowApps, disallowApps)
+                val prepareVpn = ProxyVpnService.prepareVpn(
+                    activity,
+                    proxyHost!!,
+                    proxyPort!!,
+                    allowApps,
+                    disallowApps,
+                    setSystemProxy
+                )
                 if (prepareVpn) {
                     activity.startService(
                         ProxyVpnService.startVpnIntent(
@@ -53,7 +61,8 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
                             proxyHost,
                             proxyPort,
                             allowApps,
-                            disallowApps
+                            disallowApps,
+                            setSystemProxy
                         )
                     )
                 }
@@ -82,6 +91,7 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
                         proxyPort = call.argument<Int>("proxyPort")
                         allowApps = call.argument<ArrayList<String>>("allowApps")
                         disallowApps = call.argument<ArrayList<String>>("disallowApps")
+                        setSystemProxy = call.argument<Boolean>("setSystemProxy") ?: true
 
                         val param = updatePictureInPictureParams(ProxyVpnService.isRunning)
                         if (!registerBroadcast) {

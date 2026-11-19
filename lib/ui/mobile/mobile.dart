@@ -331,7 +331,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
       return PictureInPicture.enterPictureInPictureMode(
           Platform.isAndroid ? await localIp() : "127.0.0.1", proxyServer.port,
-          appList: appList, disallowApps: disallowApps);
+          appList: appList, disallowApps: disallowApps, setSystemProxy: proxyServer.configuration.enableSystemProxy);
     }
     return false;
   }
