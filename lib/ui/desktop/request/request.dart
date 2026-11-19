@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:convert';
 
 import 'package:date_format/date_format.dart';
 
-import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/ui/component/context_menu.dart';
@@ -190,6 +188,24 @@ class _RequestWidgetState extends State<RequestWidget> {
     // 内容沿用旧版（类型图标 + 「METHOD path」标题 + 「#编号 时间 - [状态] 类型 大小 耗时」副行 + 右侧 app 图标）。
     // Material+InkWell：hover/水波纹由组件自身处理，不触发整行 setState 重建
     //（之前 MouseRegion+setState 会让图片缩略图每次 hover 都重新解码，闪烁且费性能）。
+    // 行密度来自偏好设置（抓包列表密度）：宽松 / 紧凑 / 极紧凑
+    final metrics = (AppConfiguration.current?.captureRowMetrics ?? const CaptureRowMetrics(
+        leftWithDomain: 12,
+        leftIndent: 26,
+        leftSelection: 6,
+        right: 10,
+        top: 7,
+        bottom: 7,
+        titleSize: 13,
+        metaSize: 11,
+        titleMaxLines: 2,
+        showMeta: true,
+        gap: 3,
+        iconGap: 10,
+        iconWidth: 18,
+        iconSize: 16,
+        imageSize: 19));
+
     return Material(
         color: selected ? primarySoftBg(theme) : Colors.transparent,
         child: InkWell(
@@ -202,43 +218,49 @@ class _RequestWidgetState extends State<RequestWidget> {
             onSecondaryTapDown: (details) => contextualMenu(details),
             hoverColor: rowHoverColor(theme),
             child: Container(
-                padding: EdgeInsets.only(
-                    left: selectedInSelectionMode ? 6 : (widget.displayDomain ? 12 : 26),
-                    right: 10,
-                    top: 7,
-                    bottom: 7),
+                padding: metrics.padding(
+                    displayDomain: widget.displayDomain, selectedInSelectionMode: selectedInSelectionMode),
                 child: Row(children: [
                   if (selectedInSelectionMode) ...[
-                    Icon(Icons.check_box_outlined, size: 18, color: theme.colorScheme.primary),
+                    Icon(Icons.check_box_outlined, size: metrics.iconWidth, color: theme.colorScheme.primary),
                     const SizedBox(width: 4),
                   ],
-                  getIcon(response, color: requestColor),
-                  const SizedBox(width: 10),
+                  getIcon(response,
+                      color: requestColor,
+                      width: metrics.iconWidth,
+                      size: metrics.iconSize,
+                      imageWidth: metrics.imageSize),
+                  SizedBox(width: metrics.iconGap),
                   Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text.rich(
-                        maxLines: 2,
+                        maxLines: metrics.titleMaxLines,
                         overflow: TextOverflow.ellipsis,
                         TextSpan(children: [
                           TextSpan(text: '${request.method.name} '),
                           TextSpan(text: path.fixAutoLines()),
                           if (operationName != null) graphqlOperationSpan(request, fixAutoLines: true)!,
                         ]),
-                        style: TextStyle(fontSize: 13, height: 1.25, color: requestColor)),
-                    const SizedBox(height: 3),
-                    Text.rich(
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        TextSpan(children: [
-                          TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
-                          TextSpan(text: '$time - ', style: TextStyle(fontSize: 11, color: text3Color(theme))),
-                          TextSpan(
-                              text: '[${response?.status.code ?? ''}]',
-                              style: TextStyle(fontSize: 11, color: text3Color(theme))),
-                          TextSpan(
-                              text: '  $contentType $packagesSize ${response?.costTime() ?? ''}',
-                              style: TextStyle(fontSize: 11, color: text3Color(theme))),
-                        ])),
+                        style: TextStyle(fontSize: metrics.titleSize, height: 1.25, color: requestColor)),
+                    if (metrics.showMeta) ...[
+                      SizedBox(height: metrics.gap),
+                      Text.rich(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          TextSpan(children: [
+                            TextSpan(
+                                text: '#${widget.index} ',
+                                style: TextStyle(fontSize: metrics.metaSize, color: Colors.teal)),
+                            TextSpan(
+                                text: '$time - ', style: TextStyle(fontSize: metrics.metaSize, color: text3Color(theme))),
+                            TextSpan(
+                                text: '[${response?.status.code ?? ''}]',
+                                style: TextStyle(fontSize: metrics.metaSize, color: text3Color(theme))),
+                            TextSpan(
+                                text: '  $contentType $packagesSize ${response?.costTime() ?? ''}',
+                                style: TextStyle(fontSize: metrics.metaSize, color: text3Color(theme))),
+                          ])),
+                    ],
                   ])),
                   if (widget.trailing != null) ...[const SizedBox(width: 8), widget.trailing!],
                 ]))));
@@ -551,11 +573,9 @@ class _RequestWidgetState extends State<RequestWidget> {
   Future<void> requestEdit() async {
     var size = MediaQuery.of(context).size;
 
-    await DesktopMultiWindow.createWindow(
-      jsonEncode({'name': 'RequestEditor', 'request': widget.request, 'proxyPort': widget.proxyServer.port}),
-      title: localizations.requestEdit,
-      size: Size(960, size.height),
-    );
+    await MultiWindow.openWindow(localizations.requestEdit, 'RequestEditor',
+        size: Size(960, size.height),
+        args: {'request': widget.request, 'proxyPort': widget.proxyServer.port});
   }
 
   // 新窗口打开详情

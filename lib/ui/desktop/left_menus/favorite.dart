@@ -15,10 +15,9 @@
  */
 
 import 'dart:collection';
-import 'dart:convert';
 
 import 'package:date_format/date_format.dart';
-import 'package:proxypin/ui/component/multi_window_compat.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -287,11 +286,8 @@ class _FavoriteItemState extends State<_FavoriteItem> {
   Future<void> requestEdit(HttpRequest request) async {
     var size = MediaQuery.of(context).size;
 
-    await DesktopMultiWindow.createWindow(
-      jsonEncode({'name': 'RequestEditor', 'request': request}),
-      title: localizations.requestEdit,
-      size: Size(960, size.height),
-    );
+    await MultiWindow.openWindow(localizations.requestEdit, 'RequestEditor',
+        size: Size(960, size.height), args: {'request': request});
   }
 
   //点击事件

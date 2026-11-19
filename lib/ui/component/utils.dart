@@ -116,12 +116,12 @@ TextSpan? graphqlOperationSpan(HttpRequest request, {double? fontSize, bool fixA
   );
 }
 
-Widget getIcon(HttpResponse? response, {Color? color}) {
+Widget getIcon(HttpResponse? response, {Color? color, double width = 18, double size = 16, double? imageWidth}) {
   if (response == null) {
-    return SizedBox(width: 18, child: Icon(Icons.question_mark, size: 16, color: color ?? Colors.green));
+    return SizedBox(width: width, child: Icon(Icons.question_mark, size: size, color: color ?? Colors.green));
   }
   if (response.status.code < 0) {
-    return SizedBox(width: 18, child: Icon(Icons.error, size: 16, color: color ?? Colors.red));
+    return SizedBox(width: width, child: Icon(Icons.error, size: size, color: color ?? Colors.red));
   }
 
   var contentType = response.contentType;
@@ -131,13 +131,12 @@ Widget getIcon(HttpResponse? response, {Color? color}) {
     var body = response.body!;
     return Image.memory(
       body is Uint8List ? body : Uint8List.fromList(body),
-      width: Platforms.isDesktop() ? 19 : 26,
-      errorBuilder: (context, error, stackTrace) => Icon(Icons.image, size: 16, color: color ?? Colors.green),
+      width: imageWidth ?? (Platforms.isDesktop() ? 19 : 26),
+      errorBuilder: (context, error, stackTrace) => Icon(Icons.image, size: size, color: color ?? Colors.green),
     );
   }
 
-  return SizedBox(
-      width: 18, child: Icon(contentMap[contentType] ?? Icons.http, size: 16, color: color ?? Colors.green));
+  return SizedBox(width: width, child: Icon(contentMap[contentType] ?? Icons.http, size: size, color: color ?? Colors.green));
 }
 
 //展示报文大小

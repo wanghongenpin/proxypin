@@ -149,10 +149,16 @@ class RequestRowState extends State<RequestRow> {
 
     var highlightColor = color(url);
 
+    // 行密度来自偏好设置（抓包列表密度）
+    var metrics = AppConfiguration.current?.captureRowMetrics;
+    var titleSize = (metrics?.titleSize ?? 13) + 1;
+
     return GestureDetector(
         onLongPressStart: menu,
         child: ListTile(
           visualDensity: const VisualDensity(vertical: -4),
+          dense: metrics != null && !metrics.showMeta,
+          minVerticalPadding: metrics != null && metrics.top <= 3 ? 0 : 4,
           minLeadingWidth: 5,
           selected: selected ||
               (widget.selectionController.isSelectionMode && widget.selectionController.contains(request.requestId)),
@@ -160,21 +166,26 @@ class RequestRowState extends State<RequestRow> {
           selectedColor: highlightColor,
           leading: rowLeading(),
           title: Text.rich(
-              maxLines: 2,
+              maxLines: metrics?.titleMaxLines ?? 2,
               overflow: TextOverflow.ellipsis,
-              TextSpan(style: const TextStyle(fontSize: 14), children: [
+              TextSpan(style: TextStyle(fontSize: titleSize), children: [
                 TextSpan(text: title.fixAutoLines()),
-                if (operationName != null) graphqlOperationSpan(request, fontSize: 14, fixAutoLines: true)!,
+                if (operationName != null) graphqlOperationSpan(request, fontSize: titleSize, fixAutoLines: true)!,
               ])),
-          subtitle: Text.rich(
-              maxLines: 1,
-              TextSpan(children: [
-                TextSpan(text: '#${widget.index} ', style: const TextStyle(fontSize: 11, color: Colors.teal)),
-                TextSpan(text: subTitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              ])),
+          subtitle: metrics != null && !metrics.showMeta
+              ? null
+              : Text.rich(
+                  maxLines: 1,
+                  TextSpan(children: [
+                    TextSpan(
+                        text: '#${widget.index} ',
+                        style: TextStyle(fontSize: metrics?.metaSize ?? 11, color: Colors.teal)),
+                    TextSpan(text: subTitle, style: TextStyle(fontSize: metrics?.metaSize ?? 11, color: Colors.grey)),
+                  ])),
           trailing: request.protocolVersion == 'MQTT'
               ? const Icon(Icons.hub_outlined, color: Colors.teal)
-              : getIcon(response, color: highlightColor),
+              : getIcon(response,
+                  color: highlightColor, width: metrics?.iconWidth ?? 18, size: metrics?.iconSize ?? 16),
           contentPadding:
               Platform.isIOS ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 3, right: 5),
           onTap: () {

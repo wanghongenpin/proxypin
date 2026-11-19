@@ -11,5 +11,15 @@
   "resume": "Retomar",
   "overview": "Visão geral",
   "mcpAuthEnabled": "Exigir token de acesso"
+,
+  "captureListDensity": "Densidade da lista",
+  "densityComfortable": "Confortável",
+  "densityCompact": "Compacta",
+  "densityDense": "Densa",
+  "codeFont": "Fonte do código",
+  "codeFontFollowUi": "Seguir a fonte da interface",
+  "codeFontSystemMono": "Monoespaçada do sistema",
+  "codeFontCustom": "Fonte personalizada…",
+  "codeFontFamily": "Família da fonte",
+  "codeFontSize": "Tamanho da fonte do código"
 }
-

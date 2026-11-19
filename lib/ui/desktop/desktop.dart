@@ -30,9 +30,12 @@ import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/http/websocket.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/memory_cleanup.dart';
+import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/configuration.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:proxypin/utils/navigator.dart';
 import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/desktop/left_menus/favorite.dart';
 import 'package:proxypin/ui/desktop/left_menus/history.dart';
@@ -117,6 +120,16 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
         logger.e('MCP auto-start failed: $e');
       }));
     }
+    // Linux 上工具/编辑器都以路由形式在主窗口打开（见 MultiWindow.openWindow）
+    MultiWindow.onOpenWindow = (widgetName, args) {
+      final navigator = navigatorHelper.navigatorKey.currentState;
+      if (navigator == null) {
+        return;
+      }
+      navigator.push(MaterialPageRoute(
+          builder: (_) => InAppWindowHost(child: multiWindow('0', {'name': widgetName, ...?args}))));
+    };
+
     panel = NetworkTabController(tabStyle: const TextStyle(fontSize: 12.5), proxyServer: proxyServer);
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((_) {
       if (mounted) {
@@ -240,3 +253,29 @@ class _DesktopHomePagePageState extends State<DesktopHomePage> implements EventL
   }
 }
 
+/// 内嵌（Linux）打开的“子窗口”页面宿主：主窗口是无边框的，路由盖住自绘工具栏后
+/// 就没法拖动窗口了，这里在页面顶部叠一层透明的标题栏拖动区。
+/// 用 translucent 行为，点击仍然落到页面自己的返回/操作按钮上，只有拖动才移动窗口。
+class InAppWindowHost extends StatelessWidget {
+  final Widget child;
+
+  const InAppWindowHost({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      child,
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 40,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onPanStart: (_) => windowManager.startDragging(),
+          child: const SizedBox.expand(),
+        ),
+      ),
+    ]);
+  }
+}
