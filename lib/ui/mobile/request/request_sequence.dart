@@ -49,6 +49,13 @@ class RequestSequence extends StatefulWidget {
 class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliveClientMixin {
   late final MultiSelectListener<String> selectionListener;
 
+  /// Keep the request list position stable while a detail route is open.
+  ///
+  /// Using the route's primary controller here can attach the list to a newly
+  /// created controller after an iOS navigation transition, resetting its
+  /// offset to zero when the detail page is popped.
+  final ScrollController scrollController = ScrollController();
+
   ///显示的请求列表 最新的在前面
   Queue<HttpRequest> view = Queue();
   bool changing = false;
@@ -94,6 +101,7 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   void dispose() {
     widget.selectionController.selectedIds.removeListener(selectionListener);
     KeywordHighlights.removeListener(highlightListener);
+    scrollController.dispose();
     super.dispose();
   }
 
@@ -229,9 +237,9 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
               onDelete: deleteSelected),
         Expanded(
             child: Scrollbar(
-                controller: PrimaryScrollController.maybeOf(context),
+                controller: scrollController,
                 child: ListView.separated(
-                    controller: PrimaryScrollController.maybeOf(context),
+                    controller: scrollController,
                     scrollCacheExtent: ScrollCacheExtent.viewport(2.0),
                     separatorBuilder: (context, index) =>
                         Divider(thickness: 0.2, height: 0, color: Theme.of(context).dividerColor),
@@ -271,8 +279,10 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
   }
 
   void scrollToTop() {
-    PrimaryScrollController.maybeOf(context)
-        ?.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+    if (!scrollController.hasClients) {
+      return;
+    }
+    scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.ease);
   }
 
   ///排序
