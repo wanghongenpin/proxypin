@@ -55,7 +55,19 @@ static void my_application_activate(GApplication* application) {
   if (g_file_test("assets", G_FILE_TEST_IS_DIR)) {
       gtk_window_set_icon_from_file(window, "assets/icon.png", NULL); // For debug mode
   } else {
-      gtk_window_set_icon_from_file(window, "/opt/proxypin/data/flutter_assets/assets/icon.png", NULL); // For release mode
+      // Resolve the icon relative to the release bundle instead of hardcoding a
+      // Debian-specific install path, so any prefix (/usr/lib/proxypin, /opt/...)
+      // works.
+      g_autofree gchar* exe_path = g_file_read_link("/proc/self/exe", NULL);
+      g_autofree gchar* exe_dir =
+          exe_path != NULL ? g_path_get_dirname(exe_path) : NULL;
+      g_autofree gchar* icon_path =
+          exe_dir != NULL
+              ? g_build_filename(exe_dir, "data", "flutter_assets", "assets",
+                                 "icon.png", NULL)
+              : NULL;
+      gtk_window_set_icon_from_file(
+          window, icon_path != NULL ? icon_path : "assets/icon.png", NULL);
   }
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
