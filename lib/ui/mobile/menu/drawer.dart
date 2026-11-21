@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
+import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/components/host_filter.dart';
 import 'package:proxypin/network/components/manager/hosts_manager.dart';
@@ -46,6 +47,7 @@ import 'package:proxypin/ui/mobile/setting/request_crypto.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
+import 'package:proxypin/network/util/cert/emudhra.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../component/proxy_port_setting.dart';
@@ -289,6 +291,8 @@ class _SettingPage extends StatelessWidget {
                           proxyServer.configuration.flushConfig();
                         })),
                 Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                _EmudhraSection(configuration: configuration),
+                Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(
                     title: Text(localizations.externalProxy),
                     trailing: const Icon(Icons.keyboard_arrow_right),
@@ -408,5 +412,55 @@ class FilterMenu extends StatelessWidget {
                               onTap: () => navigator(context, AppBlacklist(proxyServer: proxyServer)))
                         ])
                 ]))));
+  }
+}
+
+/// eMudhra 链路设置区块, 独立 StatefulWidget 以便切换/选择链路时即时刷新
+class _EmudhraSection extends StatefulWidget {
+  final Configuration configuration;
+
+  const _EmudhraSection({required this.configuration});
+
+  @override
+  State<_EmudhraSection> createState() => _EmudhraSectionState();
+}
+
+class _EmudhraSectionState extends State<_EmudhraSection> {
+  Configuration get configuration => widget.configuration;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      ListTile(
+          title: const Text("eMudhra"),
+          trailing: SwitchWidget(
+              value: configuration.emudhraChain != EmudhraChains.off,
+              scale: 0.8,
+              onChanged: (value) {
+                setState(() {
+                  configuration.emudhraChain = value ? EmudhraChains.auto : EmudhraChains.off;
+                });
+                configuration.flushConfig();
+              })),
+      if (configuration.emudhraChain != EmudhraChains.off)
+        ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 22),
+            dense: true,
+            title: Text(EmudhraChains.labelOf(configuration.emudhraChain),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).hintColor)),
+            trailing: PopupMenuButton<String>(
+                initialValue: configuration.emudhraChain,
+                tooltip: "eMudhra chain",
+                onSelected: (value) {
+                  setState(() {
+                    configuration.emudhraChain = value;
+                  });
+                  configuration.flushConfig();
+                },
+                itemBuilder: (context) => [
+                      const PopupMenuItem(value: EmudhraChains.auto, child: Text("Auto")),
+                      ...EmudhraChains.all.map((chain) => PopupMenuItem(value: chain.id, child: Text(chain.label)))
+                    ])),
+    ]);
   }
 }
