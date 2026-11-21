@@ -70,10 +70,12 @@ set(DART_API_DL_SOURCE "")
 if(NOT "$ENV{PROXYPIN_DART_API_DL_C}" STREQUAL "")
   set(DART_API_DL_SOURCE "$ENV{PROXYPIN_DART_API_DL_C}")
 else()
-  find_program(_FLUTTER_EXECUTABLE NAMES flutter)
-  if(_FLUTTER_EXECUTABLE)
-    get_filename_component(_FLUTTER_BIN_DIR "${_FLUTTER_EXECUTABLE}" PATH)
-    get_filename_component(_FLUTTER_SDK_DIR "${_FLUTTER_BIN_DIR}" PATH)
+  # generated_config.cmake is loaded in the Flutter child directory; read its
+  # FLUTTER_ROOT so the source always comes from the SDK used for this build.
+  get_directory_property(_FLUTTER_SDK_DIR
+    DIRECTORY "${FLUTTER_MANAGED_DIR}"
+    DEFINITION FLUTTER_ROOT)
+  if(_FLUTTER_SDK_DIR)
     set(DART_API_DL_SOURCE "${_FLUTTER_SDK_DIR}/bin/cache/dart-sdk/include/dart_api_dl.c")
   endif()
 endif()
