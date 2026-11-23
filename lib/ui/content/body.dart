@@ -82,13 +82,15 @@ class HttpBodyWidget extends StatefulWidget {
 
 class HttpBodyState extends State<HttpBodyWidget> {
   var bodyKey = GlobalKey<_BodyState>();
-  int tabIndex = 0;
+  ViewType? selectedViewType;
   final searchIconKey = GlobalKey();
   final SearchTextController searchController = SearchTextController();
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   bool showDecoded = false;
   CryptoDecodedResult? decoded;
+
+  ViewType _currentViewType(Tabs tabs) => tabs.list.contains(selectedViewType) ? selectedViewType! : tabs.list.first;
 
   //当前请求是否命中已启用的重写规则
   final RxBool rewriteEnabled = false.obs;
@@ -173,9 +175,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     }
 
     var tabs = Tabs.of(widget.httpMessage?.contentType, isJsonText());
-
-    if (tabIndex > 0 && tabIndex >= tabs.list.length) tabIndex = tabs.list.length - 1;
-    bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[tabIndex]);
+    final viewType = _currentViewType(tabs);
 
     List<Widget> list = [
       widget.inNewWindow ? const SizedBox() : titleWidget(tabs: tabs),
@@ -185,7 +185,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
           child: _Body(
               key: bodyKey,
               message: widget.httpMessage,
-              viewType: tabs.list[tabIndex],
+              viewType: viewType,
               scrollController: widget.scrollController,
               searchController: searchController)) //body
     ];
@@ -252,29 +252,29 @@ class HttpBodyState extends State<HttpBodyWidget> {
     }
     var theme = Theme.of(context);
     var text3 = theme.brightness == Brightness.light ? const Color(0xFF8F959E) : DarkPalette.text3;
+    final currentViewType = _currentViewType(tabs);
     return [
-      for (var i = 0; i < tabs.list.length; i++)
+      for (final viewType in tabs.list)
         Padding(
             padding: const EdgeInsets.only(right: 4),
             // 选中底色由 Material 绘制，InkWell 的 hover/水波纹才能显示在底色之上
             child: Material(
-                color: i == tabIndex ? primarySoftBg(theme, lightAlpha: 0.12) : Colors.transparent,
+                color: viewType == currentViewType ? primarySoftBg(theme, lightAlpha: 0.12) : Colors.transparent,
                 borderRadius: BorderRadius.circular(5),
                 child: InkWell(
                     borderRadius: BorderRadius.circular(5),
                     // 设计稿小控件 hover：浅色 #F0F1F3，暗黑 --hover
                     hoverColor: theme.brightness == Brightness.light ? const Color(0xFFF0F1F3) : DarkPalette.hover,
                     onTap: () {
-                      setState(() => tabIndex = i);
-                      bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[i]);
+                      setState(() => selectedViewType = viewType);
                     },
                     child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        child: Text(tabs.list[i].title,
+                        child: Text(viewType.title,
                             style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: i == tabIndex ? FontWeight.w500 : FontWeight.w400,
-                                color: i == tabIndex ? theme.colorScheme.primary : text3)))))),
+                                fontWeight: viewType == currentViewType ? FontWeight.w500 : FontWeight.w400,
+                                color: viewType == currentViewType ? theme.colorScheme.primary : text3)))))),
     ];
   }
 
@@ -331,8 +331,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final rewriteBtn = IconButton(
       visualDensity: visualDensity,
       iconSize: 15,
-      icon: Obx(() => SvgIcon('pencil', size: 15,
-          color: rewriteEnabled.value ? Colors.deepOrangeAccent : iconColor)),
+      icon: Obx(() => SvgIcon('pencil', size: 15, color: rewriteEnabled.value ? Colors.deepOrangeAccent : iconColor)),
       tooltip: localizations.requestRewrite,
       onPressed: showRequestRewrite,
     );
@@ -463,8 +462,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     ];
 
     return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: list));
+        scrollDirection: Axis.horizontal, child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: list));
   }
 
   ///下载图片
@@ -475,12 +473,12 @@ class HttpBodyState extends State<HttpBodyWidget> {
         icon: SvgIcon('download', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         tooltip: localizations.saveImage,
         onPressed: () async {
-          var body = bodyKey.currentState?.message?.body;
+          var body = bodyKey.currentState?.widget.message?.body;
           if (body == null) {
             return;
           }
           var bytes = Uint8List.fromList(body);
-          var extension = _imageExtension(bytes, bodyKey.currentState?.message?.headers.contentType);
+          var extension = _imageExtension(bytes, bodyKey.currentState?.widget.message?.headers.contentType);
           var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.$extension";
           if (Platform.isIOS) {
             String? path = await ImagePickers.saveByteDataImageToGallery(bytes);
@@ -647,31 +645,15 @@ String _formatTextBodyIsolate(Map<String, String> args) {
 class _BodyState extends State<_Body> {
   static const int _virtualizedThreshold = 100000;
 
-  late ViewType viewType;
-  HttpMessage? message;
-
-  @override
-  void initState() {
-    super.initState();
-    viewType = widget.viewType;
-    message = widget.message;
-  }
-
-  void changeState(HttpMessage? message, ViewType viewType) {
-    setState(() {
-      this.message = message;
-      this.viewType = viewType;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return _getBody(viewType);
+    return _getBody(widget.viewType);
   }
 
   HttpMessage? _effectiveMessage(HttpBodyState? parent) {
+    final message = widget.message;
     if (parent?.showDecoded == true && parent?.decoded != null && message != null) {
-      return _DecodedHttpMessage(message!, parent!.decoded!);
+      return _DecodedHttpMessage(message, parent!.decoded!);
     }
     return message;
   }
@@ -727,7 +709,7 @@ class _BodyState extends State<_Body> {
       return null;
     }
 
-    if (viewType == ViewType.hex) {
+    if (widget.viewType == ViewType.hex) {
       return currentMessage.body!.map(intToHex).join(" ");
     }
 
@@ -735,11 +717,11 @@ class _BodyState extends State<_Body> {
         ? parent!.decoded!.text!
         : await currentMessage.decodeBodyString();
 
-    if (viewType == ViewType.text) {
+    if (widget.viewType == ViewType.text) {
       return body;
     }
 
-    return await _formatTextBody(viewType, body);
+    return await _formatTextBody(widget.viewType, body);
   }
 
   Widget _getBody(ViewType type) {
@@ -798,32 +780,34 @@ class _BodyState extends State<_Body> {
           contextMenuBuilder: bodyContextMenu);
     }
 
-    return futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
-      try {
-        if (type == ViewType.jsonText) {
-          var jsonObject = json.decode(body);
-          return JsonText(
-              json: jsonObject,
-              indent: Platforms.isDesktop() ? '    ' : '  ',
-              colorTheme: ColorTheme.of(context),
-              searchController: widget.searchController,
-              scrollController: widget.scrollController,
-              contextMenuBuilder: bodyContextMenu);
-        }
+    return KeyedSubtree(
+        key: ValueKey('body-${identityHashCode(message)}-${type.name}'),
+        child: futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
+          try {
+            if (type == ViewType.jsonText) {
+              var jsonObject = json.decode(body);
+              return JsonText(
+                  json: jsonObject,
+                  indent: Platforms.isDesktop() ? '    ' : '  ',
+                  colorTheme: ColorTheme.of(context),
+                  searchController: widget.searchController,
+                  scrollController: widget.scrollController,
+                  contextMenuBuilder: bodyContextMenu);
+            }
 
-        if (type == ViewType.json) {
-          return JsonViewer(json.decode(body),
-              colorTheme: ColorTheme.of(context), searchController: widget.searchController);
-        }
+            if (type == ViewType.json) {
+              return JsonViewer(json.decode(body),
+                  colorTheme: ColorTheme.of(context), searchController: widget.searchController);
+            }
 
-        return _buildTextBodyViewer(type, body, message: message);
-      } catch (e) {
-        logger.e(e, stackTrace: StackTrace.current);
-      }
+            return _buildTextBodyViewer(type, body, message: message);
+          } catch (e) {
+            logger.e(e, stackTrace: StackTrace.current);
+          }
 
-      return HighlightTextWidget(
-          text: body, searchController: widget.searchController, contextMenuBuilder: bodyContextMenu);
-    });
+          return HighlightTextWidget(
+              text: body, searchController: widget.searchController, contextMenuBuilder: bodyContextMenu);
+        }));
   }
 
   String? _languageForViewType(ViewType type, HttpMessage? message) {
@@ -855,25 +839,28 @@ class _BodyState extends State<_Body> {
     // Format asynchronously (may use compute)
     final futureFormatted = _formatTextBody(type, text);
 
-    return futureWidget(
-      initialData: text.substring(0, min(text.length, 10000)), // Show a preview while formatting
-      futureFormatted,
-      (formattedText) {
-        if (showVirtualized) {
-          return VirtualizedHighlightText(
-            text: formattedText,
-            language: language,
-            searchController: widget.searchController,
-            scrollController: widget.scrollController,
-          );
-        }
+    return KeyedSubtree(
+      key: ValueKey('formatted-body-${identityHashCode(message)}-${type.name}'),
+      child: futureWidget(
+        initialData: text.substring(0, min(text.length, 10000)), // Show a preview while formatting
+        futureFormatted,
+        (formattedText) {
+          if (showVirtualized) {
+            return VirtualizedHighlightText(
+              text: formattedText,
+              language: language,
+              searchController: widget.searchController,
+              scrollController: widget.scrollController,
+            );
+          }
 
-        return HighlightTextWidget(
-            language: language,
-            text: formattedText,
-            searchController: widget.searchController,
-            contextMenuBuilder: bodyContextMenu);
-      },
+          return HighlightTextWidget(
+              language: language,
+              text: formattedText,
+              searchController: widget.searchController,
+              contextMenuBuilder: bodyContextMenu);
+        },
+      ),
     );
   }
 }
