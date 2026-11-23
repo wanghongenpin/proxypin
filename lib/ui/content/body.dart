@@ -43,11 +43,11 @@ import 'package:proxypin/utils/css_formatter.dart';
 import 'package:proxypin/utils/html_formatter.dart';
 import 'package:proxypin/utils/js_formatter.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:proxypin/utils/num.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/xml_formatter.dart';
 
 import '../component/json/json_text.dart';
+import 'hex_viewer.dart';
 import '../component/search/highlight_text.dart';
 import '../component/search/search_controller.dart';
 import '../component/search/virtualized_highlight_text.dart';
@@ -645,6 +645,9 @@ String _formatTextBodyIsolate(Map<String, String> args) {
 class _BodyState extends State<_Body> {
   static const int _virtualizedThreshold = 100000;
 
+  // 由 HexViewer 在（重新）格式化时回传，工具栏复制/编码据此取当前消息完整 Hex 文本。
+  Future<String>? _hexFormattedText;
+
   @override
   Widget build(BuildContext context) {
     return _getBody(widget.viewType);
@@ -710,7 +713,7 @@ class _BodyState extends State<_Body> {
     }
 
     if (widget.viewType == ViewType.hex) {
-      return currentMessage.body!.map(intToHex).join(" ");
+      return await _hexFormattedText ?? '';
     }
 
     final body = parent?.showDecoded == true && parent?.decoded?.text != null
@@ -770,7 +773,14 @@ class _BodyState extends State<_Body> {
       return const Center(child: Text("video not support preview"));
     }
     if (type == ViewType.hex) {
-      return HexViewer(data: Uint8List.fromList(message.body!), searchController: widget.searchController);
+      return HexViewer(
+        data: message.body!,
+        searchController: widget.searchController,
+        // 详情面板外层 SingleChildScrollView 的 controller：Hex 滚到边后把剩余滚动量
+        // 级联给 header 所在的外层滚动视图；其它调用点为 null，自动不启用。
+        outerScrollController: widget.scrollController,
+        onFormattedText: (future) => _hexFormattedText = future,
+      );
     }
 
     if (type == ViewType.formUrl) {
@@ -937,59 +947,6 @@ enum ViewType {
       }
     }
     return null;
-  }
-}
-
-class HexViewer extends StatelessWidget {
-  final Uint8List data;
-  final int bytesPerRow;
-  final SearchTextController searchController;
-
-  const HexViewer({super.key, required this.data, this.bytesPerRow = 16, required this.searchController});
-
-  @override
-  Widget build(BuildContext context) {
-    return HighlightTextWidget(
-        style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
-        text: _formatHex(data, bytesPerRow),
-        searchController: searchController,
-        contextMenuBuilder: bodyContextMenu);
-  }
-
-  String _formatHex(Uint8List data, int bytesPerRow) {
-    final StringBuffer buffer = StringBuffer();
-    for (int i = 0; i < data.length; i += bytesPerRow) {
-      // Address
-      // buffer.write(i.toRadixString(16).padLeft(8, '0'));
-      // buffer.write('  ');
-
-      // Hex values
-      for (int j = 0; j < bytesPerRow; j++) {
-        if (i + j < data.length) {
-          buffer.write(data[i + j].toRadixString(16).padLeft(2, '0'));
-        } else {
-          buffer.write('  ');
-        }
-        buffer.write(' ');
-      }
-
-      buffer.write('    ');
-
-      // ASCII representation
-      for (int j = 0; j < bytesPerRow; j++) {
-        if (i + j < data.length) {
-          final byte = data[i + j];
-          if (byte >= 32 && byte <= 126) {
-            buffer.write(String.fromCharCode(byte));
-          } else {
-            buffer.write('.');
-          }
-        }
-      }
-
-      buffer.writeln();
-    }
-    return buffer.toString();
   }
 }
 
