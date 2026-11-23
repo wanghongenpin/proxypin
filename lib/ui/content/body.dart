@@ -48,6 +48,7 @@ import 'package:proxypin/utils/xml_formatter.dart';
 
 import '../component/json/json_text.dart';
 import 'hex_viewer.dart';
+import '../component/search/active_viewer_scope.dart';
 import '../component/search/highlight_text.dart';
 import '../component/search/search_controller.dart';
 import '../component/search/virtualized_highlight_text.dart';
@@ -648,9 +649,67 @@ class _BodyState extends State<_Body> {
   // 由 HexViewer 在（重新）格式化时回传，工具栏复制/编码据此取当前消息完整 Hex 文本。
   Future<String>? _hexFormattedText;
 
+  // 懒保活：访问过的 tab 整树保留（选区、滚动、搜索状态不丢），未访问的 tab 不构建；
+  // 切换消息（或解码态变化）时整表清空，旧查看器随之 dispose，内存只保留当前消息的已看 tab。
+  final Map<ViewType, Widget> _keptAliveViewers = {};
+  int? _keptMessageHash;
+  bool? _keptDecodedMode;
+
   @override
   Widget build(BuildContext context) {
-    return _getBody(widget.viewType);
+    final parent = context.findAncestorStateOfType<HttpBodyState>();
+    final decodedMode = parent?.showDecoded == true && parent?.decoded != null;
+    final messageHash = widget.message == null ? null : identityHashCode(widget.message);
+
+    // 解码态切换后 _DecodedHttpMessage 是新实例，旧缓存内容已失效，整体清空。
+    if (_keptMessageHash != messageHash || _keptDecodedMode != decodedMode) {
+      _keptAliveViewers.clear();
+      _keptMessageHash = messageHash;
+      _keptDecodedMode = decodedMode;
+      _hexFormattedText = null;
+    }
+
+    final viewer = _buildViewer(widget.viewType);
+    // WebSocket/SSE/空 body 等分支没有 tab 概念，保持原样直接渲染，不进保活容器。
+    if (!_isCacheable(widget.viewType)) {
+      return viewer;
+    }
+
+    // 只存裸查看器 widget：当前类型每帧用新实例覆盖（同位置 Element/State 复用，走 didUpdateWidget），
+    // 其它已访问过的 tab 保留上次的实例不动，从而保住选区、滚动和搜索状态。
+    _keptAliveViewers[widget.viewType] = viewer;
+
+    // 用 Stack + Offstage 而非 IndexedStack：Offstage 子树报零尺寸，隐藏的固定高查看器
+    // （如 HexViewer 的 SizedBox）不会把外层 SingleChildScrollView 撑出多余空白。
+    // TickerMode 停掉隐藏子树的帧回调（code_forge 光标闪烁等），省掉隐藏期的绘制开销。
+    // 每个 child 的包裹结构在帧间保持恒定，Element 才能稳定复用、不触发重新挂载。
+    return Stack(
+      children: [
+        for (final entry in _keptAliveViewers.entries)
+          Offstage(
+            offstage: entry.key != widget.viewType,
+            child: TickerMode(
+              enabled: entry.key == widget.viewType,
+              child: ActiveViewerScope(
+                active: entry.key == widget.viewType,
+                child: entry.value,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 只有带 tab 的常规内容类型进保活；流式消息、空 body 走即时渲染分支。
+  // 判断需与 _buildViewer 开头的早返回分支保持一致。
+  bool _isCacheable(ViewType type) {
+    final parent = context.findAncestorStateOfType<HttpBodyState>();
+    final message = _effectiveMessage(parent);
+    if (message == null || message.body == null) return false;
+    if (message.isWebSocket || (message.contentType == ContentType.sse && message.messages.isNotEmpty)) {
+      return false;
+    }
+    return true;
   }
 
   HttpMessage? _effectiveMessage(HttpBodyState? parent) {
@@ -727,7 +786,7 @@ class _BodyState extends State<_Body> {
     return await _formatTextBody(widget.viewType, body);
   }
 
-  Widget _getBody(ViewType type) {
+  Widget _buildViewer(ViewType type) {
     final parent = context.findAncestorStateOfType<HttpBodyState>();
     final message = _effectiveMessage(parent);
 

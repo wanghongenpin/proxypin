@@ -18,6 +18,8 @@ import 'dart:math';
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 
 String _formatHexIsolate(Map<String, Object> args) => formatHex(args['data'] as List<int>, args['bytesPerRow'] as int);
@@ -32,6 +34,12 @@ const int _highlightWindowMargin = 20;
 // 小于该字节数直接在主 isolate 同步格式化：compute 的 isolate 往返至少跨一帧，
 // 小消息也走异步会在切换时闪一下 loading。超过阈值才进后台 isolate，避免大 body 阻塞 UI。
 const int _syncFormatByteLimit = 256 * 1024;
+
+// 内容很少时查看器仍保留的最小高度：留出可点击、可滚动的基本视口，避免缩成一两行难以交互。
+const double _minViewerHeight = 240.0;
+
+// 大内容/加载态的视口高度：屏高减去头部工具栏等占用，沿用历史值。
+const double _viewerViewportTopOffset = 210.0;
 
 // code_forge 内置垂直滚动条默认 thickness 是 15，偏宽；只改细宽度，其它行为保持默认。
 const double _scrollbarThickness = 8.0;
@@ -97,9 +105,16 @@ class HexViewerState extends State<HexViewer> {
   // 在其 dispose 中不会被移除，复用会让已释放的渲染对象继续收到滚动通知而崩溃，
   // 因此每次 _load 都新建一个，旧的延迟到本帧结束（旧渲染对象卸载、position detach）后释放。
   ScrollController _vScrollController = ScrollController();
+  // 自持焦点节点传给 CodeForge：编辑器获得焦点时需要保证其 IME 连接有效（见 _onEditorFocusChanged）。
+  // code_forge 不 dispose 外部传入的 focusNode，生命周期由本组件管理。
+  final FocusNode _editorFocusNode = FocusNode();
   Object? _error;
   int _loadId = 0;
   bool _syncingSearch = false;
+  // 搜索控制器通知合并标记：同一帧内的多次通知（连续输入）只在帧后同步一次。
+  bool _searchNotifyScheduled = false;
+  // 懒保活下是否为当前可见查看器：隐藏期间不响应共享搜索、不回写计数。
+  bool _isActive = true;
   String _searchSignature = '';
   int _findMatchIndex = -1;
 
@@ -115,6 +130,12 @@ class HexViewerState extends State<HexViewer> {
   CodeForgeController? get controller => _controller;
 
   @visibleForTesting
+  FindController? get findController => _findController;
+
+  @visibleForTesting
+  FocusNode get editorFocusNode => _editorFocusNode;
+
+  @visibleForTesting
   ScrollController get scrollController => _vScrollController;
 
   @visibleForTesting
@@ -123,8 +144,9 @@ class HexViewerState extends State<HexViewer> {
   @override
   void initState() {
     super.initState();
-    widget.searchController.addListener(_syncSearch);
+    widget.searchController.addListener(_onSearchNotified);
     _vScrollController.addListener(_onScroll);
+    _editorFocusNode.addListener(_onEditorFocusChanged);
     _load();
   }
 
@@ -132,8 +154,8 @@ class HexViewerState extends State<HexViewer> {
   void didUpdateWidget(covariant HexViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.searchController != widget.searchController) {
-      oldWidget.searchController.removeListener(_syncSearch);
-      widget.searchController.addListener(_syncSearch);
+      oldWidget.searchController.removeListener(_onSearchNotified);
+      widget.searchController.addListener(_onSearchNotified);
       _searchSignature = '';
       // build 阶段不能同步触发搜索同步：它会写 GetX Rx，导致监听的 Obx 在构建中 markNeedsBuild。
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -256,11 +278,42 @@ class HexViewerState extends State<HexViewer> {
   @override
   void dispose() {
     _loadId++;
-    widget.searchController.removeListener(_syncSearch);
+    widget.searchController.removeListener(_onSearchNotified);
+    _editorFocusNode.removeListener(_onEditorFocusChanged);
+    _editorFocusNode.dispose();
     _findController?.dispose();
     _controller?.dispose();
     _vScrollController.dispose();
     super.dispose();
+  }
+
+  // 搜索浮层的 TextField 获得焦点时，框架会把编辑器的 TextInputConnection 置为 detached
+  // （平台只允许一个输入连接）。只读模式下 code_forge 自身不会重连（它的焦点监听和 _resetImeConnection
+  // 都有 readOnly 早退），且仍保留这条失效引用；之后在编辑器里按下鼠标时，handleEvent 先
+  // requestFocus 再对连接做强制调用，失效连接会抛 attached 断言、null 连接会抛空指针，
+  // 本次指针事件直接中断，拖拽选择文字随之失效——表现为"搜索时有时选不中文字"。
+  // 这里在编辑器重新获得焦点的同步监听里，用公开的 TextInput.attach 补一条只读连接：
+  // 监听在 code_forge 自己的焦点监听之后执行，此刻它的 requestFocus 流程尚未走到连接调用，
+  // 补好的连接让后续强制调用全部安全通过；连接配置与 code_forge 内部 _attachImeConnection 对齐。
+  void _onEditorFocusChanged() {
+    if (!_editorFocusNode.hasFocus) return;
+    final controller = _controller;
+    if (controller == null) return;
+    final connection = controller.connection;
+    if (connection != null && connection.attached) return;
+    final fresh = TextInput.attach(
+      controller,
+      TextInputConfiguration(
+        readOnly: true,
+        enableDeltaModel: true,
+        enableSuggestions: false,
+        inputType: TextInputType.multiline,
+        inputAction: TextInputAction.newline,
+        autocorrect: false,
+        viewId: View.of(context).viewId,
+      ),
+    );
+    controller.connection = fresh;
   }
 
   // 替代 code_forge 渲染对象内置的 _scrollToLine：保持相同的居中滚动语义，
@@ -279,7 +332,7 @@ class HexViewerState extends State<HexViewer> {
 
   void _onFindChanged() {
     final find = _findController;
-    if (find == null || _syncingSearch) return;
+    if (find == null || _syncingSearch || !_isActive) return;
     _findMatchIndex = find.currentMatchIndex;
     widget.searchController.currentMatchIndex.value = max(0, find.currentMatchIndex);
     widget.searchController.updateMatchCount(find.matchCount);
@@ -355,8 +408,23 @@ class HexViewerState extends State<HexViewer> {
     _appliedWindowLast = lastLine;
   }
 
+  // 搜索控制器的通知统一延迟到帧后再同步，而不是在监听回调里立即处理。
+  // showSearchOverlay 是"先写回 pattern、后插入浮层"：写回触发通知时浮层尚未插入，
+  // shouldSearch() 仍为 false，立即同步会把搜索误判为停用；浮层插入后又不再有任何事件，
+  // 表现为关闭搜索框再打开时不会重新触发。其他视图用 AnimatedBuilder 在下一帧拉取最新
+  // 状态所以没这个问题；这里对齐同样的"帧后拉取"模式即可，无需改动共享的搜索控制器。
+  // 同一帧内的多次通知合并成一次同步，连续输入只跑一次。
+  void _onSearchNotified() {
+    if (_searchNotifyScheduled) return;
+    _searchNotifyScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _searchNotifyScheduled = false;
+      if (mounted) _syncSearch();
+    });
+  }
+
   void _syncSearch() {
-    if (_syncingSearch) return;
+    if (_syncingSearch || !_isActive) return;
     final find = _findController;
     if (find == null) return;
 
@@ -376,9 +444,21 @@ class HexViewerState extends State<HexViewer> {
           find.find(settings.pattern);
         }
       } else if (find.matchCount > 0 && _findMatchIndex != search.currentMatchIndex.value) {
-        final steps = (search.currentMatchIndex.value - _findMatchIndex) % find.matchCount;
-        for (int i = 0; i < steps; i++) {
-          find.next();
+        // 取环绕最短路径的方向导航。旧实现只按正向差值循环 next()：按"上一个"时差值为 -1，
+        // 被 % 换算成 N-1 次 next()，等于从当前匹配绕整整一圈，N 次滚动动画/高亮更新叠加，
+        // 匹配一多就明显比"下一个"卡。反向差值直接走 previous()，任何单步导航都只调一次。
+        final total = find.matchCount;
+        var forward = (search.currentMatchIndex.value - _findMatchIndex) % total;
+        if (forward < 0) forward += total;
+        final backward = total - forward;
+        if (forward <= backward) {
+          for (var i = 0; i < forward; i++) {
+            find.next();
+          }
+        } else {
+          for (var i = 0; i < backward; i++) {
+            find.previous();
+          }
         }
       }
     } finally {
@@ -389,15 +469,33 @@ class HexViewerState extends State<HexViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final height = max(240.0, MediaQuery.sizeOf(context).height - 210);
+    final viewportHeight = max(_minViewerHeight, MediaQuery.sizeOf(context).height - _viewerViewportTopOffset);
+    // 依赖作用域：Offstage 切回时本组件随 ActiveViewerScope 一起重建。
+    final active = ActiveViewerScope.isActive(context);
+    if (active && !_isActive) {
+      // 重新激活后补一次搜索同步，把隐藏期间错过的共享搜索状态应用到 FindController，
+      // 并让本查看器重新成为计数/导航的归属者。延迟到帧后，避免 build 阶段写 Rx。
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _isActive) _syncSearch();
+      });
+    }
+    _isActive = active;
     final error = _error;
     final controller = _controller;
     if (error != null) {
-      return SizedBox(height: height, child: Center(child: Text('Hex viewer unavailable: $error')));
+      return SizedBox(height: viewportHeight, child: Center(child: Text('Hex viewer unavailable: $error')));
     }
     if (controller == null) {
-      return SizedBox(height: height, child: const Center(child: CircularProgressIndicator()));
+      return SizedBox(height: viewportHeight, child: const Center(child: CircularProgressIndicator()));
     }
+
+    // code_forge 的渲染对象在拿到紧高度约束时会把字段高度撑满该约束（performLayout 里
+    // contentHeight = max(内容高, constraints.maxHeight)），所以以前固定一屏高会让只有几行的
+    // 小 body 也留出大片空白。这里按真实行数算出内容自然高度（非换行、无折叠时渲染层就是
+    // lineCount * 行高，见 code_area.dart 的 visibleHeight），内容不足一屏就收缩、超出仍保持
+    // 视口高度由内部滚动；下限保留最小可用高度。与横向宽度问题同源，都是被"屏幕级最小尺寸"撑住。
+    final contentHeight = controller.lineCount * _hexLineHeight;
+    final height = max(_minViewerHeight, min(viewportHeight, contentHeight));
 
     final theme = Theme.of(context);
     return SizedBox(
@@ -423,6 +521,7 @@ class HexViewerState extends State<HexViewer> {
                 key: ValueKey<int>(_loadId),
                 controller: controller,
                 findController: _findController,
+                focusNode: _editorFocusNode,
                 verticalScrollController: _vScrollController,
                 // 覆盖 code_forge 默认的 thickness 15；thumbColor 沿用其默认 decoration 的取色
                 // （编辑器文字色 withAlpha(150)），只改宽度不改观感。
@@ -443,7 +542,11 @@ class HexViewerState extends State<HexViewer> {
                     fontFamily: 'Courier',
                     fontSize: _hexFontSize,
                     color: theme.colorScheme.onSurface,
-                    backgroundColor: Colors.transparent,
+                    // code_forge 的右键菜单（桌面 Card、移动端工具条）底色直接取 root.backgroundColor，
+                    // 原来传透明色导致菜单半透明看不清。宿主卡片本身就是 surface 色（panel.dart），
+                    // 渲染层每帧用此色铺编辑器底，换成 surface 视觉无变化，但菜单随之变为不透明，
+                    // 与其他视图的选区菜单（同样基于 surface 配色）保持一致。
+                    backgroundColor: theme.colorScheme.surface,
                   ),
                 },
                 textStyle: const TextStyle(fontFamily: 'Courier', fontSize: _hexFontSize),

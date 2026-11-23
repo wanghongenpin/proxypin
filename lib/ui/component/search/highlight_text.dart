@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
 import 'package:proxypin/ui/component/search/highlight_text_document.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 
@@ -32,9 +33,12 @@ class HighlightTextWidget extends StatelessWidget {
         );
         final spans = document.buildAllSpans(context);
 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          searchController.updateMatchCount(document.totalMatchCount);
-        });
+        // 懒保活后隐藏查看器仍会随共享搜索控制器重建，只有活动查看器才允许回写计数。
+        if (ActiveViewerScope.isActive(context)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            searchController.updateMatchCount(document.totalMatchCount);
+          });
+        }
 
         return SelectableText.rich(
           TextSpan(children: spans),

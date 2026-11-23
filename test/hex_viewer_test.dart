@@ -25,6 +25,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
+import 'package:proxypin/ui/component/search/highlight_text.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/ui/content/hex_viewer.dart';
@@ -264,6 +266,139 @@ void main() async {
       searchController.closeSearch();
       await tester.pump();
       expect(searchController.totalMatchCount.value, 0);
+    });
+
+    testWidgets('re-triggers search after the overlay is closed and reopened', skip: !nativeReady, (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await pumpViewer(tester, List.generate(64, (index) => index % 2));
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && viewerKey.currentState!.controller == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+
+      final viewerContext = tester.element(find.byType(HexViewer));
+      searchController.showSearchOverlay(viewerContext, top: 20, right: 10);
+      searchController.patternController.text = '01';
+      await tester.pump();
+      final findController = viewerKey.currentState!.findController!;
+      expect(findController.isActive, isTrue);
+      expect(findController.matchCount, 32);
+
+      // X 按钮路径：closeSearch 清空 pattern 并移除浮层，帧后同步读到 shouldSearch=false，搜索停用。
+      searchController.closeSearch();
+      await tester.pump();
+      expect(findController.isActive, isFalse);
+
+      // 重开走 showSearchOverlay：先写回 pattern（触发通知时浮层尚未插入，shouldSearch 为 false）、
+      // 后插入浮层。HexViewer 把通知延迟到帧后再同步，此刻读到的已是"可见"状态，搜索重新激活。
+      searchController.showSearchOverlay(viewerContext, top: 20, right: 10);
+      await tester.pump();
+      expect(findController.isActive, isTrue);
+      expect(findController.matchCount, 32);
+    });
+
+    testWidgets('previous match navigates one step instead of wrapping through all matches', skip: !nativeReady,
+        (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await pumpViewer(tester, List.generate(64, (index) => index % 2));
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && viewerKey.currentState!.controller == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+      searchController.showSearchOverlay(tester.element(find.byType(HexViewer)), top: 20, right: 10);
+      searchController.patternController.text = '01';
+      await tester.pump();
+      expect(searchController.totalMatchCount.value, 32);
+
+      final findController = viewerKey.currentState!.findController!;
+      searchController.moveNext();
+      searchController.moveNext();
+      await tester.pump();
+      expect(findController.currentMatchIndex, 2);
+
+      // 普通"上一个"：只允许一次 FindController 通知（一次 previous()）。
+      // 旧实现换算成 31 次 next()，会产生 31 次通知并播放 31 次滚动动画。
+      var notifications = 0;
+      void countNotifications() => notifications++;
+      findController.addListener(countNotifications);
+      searchController.movePrevious();
+      await tester.pump();
+      expect(searchController.currentMatchIndex.value, 1);
+      expect(findController.currentMatchIndex, 1);
+      expect(notifications, 1);
+
+      // 从首个匹配再按"上一个"环绕到末尾：最短路径仍是一次 previous()，而不是 31 次 next()。
+      notifications = 0;
+      searchController.movePrevious();
+      await tester.pump();
+      expect(searchController.currentMatchIndex.value, 0);
+      expect(findController.currentMatchIndex, 0);
+      notifications = 0;
+      searchController.movePrevious();
+      await tester.pump();
+      expect(searchController.currentMatchIndex.value, 31);
+      expect(findController.currentMatchIndex, 31);
+      expect(notifications, 1);
+      findController.removeListener(countNotifications);
+    });
+
+    testWidgets('re-attaches the IME connection so text selection works while search is active', skip: !nativeReady,
+        (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await pumpViewer(tester, List.generate(256, (index) => index % 2));
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && viewerKey.currentState!.controller == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+      final controller = viewerKey.currentState!.controller!;
+
+      searchController.showSearchOverlay(tester.element(find.byType(HexViewer)), top: 20, right: 10);
+      await tester.pump();
+      searchController.patternController.text = '01';
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(viewerKey.currentState!.findController!.isActive, isTrue);
+
+      // 搜索框抢走平台 IME 后，编辑器连接处于 detached 状态（真机上“搜索时选不中文字”的前置状态）。
+      expect(controller.connection == null || controller.connection!.attached == false, isTrue);
+
+      // 真机点击编辑器会 requestFocus，焦点监听同步重连；测试绑定的指针焦点交付时序不同，
+      // 直接请求编辑器焦点来确定性触发同一条重连路径。
+      viewerKey.currentState!.editorFocusNode.requestFocus();
+      await tester.pump();
+      expect(controller.connection, isNotNull);
+      expect(controller.connection!.attached, isTrue);
+
+      // 重连后拖拽应建立非折叠选区，且不再抛 attached 断言/空指针。
+      final gesture = await tester.startGesture(const Offset(120, 120), kind: PointerDeviceKind.mouse);
+      for (final dy in [40.0, 80.0, 120.0, 160.0]) {
+        await gesture.moveTo(Offset(120, 120 + dy));
+        await tester.pump();
+      }
+      await gesture.up();
+      await tester.pump();
+      // 等双击识别器的 400ms 倒计时走完，避免收尾报 pending Timer。
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(tester.takeException(), isNull);
+      expect(controller.selection.isCollapsed, isFalse);
     });
 
     testWidgets('does not write GetX Rx during build when switching data', skip: !nativeReady, (tester) async {
@@ -552,6 +687,35 @@ void main() async {
       expect(overflow, lessThan(100));
     });
 
+    testWidgets('shrinks to content height for small bodies but keeps a usable minimum', skip: !nativeReady,
+        (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      // 屏高 800 -> 视口高度 max(240, 800-210) = 590；行高固定 14*1.2 = 16.8。
+      double editorHeight() => tester.getSize(find.byType(CodeForge)).height;
+
+      // 1 行内容远低于下限：保留 240 的最小可用高度，而不是整屏 590 的空白。
+      await pumpViewer(tester, List.generate(4, (i) => i));
+      await tester.pump();
+      expect(editorHeight(), 240);
+
+      // 落在下限与视口之间：严格按内容自然高度（lineCount * 行高）收缩，明显小于视口 590。
+      await pumpViewer(tester, List.generate(320, (i) => i % 256));
+      await tester.pump();
+      final midController = viewerKey.currentState!.controller!;
+      final midContentHeight = midController.lineCount * 16.8;
+      expect(editorHeight(), closeTo(midContentHeight, 0.01));
+      expect(editorHeight(), greaterThan(240));
+      expect(editorHeight(), lessThan(590));
+
+      // 内容远超视口：保持视口高度 590，由内部滚动承载，不把外层撑高。
+      await pumpViewer(tester, List.generate(2000, (i) => i % 256));
+      await tester.pump();
+      expect(editorHeight(), 590);
+    });
+
     testWidgets('windows large search highlights to the visible lines', skip: !nativeReady, (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -592,6 +756,162 @@ void main() async {
       final bottomMinLine = bottomHighlights.map((h) => h.start ~/ lineCharLength).reduce(min);
       expect(bottomMinLine, greaterThan(topMaxLine));
       expect(bottomHighlights.length, lessThan(2000));
+    });
+  });
+
+  group('HttpBody tab keep-alive', () {
+    Widget frame(HttpMessage message) {
+      return MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: HttpBodyWidget(httpMessage: message)),
+      );
+    }
+
+    // octet-stream 的 tab 为 [Text, Hex]，正好覆盖文本查看器和 HexViewer 两条路径。
+    HttpRequest octetMessage(String body) {
+      return HttpRequest(HttpMethod.get, 'https://example.com/body')
+        ..headers.contentType = 'application/octet-stream'
+        ..body = body.codeUnits;
+    }
+
+    testWidgets('keeps a visited tab alive with its scroll offset and lazily builds others', skip: !nativeReady,
+        (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(frame(octetMessage(String.fromCharCodes(List.generate(2000, (i) => 65 + i % 26)))));
+      await tester.pumpAndSettle();
+
+      // 初始只构建了 Text tab，Hex 尚未访问，不应存在于树中。
+      expect(find.byType(HexViewer, skipOffstage: false), findsNothing);
+
+      await tester.tap(find.text('Hex'));
+      await tester.pump();
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+      expect(find.byType(HexViewer), findsOneWidget);
+
+      // 滚动 Hex 后切到 Text：HexViewer 必须以 Offstage 形式保留而不是销毁。
+      final hexState = tester.state<HexViewerState>(find.byType(HexViewer));
+      await tester.runAsync(() async {
+        if (hexState.scrollController.hasClients) {
+          hexState.scrollController.jumpTo(120);
+        }
+      });
+      await tester.pump();
+      expect(hexState.scrollController.offset, 120);
+      final savedOffset = hexState.scrollController.offset;
+
+      await tester.tap(find.text('Text'));
+      await tester.pump();
+      // find 默认跳过 Offstage 子树，这里显式关掉以确认查看器只是被隐藏。
+      final hiddenHex = find.byType(HexViewer, skipOffstage: false);
+      expect(hiddenHex, findsOneWidget);
+      final offstage = tester
+          .widget<Offstage>(find.ancestor(of: hiddenHex, matching: find.byType(Offstage, skipOffstage: false)).first);
+      expect(offstage.offstage, isTrue);
+      // Text tab 同样已被访问，两个查看器此刻都在树中。
+      expect(find.byType(HighlightTextWidget), findsOneWidget);
+
+      // 切回 Hex：同一个 State（不是重新挂载），滚动偏移原样保留。
+      await tester.tap(find.text('Hex'));
+      await tester.pump();
+      expect(find.byType(HexViewer), findsOneWidget);
+      final restoredState = tester.state<HexViewerState>(find.byType(HexViewer));
+      expect(restoredState, same(hexState));
+      expect(restoredState.scrollController.offset, savedOffset);
+    });
+
+    testWidgets('drops kept viewers when switching to another message', skip: !nativeReady, (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final first = octetMessage('first message body');
+      await tester.pumpWidget(frame(first));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hex'));
+      await tester.pump();
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+      expect(find.byType(HexViewer), findsOneWidget);
+      final firstState = tester.state<HexViewerState>(find.byType(HexViewer));
+
+      // 切换到另一条消息：旧 HexViewer 必须 dispose，缓存不能跨消息残留。
+      // 注意 HttpBodyState 会复用并记住上次选中的 tab，因此新消息直接落在 Hex，
+      // 但它必须是从零构建的新实例，且 Text tab 仍保持懒构建。
+      final second = octetMessage('second message body');
+      await tester.pumpWidget(frame(second));
+      await tester.pump();
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+      expect(firstState.mounted, isFalse);
+      expect(find.byType(HexViewer, skipOffstage: false), findsOneWidget);
+      final secondState = tester.state<HexViewerState>(find.byType(HexViewer));
+      expect(secondState, isNot(same(firstState)));
+      expect(find.byType(HighlightTextWidget, skipOffstage: false), findsNothing);
+
+      // 切到 Text 才首次构建该查看器，验证新消息的懒构建语义没有被旧缓存破坏。
+      await tester.tap(find.text('Text'));
+      await tester.pump();
+      expect(find.byType(HighlightTextWidget), findsOneWidget);
+    });
+
+    testWidgets('hidden viewers do not overwrite the shared search count', (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      // 组件级守卫：inactive 作用域内的查看器随共享控制器重建，但不得回写匹配计数。
+      final search = SearchTextController();
+      addTearDown(search.dispose);
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ActiveViewerScope(
+            active: false,
+            child: HighlightTextWidget(text: 'hello hello', searchController: search),
+          ),
+        ),
+      ));
+
+      search.showSearchOverlay(tester.element(find.byType(HighlightTextWidget)), top: 20, right: 10);
+      search.updateMatchCount(99);
+      search.patternController.text = 'hello';
+      await tester.pump();
+      await tester.pump();
+      // 文本实际有 2 个匹配，若守卫失效这里会被覆盖成 2。
+      expect(search.totalMatchCount.value, 99);
+
+      // 对照：同一查看器在 active 作用域下正常回写真实匹配数。
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: ActiveViewerScope(
+            active: true,
+            child: HighlightTextWidget(text: 'hello hello', searchController: search),
+          ),
+        ),
+      ));
+      search.patternController.text = 'hello';
+      await tester.pump();
+      await tester.pump();
+      expect(search.totalMatchCount.value, 2);
     });
   });
 }
