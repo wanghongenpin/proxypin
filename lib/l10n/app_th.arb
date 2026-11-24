@@ -203,6 +203,8 @@
   "scrollEnd": "เลื่อนไปท้ายสุด",
   "search": "ค้นหา",
   "select": "เลือก",
+  "selectAll": "เลือกทั้งหมด",
+  "selectedItems": "เลือกแล้ว {count} รายการ",
   "selectAction": "เลือกการทำงาน",
   "selectFile": "เลือกไฟล์",
   "serverNotStart": "ยังไม่เริ่มพร็อกซี",

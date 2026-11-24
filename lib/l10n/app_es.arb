@@ -203,6 +203,8 @@
   "scrollEnd": "Ir al final",
   "search": "Buscar",
   "select": "Seleccionar",
+  "selectAll": "Seleccionar todo",
+  "selectedItems": "{count} seleccionados",
   "selectAction": "Selecciona una acción",
   "selectFile": "Seleccionar archivo",
   "serverNotStart": "El servidor proxy no se ha iniciado",

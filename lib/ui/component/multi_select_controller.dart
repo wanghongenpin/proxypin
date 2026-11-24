@@ -42,6 +42,42 @@ class MultiSelectController {
     _anchorId = requestId;
   }
 
+  ///选中当前可见的全部请求。空列表不处理。
+  void selectAll(Iterable<String> ids) {
+    final idList = ids.toList();
+    if (idList.isEmpty) {
+      return;
+    }
+
+    selectionMode.value = true;
+    selectedIds
+      ..clear()
+      ..addAll(idList);
+    _anchorId = idList.last;
+  }
+
+  ///清空选中但保留多选模式，便于取消全选后继续手动勾选
+  void clearSelection() {
+    selectedIds.clear();
+    _anchorId = null;
+    selectionMode.value = true;
+  }
+
+  ///全选/取消全选切换：当前可见项已全部选中时仅清空勾选（保留多选模式），否则全选。
+  void toggleSelectAll(Iterable<String> ids) {
+    final idList = ids.toList();
+    if (idList.isEmpty) {
+      return;
+    }
+
+    final selectedSet = selectedIds.toSet();
+    if (idList.every(selectedSet.contains)) {
+      clearSelection();
+    } else {
+      selectAll(idList);
+    }
+  }
+
   void toggleSelectionMode([String? requestId]) {
     if (selectionMode.value) {
       clear();

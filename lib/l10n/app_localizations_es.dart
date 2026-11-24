@@ -486,6 +486,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get select => 'Seleccionar';
 
   @override
+  String get selectAll => 'Seleccionar todo';
+
+  @override
+  String selectedItems(int count) {
+    return '$count seleccionados';
+  }
+
+  @override
   String get copy => 'Copiar';
 
   @override
