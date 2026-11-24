@@ -17,6 +17,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -293,6 +294,28 @@ List<ContextMenuButtonItem> sendToToolItems(BuildContext context, String payload
         onDone();
       },
       type: ContextMenuButtonType.custom,
+    ),
+  ];
+}
+
+/// code_forge 右键菜单版的“发送到解码器 / AES 解密”，与 [sendToToolItems] 同两项、同标签。
+/// [payloadBuilder] 返回选中文本、无选区时回退全文；为空则不追加任何菜单项。
+/// code_forge 的自定义菜单只在桌面端渲染，移动端选择工具栏没有扩展点。
+List<CustomContextMenu> codeForgeSendToToolItems(BuildContext context, String Function() payloadBuilder) {
+  final payload = payloadBuilder().trim();
+  if (payload.isEmpty) return const [];
+
+  final bool isZh = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
+  return [
+    CustomContextMenu(
+      label: isZh ? '发送到解码器' : 'Send to Decoder',
+      description: '',
+      onPress: () => encodeWindow(EncoderType.base64, context, payload),
+    ),
+    CustomContextMenu(
+      label: isZh ? '发送到 AES 解密' : 'Send to AES Decrypt',
+      description: '',
+      onPress: () => openAesWindow(context, payload),
     ),
   ];
 }

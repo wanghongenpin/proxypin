@@ -25,11 +25,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/code_forge/read_only_viewer.dart';
 import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
 import 'package:proxypin/ui/component/search/highlight_text.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 import 'package:proxypin/ui/content/body.dart';
+import 'package:proxypin/ui/content/formatted_code_viewer.dart';
 import 'package:proxypin/ui/content/hex_viewer.dart';
+
+// CodeForge 编辑器有持续 ticker，不能用 pumpAndSettle；而带 AppLocalizations 的 HttpBodyWidget
+// 还依赖 deferred 库加载，需要 fake-async 时间推进（runAsync 无法推进这种 Timer）。
+// 统一用定时 pump 轮询直到条件成立，最多约 3 秒。
+Future<void> pumpUntil(WidgetTester tester, bool Function() condition, {int maxTries = 30}) async {
+  for (var i = 0; i < maxTries && !condition(); i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
+// 保活 Stack 里多个 tab 可同时持有 CodeForge，定位 Hex 编辑器时要限定在 HexViewer 子树内。
+Finder hexCodeForge() => find.descendant(of: find.byType(HexViewer), matching: find.byType(CodeForge));
 
 void main() async {
   // 纯 Dart 格式化逻辑不依赖原生库，任何环境都要跑。
@@ -154,7 +168,7 @@ void main() async {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
 
-      // 超过同步阈值（256KiB）的大 body 必须保留 isolate 路径，避免阻塞主线程。
+      // 超过同步阈值（128KiB）的大 body 必须保留 isolate 路径，避免阻塞主线程。
       await pumpViewer(tester, List.filled(300 * 1024, 0x41));
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(viewerKey.currentState!.controller, isNull);
@@ -183,17 +197,12 @@ void main() async {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: HttpBodyWidget(httpMessage: message)),
       ));
-      await tester.pumpAndSettle();
+      // 带 l10n 委托的 HttpBodyWidget 要先完成 deferred 库加载才构建 body，用定时 pump 等分段出现。
+      await pumpUntil(tester, () => find.text('Hex').evaluate().isNotEmpty);
       await tester.tap(find.text('Hex'));
-      await tester.pump();
-      await tester.runAsync(() async {
-        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          tester.binding.scheduleFrame();
-        }
-      });
-      await tester.pump();
-      expect(find.byType(CodeForge), findsOneWidget);
+      // Text tab 已持有一个 CodeForge，这里限定在 HexViewer 子树内等待 Hex 编辑器。
+      await pumpUntil(tester, () => hexCodeForge().evaluate().isNotEmpty);
+      expect(hexCodeForge(), findsOneWidget);
 
       final clipboard = <String>[];
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
@@ -665,8 +674,9 @@ void main() async {
         return state.horizontalScrollable.position.maxScrollExtent as double;
       }
 
-      // 4 字节一行（Ahem 测试字体下约 56 字符 ×14 = 784px）放得下 900 视口，不应有横向越界。
-      // 修复前 code_forge 把最小宽度取成整屏宽 1000，extent 恒为内边距总量 100，与内容无关。
+      // 4 字节一行（Ahem 测试字体下约 56 字符 ×14 = 784px）加 8 位偏移 gutter（约 81px）
+      // 与 12px 行号间距（约 877px）仍放得下 900 视口，不应有横向越界。修复前 code_forge
+      // 把最小宽度取成整屏宽 1000，extent 恒为内边距总量 100，与内容无关。
       await tester.pumpWidget(frame(List.generate(4, (i) => i)));
       await tester.runAsync(() async {
         for (int i = 0; i < 20 && key.currentState!.controller == null; i++) {
@@ -677,14 +687,47 @@ void main() async {
       await tester.pump();
       expect(await horizontalExtent(), 0);
 
-      // 完整 16 字节日志行（68 字符 ×14 = 952px）确实超过 900 视口，正当的横向滚动要保留，
-      // 且 extent 只反映真实内容超宽（约 52），不再混入内边距造成的 100。
+      // 完整 16 字节日志行（68 字符 ×14 = 952px）确实超过正文可用宽度，正当的横向滚动要保留。
+      // extent = 内容宽 + 8 位偏移 gutter 宽（Ahem 下约 81px）+ 12px 行号间距 - 900 视口 ≈ 145，
+      // 只反映真实内容超宽、固定 gutter 宽与行号间距，不再混入内边距造成的额外 100。
       await tester.pumpWidget(frame(List.generate(32, (i) => i)));
       await tester.pump();
       await tester.pump();
       final overflow = await horizontalExtent();
       expect(overflow, greaterThan(0));
-      expect(overflow, lessThan(100));
+      expect(overflow, lessThan(160));
+    });
+
+    testWidgets('renders byte offsets in the gutter instead of line numbers', skip: !nativeReady, (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await pumpViewer(tester, List.generate(48, (index) => index));
+      await tester.runAsync(() async {
+        for (int i = 0; i < 20 && viewerKey.currentState!.controller == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          tester.binding.scheduleFrame();
+        }
+      });
+      await tester.pump();
+
+      final codeForge = tester.widget<CodeForge>(find.byType(CodeForge));
+      expect(codeForge.enableGutter, isTrue);
+      final gutterBuilder = codeForge.gutterBuilder;
+      expect(gutterBuilder, isNotNull);
+      expect(codeForge.gutterStyle, isNotNull);
+      // 固定槽宽 = 8 字符 × 0.6em + 1em padding（8×14×0.6+14 = 81.2），首帧即最终宽度，
+      // 不依赖 paint 阶段按 gutterBuilder 文本撑宽，避免偏移叠在窄槽里闪一下。
+      expect(codeForge.gutterStyle!.gutterWidth, 81.2);
+      // 行号与正文的间距映射到 innerPadding.left（HexViewer 的 _gutterSpacing = 12）。
+      expect(codeForge.innerPadding?.left, 12.0);
+      expect(codeForge.innerPadding?.top, 0.0);
+
+      // 每行 16 字节：第 N 行（1 基）首字节偏移 = (N-1)*16，渲染为定长 8 位十六进制。
+      expect(gutterBuilder!.builder(1, ''), '00000000');
+      expect(gutterBuilder.builder(2, ''), '00000010');
+      expect(gutterBuilder.builder(4, ''), '00000030');
     });
 
     testWidgets('shrinks to content height for small bodies but keeps a usable minimum', skip: !nativeReady,
@@ -782,20 +825,15 @@ void main() async {
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(frame(octetMessage(String.fromCharCodes(List.generate(2000, (i) => 65 + i % 26)))));
-      await tester.pumpAndSettle();
+      // 先完成 l10n deferred 加载，Text tab（小文本走旧高亮组件）随之构建；此时 Hex 尚未访问。
+      await pumpUntil(tester, () => find.byType(HighlightTextWidget).evaluate().isNotEmpty);
 
       // 初始只构建了 Text tab，Hex 尚未访问，不应存在于树中。
       expect(find.byType(HexViewer, skipOffstage: false), findsNothing);
 
       await tester.tap(find.text('Hex'));
-      await tester.pump();
-      await tester.runAsync(() async {
-        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          tester.binding.scheduleFrame();
-        }
-      });
-      await tester.pump();
+      // Text tab 已持有一个 CodeForge，这里限定在 HexViewer 子树内等待 Hex 编辑器。
+      await pumpUntil(tester, () => hexCodeForge().evaluate().isNotEmpty);
       expect(find.byType(HexViewer), findsOneWidget);
 
       // 滚动 Hex 后切到 Text：HexViewer 必须以 Offstage 形式保留而不是销毁。
@@ -817,8 +855,10 @@ void main() async {
       final offstage = tester
           .widget<Offstage>(find.ancestor(of: hiddenHex, matching: find.byType(Offstage, skipOffstage: false)).first);
       expect(offstage.offstage, isTrue);
-      // Text tab 同样已被访问，两个查看器此刻都在树中。
-      expect(find.byType(HighlightTextWidget), findsOneWidget);
+      // Text tab 是小文本，走旧高亮组件不进 code_forge；树中只有 Hex 一个 code_forge 查看器。
+      expect(find.byType(FormattedCodeViewer, skipOffstage: false), findsNothing);
+      expect(find.byType(HighlightTextWidget, skipOffstage: false), findsOneWidget);
+      expect(find.byType(CodeForgeReadOnlyViewer, skipOffstage: false), findsOneWidget);
 
       // 切回 Hex：同一个 State（不是重新挂载），滚动偏移原样保留。
       await tester.tap(find.text('Hex'));
@@ -836,16 +876,11 @@ void main() async {
 
       final first = octetMessage('first message body');
       await tester.pumpWidget(frame(first));
-      await tester.pumpAndSettle();
+      // 先完成 l10n deferred 加载，小文本 Text tab 走旧高亮组件。
+      await pumpUntil(tester, () => find.byType(HighlightTextWidget).evaluate().isNotEmpty);
       await tester.tap(find.text('Hex'));
-      await tester.pump();
-      await tester.runAsync(() async {
-        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          tester.binding.scheduleFrame();
-        }
-      });
-      await tester.pump();
+      // Text tab 已持有一个 CodeForge，限定在 HexViewer 子树内等待 Hex 编辑器。
+      await pumpUntil(tester, () => hexCodeForge().evaluate().isNotEmpty);
       expect(find.byType(HexViewer), findsOneWidget);
       final firstState = tester.state<HexViewerState>(find.byType(HexViewer));
 
@@ -854,23 +889,16 @@ void main() async {
       // 但它必须是从零构建的新实例，且 Text tab 仍保持懒构建。
       final second = octetMessage('second message body');
       await tester.pumpWidget(frame(second));
-      await tester.pump();
-      await tester.runAsync(() async {
-        for (int i = 0; i < 20 && find.byType(CodeForge).evaluate().isEmpty; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-          tester.binding.scheduleFrame();
-        }
-      });
-      await tester.pump();
-      expect(firstState.mounted, isFalse);
+      await pumpUntil(tester, () => !firstState.mounted);
       expect(find.byType(HexViewer, skipOffstage: false), findsOneWidget);
       final secondState = tester.state<HexViewerState>(find.byType(HexViewer));
       expect(secondState, isNot(same(firstState)));
+      // Text tab 尚未访问，懒构建下不应存在于树中（小文本将走旧高亮组件）。
       expect(find.byType(HighlightTextWidget, skipOffstage: false), findsNothing);
 
       // 切到 Text 才首次构建该查看器，验证新消息的懒构建语义没有被旧缓存破坏。
       await tester.tap(find.text('Text'));
-      await tester.pump();
+      await pumpUntil(tester, () => find.byType(HighlightTextWidget).evaluate().isNotEmpty);
       expect(find.byType(HighlightTextWidget), findsOneWidget);
     });
 
