@@ -129,10 +129,44 @@ class HistoryStorage {
   Future<void> removeHistory(int index) async {
     var history = _histories.removeAt(index);
     logger.i('删除历史记录 $history');
+    await _deleteHistoryFile(history);
+    await refresh();
+  }
+
+  /// 按 stableId 批量删除历史记录，返回实际删除条数。
+  ///
+  /// 列表只触发一次 onBatchRemove；单个文件删除失败不中断整批，最后统一刷新 histories.json。
+  /// 调用方须在弹确认框等异步操作前用 stableId 锁定目标，删除导致的索引漂移不会影响结果。
+  Future<int> removeHistories(Set<int> stableIds) async {
+    if (stableIds.isEmpty) {
+      return 0;
+    }
+    final targets = pickHistoriesByIds(_histories.source, stableIds);
+    if (targets.isEmpty) {
+      return 0;
+    }
+    final targetSet = targets.toSet();
+    _histories.removeWhere(targetSet.contains);
+    for (final history in targets) {
+      logger.i('删除历史记录 $history');
+      await _deleteHistoryFile(history);
+    }
+    await refresh();
+    return targets.length;
+  }
+
+  /// 容错删除历史文件：文件已不存在视为成功，其他异常记录日志后跳过，不中断批量流程。
+  Future<void> _deleteHistoryFile(HistoryItem history) async {
     final homePath = await _homePath();
     var file = File('$homePath${Platform.pathSeparator}${Files.getName(history.path)}');
-    file.delete();
-    await refresh();
+    if (!await file.exists()) {
+      return;
+    }
+    try {
+      await file.delete();
+    } catch (e) {
+      logger.e('删除历史文件失败 ${history.path}', error: e);
+    }
   }
 
   //获取请求列表
@@ -406,4 +440,15 @@ class HistoryItem {
   String toString() {
     return "$path $requestLength $fileSize";
   }
+}
+
+/// 按 stableId 从列表中挑出对应的历史记录，保持入参列表的顺序。
+///
+/// 纯函数、无 I/O，供批量删除和测试使用。删除等异步操作会让索引漂移，
+/// 调用方应在弹确认框前就用 stableId 锁定目标，而不是持有 index。
+List<HistoryItem> pickHistoriesByIds(Iterable<HistoryItem> items, Set<int> stableIds) {
+  if (stableIds.isEmpty) {
+    return const <HistoryItem>[];
+  }
+  return items.where((item) => stableIds.contains(item.stableId)).toList();
 }
