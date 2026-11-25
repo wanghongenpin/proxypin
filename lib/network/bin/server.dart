@@ -56,6 +56,14 @@ class ProxyServer {
   //配置
   final Configuration configuration;
 
+  Future<void> _lifecycle = Future.value();
+
+  Future<T> _serialize<T>(Future<T> Function() operation) {
+    final result = _lifecycle.then((_) => operation());
+    _lifecycle = result.then<void>((_) {}, onError: (Object error, StackTrace stack) {});
+    return result;
+  }
+
   ProxyServer(this.configuration) {
     current = this;
   }
@@ -80,7 +88,12 @@ class ProxyServer {
   }
 
   /// 启动代理服务
-  Future<Server> start() async {
+  Future<Server> start() => _serialize(_start);
+
+  Future<Server> _start() async {
+    if (isRunning) {
+      return this.server!;
+    }
     Server server = Server(configuration, listener: CombinedEventListener(listeners));
 
     List<Interceptor> interceptors = [
@@ -104,36 +117,36 @@ class ProxyServer {
       );
     });
 
-    return server.bind(port).then((serverSocket) {
-      logger.i("listen on $port");
-      this.server = server;
-      if (configuration.enableSystemProxy) {
-        // 设置系统代理失败（如桌面环境不支持/命令缺失）不应影响代理本体是否可用。
-        setSystemProxyEnable(true).catchError((Object e) {
-          logger.w('enable system proxy failed: $e');
-        });
+    await server.bind(port);
+    logger.i("listen on $port");
+    this.server = server;
+    if (configuration.enableSystemProxy) {
+      try {
+        await _setSystemProxyEnable(true);
+      } catch (e) {
+        logger.w('enable system proxy failed: $e');
       }
+    }
 
-      //初始化证书
-      CertificateManager.initCAConfig();
-      ClientCertManager.preload();
-      return server;
-    });
+    //初始化证书
+    CertificateManager.initCAConfig();
+    ClientCertManager.preload();
+    return server;
   }
 
   /// 停止代理服务
-  Future<Server?> stop() async {
+  Future<Server?> stop() => _serialize(_stop);
+
+  Future<Server?> _stop() async {
+    if (Platform.isLinux) {
+      await _setSystemProxyEnable(false);
+    }
     if (!isRunning) {
       return server;
     }
 
-    if (configuration.enableSystemProxy) {
-      // 恢复系统代理失败也要继续关闭监听，否则会出现「界面显示已停止、端口还在监听」。
-      try {
-        await setSystemProxyEnable(false);
-      } catch (e) {
-        logger.w('restore system proxy failed, stopping listener anyway: $e');
-      }
+    if (!Platform.isLinux && configuration.enableSystemProxy) {
+      await _setSystemProxyEnable(false);
     }
     logger.i("stop on $port");
     await server?.stop();
@@ -141,13 +154,15 @@ class ProxyServer {
   }
 
   /// 设置系统代理
-  Future<void> setSystemProxyEnable(bool enable) async {
+  Future<void> setSystemProxyEnable(bool enable) => _serialize(() => _setSystemProxyEnable(enable));
+
+  Future<void> _setSystemProxyEnable(bool enable) async {
     if (!Platforms.isDesktop()) {
       return;
     }
 
     //关闭系统代理 恢复成外部代理地址
-    if (!enable && configuration.externalProxy?.enabled == true) {
+    if (!Platform.isLinux && !enable && configuration.externalProxy?.enabled == true) {
       await SystemProxy.setSystemProxy(configuration.externalProxy!.port!, enableSsl, configuration.proxyPassDomains);
       return;
     }
@@ -156,9 +171,10 @@ class ProxyServer {
   }
 
   /// 重启代理服务
-  Future<void> restart() async {
-    await stop().whenComplete(() => start());
-  }
+  Future<void> restart() => _serialize(() async {
+        await _stop();
+        await _start();
+      });
 
   ///检查是否监听端口 没有监听则启动
   Future<void> retryBind() async {

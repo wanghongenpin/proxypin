@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
@@ -332,12 +334,15 @@ class _ProxyMenuState extends State<_ProxyMenu> {
           child: Switch(
               hoverColor: Colors.transparent,
               value: configuration.enableSystemProxy,
-              onChanged: (val) {
-                widget.proxyServer.setSystemProxyEnable(val);
-                configuration.enableSystemProxy = val;
-                setState(() {
-                  changed = true;
-                });
+              onChanged: (val) async {
+                try {
+                  await widget.proxyServer.setSystemProxyEnable(val);
+                  configuration.enableSystemProxy = val;
+                  if (mounted) setState(() => changed = true);
+                } catch (error) {
+                  logger.e('set system proxy failed', error: error);
+                  if (mounted) FlutterToastr.show(localizations.fail, context, duration: 3);
+                }
               })),
       SizedBox(width: 10)
     ]);

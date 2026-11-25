@@ -243,7 +243,7 @@ class MacSystemProxy implements SystemProxy {
     // Use a safer pipeline that avoids embedding awk's $2 (which complicates Dart string quoting).
     // This command finds the Device line, takes the following Hardware Port line, and extracts the part after ':'
     var cmd =
-        'networksetup -listnetworkserviceorder | grep "Device: ${name}" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
+        'networksetup -listnetworkserviceorder | grep "Device: $name" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
     var results = await Process.run('bash', ['-c', cmd]);
     var out = results.stdout.toString().trim();
     if (out.isEmpty) return '';
@@ -372,273 +372,220 @@ class WindowsSystemProxy extends SystemProxy {
 }
 
 class LinuxSystemProxy extends SystemProxy {
+  LinuxSystemProxy({Map<String, String>? environment, Future<ProcessResult> Function(String, List<String>)? run})
+      : _environment = environment ?? Platform.environment,
+        _runProcess = run ?? Process.run;
+
+  final Map<String, String> _environment;
+  final Future<ProcessResult> Function(String, List<String>) _runProcess;
+
   static const String _schema = 'org.gnome.system.proxy';
+  bool get _isKde => (_environment['XDG_CURRENT_DESKTOP'] ?? '').toUpperCase().split(':').contains('KDE');
+  String get _kdePath => '${_environment['XDG_CONFIG_HOME'] ?? '${_environment['HOME']}/.config'}/kioslaverc';
 
-  /// Plasma 6 只提供 kwriteconfig6（kwriteconfig5 已被移除），而 proxy_manager 0.0.3
-  /// 在 XDG_CURRENT_DESKTOP=KDE 时写死调用 kwriteconfig5，会抛 ProcessException：
-  /// 表现为「点停止后提示失败，但代理其实还在监听」，设置系统代理时也会异步抛错。
-  /// 这里自己写 KIO 的配置并做版本兼容。
-  static Future<void> _kdeConfig(String key, String value) async {
-    final desktop = Platform.environment['XDG_CURRENT_DESKTOP'] ?? '';
-    if (!desktop.toUpperCase().contains('KDE')) {
-      return;
+  Future<String> _run(String tool, List<String> args) async {
+    final result = await _runProcess(tool, args);
+    if (result.exitCode != 0 || (tool == 'gsettings' && result.stderr.toString().isNotEmpty)) {
+      throw StateError('$tool ${args.first} failed: ${result.stderr}');
     }
+    return result.stdout.toString();
+  }
 
-    final home = Platform.environment['HOME'];
-    for (final tool in const ['kwriteconfig6', 'kwriteconfig5']) {
+  Future<String> _kdeCommand(String command, String key, List<String> args) async {
+    for (final version in const ['6', '5']) {
       try {
-        final result = await Process.run(tool, [
+        return await _run('$command$version', [
           '--file',
-          '$home/.config/kioslaverc',
+          _kdePath,
           '--group',
           'Proxy Settings',
           '--key',
           key,
-          value,
+          ...args,
         ]);
-        if (result.exitCode == 0) {
-          return;
+      } on ProcessException catch (error) {
+        if (error.errorCode != 2) {
+          rethrow;
         }
-        logger.w('$tool $key=$value exits with ${result.exitCode}: ${result.stderr}');
-      } on ProcessException {
-        // 该版本不存在，试下一个
       }
     }
-    logger.w('kwriteconfig6/5 not found, skip KDE proxy setting ($key)');
+    throw StateError('$command for Plasma 5 or 6 is unavailable');
   }
 
-  /// 删除某个 KIO 键（还原时清理我们自己写入、但用户原本没有的键）
-  static Future<void> _kdeDelete(String key) async {
-    final desktop = Platform.environment['XDG_CURRENT_DESKTOP'] ?? '';
-    if (!desktop.toUpperCase().contains('KDE')) {
-      return;
-    }
+  Future<String?> _kdeRead(String key) async {
+    const absent = '__proxypin_unset_proxy_key__';
+    final raw = await _kdeCommand('kreadconfig', key, ['--default', absent]);
+    final value = raw.endsWith('\n') ? raw.substring(0, raw.length - 1) : raw;
+    return value == absent ? null : value;
+  }
 
-    final home = Platform.environment['HOME'];
-    for (final tool in const ['kwriteconfig6', 'kwriteconfig5']) {
+  Future<void> _kdeWrite(String key, String? value) async {
+    await _kdeCommand('kwriteconfig', key, ['--notify', if (value == null) '--delete' else '--', if (value != null) value]);
+    if (await _kdeRead(key) != value) {
+      throw StateError('KIO did not save $key');
+    }
+  }
+
+  static const _mode = '$_schema|mode';
+  static const _gnomeKeys = [
+    '$_schema.http|host',
+    '$_schema.http|port',
+    '$_schema.http|enabled',
+    '$_schema.https|host',
+    '$_schema.https|port',
+    _mode,
+  ];
+  static const _kdeKeys = ['httpProxy', 'httpsProxy', 'socksProxy', 'NoProxyFor', 'ProxyType'];
+  static const _legacyGnomeKeys = [
+    '$_schema|autoconfig-url',
+    '$_schema|ignore-hosts',
+    '$_schema.socks|host',
+    '$_schema.socks|port',
+  ];
+
+  File get _backupFile {
+    final home = _environment['HOME'];
+    if (home == null || home.isEmpty) {
+      throw StateError('Cannot locate the system proxy backup without HOME');
+    }
+    return File('$home/.proxypin/system_proxy_backup.json');
+  }
+
+  Future<String> _gnomeRead(String key) async {
+    return (await _run('gsettings', ['get', ...key.split('|')])).trim();
+  }
+
+  Future<void> _gnomeWrite(String key, String value) async {
+    await _run('gsettings', ['set', ...key.split('|'), value]);
+    if (await _gnomeRead(key) != value) {
+      throw StateError('GSettings did not save $key');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> _readBackup(File file) async {
+    try {
+      return jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    } on PathNotFoundException {
+      return null;
+    }
+  }
+
+  Future<void> _saveBackup(File file) async {
+    final Map<String, dynamic> snapshot;
+    if (_isKde) {
       try {
-        final result = await Process.run(tool, [
-          '--file',
-          '$home/.config/kioslaverc',
-          '--group',
-          'Proxy Settings',
-          '--delete',
-          '--key',
-          key,
-        ]);
-        if (result.exitCode == 0) {
-          return;
-        }
-      } on ProcessException {
-        // 该版本不存在，试下一个
+        await File(_kdePath).readAsBytes();
+      } on PathNotFoundException {
+        // A new KDE profile may not have a KIO configuration yet.
       }
+      snapshot = {'kioslaverc': {for (final key in _kdeKeys) key: await _kdeRead(key)}};
+    } else {
+      snapshot = {'gsettings': {for (final key in _gnomeKeys) key: await _gnomeRead(key)}};
     }
-  }
-
-  static Future<void> _gsettings(List<String> args) async {
+    await file.parent.create(recursive: true);
+    final staging = await file.parent.createTemp('system-proxy-');
     try {
-      final result = await Process.run('gsettings', args);
-      if (result.exitCode != 0) {
-        logger.w('gsettings ${args.join(' ')} failed: ${result.stderr}');
-      }
-    } on ProcessException catch (e) {
-      logger.w('gsettings not available: $e');
+      final temporary = await File('${staging.path}/backup.json').writeAsString(jsonEncode(snapshot), flush: true);
+      await temporary.rename(file.path);
+    } finally {
+      await staging.delete(recursive: true);
     }
   }
 
-  static const List<String> _proxyTypes = ['http', 'https', 'socks'];
-
-  /// 已知的 KIO 代理相关键，备份/还原时按这个列表处理
-  static const List<String> _kdeKeys = ['ProxyType', 'httpProxy', 'httpsProxy', 'socksProxy', 'NoProxyFor'];
-
-  /// 启动系统代理前把用户原有设置存一份，停止时还原。
-  /// 否则（上游行为）停止会把模式直接设成 none，用户自己的 PAC/手动代理配置就丢了。
-  static File? get _backupFile {
-    final home = Platform.environment['HOME'];
-    return home == null ? null : File('$home/.proxypin/system_proxy_backup.json');
-  }
-
-  static Future<String?> _gsettingsGet(String schema, String key) async {
-    try {
-      final result = await Process.run('gsettings', ['get', schema, key]);
-      if (result.exitCode == 0) {
-        return result.stdout.toString().trim();
-      }
-    } on ProcessException catch (e) {
-      logger.w('gsettings get $schema $key failed: $e');
+  Future<void> _restoreBackup(File file, Map<String, dynamic> data) async {
+    if (data.isEmpty ||
+        data.values.any((value) => value is! Map<String, dynamic>) ||
+        data.keys.any((key) => key != 'gsettings' && key != 'kioslaverc')) {
+      throw const FormatException('Invalid system proxy backup');
     }
-    return null;
-  }
-
-  /// 读取 ~/.config/kioslaverc 的 [Proxy Settings] 段（只取代理相关键）
-  static Map<String, String> _readKdeConfig() {
-    final home = Platform.environment['HOME'];
-    if (home == null) {
-      return {};
+    final settings = data['gsettings'] as Map<String, dynamic>?;
+    final kde = data['kioslaverc'] as Map<String, dynamic>?;
+    if (settings != null &&
+        (settings.isNotEmpty || kde == null || !_isKde) &&
+        _gnomeKeys.any((key) => settings[key] is! String)) {
+      throw const FormatException('Incomplete GSettings proxy backup');
     }
-    final file = File('$home/.config/kioslaverc');
-    if (!file.existsSync()) {
-      return {};
+    if (kde != null &&
+        (kde.values.any((value) => value != null && value is! String) ||
+            (settings == null && _kdeKeys.any((key) => !kde.containsKey(key))))) {
+      throw const FormatException('Invalid KIO proxy backup');
     }
-
-    final result = <String, String>{};
-    var inSection = false;
-    try {
-      for (final line in file.readAsLinesSync()) {
-        final trimmed = line.trim();
-        if (trimmed.startsWith('[')) {
-          inSection = trimmed == '[Proxy Settings]';
-          continue;
-        }
-        if (!inSection || trimmed.isEmpty || trimmed.startsWith('#')) {
-          continue;
-        }
-        final index = trimmed.indexOf('=');
-        if (index <= 0) {
-          continue;
-        }
-        final key = trimmed.substring(0, index).trim();
-        if (_kdeKeys.contains(key)) {
-          result[key] = trimmed.substring(index + 1).trim();
+    if (settings != null && settings.isNotEmpty) {
+      for (final key in [..._legacyGnomeKeys.where(settings.containsKey), ..._gnomeKeys]) {
+        final value = settings[key] as String;
+        if (await _gnomeRead(key) != value) {
+          await _gnomeWrite(key, value);
         }
       }
-    } catch (e) {
-      logger.w('read kioslaverc failed: $e');
     }
-    return result;
-  }
-
-  static Future<void> _saveBackup() async {
-    final file = _backupFile;
-    if (file == null || file.existsSync()) {
-      // 已有备份（含上次异常退出留下的）就不覆盖，避免把我们的设置当成用户设置
-      return;
-    }
-
-    // gsettings 的代理项分属不同 schema：org.gnome.system.proxy 只有 mode /
-    // autoconfig-url / ignore-hosts，各协议的 host/port/enabled 在 .http/.https/.socks 里。
-    final settings = <String, String>{};
-    Future<void> read(String schema, String key) async {
-      final value = await _gsettingsGet(schema, key);
-      if (value != null) {
-        settings['$schema|$key'] = value;
-      }
-    }
-
-    for (final key in const ['mode', 'autoconfig-url', 'ignore-hosts']) {
-      await read(_schema, key);
-    }
-    for (final type in _proxyTypes) {
-      await read('$_schema.$type', 'enabled');
-      await read('$_schema.$type', 'host');
-      await read('$_schema.$type', 'port');
-    }
-
-    try {
-      await file.parent.create(recursive: true);
-      await file.writeAsString(jsonEncode({'gsettings': settings, 'kioslaverc': _readKdeConfig()}));
-      logger.d('system proxy settings backed up');
-    } catch (e) {
-      logger.w('backup system proxy settings failed: $e');
-    }
-  }
-
-  /// gsettings get 的结果带引号（字符串）或数组字面量，还原时按需去掉外层单引号
-  static String _unwrap(String raw) {
-    final value = raw.trim();
-    if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
-      return value.substring(1, value.length - 1);
-    }
-    return value;
-  }
-
-  /// 还原备份；没有备份时返回 false，由调用方走默认逻辑
-  static Future<bool> _restoreBackup() async {
-    final file = _backupFile;
-    if (file == null || !file.existsSync()) {
-      return false;
-    }
-
-    try {
-      final data = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-      final settings = (data['gsettings'] as Map?)?.cast<String, dynamic>() ?? const {};
-      final kde = (data['kioslaverc'] as Map?)?.cast<String, dynamic>() ?? const {};
-
-      String? mode;
-      // 先写具体项，最后切 mode，避免中途出现「manual 但地址还是 9099」的空窗
-      for (final entry in settings.entries) {
-        final sep = entry.key.indexOf('|');
-        if (sep <= 0) {
-          continue;
-        }
-        final schema = entry.key.substring(0, sep);
-        final key = entry.key.substring(sep + 1);
-        if (schema == _schema && key == 'mode') {
-          mode = '${entry.value}';
-          continue;
-        }
-        await _gsettings(['set', schema, key, _unwrap('${entry.value}')]);
-      }
-      if (mode != null) {
-        await _gsettings(['set', _schema, 'mode', _unwrap(mode)]);
-      }
-
+    if (kde != null && (settings == null || _isKde || kde.isNotEmpty || await File(_kdePath).exists())) {
       for (final key in _kdeKeys) {
-        if (kde[key] != null) {
-          await _kdeConfig(key, '${kde[key]}');
-        } else {
-          // 用户原本没有这个键：删掉我们写入的值，否则会留下指向 9099 的死配置
-          await _kdeDelete(key);
+        final value = kde[key] as String?;
+        if (await _kdeRead(key) != value) {
+          await _kdeWrite(key, value);
         }
       }
+    }
+    await file.delete();
+    logger.i('system proxy settings restored');
+  }
 
-      file.deleteSync();
-      logger.i('system proxy settings restored');
-      return true;
-    } catch (e) {
-      logger.w('restore system proxy settings failed: $e');
-      return false;
+  @override
+  Future<void> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) => enable(port, sslSetting);
+
+  Future<void> enable(int port, bool sslSetting) async {
+    final file = _backupFile;
+    final previous = await _readBackup(file);
+    if (previous != null) {
+      await _restoreBackup(file, previous);
+    }
+    await _saveBackup(file);
+
+    try {
+      if (_isKde) {
+        await _kdeWrite('httpProxy', 'http://127.0.0.1:$port');
+        await _kdeWrite('httpsProxy', sslSetting ? 'http://127.0.0.1:$port' : null);
+        await _kdeWrite('ProxyType', '1');
+      } else {
+        await _gnomeWrite('$_schema.http|host', "'127.0.0.1'");
+        await _gnomeWrite('$_schema.http|port', '$port');
+        await _gnomeWrite('$_schema.http|enabled', 'true');
+        await _gnomeWrite('$_schema.https|host', sslSetting ? "'127.0.0.1'" : "''");
+        await _gnomeWrite('$_schema.https|port', sslSetting ? '$port' : '0');
+        await _gnomeWrite(_mode, "'manual'");
+      }
+    } catch (error) {
+      try {
+        await restore();
+      } catch (rollbackError) {
+        logger.e('system proxy rollback failed', error: rollbackError);
+      }
+      rethrow;
     }
   }
 
   @override
-  Future<void> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) async {
-    await _saveBackup();
-    await _gsettings(['set', _schema, 'mode', 'manual']);
-    await _gsettings(['set', '$_schema.http', 'host', '127.0.0.1']);
-    await _gsettings(['set', '$_schema.http', 'port', '$port']);
-    await _gsettings(['set', '$_schema.http', 'enabled', 'true']);
-    // 只代理 http/https：用户原来若开了 socks 代理，指向的是我们没监听的端口，先关掉（停止时还原）
-    await _gsettings(['set', '$_schema.socks', 'enabled', 'false']);
-    if (sslSetting) {
-      await _gsettings(['set', '$_schema.https', 'host', '127.0.0.1']);
-      await _gsettings(['set', '$_schema.https', 'port', '$port']);
-      await _gsettings(['set', '$_schema.https', 'enabled', 'true']);
+  Future<void> _setProxyEnable(bool proxyEnable, bool sslSetting) => restore();
+
+  Future<void> restore() async {
+    final file = _backupFile;
+    final snapshot = await _readBackup(file);
+    if (snapshot != null) {
+      await _restoreBackup(file, snapshot);
     }
-
-    await _kdeConfig('ProxyType', '1');
-    await _kdeConfig('httpProxy', 'http://127.0.0.1:$port');
-    if (sslSetting) {
-      await _kdeConfig('httpsProxy', 'http://127.0.0.1:$port');
-    }
-
-    SystemProxy.setProxyPassDomains(proxyPassDomains);
-  }
-
-  @override
-  Future<void> _setProxyEnable(bool proxyEnable, bool sslSetting) async {
-    if (await _restoreBackup()) {
-      return;
-    }
-
-    // 没有备份（例如系统代理是别处开启的）时保持旧行为：关掉代理
-    await _gsettings(['set', _schema, 'mode', 'none']);
-    await _kdeConfig('ProxyType', '0');
   }
 
   ///linux 获取代理
   @override
   Future<ProxyInfo?> _getSystemProxy(ProxyTypes types) async {
+    if (_isKde) {
+      if (await _kdeRead('ProxyType') != '1') {
+        return null;
+      }
+      final value = await _kdeRead('${types.name}Proxy');
+      final uri = value == null ? null : Uri.tryParse(value.replaceFirst(' ', ':'));
+      return uri != null && uri.host.isNotEmpty && uri.hasPort ? ProxyInfo.of(uri.host, uri.port) : null;
+    }
     var mode = await Process.run("gsettings", ["get", "org.gnome.system.proxy", "mode"])
         .then((value) => value.stdout.toString().trim());
     if (mode.contains("manual")) {

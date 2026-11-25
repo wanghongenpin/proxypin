@@ -62,15 +62,18 @@ class CertInstaller {
   static Future<bool> installLinuxCertificate(File certFile) async {
     String? anchorDir;
     List<String> refresh;
+    final debianRefresh = const ['/usr/sbin/update-ca-certificates', '/usr/bin/update-ca-certificates']
+        .where((path) => File(path).existsSync())
+        .firstOrNull;
     if (File('/usr/bin/update-ca-trust').existsSync() && Directory(_fedoraAnchorDir).existsSync()) {
       anchorDir = _fedoraAnchorDir;
-      refresh = ['update-ca-trust', 'extract'];
-    } else if (File('/usr/bin/update-ca-certificates').existsSync()) {
+      refresh = ['/usr/bin/update-ca-trust', 'extract'];
+    } else if (debianRefresh != null) {
       anchorDir = _debianAnchorDir;
-      refresh = ['update-ca-certificates'];
+      refresh = [debianRefresh];
     } else if (File('/usr/bin/trust').existsSync()) {
       anchorDir = _p11kitAnchorDir;
-      refresh = ['trust', 'extract-compat'];
+      refresh = ['/usr/bin/trust', 'extract-compat'];
     } else {
       logger.w('No supported CA store found, please install ca-certificates-utils / ca-certificates');
       return false;

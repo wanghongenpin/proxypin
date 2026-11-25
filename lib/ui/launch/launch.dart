@@ -180,11 +180,15 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     _exiting = true;
     logger.d("appExit");
 
-    // 停止代理可能因为还有活跃连接而卡住；加超时保证“退出”一定能退。
     try {
-      await widget.proxyServer.stop().timeout(const Duration(seconds: 3));
+      await widget.proxyServer.stop();
     } catch (e) {
-      logger.w('stop proxy server failed or timed out, force exit: $e');
+      logger.w('stop proxy server failed during exit: $e');
+      _exiting = false;
+      if (mounted) {
+        FlutterToastr.show(localizations.fail, context, duration: 3);
+      }
+      return;
     }
 
     started = false;
@@ -223,7 +227,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     if (!isPreventClose || Platform.isMacOS) {
       await appExit();
     }
-    return super.didRequestAppExit();
+    return AppExitResponse.cancel;
   }
 
   @override
@@ -246,7 +250,9 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     if (state == AppLifecycleState.detached) {
       logger.d('AppLifecycleState.detached');
       widget.onStop?.call();
-      widget.proxyServer.stop();
+      unawaited(widget.proxyServer.stop().then<void>((_) {}, onError: (Object error, StackTrace stack) {
+        logger.e('stop proxy server failed on detach', error: error, stackTrace: stack);
+      }));
       started = false;
     }
   }
@@ -293,7 +299,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
         logger.e("stop proxy server failed", error: e);
         if (mounted) {
           FlutterToastr.show(localizations.fail, context, duration: 3);
-          _updateStarted(false);
+          _updateStarted(widget.proxyServer.isRunning);
         }
       });
     } else {
@@ -346,6 +352,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
         widget.onStart?.call();
       }).catchError((e) {
         logger.e("启动代理服务器失败", error: e);
+        if (!mounted) return;
         String message = localizations.proxyPortRepeat(widget.proxyServer.port);
         FlutterToastr.show(message, context, duration: 3);
       });
