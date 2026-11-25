@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
+import 'package:proxypin/ui/component/linux_window_resize_area.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -87,14 +88,19 @@ void main(List<String> args) async {
     await DesktopSupport.initialize(appConfiguration);
   }
 
-  runApp(FluentApp(DesktopHomePage(await configuration, appConfiguration), appConfiguration));
+  runApp(FluentApp(
+    DesktopHomePage(await configuration, appConfiguration),
+    appConfiguration,
+    resizeWindow: Platform.isLinux,
+  ));
 }
 
 class FluentApp extends StatelessWidget {
   final Widget home;
   final AppConfiguration appConfiguration;
+  final bool resizeWindow;
 
-  const FluentApp(this.home, this.appConfiguration, {super.key});
+  const FluentApp(this.home, this.appConfiguration, {super.key, this.resizeWindow = false});
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +117,7 @@ class FluentApp extends StatelessWidget {
             locale: appConfiguration.language,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
+            builder: resizeWindow ? (context, child) => LinuxWindowResizeArea(child: child!) : null,
             home: home,
           );
         });
