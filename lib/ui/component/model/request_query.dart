@@ -1,5 +1,9 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/utils/ip.dart' show ipList;
 import 'package:proxypin/utils/query/query.dart';
 
 /// HTTP 请求列表的查询字段
@@ -15,6 +19,7 @@ class RequestQueryItem {
 
 /// 帮助面板中的常用快捷条件
 const List<String> quickRequestFilters = [
+  'is:remote',
   'is:error',
   'is:pending',
   'is:slow',
@@ -116,6 +121,24 @@ class RequestQuery {
     return false;
   }
 
+  /// 请求是否来自其它设备（热点 / USB 共享 / 局域网设置代理），而非本机应用：
+  /// 客户端地址不是回环、也不是本机任一网卡地址，且没有反查到本机应用。
+  static bool isRemoteClient(HttpRequest request) {
+    if (request.processInfo != null) return false;
+    final client = request.remoteHost;
+    if (client == null || client.isEmpty) return false;
+    final address = InternetAddress.tryParse(client);
+    if (address == null || address.isLoopback) return false;
+    final mapped = client.startsWith('::ffff:') ? client.substring(7) : client;
+    return !(localIpCache ?? const []).contains(mapped);
+  }
+
+  /// 本机 IP 列表（来自 utils/ip.dart 的缓存；测试可覆盖）
+  static List<String>? get localIpCache => localIpsOverride ?? ipList;
+
+  @visibleForTesting
+  static List<String>? localIpsOverride;
+
   static bool _matchIs(QueryTerm term, RequestQueryItem item) {
     final res = item.response;
     for (final v in term.values) {
@@ -133,6 +156,8 @@ class RequestQuery {
         'cookie' => item.request.headers.get('Cookie') != null,
         'large' => (_bodySize(res) ?? 0) > 1024 * 1024,
         'slow' => (_durationMs(item) ?? 0) > 1000,
+        'remote' || 'tether' || 'hotspot' || 'lan' || 'device' => isRemoteClient(item.request),
+        'local' => !isRemoteClient(item.request),
         _ => false,
       };
       if (hit) return true;
@@ -184,11 +209,11 @@ class RequestQuery {
       QueryField(['app', 'process'], (i, t) => t.matchAnyText([i.request.processInfo?.name, i.request.processInfo?.id]),
           description: '来源应用名或包名', examples: ['app:微信', 'app:com.tencent.*']),
       QueryField(['port'], (i, t) => t.matchNumber(i.request.hostAndPort?.port), description: '端口', examples: ['port:8080']),
-      QueryField(['ip'], (i, t) => t.matchAnyText([i.request.remoteHost, i.response?.remoteHost]), description: '客户端/远程 IP'),
+      QueryField(['ip'], (i, t) => t.matchAnyText([i.request.remoteHost, i.response?.remoteHost]), description: '客户端/远程 IP', examples: ['ip:192.168.43.*']),
       QueryField(['proto', 'protocol', 'scheme'], (i, t) => _matchProto(t, i),
           description: 'http/https/ws/sse/h1/h2/graphql', examples: ['proto:h2', 'proto:ws']),
       QueryField(['is', 'has'], (i, t) => _matchIs(t, i),
-          description: 'pending/error/ok/redirect/ws/sse/https/h2/graphql/cookie/large/slow', examples: ['is:error', 'is:slow']),
+          description: 'pending/error/ok/redirect/ws/sse/https/h2/graphql/cookie/large/slow/remote(热点·局域网设备)/local', examples: ['is:remote', 'is:error', 'is:slow']),
     ],
   );
 

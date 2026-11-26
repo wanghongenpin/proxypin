@@ -130,7 +130,9 @@ HTTP 请求列表的搜索框与原始抓包列表共用一套语法（点击搜
 | `size>100k`、`time>1s` | 数值比较，支持 k/m、ms/s 单位 |
 
 HTTP 字段：method、host、path、url、query、status、type、reqtype、size、reqsize、time、header、reqheader、resheader、
-body、reqbody、resbody、cookie、app、port、ip、proto、is（pending/error/ok/redirect/ws/sse/https/h2/graphql/cookie/large/slow）。
+body、reqbody、resbody、cookie、app、port、ip（客户端 / 远程 IP）、proto、is（pending/error/ok/redirect/ws/sse/https/h2/graphql/cookie/large/slow/remote/local）。
+
+`is:remote`：来自其它设备（热点 / USB 共享 / 局域网设置代理）的请求——客户端地址不是回环或本机网卡地址，且未反查到本机应用；`is:local` 相反。
 
 原始抓包字段：proto（tcp/udp/icmp/dns/tls/http/quic/ipv4/ipv6）、host、ip、src、dst、port、sport、dport、app、bytes、
 packets、time、info、is（open/closed/reset/syn/oneway/large/named）。

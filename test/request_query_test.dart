@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/network/util/process_info.dart';
 import 'package:proxypin/ui/component/model/request_query.dart';
 import 'package:proxypin/ui/component/model/search_model.dart';
 import 'package:proxypin/utils/query/query.dart';
@@ -146,6 +147,27 @@ void main() {
       final model = SearchModel(r'status:\d');
       model.isRegExp.value = true;
       expect(model.query, isNull);
+    });
+  });
+
+  group('is:remote', () {
+    HttpRequest from(String? client) => req('GET', 'https://www.zhihu.com/api/v4/x', status: 200)..remoteHost = client;
+    setUp(() => RequestQuery.localIpsOverride = ['192.168.43.1', '10.93.71.178']);
+    tearDown(() => RequestQuery.localIpsOverride = null);
+
+    test('hotspot client is remote, own addresses and loopback are local', () {
+      expect(q('is:remote', from('192.168.43.5')), isTrue);
+      expect(q('is:remote', from('127.0.0.1')), isFalse);
+      expect(q('is:remote', from('10.93.71.178')), isFalse);
+      expect(q('is:remote', from(null)), isFalse);
+      expect(q('is:local', from('192.168.43.5')), isFalse);
+      expect(q('-is:remote host:zhihu', from('127.0.0.1')), isTrue);
+    });
+
+    test('request attributed to a local app is never remote', () {
+      final r = from('192.168.43.5');
+      r.processInfo = ProcessInfo('com.android.chrome', 'Chrome', '', os: 'android');
+      expect(q('is:remote', r), isFalse);
     });
   });
 }
