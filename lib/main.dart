@@ -20,6 +20,7 @@ import 'dart:io';
 
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
 import 'package:proxypin/ui/component/chinese_font.dart';
@@ -169,8 +170,11 @@ class FluentApp extends StatelessWidget {
       );
     }
 
-    var themeData =
-        ThemeData(brightness: brightness, useMaterial3: appConfiguration.useMaterial3, colorScheme: colorScheme);
+    var themeData = ThemeData(
+        brightness: brightness,
+        useMaterial3: appConfiguration.useMaterial3,
+        colorScheme: colorScheme,
+        pageTransitionsTheme: pageTransitionsTheme);
     if (!isDark) {
       themeData = themeData.copyWith(
           // 手机端用户拍板全纯白；桌面端保留设计稿 #F5F6F8 窗口灰底
@@ -226,3 +230,14 @@ class FluentApp extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
   }
 }
+
+/// Android 不使用 Flutter 默认的 PredictiveBackPageTransitionsBuilder：
+/// 底部导航各 Tab 是嵌套 Navigator，预测性返回手势会被 Tab 内当前页面直接认领，
+/// 根 Navigator 上打开的弹窗还在时就把下面的页面返回掉了（targetSdk 36 / Android 16 默认启用预测性返回）。
+const pageTransitionsTheme = PageTransitionsTheme(builders: {
+  TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+  TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+  TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+  TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(),
+  TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(),
+});

@@ -72,9 +72,9 @@ object NetInterfaces {
 
         val names = LinkedHashSet<String>()
         names += javaIfaces.keys
-        val sys = File("/sys/class/net").list()
-        if (!sys.isNullOrEmpty()) names += sys
-        else if (RootShell.instance.isReady) names += RootShell.instance.exec("ls /sys/class/net").stdout.map { it.trim() }
+        // 不走 su：抓包期间 root shell 被连接反查频繁占用，排队会导致列表半天出不来；
+        // 未连接的网卡对抓包没有意义，Java API 看不到也无妨（结果也不再因是否开过抓包而不同）
+        File("/sys/class/net").list()?.let { names += it }
         names.removeAll { it.isBlank() }
 
         return names.map { name ->

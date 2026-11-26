@@ -149,7 +149,8 @@ class _RawCapturePageState extends State<RawCapturePage> {
   }
 
   Future<void> _settings() async {
-    final interfaces = await NetInterfaceInfo.list();
+    // 未连接的网卡不显示（当前选择除外）
+    final interfaces = (await NetInterfaceInfo.list()).where((e) => e.connected || e.name == _iface).toList();
     if (!mounted) return;
     final bpf = TextEditingController(text: _bpf);
     var iface = interfaces.any((e) => e.name == _iface) ? _iface : 'any';

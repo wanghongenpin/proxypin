@@ -82,7 +82,8 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
   Future<void> _pickInterfaces() async {
     final all = await NetInterfaceInfo.list();
     if (!mounted) return;
-    final uplinks = all.where((e) => e.isUplink).toList();
+    // 只列已连接的出口网卡；已选但当前未连接的也保留，便于取消
+    final uplinks = all.where((e) => e.isUplink && (e.connected || configuration.rootInterfaces.contains(e.name))).toList();
     // 已选但当前不存在的网卡（如未连接的移动数据）也保留显示
     for (final name in configuration.rootInterfaces) {
       if (!uplinks.any((e) => e.name == name)) uplinks.add(NetInterfaceInfo(name, 'other', up: false));
