@@ -203,9 +203,11 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
                     subtitle: Text(
                         isCN
                             ? '连接本机热点、USB 或蓝牙共享的电脑 / 手机流量也进入代理，无需在对方设置代理。'
-                                '对方需信任 ProxyPin 证书才能解密 HTTPS；请先开启热点再启动抓包。'
+                                '对方需信任 ProxyPin 证书才能解密 HTTPS（在对方浏览器打开 http://<手机热点IP>:${widget.proxyServer.port}/ssl 下载）；'
+                                '请先开启热点再启动抓包。'
                             : 'Traffic of devices using this phone\'s hotspot / USB / Bluetooth tethering also goes through the proxy, '
-                                'no proxy setup needed on them. They must trust the ProxyPin CA for HTTPS. Turn on the hotspot before starting.',
+                                'no proxy setup needed on them. They must trust the ProxyPin CA for HTTPS (download from http://<hotspot IP>:${widget.proxyServer.port}/ssl). '
+                                'Turn on the hotspot before starting.',
                         style: hint),
                     trailing: SwitchWidget(
                         value: configuration.rootCaptureTether,

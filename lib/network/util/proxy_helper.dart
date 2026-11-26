@@ -41,6 +41,12 @@ class ProxyHelper {
   //请求本服务
   static Future<void> localRequest(ChannelContext channelContext, HttpRequest msg, Channel channel,
       {EventListener? listener}) async {
+    // 通过本机 IP 直接下载证书：http://<手机IP>:<端口>/ssl（热点 / 局域网设备安装 CA 用）
+    if (msg.path == '/ssl') {
+      crtDownload(channelContext, channel, msg);
+      return;
+    }
+
     //获取配置
     if (msg.path == '/config') {
       final requestRewrites = await RequestRewriteManager.instance;
