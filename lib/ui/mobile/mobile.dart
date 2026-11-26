@@ -615,6 +615,10 @@ class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
             key: MobileApp.searchStateKey, onSearch: (val) => MobileApp.requestStateKey.currentState?.search(val)),
         actions: [
           IconButton(
+              tooltip: localizations.clearSearch,
+              icon: const Icon(Icons.close),
+              onPressed: () => MobileApp.searchStateKey.currentState?.clearKeyword()),
+          IconButton(
               tooltip: localizations.clear,
               icon: const Icon(Icons.delete_outline),
               onPressed: () => _onClear(context, localizations)),

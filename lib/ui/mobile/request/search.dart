@@ -53,6 +53,19 @@ class MobileSearchState extends State<MobileSearch> {
     super.dispose();
   }
 
+  /// Clear only the keyword (does not wipe the request list).
+  void clearKeyword() {
+    if (_keywordController.text.isEmpty && (searchModel.keyword == null || searchModel.keyword!.isEmpty)) {
+      return;
+    }
+    setState(() {
+      _keywordController.clear();
+      searchModel.keyword = null;
+      _searched = searchModel.isNotEmpty;
+    });
+    widget.onSearch?.call(searchModel);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
