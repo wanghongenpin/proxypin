@@ -330,7 +330,10 @@ class McpServer {
         ),
         McpTool(
           name: 'get_flow_messages',
-          description: 'Page WebSocket frames of a flow (newest have byte-budget priority). Text frames include payload text.',
+          description:
+              'Page WebSocket frames of a flow (newest have byte-budget priority). Text frames include payload text. '
+              'Binary frames are placeholders by default; pass include_binary=true to get their payload as base64 '
+              '(capped at 64KB of raw bytes per response, newest frames first, truncated frames carry returnedBytes).',
           inputSchema: {
             'type': 'object',
             'properties': {
@@ -341,6 +344,10 @@ class McpServer {
               },
               'offset': {'type': 'integer'},
               'limit': {'type': 'integer', 'description': 'Max frames, default/max 200'},
+              'include_binary': {
+                'type': 'boolean',
+                'description': 'Return binary frame payloads as base64 (data field). Default false: placeholder only.'
+              },
             },
             'required': ['id'],
           },
@@ -355,6 +362,7 @@ class McpServer {
               store.frames(id ?? ''),
               offset: _intArgOr(args['offset'], 0),
               limit: _intArgOr(args['limit'], FlowView.maxWsFrames),
+              includeBinary: args['include_binary'] == true,
             );
           },
         ),

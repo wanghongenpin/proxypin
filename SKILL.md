@@ -24,7 +24,7 @@ Confirm reachability with `get_proxy_status` first; then get the rule index from
 2. **Locate**:
    - Filter by URL/host/method/status: `list_flows(host:, method:, keyword:, status_from:, status_to:)` (`keyword` matches the full URL; `host` is a substring).
    - **Search inside bodies**: `search_flows(keyword: "error 500")` — only searches bodies; binary and >2MB bodies are skipped.
-3. **Drill in**: `get_flow_detail(id:)` for headers (redacted by default) + a truncated body preview; page large bodies with `get_flow_body(id:, side:, offset:, limit:)`; WebSocket frames via `get_flow_messages`.
+3. **Drill in**: `get_flow_detail(id:)` for headers (redacted by default) + a truncated body preview; page large bodies with `get_flow_body(id:, side:, offset:, limit:)`; WebSocket frames via `get_flow_messages` (binary frames return placeholders by default; pass `include_binary: true` to get their payload as base64 in the `data` field, capped at 64KB raw bytes per response, newest frames first).
 4. **Reproduce / change**:
    - Get the index with `list_rules`; `update_*` only changes the fields you pass, `remove_*` deletes, `create_*` adds.
    - Debug a single request: `replay_flow(id:)` to replay; `send_request(curl:)` to fire a new one.
