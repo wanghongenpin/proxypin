@@ -16,6 +16,10 @@ class Vpn {
   /// 最近一次 Root 模式启动失败的原因
   static String? lastRootError;
 
+  /// Root 模式规则被删除 / 变更后回调：iptables 只影响新连接，
+  /// 由上层断开已被重定向的旧连接（否则 Chrome 等复用的长连接会继续经过代理）。
+  static void Function()? onRootRulesChanged;
+
   static List<String> _proxyPassDomains(Configuration configuration) {
     return configuration.proxyPassDomains.split(';').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
   }
@@ -60,6 +64,7 @@ class Vpn {
     if (rootModeActive || await RootProxy.isRunning()) {
       await RootProxy.stop();
       rootModeActive = false;
+      onRootRulesChanged?.call();
     }
     proxyVpnChannel.invokeMethod("stopVpn");
     isVpnStarted = false;
@@ -74,12 +79,14 @@ class Vpn {
       lastRootError = result.error;
       rootModeActive = result.success;
       isVpnStarted = result.success;
+      onRootRulesChanged?.call();
       return;
     }
 
     if (rootModeActive) {
       await RootProxy.stop();
       rootModeActive = false;
+      onRootRulesChanged?.call();
     }
 
     List<String>? appList = configuration.appWhitelistEnabled ? configuration.appWhitelist : [];

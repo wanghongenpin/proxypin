@@ -111,6 +111,23 @@ class Server extends Network {
     return serverSocket;
   }
 
+  /// 断开当前所有客户端连接（监听保持）。
+  /// Root 模式删除 / 变更 iptables 规则只影响新连接，已被重定向的长连接需主动断开，客户端才会按新规则重连。
+  int closeConnections() {
+    var count = 0;
+    for (var channel in List.of(_connections)) {
+      if (channel.isClosed) continue;
+      try {
+        channel.close();
+        count++;
+      } catch (e) {
+        logger.e('Error closing socket: $e');
+      }
+    }
+    _connections.clear();
+    return count;
+  }
+
   Future<ServerSocket> stop() async {
     if (!isRunning) return serverSocket;
     isRunning = false;
