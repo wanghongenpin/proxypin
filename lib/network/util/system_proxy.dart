@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:proxypin/network/channel/host_port.dart';
@@ -242,7 +243,7 @@ class MacSystemProxy implements SystemProxy {
     // Use a safer pipeline that avoids embedding awk's $2 (which complicates Dart string quoting).
     // This command finds the Device line, takes the following Hardware Port line, and extracts the part after ':'
     var cmd =
-        'networksetup -listnetworkserviceorder | grep "Device: ${name}" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
+        'networksetup -listnetworkserviceorder | grep "Device: $name" -A 1 | grep "Hardware Port" | cut -d: -f2 | sed -n \'1p\'';
     var results = await Process.run('bash', ['-c', cmd]);
     var out = results.stdout.toString().trim();
     if (out.isEmpty) return '';
@@ -371,19 +372,220 @@ class WindowsSystemProxy extends SystemProxy {
 }
 
 class LinuxSystemProxy extends SystemProxy {
+  LinuxSystemProxy({Map<String, String>? environment, Future<ProcessResult> Function(String, List<String>)? run})
+      : _environment = environment ?? Platform.environment,
+        _runProcess = run ?? Process.run;
+
+  final Map<String, String> _environment;
+  final Future<ProcessResult> Function(String, List<String>) _runProcess;
+
+  static const String _schema = 'org.gnome.system.proxy';
+  bool get _isKde => (_environment['XDG_CURRENT_DESKTOP'] ?? '').toUpperCase().split(':').contains('KDE');
+  String get _kdePath => '${_environment['XDG_CONFIG_HOME'] ?? '${_environment['HOME']}/.config'}/kioslaverc';
+
+  Future<String> _run(String tool, List<String> args) async {
+    final result = await _runProcess(tool, args);
+    if (result.exitCode != 0 || (tool == 'gsettings' && result.stderr.toString().isNotEmpty)) {
+      throw StateError('$tool ${args.first} failed: ${result.stderr}');
+    }
+    return result.stdout.toString();
+  }
+
+  Future<String> _kdeCommand(String command, String key, List<String> args) async {
+    for (final version in const ['6', '5']) {
+      try {
+        return await _run('$command$version', [
+          '--file',
+          _kdePath,
+          '--group',
+          'Proxy Settings',
+          '--key',
+          key,
+          ...args,
+        ]);
+      } on ProcessException catch (error) {
+        if (error.errorCode != 2) {
+          rethrow;
+        }
+      }
+    }
+    throw StateError('$command for Plasma 5 or 6 is unavailable');
+  }
+
+  Future<String?> _kdeRead(String key) async {
+    const absent = '__proxypin_unset_proxy_key__';
+    final raw = await _kdeCommand('kreadconfig', key, ['--default', absent]);
+    final value = raw.endsWith('\n') ? raw.substring(0, raw.length - 1) : raw;
+    return value == absent ? null : value;
+  }
+
+  Future<void> _kdeWrite(String key, String? value) async {
+    await _kdeCommand('kwriteconfig', key, ['--notify', if (value == null) '--delete' else '--', if (value != null) value]);
+    if (await _kdeRead(key) != value) {
+      throw StateError('KIO did not save $key');
+    }
+  }
+
+  static const _mode = '$_schema|mode';
+  static const _gnomeKeys = [
+    '$_schema.http|host',
+    '$_schema.http|port',
+    '$_schema.http|enabled',
+    '$_schema.https|host',
+    '$_schema.https|port',
+    _mode,
+  ];
+  static const _kdeKeys = ['httpProxy', 'httpsProxy', 'socksProxy', 'NoProxyFor', 'ProxyType'];
+  static const _legacyGnomeKeys = [
+    '$_schema|autoconfig-url',
+    '$_schema|ignore-hosts',
+    '$_schema.socks|host',
+    '$_schema.socks|port',
+  ];
+
+  File get _backupFile {
+    final home = _environment['HOME'];
+    if (home == null || home.isEmpty) {
+      throw StateError('Cannot locate the system proxy backup without HOME');
+    }
+    return File('$home/.proxypin/system_proxy_backup.json');
+  }
+
+  Future<String> _gnomeRead(String key) async {
+    return (await _run('gsettings', ['get', ...key.split('|')])).trim();
+  }
+
+  Future<void> _gnomeWrite(String key, String value) async {
+    await _run('gsettings', ['set', ...key.split('|'), value]);
+    if (await _gnomeRead(key) != value) {
+      throw StateError('GSettings did not save $key');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> _readBackup(File file) async {
+    try {
+      return jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    } on PathNotFoundException {
+      return null;
+    }
+  }
+
+  Future<void> _saveBackup(File file) async {
+    final Map<String, dynamic> snapshot;
+    if (_isKde) {
+      try {
+        await File(_kdePath).readAsBytes();
+      } on PathNotFoundException {
+        // A new KDE profile may not have a KIO configuration yet.
+      }
+      snapshot = {'kioslaverc': {for (final key in _kdeKeys) key: await _kdeRead(key)}};
+    } else {
+      snapshot = {'gsettings': {for (final key in _gnomeKeys) key: await _gnomeRead(key)}};
+    }
+    await file.parent.create(recursive: true);
+    final staging = await file.parent.createTemp('system-proxy-');
+    try {
+      final temporary = await File('${staging.path}/backup.json').writeAsString(jsonEncode(snapshot), flush: true);
+      await temporary.rename(file.path);
+    } finally {
+      await staging.delete(recursive: true);
+    }
+  }
+
+  Future<void> _restoreBackup(File file, Map<String, dynamic> data) async {
+    if (data.isEmpty ||
+        data.values.any((value) => value is! Map<String, dynamic>) ||
+        data.keys.any((key) => key != 'gsettings' && key != 'kioslaverc')) {
+      throw const FormatException('Invalid system proxy backup');
+    }
+    final settings = data['gsettings'] as Map<String, dynamic>?;
+    final kde = data['kioslaverc'] as Map<String, dynamic>?;
+    if (settings != null &&
+        (settings.isNotEmpty || kde == null || !_isKde) &&
+        _gnomeKeys.any((key) => settings[key] is! String)) {
+      throw const FormatException('Incomplete GSettings proxy backup');
+    }
+    if (kde != null &&
+        (kde.values.any((value) => value != null && value is! String) ||
+            (settings == null && _kdeKeys.any((key) => !kde.containsKey(key))))) {
+      throw const FormatException('Invalid KIO proxy backup');
+    }
+    if (settings != null && settings.isNotEmpty) {
+      for (final key in [..._legacyGnomeKeys.where(settings.containsKey), ..._gnomeKeys]) {
+        final value = settings[key] as String;
+        if (await _gnomeRead(key) != value) {
+          await _gnomeWrite(key, value);
+        }
+      }
+    }
+    if (kde != null && (settings == null || _isKde || kde.isNotEmpty || await File(_kdePath).exists())) {
+      for (final key in _kdeKeys) {
+        final value = kde[key] as String?;
+        if (await _kdeRead(key) != value) {
+          await _kdeWrite(key, value);
+        }
+      }
+    }
+    await file.delete();
+    logger.i('system proxy settings restored');
+  }
+
   @override
-  Future<void> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) async {
-    ProxyManager manager = ProxyManager();
+  Future<void> _setSystemProxy(int port, bool sslSetting, String proxyPassDomains) => enable(port, sslSetting);
 
-    await manager.setAsSystemProxy(ProxyTypes.http, "127.0.0.1", port);
-    if (sslSetting) await manager.setAsSystemProxy(ProxyTypes.https, "127.0.0.1", port);
+  Future<void> enable(int port, bool sslSetting) async {
+    final file = _backupFile;
+    final previous = await _readBackup(file);
+    if (previous != null) {
+      await _restoreBackup(file, previous);
+    }
+    await _saveBackup(file);
 
-    SystemProxy.setProxyPassDomains(proxyPassDomains);
+    try {
+      if (_isKde) {
+        await _kdeWrite('httpProxy', 'http://127.0.0.1:$port');
+        await _kdeWrite('httpsProxy', sslSetting ? 'http://127.0.0.1:$port' : null);
+        await _kdeWrite('ProxyType', '1');
+      } else {
+        await _gnomeWrite('$_schema.http|host', "'127.0.0.1'");
+        await _gnomeWrite('$_schema.http|port', '$port');
+        await _gnomeWrite('$_schema.http|enabled', 'true');
+        await _gnomeWrite('$_schema.https|host', sslSetting ? "'127.0.0.1'" : "''");
+        await _gnomeWrite('$_schema.https|port', sslSetting ? '$port' : '0');
+        await _gnomeWrite(_mode, "'manual'");
+      }
+    } catch (error) {
+      try {
+        await restore();
+      } catch (rollbackError) {
+        logger.e('system proxy rollback failed', error: rollbackError);
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> _setProxyEnable(bool proxyEnable, bool sslSetting) => restore();
+
+  Future<void> restore() async {
+    final file = _backupFile;
+    final snapshot = await _readBackup(file);
+    if (snapshot != null) {
+      await _restoreBackup(file, snapshot);
+    }
   }
 
   ///linux 获取代理
   @override
   Future<ProxyInfo?> _getSystemProxy(ProxyTypes types) async {
+    if (_isKde) {
+      if (await _kdeRead('ProxyType') != '1') {
+        return null;
+      }
+      final value = await _kdeRead('${types.name}Proxy');
+      final uri = value == null ? null : Uri.tryParse(value.replaceFirst(' ', ':'));
+      return uri != null && uri.host.isNotEmpty && uri.hasPort ? ProxyInfo.of(uri.host, uri.port) : null;
+    }
     var mode = await Process.run("gsettings", ["get", "org.gnome.system.proxy", "mode"])
         .then((value) => value.stdout.toString().trim());
     if (mode.contains("manual")) {

@@ -171,26 +171,37 @@ class _PCCertState extends State<PCCert> with TickerProviderStateMixin {
     final isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return [
-      Text(isCN
-          ? "安装证书到本系统，以Ubuntu为例 下载证书：\n"
-              "先把证书复制到 /usr/local/share/ca-certificates/，然后执行 update-ca-certificates 即可。\n"
-              "其他系统请网上搜索安装根证书"
-          : "Install the certificate to this system), take Ubuntu as an example to download the certificate:\n"
-              "First copy the certificate to /usr/local/share/ca-certificates/, and then execute update-ca-certificates.\n"
-              "For other systems, please search online for installing root certificates."),
-      const SizedBox(height: 5),
       Text(
           isCN
-              ? "提示：FireFox有自己的信任证书库，所以要手动在设置中导入需要导入的证书。"
-              : "Note: FireFox has its own trusted certificate library, so you need to manually import the required certificates in the settings.",
-          style: TextStyle(fontSize: 12)),
-      const SizedBox(height: 10),
+              ? "「自动」标签页会通过 pkexec 弹出系统授权框，把证书装进系统根证书库（需要 polkit 授权代理，KDE/GNOME 默认自带）。\n"
+                  "如果自动安装不可用，请按下面的发行版命令手动安装。"
+              : "The \"Automatic\" tab installs the certificate into the system trust store via pkexec\n"
+                  "(requires a polkit authentication agent, shipped by default with KDE/GNOME).\n"
+                  "If that is unavailable, run the commands for your distribution below.",
+          style: const TextStyle(fontSize: 13)),
+      const SizedBox(height: 12),
+      Text(isCN ? "Arch / Fedora / openSUSE" : "Arch / Fedora / openSUSE",
+          style: const TextStyle(fontWeight: FontWeight.w600)),
+      const SelectableText.rich(
+          textAlign: TextAlign.justify,
+          TextSpan(style: TextStyle(color: Color(0xff6a8759)), children: [
+            TextSpan(text: "  sudo cp ProxyPinCA.crt /etc/ca-certificates/trust-source/anchors/ \n"),
+            TextSpan(text: "  sudo trust extract-compat")
+          ])),
+      const SizedBox(height: 12),
+      Text(isCN ? "Debian / Ubuntu" : "Debian / Ubuntu", style: const TextStyle(fontWeight: FontWeight.w600)),
       const SelectableText.rich(
           textAlign: TextAlign.justify,
           TextSpan(style: TextStyle(color: Color(0xff6a8759)), children: [
             TextSpan(text: "  sudo cp ProxyPinCA.crt /usr/local/share/ca-certificates/ \n"),
             TextSpan(text: "  sudo update-ca-certificates")
           ])),
+      const SizedBox(height: 12),
+      Text(
+          isCN
+              ? "提示：Firefox 使用自己的证书库，需要在设置里手动导入；Chrome/Chromium 使用 NSS 用户库（~/.pki/nssdb），自动安装时会一并导入。"
+              : "Note: Firefox keeps its own store, import the certificate manually. Chrome/Chromium use the NSS user database (~/.pki/nssdb), which the automatic install also updates.",
+          style: const TextStyle(fontSize: 12)),
       const SizedBox(height: 10)
     ];
   }
