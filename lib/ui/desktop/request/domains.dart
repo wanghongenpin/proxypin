@@ -275,6 +275,13 @@ class DomainWidgetState extends State<DomainList> with AutomaticKeepAliveClientM
         requests?.addRequest(response.requestId, pathRow.request, sortDesc);
       }
       requests?.getRequest(response)?.setResponse(response);
+    } else if (searchModel?.isNotEmpty == true) {
+      // 依赖响应的条件（如 -type:image）在请求到达时无法判断，响应到达后不再匹配则剔除
+      final requests = searchView[domain];
+      if (requests?.getRequest(response) != null) {
+        requests!._hideRequest(pathRow.request);
+        setState(() {});
+      }
     }
   }
 
@@ -450,6 +457,14 @@ class DomainRequests extends StatefulWidget {
   void _remove(RequestWidget requestWidget) {
     if (body.remove(requestWidget)) {
       onRequestRemove?.call(requestWidget.request);
+      changeState();
+    }
+  }
+
+  /// 仅从搜索视图中移除（不触发 onRequestRemove，后者会删除请求本身）
+  void _hideRequest(HttpRequest request) {
+    var requestWidget = requestMap.remove(request.requestId);
+    if (requestWidget != null && body.remove(requestWidget)) {
       changeState();
     }
   }
