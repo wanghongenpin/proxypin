@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/network/pcap/capture_session.dart';
 import 'package:proxypin/network/pcap/packet.dart';
+import 'package:proxypin/network/pcap/pcap.dart';
+import 'package:proxypin/network/pcap/pcapng.dart';
+import 'package:proxypin/network/util/tls_keylog.dart';
 import 'package:proxypin/network/util/logger.dart';
 
 class RawCaptureStatus {
@@ -59,11 +62,14 @@ class RawCapture extends ChangeNotifier {
     if (running) return true;
     lastError = null;
     session = CaptureSession()..onNewFlow = _resolveOwner;
+    // 抓包期间记录 ProxyPin 上游 TLS 会话密钥，导出 pcapng 时嵌入
+    TlsKeyLog.instance.start();
     _listen();
     final result = await _channel.invokeMapMethod<String, dynamic>(
         'start', {'iface': iface, 'filter': filter, 'snapLen': snapLen});
     if (result?['success'] != true) {
       lastError = result?['error']?.toString() ?? 'unknown error';
+      TlsKeyLog.instance.stop();
       logger.w('raw capture start failed: $lastError');
       notifyListeners();
       return false;
@@ -78,6 +84,7 @@ class RawCapture extends ChangeNotifier {
     final path = await _channel.invokeMethod<String>('stop');
     file = path ?? file;
     running = false;
+    TlsKeyLog.instance.stop();
     _flushNotify();
   }
 
@@ -107,6 +114,7 @@ class RawCapture extends ChangeNotifier {
         _scheduleNotify();
       } else if (event is Map && event['event'] == 'stopped') {
         running = false;
+        TlsKeyLog.instance.stop();
         if (event['error'] != null) lastError = event['error'].toString();
         file = event['file'] ?? file;
         _flushNotify();
@@ -167,11 +175,39 @@ class RawCapture extends ChangeNotifier {
 
   // ------------- 导出 -------------
 
-  /// 导出指定包为临时 pcap 文件（筛选结果导出）
-  Future<File> exportPackets(Iterable<Packet> packets, String directory) async {
-    final bytes = session.exportPcap(packets);
-    final f = File('$directory/proxypin-${DateTime.now().millisecondsSinceEpoch}.pcap');
+  /// 本次抓包收集到的 TLS 密钥条数
+  int get tlsKeyCount => TlsKeyLog.instance.length;
+
+  int get tlsConnectionCount => TlsKeyLog.instance.connectionCount;
+
+  String get _comment =>
+      'Captured by ProxyPin. TLS keys embedded for ProxyPin upstream connections '
+      '(ProxyPin -> server); app -> ProxyPin (127.0.0.1) legs cannot be decrypted.';
+
+  String _name(String ext) => 'proxypin-${DateTime.now().millisecondsSinceEpoch}.$ext';
+
+  /// 导出指定包（筛选结果 / 单条流）。[pcapng] 为 true 时嵌入 TLS 密钥
+  Future<File> exportPackets(Iterable<Packet> packets, String directory, {bool pcapng = true}) async {
+    final sorted = packets.toList()..sort((a, b) => a.index.compareTo(b.index));
+    final Uint8List bytes;
+    if (pcapng) {
+      bytes = PcapngWriter.build(session.linkType ?? LinkType.raw, sorted.map((p) => p.record),
+          keyLog: TlsKeyLog.instance.export(), comment: _comment);
+    } else {
+      bytes = session.exportPcap(sorted);
+    }
+    final f = File('$directory/${_name(pcapng ? 'pcapng' : 'pcap')}');
     await f.writeAsBytes(bytes);
     return f;
+  }
+
+  /// 导出完整抓包文件。pcapng 由原始 pcap 文件流式转换并嵌入密钥；否则直接返回原始 pcap
+  Future<File?> exportFull(String directory, {bool pcapng = true}) async {
+    final path = file;
+    if (path == null || !await File(path).exists()) return null;
+    if (!pcapng) return File(path);
+    final out = File('$directory/${File(path).uri.pathSegments.last.replaceAll('.pcap', '')}.pcapng');
+    await PcapngWriter.convertFile(File(path), out, keyLog: TlsKeyLog.instance.export(), comment: _comment);
+    return out;
   }
 }

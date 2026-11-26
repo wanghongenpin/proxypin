@@ -76,7 +76,23 @@ adb shell su -c 'iptables -t nat -D OUTPUT -j PROXYPIN_OUT; iptables -t nat -F P
   应用层识别 DNS（查询/应答，并用应答把 IP 反查为域名）、TLS ClientHello SNI、HTTP 请求/响应行、QUIC。
 - 按「流」（协议 + 双端地址端口）聚合，异步通过 `/proc/net/{tcp,udp}{,6}` 反查所属应用。
 - 导出：完整 pcap，或只导出当前筛选结果 / 单条流。
-- HTTPS / QUIC 内容为密文，只能看到域名（SNI）、IP、端口、大小等元数据；要看明文请用代理抓包（MITM）。
+- HTTPS / QUIC 内容为密文，只能看到域名（SNI）、IP、端口、大小等元数据；要看明文请用代理抓包（MITM），或见下文的 TLS 密钥嵌入。
+
+## 导出 pcapng 自动解密 HTTPS
+
+抓包期间 ProxyPin 会记录**自身上游 TLS 连接**（ProxyPin → 真实服务器）的会话密钥（NSS Key Log 格式），
+导出时写入 pcapng 的 Decryption Secrets Block（`TLSK`）。用 Wireshark 打开即自动解密，无需配置 keylog 文件。
+
+- 适用：开启 Root 模式（或 VPN）+ HTTPS 抓包，被 ProxyPin 解密转发的连接，其上游段走真实网卡，可被 tcpdump 抓到并解密；
+  支持 TLS 1.2 / 1.3。
+- 不适用：App → ProxyPin（127.0.0.1:代理端口）这一段。Dart `SecureSocket.secureServer` 没有开放 keyLog，
+  Wireshark 中可用 `not tcp.port == 9099` 过滤；证书锁定 / 未开启 HTTPS 抓包 / 过滤名单内的直通连接也无法解密。
+- 只记录抓包开始之后新建的连接；抓包前已建立的长连接没有密钥（可强制停止目标 App 让其重连）。
+- 配置了重写规则时，解密看到的是改写后真正发给服务器的内容。
+- 仍可选择导出不含密钥的原始 pcap。
+
+验证：`test/pcapng_test.dart`（块结构 + tshark 解密样本）与 `test/e2e/keylog_proxy_e2e_test.dart`
+（真实 ProxyServer MITM → HTTPS 服务器，tcpdump 抓包，tshark 不带 keylog 参数解密出上游请求）。
 
 # 高级筛选语法
 

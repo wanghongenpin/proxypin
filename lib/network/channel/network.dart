@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:proxypin/network/util/tls_keylog.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -340,7 +341,10 @@ class Client extends Network {
   Future<Channel> secureConnect(HostAndPort hostAndPort, ChannelContext channelContext) async {
     SecurityContext? context = await ClientCertManager.securityContextForHost(hostAndPort.host);
     return SecureSocket.connect(_stripIPv6Brackets(hostAndPort.host), hostAndPort.port,
-        context: context, timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
+        context: context,
+        timeout: const Duration(seconds: 3),
+        onBadCertificate: (certificate) => true,
+        keyLog: TlsKeyLog.instance.callback).then((socket) {
       var channel = Channel(socket);
       channelContext.serverChannel = channel;
       return listen(channel, channelContext);

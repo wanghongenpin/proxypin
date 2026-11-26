@@ -200,18 +200,22 @@ class _RawCapturePageState extends State<RawCapturePage> {
                 )));
   }
 
-  Future<void> _export({required bool filtered, required bool share}) async {
+  Future<void> _export({required bool filtered, required bool share, bool pcapng = true}) async {
+    if (capture.running && !filtered) {
+      FlutterToastr.show(t('请先停止抓包再导出完整文件', 'Stop capture before exporting the full file'), context);
+      return;
+    }
     File? file;
+    final dir = await getTemporaryDirectory();
     if (filtered) {
       final packets = _packetView ? _packets : _flows.expand((f) => f.packets).toList();
       if (packets.isEmpty) {
-        FlutterToastr.show(t('没有可导出的数据', 'Nothing to export'), context);
+        if (mounted) FlutterToastr.show(t('没有可导出的数据', 'Nothing to export'), context);
         return;
       }
-      final dir = await getTemporaryDirectory();
-      file = await capture.exportPackets(packets, dir.path);
-    } else if (capture.file != null) {
-      file = File(capture.file!);
+      file = await capture.exportPackets(packets, dir.path, pcapng: pcapng);
+    } else {
+      file = await capture.exportFull(dir.path, pcapng: pcapng);
     }
     if (file == null || !await file.exists()) {
       if (mounted) FlutterToastr.show(t('没有抓包文件', 'No capture file'), context);
@@ -219,7 +223,9 @@ class _RawCapturePageState extends State<RawCapturePage> {
     }
     final name = file.uri.pathSegments.last;
     if (share) {
-      await SharePlus.instance.share(ShareParams(files: [XFile(file.path, mimeType: 'application/vnd.tcpdump.pcap')]));
+      await SharePlus.instance.share(ShareParams(files: [
+        XFile(file.path, mimeType: pcapng ? 'application/x-pcapng' : 'application/vnd.tcpdump.pcap')
+      ]));
       return;
     }
     final saved = await FilePicker.saveFile(fileName: name, bytes: await file.readAsBytes());
@@ -254,15 +260,18 @@ class _RawCapturePageState extends State<RawCapturePage> {
                     _export(filtered: true, share: true);
                   case 'saveFiltered':
                     _export(filtered: true, share: false);
+                  case 'sharePcap':
+                    _export(filtered: false, share: true, pcapng: false);
                   case 'clear':
                     capture.clear();
                 }
               },
               itemBuilder: (_) => [
-                    PopupMenuItem(value: 'share', child: Text(t('分享完整 pcap', 'Share full pcap'))),
-                    PopupMenuItem(value: 'save', child: Text(t('保存完整 pcap', 'Save full pcap'))),
-                    PopupMenuItem(value: 'shareFiltered', child: Text(t('分享筛选结果', 'Share filtered'))),
-                    PopupMenuItem(value: 'saveFiltered', child: Text(t('保存筛选结果', 'Save filtered'))),
+                    PopupMenuItem(value: 'share', child: Text(t('分享完整 pcapng（含 TLS 密钥）', 'Share full pcapng (TLS keys)'))),
+                    PopupMenuItem(value: 'save', child: Text(t('保存完整 pcapng（含 TLS 密钥）', 'Save full pcapng (TLS keys)'))),
+                    PopupMenuItem(value: 'shareFiltered', child: Text(t('分享筛选结果 pcapng', 'Share filtered pcapng'))),
+                    PopupMenuItem(value: 'saveFiltered', child: Text(t('保存筛选结果 pcapng', 'Save filtered pcapng'))),
+                    PopupMenuItem(value: 'sharePcap', child: Text(t('分享原始 pcap（不含密钥）', 'Share raw pcap (no keys)'))),
                     PopupMenuItem(value: 'clear', child: Text(t('清空列表', 'Clear list'))),
                   ]),
         ],
@@ -287,6 +296,14 @@ class _RawCapturePageState extends State<RawCapturePage> {
               Text('${t('包', 'pkts')} ${s.totalPackets}', style: const TextStyle(fontSize: 12)),
               Text('${t('流', 'flows')} ${s.flows.length}', style: const TextStyle(fontSize: 12)),
               Text(formatBytes(s.totalBytes), style: const TextStyle(fontSize: 12)),
+              Tooltip(
+                  message: t('ProxyPin 上游 TLS 连接的会话密钥，导出 pcapng 时嵌入，Wireshark 可直接解密',
+                      'Session keys of ProxyPin upstream TLS connections, embedded in exported pcapng'),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.key, size: 12, color: capture.tlsConnectionCount > 0 ? Colors.amber.shade700 : theme.disabledColor),
+                    const SizedBox(width: 3),
+                    Text('TLS ${capture.tlsConnectionCount}', style: const TextStyle(fontSize: 12)),
+                  ])),
               Text('$_iface${_bpf.isEmpty ? '' : ' · $_bpf'}',
                   style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
               if (s.memoryFull)
@@ -464,7 +481,7 @@ class FlowDetailPage extends StatelessWidget {
             title: Text(flow.name ?? flow.server, style: const TextStyle(fontSize: 15)),
             actions: [
               IconButton(
-                  tooltip: t('分享此流 pcap', 'Share flow pcap'),
+                  tooltip: t('分享此流 pcapng（含 TLS 密钥）', 'Share flow pcapng (TLS keys)'),
                   icon: const Icon(Icons.share, size: 20),
                   onPressed: () async {
                     final dir = await getTemporaryDirectory();
