@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import 'package:proxypin/ui/component/model/request_query.dart';
+import 'package:proxypin/ui/component/query_syntax_help.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/content_type.dart';
@@ -61,19 +63,7 @@ class SearchState extends State<Search> {
             cursorHeight: 18,
             controller: keywordController,
             style: const TextStyle(fontSize: 14),
-            onChanged: (val) async {
-              searchModel.keyword = val;
-              if (!changing) {
-                changing = true;
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  changing = false;
-                  if (!searched) {
-                    searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
-                  }
-                  widget.onSearch?.call(searchModel);
-                });
-              }
-            },
+            onChanged: _onKeywordChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.all(0),
               enabledBorder: OutlineInputBorder(
@@ -90,17 +80,44 @@ class SearchState extends State<Search> {
                   onPressed: () => searchDialog()),
               hintText: 'Search',
               hintStyle: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
-              suffixIcon: ContentTypeSelect(onSelected: (contentType) {
-                setState(() {
-                  searchModel.responseContentTypes = contentType == null ? {} : {contentType};
-                  searchModel.protocols = {};
-                  searched = searchModel.isNotEmpty;
-                });
-                widget.onSearch?.call(searchModel);
-              }),
+              suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(
+                    tooltip: 'Filter syntax',
+                    splashRadius: 14,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    icon: Icon(Icons.tune, size: 17, color: theme.colorScheme.onSurfaceVariant),
+                    onPressed: () => QuerySyntaxHelp.show(context,
+                        schema: RequestQuery.schema,
+                        controller: keywordController,
+                        onChanged: _onKeywordChanged,
+                        quickFilters: quickRequestFilters)),
+                ContentTypeSelect(onSelected: (contentType) {
+                  setState(() {
+                    searchModel.responseContentTypes = contentType == null ? {} : {contentType};
+                    searchModel.protocols = {};
+                    searched = searchModel.isNotEmpty;
+                  });
+                  widget.onSearch?.call(searchModel);
+                }),
+              ]),
             ),
           ),
         ));
+  }
+
+  void _onKeywordChanged(String val) {
+    searchModel.keyword = val;
+    if (!changing) {
+      changing = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        changing = false;
+        if (!searched) {
+          searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
+        }
+        widget.onSearch?.call(searchModel);
+      });
+    }
   }
 
   void searchDialog() {

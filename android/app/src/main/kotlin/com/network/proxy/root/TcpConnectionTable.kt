@@ -29,19 +29,23 @@ object TcpConnectionTable {
     @Volatile
     private var directReadable: Boolean? = null
 
-    fun read(): List<Entry> {
-        val lines = readRaw()
+    fun read(): List<Entry> = read("tcp")
+
+    /** [proto] 为 tcp 或 udp */
+    fun read(proto: String): List<Entry> {
+        val lines = readRaw(proto)
         val result = ArrayList<Entry>(lines.size)
+        val skipListen = proto == "tcp"
         for (line in lines) {
-            parseLine(line)?.let { result.add(it) }
+            parseLine(line, skipListen)?.let { result.add(it) }
         }
         return result
     }
 
-    private fun readRaw(): List<String> {
+    private fun readRaw(proto: String): List<String> {
         if (directReadable != false) {
             try {
-                val lines = File("/proc/net/tcp").readLines() + File("/proc/net/tcp6").readLines()
+                val lines = File("/proc/net/$proto").readLines() + File("/proc/net/${proto}6").readLines()
                 // 部分 ROM 可读但只返回表头
                 if (lines.size > 2) {
                     directReadable = true
@@ -49,13 +53,13 @@ object TcpConnectionTable {
                 }
             } catch (_: Exception) {
             }
-            directReadable = false
+            if (proto == "tcp") directReadable = false
         }
-        val r = RootShell.instance.exec("cat /proc/net/tcp /proc/net/tcp6 2>/dev/null")
+        val r = RootShell.instance.exec("cat /proc/net/$proto /proc/net/${proto}6 2>/dev/null")
         return r.stdout
     }
 
-    internal fun parseLine(raw: String): Entry? {
+    internal fun parseLine(raw: String, skipListen: Boolean = true): Entry? {
         val parts = raw.trim().split(Regex("\\s+"))
         // sl local rem st tx:rx tr:when retrnsmt uid ...
         if (parts.size < 8 || !parts[0].endsWith(":")) return null
@@ -63,7 +67,7 @@ object TcpConnectionTable {
             val (lh, lp) = parseAddress(parts[1])
             val (rh, rp) = parseAddress(parts[2])
             val state = parts[3].toInt(16)
-            if (state == TCP_LISTEN) return null
+            if (skipListen && state == TCP_LISTEN) return null
             Entry(lh, lp, rh, rp, state, parts[7].toInt())
         } catch (e: Exception) {
             null

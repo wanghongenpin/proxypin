@@ -245,7 +245,7 @@ class ProcessInfoManager private constructor() {
         return null
     }
 
-    private fun getProcessInfo(uid: Int): ProcessInfo? {
+    fun getProcessInfo(uid: Int): ProcessInfo? {
         var appInfo = appInfoCache.get(uid)
         if (appInfo != null) return appInfo
 

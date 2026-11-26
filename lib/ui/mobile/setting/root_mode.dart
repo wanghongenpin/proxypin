@@ -5,6 +5,7 @@ import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/component/widgets.dart';
+import 'package:proxypin/ui/mobile/raw_capture/raw_capture_page.dart';
 import 'package:proxypin/utils/ip.dart';
 
 /// Android Root 模式设置页：iptables 透明代理，不占用 VPN 通道。
@@ -138,6 +139,17 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
                           _dirty = true;
                         })),
               ])),
+          const SizedBox(height: 12),
+          Card(
+              elevation: 0,
+              margin: EdgeInsets.zero,
+              child: ListTile(
+                  leading: const Icon(Icons.lan_outlined),
+                  title: Text(isCN ? '原始抓包 (tcpdump)' : 'Raw Capture (tcpdump)'),
+                  subtitle: Text(isCN ? '抓取全部协议，导出 pcap' : 'All protocols, export pcap', style: hint),
+                  trailing: const Icon(Icons.keyboard_arrow_right),
+                  onTap: () =>
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RawCapturePage())))),
           const SizedBox(height: 16),
           Text(isCN ? '重定向端口' : 'Redirect Ports', style: const TextStyle(fontWeight: FontWeight.w500)),
           const SizedBox(height: 4),

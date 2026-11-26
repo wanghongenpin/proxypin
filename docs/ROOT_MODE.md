@@ -59,3 +59,46 @@ adb shell su -c 'iptables -t nat -D OUTPUT -j PROXYPIN_OUT; iptables -t nat -F P
 | `lib/native/root_proxy.dart` | Dart 封装 |
 | `lib/native/vpn.dart` | 按配置在 VPN / Root 间分发，上层调用无需区分 |
 | `lib/ui/mobile/setting/root_mode.dart` | 设置页 |
+
+---
+
+# 原始抓包（Root + 内置 tcpdump）
+
+入口：工具箱 →「原始抓包」，或 设置 → Root 模式 →「原始抓包」。
+
+- 内置 tcpdump 4.99.5 / libpcap 1.10.5（静态链接，arm64-v8a 与 armeabi-v7a 各约 520KB 压缩体积），
+  由 `tool/tcpdump/build_tcpdump.sh` 用 NDK 交叉编译生成，产物位于 `android/app/src/main/assets/tcpdump/`。
+- 以 root 执行 `tcpdump -i <网卡> -U -n -s <snaplen> -w - [BPF]`，pcap 流经 stdout 读出：
+  - 完整写入 `cache/pcap/capture-*.pcap`（保留最近 10 个），可分享 / 保存，用 Wireshark 打开；
+  - 同时分批推送给 Dart 侧实时解析展示（内存最多缓存 20 万包 / 96MB，超出后仅写文件）。
+- 若 SELinux 不允许执行应用私有目录中的二进制，会自动复制到 `/data/local/tmp` 重试。
+- 解析支持 LINUX_SLL2（`-i any`）、LINUX_SLL、Ethernet（含 VLAN）、RAW；IPv4/IPv6、TCP/UDP/ICMP；
+  应用层识别 DNS（查询/应答，并用应答把 IP 反查为域名）、TLS ClientHello SNI、HTTP 请求/响应行、QUIC。
+- 按「流」（协议 + 双端地址端口）聚合，异步通过 `/proc/net/{tcp,udp}{,6}` 反查所属应用。
+- 导出：完整 pcap，或只导出当前筛选结果 / 单条流。
+- HTTPS / QUIC 内容为密文，只能看到域名（SNI）、IP、端口、大小等元数据；要看明文请用代理抓包（MITM）。
+
+# 高级筛选语法
+
+HTTP 请求列表的搜索框与原始抓包列表共用一套语法（点击搜索框右侧的筛选图标查看全部字段，点示例即可插入）：
+
+| 写法 | 含义 |
+| --- | --- |
+| `a b` | 并且 |
+| `a \| b` 或 `a OR b` | 或者 |
+| `-a` / `!a` | 取反 |
+| `field:value` | 字段包含（忽略大小写） |
+| `host:*.example.com` | `*` 通配（整体匹配） |
+| `url:/v\d+/` | 正则 |
+| `body:"hello world"` | 带空格的值 |
+| `method:GET,POST` | 多选 |
+| `status:4xx`、`status:400-499`、`status>=500`、`status!=200` | 状态码类别 / 范围 / 比较 |
+| `size>100k`、`time>1s` | 数值比较，支持 k/m、ms/s 单位 |
+
+HTTP 字段：method、host、path、url、query、status、type、reqtype、size、reqsize、time、header、reqheader、resheader、
+body、reqbody、resbody、cookie、app、port、ip、proto、is（pending/error/ok/redirect/ws/sse/https/h2/graphql/cookie/large/slow）。
+
+原始抓包字段：proto（tcp/udp/icmp/dns/tls/http/quic/ipv4/ipv6）、host、ip、src、dst、port、sport、dport、app、bytes、
+packets、time、info、is（open/closed/reset/syn/oneway/large/named）。
+
+不含字段语法时保持原有的整串文本搜索行为；勾选「正则」时不启用该语法。

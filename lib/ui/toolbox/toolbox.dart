@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/component/app_colors.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
 import 'package:proxypin/ui/desktop/left_menus/replay_tasks.dart' as desktop;
+import 'package:proxypin/ui/mobile/raw_capture/raw_capture_page.dart';
 import 'package:proxypin/ui/mobile/request/replay_tasks.dart';
 import 'package:proxypin/ui/mobile/request/request_editor.dart';
 import 'package:proxypin/ui/toolbox/qr_code_page.dart';
@@ -134,6 +137,15 @@ class _ToolboxState extends State<Toolbox> {
                       text: localizations.replayTasks,
                       color: AppColors.toolReplayTasks,
                       tooltip: localizations.replayTasks),
+                  // Root 原始抓包（内置 tcpdump）
+                  if (Platform.isAndroid)
+                    IconText(
+                        onTap: () => Navigator.of(context)
+                            .push(MaterialPageRoute(builder: (context) => const RawCapturePage())),
+                        icon: Icons.lan_outlined,
+                        text: localizations.localeName.startsWith('zh') ? '原始抓包' : 'Raw Capture',
+                        color: AppColors.toolRawCapture,
+                        tooltip: 'tcpdump'),
               ], desktopHeader: false),
               _group(localizations.view, [
                   IconText(

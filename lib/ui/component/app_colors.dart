@@ -54,6 +54,7 @@ class AppColors {
   static const toolWebSocket = Color(0xFF8A6DB8);
   static const toolJavaScript = Color(0xFFA8863E);
   static const toolReplayTasks = Color(0xFF5A87AE);
+  static const toolRawCapture = Color(0xFFAF6052);
   static const toolJson = Color(0xFF57916F);
   static const toolXml = Color(0xFFCE8359);
   static const toolTextDiff = Color(0xFF8080C6);
