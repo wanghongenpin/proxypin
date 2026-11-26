@@ -513,7 +513,15 @@ class RequestPageState extends State<RequestPage> {
                   port = remoteDevice.value.port!;
                 }
 
-                Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
+                final started =
+                    await Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
+                if (!started && context.mounted) {
+                  bool isCN = Localizations.localeOf(context).languageCode == 'zh';
+                  FlutterToastr.show(
+                      "${isCN ? 'Root 模式启动失败' : 'Root mode failed to start'}: ${Vpn.lastRootError ?? ''}", context,
+                      duration: 4);
+                }
+                return started;
               },
               onStop: () => Vpn.stopVpn()),
             ),

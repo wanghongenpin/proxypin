@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.network.proxy.ProxyVpnService
 import com.network.proxy.plugin.ProcessInfo
+import com.network.proxy.root.RootProxyManager
 import com.network.proxy.vpn.Connection
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
@@ -155,6 +156,9 @@ class ProcessInfoManager private constructor() {
     }
 
     suspend fun getProcessInfoByPort(host: String?, localPort: Int): ProcessInfo? {
+        if (RootProxyManager.instance.isRunning) {
+            return withContext(Dispatchers.IO) { getProcessInfoByPortRoot(localPort) }
+        }
         val networkInfo = localPortCache.get(localPort)
         if (networkInfo != null) {
             val processInfo = getProcessInfo(networkInfo.uid)
@@ -205,7 +209,23 @@ class ProcessInfoManager private constructor() {
         return null
     }
 
+    /**
+     * Root 模式：通过内核连接表反查应用与原始目的地址。
+     */
+    private fun getProcessInfoByPortRoot(sourcePort: Int): ProcessInfo? {
+        val entry = RootProxyManager.instance.lookup(sourcePort) ?: return null
+        val processInfo = getProcessInfo(entry.uid) ?: return null
+        val result = processInfo.copy()
+        result["remoteHost"] = entry.remoteHost
+        result["remotePort"] = entry.remotePort
+        return result
+    }
+
     fun getRemoteAddressByPort(localPort: Int): Map<String, Any>? {
+        if (RootProxyManager.instance.isRunning) {
+            val entry = RootProxyManager.instance.lookup(localPort) ?: return null
+            return mapOf("remoteHost" to entry.remoteHost, "remotePort" to entry.remotePort)
+        }
         // 优先返回同步记录的真实目的地址；localPortCache 里的地址可能来自
         // getProcessInfoByPort 的回退写入(其 remoteAddress 是本地代理自身)。
         remoteAddressCache.get(localPort)?.let { address ->

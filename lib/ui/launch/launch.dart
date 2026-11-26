@@ -297,7 +297,12 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
   Future<void> start() async {
     try {
       if (!widget.serverLaunch) {
-        await widget.onStart?.call();
+        // onStart 显式返回 false 表示启动失败（如 Root 模式未授权），保持停止状态
+        final result = await widget.onStart?.call();
+        if (result == false) {
+          if (mounted) _updateStarted(false);
+          return;
+        }
         _updateStarted(true);
         return;
       }

@@ -50,6 +50,7 @@ import 'package:proxypin/ui/mobile/setting/request_breakpoint.dart';
 import 'package:proxypin/ui/mobile/setting/request_crypto.dart';
 import 'package:proxypin/ui/mobile/setting/request_map.dart';
 import 'package:proxypin/ui/mobile/setting/request_rewrite.dart';
+import 'package:proxypin/ui/mobile/setting/root_mode.dart';
 import 'package:proxypin/ui/mobile/setting/script.dart';
 import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/ui/mobile/widgets/about.dart';
@@ -411,6 +412,23 @@ class _SettingPageState extends State<SettingPage> {
                         configuration.enableSystemProxy = value;
                         proxyServer.configuration.flushConfig();
                       })),
+            if (Platform.isAndroid) menuDivider(context),
+            // Root 模式：iptables 透明代理，不占用 VPN
+            if (Platform.isAndroid)
+              ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                  leading: glyphTile(context, 'RT', AppColors.rootMode),
+                  title: Text(isCN ? 'Root 模式' : 'Root Mode', style: titleStyle),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    if (configuration.rootModeEnabled)
+                      Text(localizations.enable,
+                          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.primary)),
+                    Icon(Icons.keyboard_arrow_right, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ]),
+                  onTap: () async {
+                    await navigator(context, RootModeSettingPage(proxyServer: proxyServer));
+                    if (mounted) setState(() {});
+                  }),
             if (Platform.isAndroid) menuDivider(context),
             ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14),

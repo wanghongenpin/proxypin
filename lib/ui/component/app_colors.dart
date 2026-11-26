@@ -44,6 +44,7 @@ class AppColors {
   static const http2 = Color(0xFF5A87AE); // HTTP/2 · 钢蓝（H2 字符块）
   static const proxyIgnoreDomain = Color(0xFF64748B); // 代理忽略域名 · 石板灰
   static const externalProxy = Color(0xFF54A396); // 外部代理 · 青绿
+  static const rootMode = Color(0xFFAF6052); // Root 模式 · 红（RT 字符块）
   static const mcp = Color(0xFF8A6DB8); // MCP 服务 · 紫
   static const preference = Color(0xFF8080C6); // 偏好设置 · 靛蓝
   static const about = Color(0xFF5A87AE); // 关于 · 钢蓝

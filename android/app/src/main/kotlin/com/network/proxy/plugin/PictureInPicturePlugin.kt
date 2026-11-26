@@ -11,6 +11,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Rational
 import com.network.proxy.ProxyVpnService
+import com.network.proxy.root.RootProxyManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
 import android.util.Log
@@ -41,10 +42,16 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
                 return
             }
 
-            val isRunning = ProxyVpnService.isRunning
+            val root = RootProxyManager.instance
+            val isRunning = ProxyVpnService.isRunning || root.isRunning
 
-            if (isRunning) {
+            if (root.isRunning) {
+                Thread { RootProxyPlugin.stopBlocking(activity.applicationContext) }.start()
+            } else if (isRunning) {
                 activity.startService(ProxyVpnService.stopVpnIntent(activity))
+            } else if (root.preferRoot && root.lastOptions != null) {
+                val options = root.lastOptions!!
+                Thread { RootProxyPlugin.startBlocking(activity.applicationContext, options) }.start()
             } else {
                 val prepareVpn = ProxyVpnService.prepareVpn(
                     activity,
@@ -93,7 +100,7 @@ class PictureInPicturePlugin : AndroidFlutterPlugin() {
                         disallowApps = call.argument<ArrayList<String>>("disallowApps")
                         setSystemProxy = call.argument<Boolean>("setSystemProxy") ?: true
 
-                        val param = updatePictureInPictureParams(ProxyVpnService.isRunning)
+                        val param = updatePictureInPictureParams(ProxyVpnService.isRunning || RootProxyManager.instance.isRunning)
                         if (!registerBroadcast) {
                             registerBroadcast = true
                             ContextCompat.registerReceiver(

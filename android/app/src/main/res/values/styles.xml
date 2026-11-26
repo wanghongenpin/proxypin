@@ -18,5 +18,8 @@
 
     <string name="vpn_active_notification_title">ProxyPin Active</string>
     <string name="vpn_active_notification_content">抓包正在运行</string>
+    <string name="root_proxy_notification_title">ProxyPin Root 模式</string>
+    <string name="root_proxy_notification_content">iptables 透明代理运行中（未占用 VPN）</string>
+    <string name="root_proxy_notification_stop">停止</string>
 
 </resources>

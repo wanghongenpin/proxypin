@@ -50,6 +50,7 @@ import 'package:proxypin/utils/listenable_list.dart';
 
 import '../../component/proxy_port_setting.dart';
 import '../../component/widgets.dart';
+import '../setting/root_mode.dart';
 import '../../desktop/setting/external_proxy.dart';
 
 ///左侧抽屉
@@ -267,6 +268,14 @@ class _SettingPage extends StatelessWidget {
                             configuration.enableSystemProxy = value;
                             proxyServer.configuration.flushConfig();
                           })),
+                if (Platform.isAndroid)
+                  Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
+                if (Platform.isAndroid)
+                  ListTile(
+                      title: Text(isCN ? 'Root 模式' : 'Root Mode'),
+                      trailing: const Icon(Icons.keyboard_arrow_right),
+                      onTap: () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => RootModeSettingPage(proxyServer: proxyServer)))),
                 if (Platform.isAndroid)
                   Divider(height: 0, thickness: 0.3, color: Theme.of(context).dividerColor.withValues(alpha: 0.22)),
                 ListTile(
