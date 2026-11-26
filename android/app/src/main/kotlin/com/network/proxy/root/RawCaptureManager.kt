@@ -109,11 +109,10 @@ class RawCaptureManager private constructor() {
         return bin
     }
 
-    /** 列出网卡 */
-    fun interfaces(): List<String> {
-        val local = File("/sys/class/net").list()?.toList()
-        val names = if (!local.isNullOrEmpty()) local else RootShell.instance.exec("ls /sys/class/net").stdout
-        return listOf("any") + names.map { it.trim() }.filter { it.isNotEmpty() }.sorted()
+    /** 列出网卡（含类型 / 状态 / 地址），首项为 any */
+    fun interfaces(context: Context): List<Map<String, Any>> {
+        val any = mapOf("name" to "any", "type" to "any", "up" to true, "addresses" to emptyList<String>(), "isDefault" to false)
+        return listOf(any) + NetInterfaces.list(context).map { it.toMap() }
     }
 
     @Synchronized

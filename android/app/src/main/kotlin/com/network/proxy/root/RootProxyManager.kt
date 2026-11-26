@@ -26,12 +26,18 @@ class RootProxyManager private constructor() {
         const val NAT_CHAIN = "PROXYPIN_OUT"
         const val FILTER6_CHAIN = "PROXYPIN_OUT6"
         const val QUIC_CHAIN = "PROXYPIN_QUIC"
+        /** 热点 / USB 共享设备流量（nat PREROUTING） */
+        const val TETHER_NAT_CHAIN = "PROXYPIN_PRE"
+        /** 共享设备的 QUIC / IPv6 拒绝（filter FORWARD） */
+        const val TETHER_FWD_CHAIN = "PROXYPIN_FWD"
 
         private const val PREFS = "proxypin_root"
         private const val PREF_RULES_INSTALLED = "rulesInstalled"
 
         /** 每个 multiport 最多 15 个端口 */
         private const val MULTIPORT_MAX = 15
+
+        private val IFACE_REGEX = Regex("^[A-Za-z0-9_.:-]{1,15}\\+?$")
     }
 
     data class Options(
@@ -47,8 +53,22 @@ class RootProxyManager private constructor() {
         /** 是否拒绝被捕获应用的 QUIC(UDP 443)，迫使其回落到 TCP 被抓包 */
         val blockQuic: Boolean,
         /** 是否本机代理（REDIRECT），否则 DNAT 到远程代理 */
-        val localProxy: Boolean
-    )
+        val localProxy: Boolean,
+        /** 只捕获经由这些网卡发出的本机流量，空 = 全部 */
+        val interfaces: List<String> = emptyList(),
+        /** 同时捕获连接本机热点 / USB / 蓝牙共享的其它设备的流量 */
+        val captureTether: Boolean = false,
+        /** 启动时检测到的共享网卡（与常见命名一起匹配） */
+        val tetherInterfaces: List<String> = emptyList()
+    ) {
+        /** 出口网卡匹配片段，空选择 = 不限 */
+        internal val outMatches: List<String>
+            get() = interfaces.filter { IFACE_REGEX.matches(it) }.distinct().map { " -o $it" }.ifEmpty { listOf("") }
+
+        internal val tetherMatches: List<String>
+            get() = (tetherInterfaces + NetInterfaces.TETHER_PATTERNS).filter { IFACE_REGEX.matches(it) }.distinct()
+                .map { " -i $it" }
+    }
 
     @Volatile
     var isRunning = false
@@ -72,8 +92,9 @@ class RootProxyManager private constructor() {
     fun isRootAvailable(): Boolean = RootShell.hasSuBinary() && RootShell.instance.requestRoot()
 
     @Synchronized
-    fun start(context: Context, options: Options): Boolean {
+    fun start(context: Context, opts: Options): Boolean {
         lastError = null
+        val options = if (opts.captureTether) opts.copy(tetherInterfaces = NetInterfaces.tetherInterfaces(context)) else opts
         if (!RootShell.instance.requestRoot()) {
             lastError = "root permission denied"
             return false
@@ -102,6 +123,11 @@ class RootProxyManager private constructor() {
         if (options.blockQuic) {
             RootShell.instance.execAll(buildQuicRules(context, options, "iptables"), ignoreError = true)
             RootShell.instance.execAll(buildQuicRules(context, options, "ip6tables"), ignoreError = true)
+        }
+
+        if (options.captureTether && options.localProxy && (options.blockQuic || options.blockIpv6)) {
+            RootShell.instance.execAll(buildTetherForwardRules(options, "iptables"), ignoreError = true)
+            RootShell.instance.execAll(buildTetherForwardRules(options, "ip6tables"), ignoreError = true)
         }
 
         markInstalled(context, true)
@@ -146,6 +172,15 @@ class RootProxyManager private constructor() {
             "while ip6tables -w -t filter -D OUTPUT -j $QUIC_CHAIN 2>/dev/null; do :; done",
             "ip6tables -w -t filter -F $QUIC_CHAIN 2>/dev/null",
             "ip6tables -w -t filter -X $QUIC_CHAIN 2>/dev/null",
+            "while iptables -w -t nat -D PREROUTING -j $TETHER_NAT_CHAIN 2>/dev/null; do :; done",
+            "iptables -w -t nat -F $TETHER_NAT_CHAIN 2>/dev/null",
+            "iptables -w -t nat -X $TETHER_NAT_CHAIN 2>/dev/null",
+            "while iptables -w -t filter -D FORWARD -j $TETHER_FWD_CHAIN 2>/dev/null; do :; done",
+            "iptables -w -t filter -F $TETHER_FWD_CHAIN 2>/dev/null",
+            "iptables -w -t filter -X $TETHER_FWD_CHAIN 2>/dev/null",
+            "while ip6tables -w -t filter -D FORWARD -j $TETHER_FWD_CHAIN 2>/dev/null; do :; done",
+            "ip6tables -w -t filter -F $TETHER_FWD_CHAIN 2>/dev/null",
+            "ip6tables -w -t filter -X $TETHER_FWD_CHAIN 2>/dev/null",
         )
         RootShell.instance.execAll(cmds, ignoreError = true)
     }
@@ -179,19 +214,63 @@ class RootProxyManager private constructor() {
             if (allowUids.isEmpty()) {
                 throw IllegalStateException("no installed app in whitelist")
             }
-            for (uid in allowUids) for (pm in portMatches) {
-                rules += "$ipt -A $c -p tcp$pm -m owner --uid-owner $uid -j $target"
+            for (uid in allowUids) for (pm in portMatches) for (om in o.outMatches) {
+                rules += "$ipt -A $c$om -p tcp$pm -m owner --uid-owner $uid -j $target"
             }
         } else {
             // 黑名单：排除指定应用，其余全部重定向
             for (uid in uidsOf(context, o.disallowApps)) {
                 rules += "$ipt -A $c -m owner --uid-owner $uid -j RETURN"
             }
-            for (pm in portMatches) {
-                rules += "$ipt -A $c -p tcp$pm -j $target"
+            for (pm in portMatches) for (om in o.outMatches) {
+                rules += "$ipt -A $c$om -p tcp$pm -j $target"
             }
         }
         rules += "$ipt -I OUTPUT -j $c"
+        if (o.captureTether && o.localProxy) rules += buildTetherRules(o)
+        return rules
+    }
+
+    /**
+     * 共享设备（热点 / USB / 蓝牙）的流量经 PREROUTING 进入本机，REDIRECT 到代理端口。
+     * 这类连接不属于本机应用，没有 uid，应用白/黑名单不适用；原始目的地址通过 conntrack 反查。
+     */
+    internal fun buildTetherRules(o: Options): List<String> {
+        val ipt = "iptables -w -t nat"
+        val c = TETHER_NAT_CHAIN
+        val rules = ArrayList<String>()
+        rules += "$ipt -N $c"
+        rules += "$ipt -A $c -d 127.0.0.0/8 -j RETURN"
+        rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
+        // 访问本机自身（如手动设置了代理指向本机）不重定向
+        rules += "$ipt -A $c -p tcp --dport ${o.proxyPort} -j RETURN"
+        for (dst in resolveBypass(o.proxyPassDomains)) {
+            rules += "$ipt -A $c -d $dst -j RETURN"
+        }
+        for (im in o.tetherMatches) for (pm in portMatches(o.redirectPorts)) {
+            rules += "$ipt -A $c$im -p tcp$pm -j REDIRECT --to-ports ${o.proxyPort}"
+        }
+        rules += "$ipt -I PREROUTING -j $c"
+        return rules
+    }
+
+    /** 共享设备的 QUIC（v4/v6）与 IPv6 TCP 拒绝，使其回落到可被重定向的 IPv4 TCP */
+    private fun buildTetherForwardRules(o: Options, binary: String): List<String> {
+        val ipt = "$binary -w -t filter"
+        val c = TETHER_FWD_CHAIN
+        val v4 = binary == "iptables"
+        val rules = ArrayList<String>()
+        rules += "$ipt -N $c"
+        for (im in o.tetherMatches) {
+            if (o.blockQuic) {
+                val reject = if (v4) "icmp-port-unreachable" else "icmp6-port-unreachable"
+                rules += "$ipt -A $c$im -p udp --dport 443 -j REJECT --reject-with $reject"
+            }
+            if (!v4 && o.blockIpv6) for (pm in portMatches(o.redirectPorts)) {
+                rules += "$ipt -A $c$im -p tcp$pm -j REJECT --reject-with tcp-reset"
+            }
+        }
+        rules += "$ipt -I FORWARD -j $c"
         return rules
     }
 
@@ -207,15 +286,15 @@ class RootProxyManager private constructor() {
         rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
         val portMatches = portMatches(o.redirectPorts)
         if (o.allowApps.isNotEmpty()) {
-            for (uid in uidsOf(context, o.allowApps)) for (pm in portMatches) {
-                rules += "$ipt -A $c -p tcp$pm -m owner --uid-owner $uid -j $reject"
+            for (uid in uidsOf(context, o.allowApps)) for (pm in portMatches) for (om in o.outMatches) {
+                rules += "$ipt -A $c$om -p tcp$pm -m owner --uid-owner $uid -j $reject"
             }
         } else {
             for (uid in uidsOf(context, o.disallowApps)) {
                 rules += "$ipt -A $c -m owner --uid-owner $uid -j RETURN"
             }
-            for (pm in portMatches) {
-                rules += "$ipt -A $c -p tcp$pm -j $reject"
+            for (pm in portMatches) for (om in o.outMatches) {
+                rules += "$ipt -A $c$om -p tcp$pm -j $reject"
             }
         }
         rules += "$ipt -I OUTPUT -j $c"
@@ -232,14 +311,14 @@ class RootProxyManager private constructor() {
         rules += "$ipt -N $c"
         rules += "$ipt -A $c -m owner --uid-owner ${Process.myUid()} -j RETURN"
         if (o.allowApps.isNotEmpty()) {
-            for (uid in uidsOf(context, o.allowApps)) {
-                rules += "$ipt -A $c -p udp --dport 443 -m owner --uid-owner $uid -j $reject"
+            for (uid in uidsOf(context, o.allowApps)) for (om in o.outMatches) {
+                rules += "$ipt -A $c$om -p udp --dport 443 -m owner --uid-owner $uid -j $reject"
             }
         } else {
             for (uid in uidsOf(context, o.disallowApps)) {
                 rules += "$ipt -A $c -m owner --uid-owner $uid -j RETURN"
             }
-            rules += "$ipt -A $c -p udp --dport 443 -j $reject"
+            for (om in o.outMatches) rules += "$ipt -A $c$om -p udp --dport 443 -j $reject"
         }
         rules += "$ipt -I OUTPUT -j $c"
         return rules
@@ -317,8 +396,35 @@ class RootProxyManager private constructor() {
                 break
             }
         }
+        if (found == null && lastOptions?.captureTether == true) found = lookupConntrack(sourcePort, proxyPort)
         if (found != null) lookupCache.put(sourcePort, found)
         return found
+    }
+
+    /**
+     * 共享设备的连接不在本机 socket 表中，从 conntrack 反查被 REDIRECT 前的目的地址：
+     * `... src=客户端 dst=原始目的 sport=P dport=443 ... src=本机 dst=客户端 sport=代理端口 dport=P ...`
+     * 部分内核未开启 nf_conntrack procfs，此时返回 null（HTTPS 仍可按 SNI、HTTP 按 Host 头转发）。
+     */
+    private fun lookupConntrack(sourcePort: Int, proxyPort: Int): TcpConnectionTable.Entry? {
+        val lines = RootShell.instance.exec(
+            "grep -h ' sport=$sourcePort ' /proc/net/nf_conntrack /proc/net/ip_conntrack 2>/dev/null"
+        ).stdout
+        return parseConntrack(lines, sourcePort, proxyPort)
+    }
+
+    internal fun parseConntrack(lines: List<String>, sourcePort: Int, proxyPort: Int): TcpConnectionTable.Entry? {
+        for (line in lines) {
+            if (!line.contains(" tcp ")) continue
+            val kv = Regex("(src|dst|sport|dport)=(\\S+)").findAll(line).map { it.groupValues[1] to it.groupValues[2] }.toList()
+            if (kv.size < 8) continue
+            val orig = kv.take(4).toMap()
+            val reply = kv.drop(4).take(4).toMap()
+            if (orig["sport"] != sourcePort.toString() || reply["sport"] != proxyPort.toString()) continue
+            val dport = orig["dport"]?.toIntOrNull() ?: continue
+            return TcpConnectionTable.Entry(orig["src"] ?: "", sourcePort, orig["dst"] ?: continue, dport, 0, -1)
+        }
+        return null
     }
 
     private fun prefs(context: Context) =

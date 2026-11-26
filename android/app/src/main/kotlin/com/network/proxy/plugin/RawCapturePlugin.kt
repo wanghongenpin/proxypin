@@ -70,7 +70,7 @@ class RawCapturePlugin : AndroidFlutterPlugin() {
                     )
                 )
 
-                "interfaces" -> async(result) { manager.interfaces() }
+                "interfaces" -> async(result) { manager.interfaces(appContext) }
 
                 "start" -> {
                     val options = RawCaptureManager.Options(

@@ -26,10 +26,18 @@
 3. 可选增强：
    - **屏蔽 IPv6 TCP**：代理只监听 IPv4，用 `ip6tables` 对被捕获应用的 IPv6 TCP 回 RST，使其回落到 IPv4；
    - **屏蔽 QUIC**：拒绝被捕获应用的 UDP 443，使 HTTP/3 回落到可抓包的 TCP。
-4. `RootProxyService` 作为前台服务保活进程（代理运行在 App 进程内），通知栏提供「停止」。
+4. 按网卡捕获（设置 → Root 模式 →「捕获网卡」）：所选网卡生成 `-o <网卡>` 匹配，只重定向经由这些网卡发出的流量
+   （例如只抓 Wi-Fi、不抓移动数据）；不选为全部。IPv6 / QUIC 拒绝规则同样只作用于所选网卡。
+5. 捕获热点 / 共享设备：在 nat `PREROUTING` 新建 `PROXYPIN_PRE`，对来自共享网卡（启动时检测到的热点网卡，
+   以及 `ap+`、`swlan+`、`softap+`、`wlan1`、`wlan2`、`rndis+`、`ncm+`、`usb+`、`bt-pan+` 等常见命名）的 TCP 执行 `REDIRECT`，
+   连接本机热点的电脑 / 手机无需设置代理即可被抓包。这类连接没有本机 uid，应用白/黑名单不适用；
+   原始目的地址从 `/proc/net/nf_conntrack` 反查（内核未开启时 HTTPS 按 SNI、HTTP 按 Host 头转发）。
+   开启「屏蔽 QUIC / IPv6」时，在 filter `FORWARD` 的 `PROXYPIN_FWD` 中拒绝共享设备的 UDP 443 与 IPv6 TCP。
+   需先开启热点再启动抓包（热点网卡在启动时检测）；仅本机代理时生效。
+6. `RootProxyService` 作为前台服务保活进程（代理运行在 App 进程内），通知栏提供「停止」。
    规则安装状态记录在 SharedPreferences，App 被强杀后下次启动自动清理残留规则，避免被捕获应用断网。
 
-所有规则都在独立的 `PROXYPIN_OUT`（nat）、`PROXYPIN_OUT6`（ip6 filter）、`PROXYPIN_QUIC`（filter）链中，
+所有规则都在独立的 `PROXYPIN_OUT` / `PROXYPIN_PRE`（nat）、`PROXYPIN_OUT6`（ip6 filter）、`PROXYPIN_QUIC` / `PROXYPIN_FWD`（filter）链中，
 停止时整体删除，不影响系统和其它应用的规则。
 
 ## 手动排查
@@ -44,6 +52,7 @@ adb shell su -c 'iptables -t nat -D OUTPUT -j PROXYPIN_OUT; iptables -t nat -F P
 ## 已知限制
 
 - 仅 TCP；UDP（除 QUIC 拒绝外）不经过代理。
+- VPN 模式无法按网卡选择：VpnService 只能接管路由进入 tun 的流量，无法区分其后实际走哪张物理网卡。
 - 证书：HTTPS 解密仍需应用信任 ProxyPin CA。Root 设备可把 CA 安装为系统证书（如 Magisk 模块）。
 - 重定向端口留空时非 HTTP 协议也会进入代理，可能导致部分应用异常，建议按需指定端口。
 
@@ -54,6 +63,7 @@ adb shell su -c 'iptables -t nat -D OUTPUT -j PROXYPIN_OUT; iptables -t nat -F P
 | `android/.../root/RootShell.kt` | 常驻 su shell，命令输出用随机标记分隔 |
 | `android/.../root/RootProxyManager.kt` | iptables 规则生成/安装/清理，连接反查 |
 | `android/.../root/TcpConnectionTable.kt` | `/proc/net/tcp{,6}` 解析 |
+| `android/.../root/NetInterfaces.kt` | 网卡枚举与类型识别（原始抓包、按网卡捕获共用） |
 | `android/.../root/RootProxyService.kt` | 前台保活服务 |
 | `android/.../plugin/RootProxyPlugin.kt` | `com.proxy/rootProxy` 方法通道 |
 | `lib/native/root_proxy.dart` | Dart 封装 |
@@ -71,6 +81,8 @@ adb shell su -c 'iptables -t nat -D OUTPUT -j PROXYPIN_OUT; iptables -t nat -F P
 - 以 root 执行 `tcpdump -i <网卡> -U -n -s <snaplen> -w - [BPF]`，pcap 流经 stdout 读出：
   - 完整写入 `cache/pcap/capture-*.pcap`（保留最近 10 个），可分享 / 保存，用 Wireshark 打开；
   - 同时分批推送给 Dart 侧实时解析展示（内存最多缓存 20 万包 / 96MB，超出后仅写文件）。
+- 抓包参数（网卡 / BPF / 截取长度）会记住上次选择；网卡列表显示类型（Wi-Fi / 移动数据 / VPN / 热点）、是否连接与 IP，
+  未连接的网卡置灰排在后面。VPN 模式下选择 `any` 会同时抓到 tun 与真实网卡上的同一份流量，可改选真实网卡去重。
 - 若 SELinux 不允许执行应用私有目录中的二进制，会自动复制到 `/data/local/tmp` 重试。
 - 解析支持 LINUX_SLL2（`-i any`）、LINUX_SLL、Ethernet（含 VLAN）、RAW；IPv4/IPv6、TCP/UDP/ICMP；
   应用层识别 DNS（查询/应答，并用应答把 IP 反查为域名）、TLS ClientHello SNI、HTTP 请求/响应行、QUIC。

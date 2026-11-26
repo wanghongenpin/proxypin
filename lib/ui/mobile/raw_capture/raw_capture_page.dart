@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:proxypin/native/net_interfaces.dart';
 import 'package:proxypin/native/raw_capture.dart';
+import 'package:proxypin/native/vpn.dart';
+import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/pcap/capture_session.dart';
 import 'package:proxypin/network/pcap/packet.dart';
 import 'package:proxypin/ui/component/query_syntax_help.dart';
@@ -67,6 +70,14 @@ class _RawCapturePageState extends State<RawCapturePage> {
     super.initState();
     capture.addListener(_onUpdate);
     capture.refresh();
+    Configuration.instance.then((c) {
+      if (!mounted) return;
+      setState(() {
+        _iface = c.rawCaptureIface;
+        _bpf = c.rawCaptureBpf;
+        _snapLen = c.rawCaptureSnapLen;
+      });
+    });
   }
 
   @override
@@ -138,11 +149,13 @@ class _RawCapturePageState extends State<RawCapturePage> {
   }
 
   Future<void> _settings() async {
-    final interfaces = await capture.interfaces();
+    final interfaces = await NetInterfaceInfo.list();
     if (!mounted) return;
     final bpf = TextEditingController(text: _bpf);
-    var iface = interfaces.contains(_iface) ? _iface : 'any';
+    var iface = interfaces.any((e) => e.name == _iface) ? _iface : 'any';
     var snap = _snapLen;
+    // VPN 模式下 any 会同时抓到 tun 与真实网卡上的同一份流量
+    final vpnActive = Vpn.isVpnStarted && !Vpn.rootModeActive;
     await showDialog(
         context: context,
         builder: (ctx) => StatefulBuilder(
@@ -154,8 +167,18 @@ class _RawCapturePageState extends State<RawCapturePage> {
                     DropdownButton<String>(
                         isExpanded: true,
                         value: iface,
-                        items: interfaces.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                        itemHeight: 54,
+                        items: interfaces
+                            .map((e) => DropdownMenuItem(value: e.name, child: NetInterfaceTile(e)))
+                            .toList(),
                         onChanged: (v) => setDialog(() => iface = v ?? 'any')),
+                    if (vpnActive && iface == 'any')
+                      Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                              t('当前为 VPN 模式，全部网卡会同时抓到 VPN(tun) 与真实网卡上的同一份流量，可选择 Wi-Fi / 移动数据网卡避免重复',
+                                  'VPN is active: "any" captures the same traffic on both tun and the real interface. Pick Wi-Fi / mobile data to avoid duplicates'),
+                              style: const TextStyle(fontSize: 11, color: Colors.orange))),
                     const SizedBox(height: 10),
                     Text(t('BPF 过滤表达式（抓包时过滤，减少数据量）', 'BPF filter (applied by tcpdump)')),
                     const SizedBox(height: 6),
@@ -192,6 +215,12 @@ class _RawCapturePageState extends State<RawCapturePage> {
                             _iface = iface;
                             _bpf = bpf.text.trim();
                             _snapLen = snap;
+                          });
+                          Configuration.instance.then((c) {
+                            c.rawCaptureIface = _iface;
+                            c.rawCaptureBpf = _bpf;
+                            c.rawCaptureSnapLen = _snapLen;
+                            c.flushConfig();
                           });
                           Navigator.pop(ctx);
                         },

@@ -50,14 +50,6 @@ class RawCapture extends ChangeNotifier {
         (m['droppedForUi'] as num?)?.toInt() ?? 0);
   }
 
-  Future<List<String>> interfaces() async {
-    try {
-      return (await _channel.invokeListMethod<String>('interfaces')) ?? ['any'];
-    } catch (_) {
-      return ['any'];
-    }
-  }
-
   Future<bool> start({String iface = 'any', String filter = '', int snapLen = 0}) async {
     if (running) return true;
     lastError = null;

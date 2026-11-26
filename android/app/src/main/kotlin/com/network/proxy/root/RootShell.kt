@@ -70,6 +70,9 @@ class RootShell private constructor() {
         }
     }
 
+    /** su shell 已建立（不会触发授权弹窗） */
+    val isReady: Boolean get() = process?.isAliveCompat() == true
+
     /** 请求 root 权限（首次会触发 Magisk/KernelSU 等授权弹窗） */
     fun requestRoot(): Boolean = ensureShell()
 

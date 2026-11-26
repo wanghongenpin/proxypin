@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:proxypin/native/net_interfaces.dart';
 import 'package:proxypin/native/root_proxy.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/configuration.dart';
@@ -78,6 +79,49 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
     _dirty = false;
   }
 
+  Future<void> _pickInterfaces() async {
+    final all = await NetInterfaceInfo.list();
+    if (!mounted) return;
+    final uplinks = all.where((e) => e.isUplink).toList();
+    // 已选但当前不存在的网卡（如未连接的移动数据）也保留显示
+    for (final name in configuration.rootInterfaces) {
+      if (!uplinks.any((e) => e.name == name)) uplinks.add(NetInterfaceInfo(name, 'other', up: false));
+    }
+    final selected = configuration.rootInterfaces.toSet();
+    final result = await showDialog<Set<String>>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+            builder: (ctx, setDialog) => AlertDialog(
+                  title: Text(isCN ? '捕获网卡' : 'Interfaces', style: const TextStyle(fontSize: 16)),
+                  contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  scrollable: true,
+                  content: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text(
+                        isCN
+                            ? '只捕获经由所选网卡发出的流量；不选 = 全部。'
+                            : 'Only capture traffic leaving via the selected interfaces. None = all.',
+                        style: const TextStyle(fontSize: 12)),
+                    const SizedBox(height: 6),
+                    for (final e in uplinks)
+                      CheckboxListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          value: selected.contains(e.name),
+                          title: NetInterfaceTile(e),
+                          onChanged: (v) => setDialog(() => v == true ? selected.add(e.name) : selected.remove(e.name))),
+                  ]),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, <String>{}), child: Text(isCN ? '全部' : 'All')),
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: Text(isCN ? '取消' : 'Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(ctx, selected), child: Text(isCN ? '确定' : 'OK')),
+                  ],
+                )));
+    if (result == null) return;
+    setState(() => configuration.rootInterfaces = result.toList());
+    await configuration.flushConfig();
+    _dirty = true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -135,6 +179,39 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
                         scale: 0.8,
                         onChanged: (value) async {
                           setState(() => configuration.rootBlockQuic = value);
+                          await configuration.flushConfig();
+                          _dirty = true;
+                        })),
+              ])),
+          const SizedBox(height: 12),
+          Card(
+              elevation: 0,
+              margin: EdgeInsets.zero,
+              child: Column(children: [
+                ListTile(
+                    title: Text(isCN ? '捕获网卡' : 'Interfaces'),
+                    subtitle: Text(
+                        configuration.rootInterfaces.isEmpty
+                            ? (isCN ? '全部网卡' : 'All interfaces')
+                            : configuration.rootInterfaces.join(', '),
+                        style: hint),
+                    trailing: const Icon(Icons.keyboard_arrow_right),
+                    onTap: _pickInterfaces),
+                const Divider(height: 0.5, thickness: 0.5),
+                ListTile(
+                    title: Text(isCN ? '捕获热点 / 共享设备' : 'Capture hotspot / tethered devices'),
+                    subtitle: Text(
+                        isCN
+                            ? '连接本机热点、USB 或蓝牙共享的电脑 / 手机流量也进入代理，无需在对方设置代理。'
+                                '对方需信任 ProxyPin 证书才能解密 HTTPS；请先开启热点再启动抓包。'
+                            : 'Traffic of devices using this phone\'s hotspot / USB / Bluetooth tethering also goes through the proxy, '
+                                'no proxy setup needed on them. They must trust the ProxyPin CA for HTTPS. Turn on the hotspot before starting.',
+                        style: hint),
+                    trailing: SwitchWidget(
+                        value: configuration.rootCaptureTether,
+                        scale: 0.8,
+                        onChanged: (value) async {
+                          setState(() => configuration.rootCaptureTether = value);
                           await configuration.flushConfig();
                           _dirty = true;
                         })),

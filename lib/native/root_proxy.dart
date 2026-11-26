@@ -37,6 +37,8 @@ class RootProxy {
       "redirectPorts": _split(configuration.rootRedirectPorts),
       "blockIpv6": configuration.rootBlockIpv6,
       "blockQuic": configuration.rootBlockQuic,
+      "interfaces": configuration.rootInterfaces,
+      "captureTether": configuration.rootCaptureTether,
     };
   }
 

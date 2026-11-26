@@ -75,6 +75,17 @@ class Configuration {
   /// Root 模式下拒绝被捕获应用的 QUIC(UDP 443)，迫使其回落到 TCP 以便抓包
   bool rootBlockQuic = true;
 
+  /// Root 模式只捕获经由这些网卡发出的流量，空 = 全部网卡
+  List<String> rootInterfaces = [];
+
+  /// Root 模式同时捕获连接本机热点 / USB / 蓝牙共享的其它设备的流量
+  bool rootCaptureTether = false;
+
+  /// 原始抓包参数（网卡 / BPF / 截取长度），记住上次选择
+  String rawCaptureIface = 'any';
+  String rawCaptureBpf = '';
+  int rawCaptureSnapLen = 0;
+
   static const String defaultRootRedirectPorts = '80,443,8080,8443';
 
   Configuration._();
@@ -110,6 +121,11 @@ class Configuration {
     rootRedirectPorts = config['rootRedirectPorts'] ?? defaultRootRedirectPorts;
     rootBlockIpv6 = config['rootBlockIpv6'] ?? true;
     rootBlockQuic = config['rootBlockQuic'] ?? true;
+    rootInterfaces = List<String>.from(config['rootInterfaces'] ?? []);
+    rootCaptureTether = config['rootCaptureTether'] ?? false;
+    rawCaptureIface = config['rawCaptureIface'] ?? 'any';
+    rawCaptureBpf = config['rawCaptureBpf'] ?? '';
+    rawCaptureSnapLen = config['rawCaptureSnapLen'] ?? 0;
     if (config['externalProxy'] != null) {
       externalProxy = ProxyInfo.fromJson(config['externalProxy']);
     }
@@ -172,6 +188,11 @@ class Configuration {
       'rootRedirectPorts': rootRedirectPorts,
       'rootBlockIpv6': rootBlockIpv6,
       'rootBlockQuic': rootBlockQuic,
+      'rootInterfaces': rootInterfaces,
+      'rootCaptureTether': rootCaptureTether,
+      'rawCaptureIface': rawCaptureIface,
+      'rawCaptureBpf': rawCaptureBpf,
+      'rawCaptureSnapLen': rawCaptureSnapLen,
       'whitelist': HostFilter.whitelist.toJson(),
       'blacklist': HostFilter.blacklist.toJson(),
     };

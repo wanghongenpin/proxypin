@@ -35,7 +35,9 @@ class RootProxyPlugin : AndroidFlutterPlugin() {
                 redirectPorts = call.argument<List<String>>("redirectPorts") ?: emptyList(),
                 blockIpv6 = call.argument<Boolean>("blockIpv6") ?: true,
                 blockQuic = call.argument<Boolean>("blockQuic") ?: true,
-                localProxy = isLocalHost(host)
+                localProxy = isLocalHost(host),
+                interfaces = call.argument<List<String>>("interfaces") ?: emptyList(),
+                captureTether = call.argument<Boolean>("captureTether") ?: false
             )
         }
 
