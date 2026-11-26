@@ -120,7 +120,7 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
     if (result == null) return;
     setState(() => configuration.rootInterfaces = result.toList());
     await configuration.flushConfig();
-    _dirty = true;
+    await _applyIfRunning();
   }
 
   @override
@@ -165,7 +165,7 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
                         onChanged: (value) async {
                           setState(() => configuration.rootBlockIpv6 = value);
                           await configuration.flushConfig();
-                          _dirty = true;
+                          await _applyIfRunning();
                         })),
                 const Divider(height: 0.5, thickness: 0.5),
                 ListTile(
@@ -181,7 +181,7 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
                         onChanged: (value) async {
                           setState(() => configuration.rootBlockQuic = value);
                           await configuration.flushConfig();
-                          _dirty = true;
+                          await _applyIfRunning();
                         })),
               ])),
           const SizedBox(height: 12),
@@ -216,7 +216,7 @@ class _RootModeSettingPageState extends State<RootModeSettingPage> {
                         onChanged: (value) async {
                           setState(() => configuration.rootCaptureTether = value);
                           await configuration.flushConfig();
-                          _dirty = true;
+                          await _applyIfRunning();
                         })),
               ])),
           const SizedBox(height: 12),
