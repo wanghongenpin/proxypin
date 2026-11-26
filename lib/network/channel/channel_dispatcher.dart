@@ -36,6 +36,10 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
   //channelInactive 需等待其完成再关闭对端连接, 避免服务端关闭时提前关闭客户端连接导致 socket hang up.
   final Set<Completer<void>> _pendingReads = {};
 
+  /// TLS 上游 close 定界响应的空闲探测间隔，见 [_scheduleCloseDelimitedProbe]。
+  static const Duration closeDelimitedIdleTimeout = Duration(milliseconds: 500);
+  Timer? _closeDelimitedProbe;
+
   void handle(Decoder decoder, Encoder encoder, ChannelHandler handler) {
     this.encoder = encoder;
     this.decoder = decoder;
@@ -119,6 +123,7 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
 
       var decodeResult = decoder.decode(channelContext, buffer);
+      _scheduleCloseDelimitedProbe(channelContext, channel);
 
       //If the body does not support parsing, forward directly
       if (decodeResult.supportedParse == false) {
@@ -390,8 +395,40 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
     handler.exceptionCaught(channelContext, channel, error, trace: trace);
   }
 
+  /// TLS 上游的 close 定界响应（如 HTTP/1.0 无 Content-Length，`openssl s_server -www`）：
+  /// 服务器发完 body 后发送 TLS close_notify，并可能等待对端回 close_notify（双向 shutdown）
+  /// 才关闭 TCP。Dart 的 [SecureSocket] 会忽略收到的 close_notify，只有底层 TCP 关闭才产生
+  /// onDone，于是 [channelInactive] 永远不触发、响应无法收尾，客户端挂起直到超时。
+  ///
+  /// close 定界响应意味着该上游连接不可能再复用，因此在上游空闲一段时间后关闭本端写方向
+  /// （TCP 半关闭，仍继续读取）：等待双向 shutdown 的服务器随即关闭连接，走正常的
+  /// [CloseDelimitedBodyFinalizer] 收尾流程；仍在发送数据的服务器不受影响。
+  void _scheduleCloseDelimitedProbe(ChannelContext channelContext, Channel channel) {
+    _closeDelimitedProbe?.cancel();
+    _closeDelimitedProbe = null;
+    if (!channel.isSsl || !identical(channel, channelContext.serverChannel)) return;
+    var codec = decoder;
+    if (codec is! CloseDelimitedBodyFinalizer || !(codec as CloseDelimitedBodyFinalizer).awaitingCloseDelimitedBody) {
+      return;
+    }
+
+    _closeDelimitedProbe = Timer(closeDelimitedIdleTimeout, () {
+      _closeDelimitedProbe = null;
+      var current = decoder;
+      if (channel.isClosed ||
+          current is! CloseDelimitedBodyFinalizer ||
+          !(current as CloseDelimitedBodyFinalizer).awaitingCloseDelimitedBody) {
+        return;
+      }
+      logger.d("[$channel] close-delimited response idle, half-closing upstream to finish body");
+      channel.close();
+    });
+  }
+
   @override
   channelInactive(ChannelContext channelContext, Channel channel) async {
+    _closeDelimitedProbe?.cancel();
+    _closeDelimitedProbe = null;
     if (identical(channel, channelContext.clientChannel)) channelContext.http2Requests.close();
     await taskQueue.waitForAll();
     //等待正在处理中的读事件完成(例如 HTTP/1.1 响应写回客户端), 避免服务端关闭时提前关闭对端连接导致 socket hang up

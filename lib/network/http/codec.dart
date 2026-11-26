@@ -68,6 +68,9 @@ abstract interface class Decoder<T> {
 /// 响应体的解码器。此类响应 body 由连接关闭定界，解码器先缓冲，待对端关闭后
 /// 由 [ChannelDispatcher.channelInactive] 调用本方法产出完整响应，
 abstract interface class CloseDelimitedBodyFinalizer {
+  /// 当前是否正在缓冲一个 close 定界的响应体（只有上游关闭连接才能确定其结束）。
+  bool get awaitingCloseDelimitedBody;
+
   DecoderResult? finishCloseDelimitedBody();
 }
 
@@ -197,6 +200,9 @@ abstract class HttpCodec<T extends HttpMessage> implements Codec<T, T>, CloseDel
     bodyReader = null;
     result = DecoderResult(isDone: false);
   }
+
+  @override
+  bool get awaitingCloseDelimitedBody => _state == State.body && bodyReader?.closeDelimited == true;
 
   @override
   DecoderResult<T>? finishCloseDelimitedBody() {
@@ -404,6 +410,9 @@ class HttpClientCodec extends Codec<HttpResponse, HttpRequest> implements CloseD
   DecoderResult<HttpResponse> decode(ChannelContext channelContext, ByteBuf byteBuf) {
     return responseCodec.decode(channelContext, byteBuf);
   }
+
+  @override
+  bool get awaitingCloseDelimitedBody => responseCodec.awaitingCloseDelimitedBody;
 
   @override
   DecoderResult? finishCloseDelimitedBody() {
