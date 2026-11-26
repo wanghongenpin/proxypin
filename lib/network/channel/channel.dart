@@ -70,6 +70,9 @@ class Channel {
   //是否使用代理
   bool useProxy = false;
 
+  /// 正在把底层 socket 升级为 TLS（原始 socket 会随之 done，但连接仍在使用）
+  bool tlsUpgrading = false;
+
   Channel(this._socket)
       : _id = DateTime.now().millisecondsSinceEpoch + Random().nextInt(999999),
         remoteSocketAddress = InetSocketAddress(_socket.remoteAddress, _socket.remotePort);

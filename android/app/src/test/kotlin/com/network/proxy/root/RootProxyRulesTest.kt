@@ -49,8 +49,12 @@ class RootProxyRulesTest {
         assertTrue(pre.any { it.contains("-A PROXYPIN_PRE -i wlan2 -p tcp -m multiport --dports 80,443 -j REDIRECT --to-ports 9099") })
         assertTrue(pre.any { it.contains("-A PROXYPIN_PRE -i ap+ -p tcp") })
         assertTrue(pre.any { it.contains("-A PROXYPIN_PRE -d 10.0.0.0/8 -j RETURN") })
+        val all = rules + manager.buildResetRules(ContextWrapper(null), options(tether = true)) +
+                manager.buildTetherForwardRules(options(tether = true), "iptables")
+        assertTrue(all.any { it.contains("-A PROXYPIN_RST -p tcp -m multiport --dports 80,443 -j REJECT --reject-with tcp-reset") })
+        assertTrue(all.any { it.contains("-A PROXYPIN_FWD -i wlan2 -p tcp -m multiport --dports 80,443 -j REJECT --reject-with tcp-reset") })
         // 输出到文件，便于在真实 iptables 上校验语法
-        System.getenv("RULES_OUT")?.let { File(it).writeText(rules.joinToString("\n")) }
+        System.getenv("RULES_OUT")?.let { File(it).writeText(all.joinToString("\n")) }
     }
 
     @Test

@@ -30,6 +30,8 @@ class RootProxyManager private constructor() {
         const val TETHER_NAT_CHAIN = "PROXYPIN_PRE"
         /** 共享设备的 QUIC / IPv6 拒绝（filter FORWARD） */
         const val TETHER_FWD_CHAIN = "PROXYPIN_FWD"
+        /** 重置规则生效前已建立、未经代理的旧连接（filter OUTPUT） */
+        const val RESET_CHAIN = "PROXYPIN_RST"
 
         private const val PREFS = "proxypin_root"
         private const val PREF_RULES_INSTALLED = "rulesInstalled"
@@ -115,6 +117,11 @@ class RootProxyManager private constructor() {
             return false
         }
 
+        // 旧连接重置：失败不影响主流程
+        if (options.localProxy) {
+            RootShell.instance.execAll(buildResetRules(context, options), ignoreError = true)
+        }
+
         // IPv6 失败不影响主流程（部分内核无 ip6tables REJECT）
         if (options.blockIpv6) {
             RootShell.instance.execAll(buildIpv6Rules(context, options), ignoreError = true)
@@ -125,7 +132,7 @@ class RootProxyManager private constructor() {
             RootShell.instance.execAll(buildQuicRules(context, options, "ip6tables"), ignoreError = true)
         }
 
-        if (options.captureTether && options.localProxy && (options.blockQuic || options.blockIpv6)) {
+        if (options.captureTether && options.localProxy) {
             RootShell.instance.execAll(buildTetherForwardRules(options, "iptables"), ignoreError = true)
             RootShell.instance.execAll(buildTetherForwardRules(options, "ip6tables"), ignoreError = true)
         }
@@ -172,6 +179,9 @@ class RootProxyManager private constructor() {
             "while ip6tables -w -t filter -D OUTPUT -j $QUIC_CHAIN 2>/dev/null; do :; done",
             "ip6tables -w -t filter -F $QUIC_CHAIN 2>/dev/null",
             "ip6tables -w -t filter -X $QUIC_CHAIN 2>/dev/null",
+            "while iptables -w -t filter -D OUTPUT -j $RESET_CHAIN 2>/dev/null; do :; done",
+            "iptables -w -t filter -F $RESET_CHAIN 2>/dev/null",
+            "iptables -w -t filter -X $RESET_CHAIN 2>/dev/null",
             "while iptables -w -t nat -D PREROUTING -j $TETHER_NAT_CHAIN 2>/dev/null; do :; done",
             "iptables -w -t nat -F $TETHER_NAT_CHAIN 2>/dev/null",
             "iptables -w -t nat -X $TETHER_NAT_CHAIN 2>/dev/null",
@@ -255,12 +265,22 @@ class RootProxyManager private constructor() {
     }
 
     /** 共享设备的 QUIC（v4/v6）与 IPv6 TCP 拒绝，使其回落到可被重定向的 IPv4 TCP */
-    private fun buildTetherForwardRules(o: Options, binary: String): List<String> {
+    internal fun buildTetherForwardRules(o: Options, binary: String): List<String> {
         val ipt = "$binary -w -t filter"
         val c = TETHER_FWD_CHAIN
         val v4 = binary == "iptables"
         val rules = ArrayList<String>()
         rules += "$ipt -N $c"
+        if (v4) {
+            // 新连接都被 PREROUTING 重定向进本机（走 INPUT），仍在 FORWARD 上的同端口 TCP 只可能是
+            // 开启热点捕获前已建立的直连：回 RST 让设备重连，否则浏览器复用的长连接一直抓不到
+            rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
+            rules += "$ipt -A $c -p tcp --dport ${o.proxyPort} -j RETURN"
+            for (dst in resolveBypass(o.proxyPassDomains)) rules += "$ipt -A $c -d $dst -j RETURN"
+            for (im in o.tetherMatches) for (pm in portMatches(o.redirectPorts)) {
+                rules += "$ipt -A $c$im -p tcp$pm -j REJECT --reject-with tcp-reset"
+            }
+        }
         for (im in o.tetherMatches) {
             if (o.blockQuic) {
                 val reject = if (v4) "icmp-port-unreachable" else "icmp6-port-unreachable"
@@ -271,6 +291,34 @@ class RootProxyManager private constructor() {
             }
         }
         rules += "$ipt -I FORWARD -j $c"
+        return rules
+    }
+
+    /**
+     * 本机应用的旧连接重置：nat OUTPUT 的 REDIRECT 只作用于新连接，被重定向的包到 filter OUTPUT 时
+     * 目的已是 127.0.0.1:代理端口；仍以原目的端口出站的被捕获流量只可能是规则生效前建立的直连，
+     * 回 RST 让应用重连（随即被重定向），否则 Chrome 等复用的 HTTP/2 长连接会一直绕过代理。
+     */
+    internal fun buildResetRules(context: Context, o: Options): List<String> {
+        val ipt = "iptables -w -t filter"
+        val c = RESET_CHAIN
+        val reject = "REJECT --reject-with tcp-reset"
+        val rules = ArrayList<String>()
+        rules += "$ipt -N $c"
+        rules += "$ipt -A $c -m owner --uid-owner ${Process.myUid()} -j RETURN"
+        rules += "$ipt -A $c -d 127.0.0.0/8 -j RETURN"
+        rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
+        for (dst in resolveBypass(o.proxyPassDomains)) rules += "$ipt -A $c -d $dst -j RETURN"
+        val portMatches = portMatches(o.redirectPorts)
+        if (o.allowApps.isNotEmpty()) {
+            for (uid in uidsOf(context, o.allowApps)) for (pm in portMatches) for (om in o.outMatches) {
+                rules += "$ipt -A $c$om -p tcp$pm -m owner --uid-owner $uid -j $reject"
+            }
+        } else {
+            for (uid in uidsOf(context, o.disallowApps)) rules += "$ipt -A $c -m owner --uid-owner $uid -j RETURN"
+            for (pm in portMatches) for (om in o.outMatches) rules += "$ipt -A $c$om -p tcp$pm -j $reject"
+        }
+        rules += "$ipt -I OUTPUT -j $c"
         return rules
     }
 

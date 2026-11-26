@@ -90,7 +90,11 @@ class Server extends Network {
       var channel = Channel(socket);
       _connections.add(channel);
 
-      socket.done.whenComplete(() => _connections.remove(channel)).onError((_, __) {});
+      // HTTPS 解密时 channel 的底层 socket 会被替换为 SecureSocket，原始 socket 随即 done；
+      // 此时不能移出列表，否则 closeConnections / stop 找不到这些连接（由定时 cleanupConnections 清理已关闭的）。
+      socket.done.whenComplete(() {
+        if (!channel.tlsUpgrading) _connections.remove(channel);
+      }).onError((_, __) {});
 
       ChannelContext channelContext = ChannelContext();
       channelContext.clientChannel = channel;
@@ -292,6 +296,7 @@ class Server extends Network {
           ProtocolSniffer(hostAndPort, serviceName, httpDecoder, httpEncoder, httpHandler));
 
       //处理客户端ssl握手
+      channel.tlsUpgrading = true;
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,
           bufferedData: data, supportedProtocols: supportedProtocols);
 

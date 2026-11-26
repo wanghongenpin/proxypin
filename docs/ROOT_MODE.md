@@ -37,10 +37,13 @@
 6. `RootProxyService` 作为前台服务保活进程（代理运行在 App 进程内），通知栏提供「停止」。
    规则安装状态记录在 SharedPreferences，App 被强杀后下次启动自动清理残留规则，避免被捕获应用断网。
 
+启动时会重置规则生效前已建立、本该被捕获的直连（filter `OUTPUT` 的 `PROXYPIN_RST`、热点为 `FORWARD` 的 `PROXYPIN_FWD`，
+回 TCP RST），否则 Chrome 等复用的 HTTP/2 长连接（同证书子域名还会合并到同一连接）会一直绕过代理。
+
 停止抓包或规则变更（白名单、网卡、热点开关等）时，会主动断开代理上已有的客户端连接：
 iptables 的 NAT 只作用于新连接，不断开的话浏览器复用的长连接会继续经过代理（VPN 模式关闭 tun 时这些连接自然断开）。
 
-所有规则都在独立的 `PROXYPIN_OUT` / `PROXYPIN_PRE`（nat）、`PROXYPIN_OUT6`（ip6 filter）、`PROXYPIN_QUIC` / `PROXYPIN_FWD`（filter）链中，
+所有规则都在独立的 `PROXYPIN_OUT` / `PROXYPIN_PRE`（nat）、`PROXYPIN_OUT6`（ip6 filter）、`PROXYPIN_QUIC` / `PROXYPIN_FWD` / `PROXYPIN_RST`（filter）链中，
 停止时整体删除，不影响系统和其它应用的规则。
 
 ## 手动排查
