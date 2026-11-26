@@ -31,6 +31,7 @@ import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/image_preview.dart';
 import 'package:proxypin/ui/component/json/json_viewer.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
 import 'package:proxypin/ui/component/multi_window.dart';
@@ -826,7 +827,7 @@ class _BodyState extends State<_Body> {
     }
 
     if (type == ViewType.image) {
-      return Center(child: Image.memory(Uint8List.fromList(message.body ?? []), fit: BoxFit.scaleDown));
+      return ImageBodyPreview(message.body ?? const [], contentType: message.headers.contentType);
     }
     if (type == ViewType.video) {
       return const Center(child: Text("video not support preview"));
