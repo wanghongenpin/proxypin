@@ -81,17 +81,13 @@ class SearchState extends State<Search> {
               hintText: 'Search',
               hintStyle: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
               suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
-                IconButton(
-                    tooltip: 'Filter syntax',
-                    splashRadius: 14,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    icon: Icon(Icons.tune, size: 17, color: theme.colorScheme.onSurfaceVariant),
-                    onPressed: () => QuerySyntaxHelp.show(context,
-                        schema: RequestQuery.schema,
-                        controller: keywordController,
-                        onChanged: _onKeywordChanged,
-                        quickFilters: quickRequestFilters)),
+                QueryFilterButton(
+                    schema: RequestQuery.schema,
+                    controller: keywordController,
+                    onChanged: _onKeywordChanged,
+                    quickFilters: quickRequestFilters,
+                    iconSize: 17,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28)),
                 ContentTypeSelect(onSelected: (contentType) {
                   setState(() {
                     searchModel.responseContentTypes = contentType == null ? {} : {contentType};

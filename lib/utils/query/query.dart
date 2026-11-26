@@ -254,7 +254,7 @@ class Query<T> {
   static Query<T> _parse<T>(String input, QuerySchema<T> schema) {
     final groups = <List<QueryTerm>>[[]];
     for (final token in tokenize(input)) {
-      if (token == '|' || token == 'OR' || token == '||') {
+      if (isOrToken(token)) {
         if (groups.last.isNotEmpty) groups.add([]);
         continue;
       }
@@ -266,12 +266,23 @@ class Query<T> {
   }
 
   /// 按空白切分，保留引号与 /正则/ 内的空格
-  static List<String> tokenize(String input) {
-    final tokens = <String>[];
+  static List<String> tokenize(String input) => tokenSpans(input).map((e) => e.value).toList();
+
+  /// 切分并记录每个条件在原文中的位置（供 UI 逐条删除 / 定位编辑）
+  static List<QueryToken> tokenSpans(String input) {
+    final tokens = <QueryToken>[];
     final sb = StringBuffer();
+    var start = -1;
     String? quote;
+    void flush(int end) {
+      if (start >= 0 && sb.isNotEmpty) tokens.add(QueryToken(sb.toString(), start, end));
+      sb.clear();
+      start = -1;
+    }
+
     for (var i = 0; i < input.length; i++) {
       final ch = input[i];
+      if (start < 0 && ch.trim().isNotEmpty) start = i;
       if (quote != null) {
         if (ch == quote) {
           quote = null;
@@ -292,14 +303,31 @@ class Query<T> {
         continue;
       }
       if (ch.trim().isEmpty) {
-        if (sb.isNotEmpty) tokens.add(sb.toString());
-        sb.clear();
+        flush(i);
         continue;
       }
       sb.write(ch);
     }
-    if (sb.isNotEmpty) tokens.add(sb.toString());
+    flush(input.length);
     return tokens;
+  }
+
+  static bool isOrToken(String token) => token == '|' || token == 'OR' || token == '||';
+
+  /// 删除第 [index] 个条件，并整理多余空白 / 首尾或连续的 OR
+  static String removeToken(String input, int index) {
+    final spans = tokenSpans(input);
+    if (index < 0 || index >= spans.length) return input;
+    final kept = [for (var i = 0; i < spans.length; i++) if (i != index) input.substring(spans[i].start, spans[i].end)];
+    final out = <String>[];
+    for (final t in kept) {
+      if (isOrToken(t) && (out.isEmpty || isOrToken(out.last))) continue;
+      out.add(t);
+    }
+    while (out.isNotEmpty && isOrToken(out.last)) {
+      out.removeLast();
+    }
+    return out.join(' ');
   }
 
   static final _fieldPattern = RegExp(r'^([A-Za-z_][\w.]*)(:>=|:<=|:>|:<|:!=|:=|:!|>=|<=|!=|:|=|>|<|~)(.*)$');
@@ -343,4 +371,17 @@ class Query<T> {
     }
     return QueryTerm(value: t, negate: negate);
   }
+}
+
+/// 原文中的一个条件片段
+class QueryToken {
+  /// 去掉引号后的值（与 [Query.tokenize] 一致）
+  final String value;
+  final int start;
+  final int end;
+
+  const QueryToken(this.value, this.start, this.end);
+
+  /// 原文
+  String source(String input) => input.substring(start, end);
 }

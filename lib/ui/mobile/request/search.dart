@@ -71,14 +71,11 @@ class MobileSearchState extends State<MobileSearch> {
                 prefixIcon: InkWell(
                     onTap: showSearch,
                     child: Icon(Icons.search, color: _searched ? Colors.green : Theme.of(context).colorScheme.primary)),
-                suffixIcon: IconButton(
-                    tooltip: 'Filter syntax',
-                    icon: Icon(Icons.tune, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    onPressed: () => QuerySyntaxHelp.show(context,
-                        schema: RequestQuery.schema,
-                        controller: _keywordController,
-                        onChanged: _onKeywordChanged,
-                        quickFilters: quickRequestFilters)),
+                suffixIcon: QueryFilterButton(
+                    schema: RequestQuery.schema,
+                    controller: _keywordController,
+                    onChanged: _onKeywordChanged,
+                    quickFilters: quickRequestFilters),
                 hintText: 'Search  method:POST status:4xx')));
   }
 
