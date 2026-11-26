@@ -484,6 +484,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get select => '选择';
 
   @override
+  String get selectAll => '全选';
+
+  @override
+  String selectedItems(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
   String get copy => '复制';
 
   @override
@@ -1944,6 +1952,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get select => '選擇';
+
+  @override
+  String get selectAll => '全選';
+
+  @override
+  String selectedItems(int count) {
+    return '已選 $count 項';
+  }
 
   @override
   String get copy => '複製';

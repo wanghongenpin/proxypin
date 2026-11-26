@@ -148,7 +148,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
       }));
     }
 
-    if (widget.appConfiguration.upgradeNoticeV40) {
+    if (widget.appConfiguration.upgradeNoticeV41) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showUpgradeNotice();
       });
@@ -331,7 +331,7 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
       return PictureInPicture.enterPictureInPictureMode(
           Platform.isAndroid ? await localIp() : "127.0.0.1", proxyServer.port,
-          appList: appList, disallowApps: disallowApps);
+          appList: appList, disallowApps: disallowApps, setSystemProxy: proxyServer.configuration.enableSystemProxy);
     }
     return false;
   }
@@ -369,24 +369,26 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
 
     String content = isCN
         ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 界面全新改版：桌面端左侧导航、可固定快捷工具栏与流量控制页、全新深色模式与 SVG 图标；移动端导航页与工具箱同步改版；\n'
-            '2. 支持导入 mTLS 客户端证书 (#680)；\n'
-            '3. 新增重放任务管理，支持批量保存与重放请求；\n'
-            '4. 支持抓取 MQTT over TLS 流量，按报文流展示并显示来源应用 (#949)；\n'
-            '5. form-data / form-urlencoded 请求体支持表单方式编辑，选中文本可直接发送到 Decoder 或 AES 工具；\n'
-            '6. 复制为 Python requests 与 curl 导入解析增强；\n'
-            '7. 修复压缩及非标准 SSE 响应体显示、close-delimited 响应体处理 (#956)、应用过滤加载失败等问题；iOS 最低支持提升至 iOS 15。\n'
+            '1. 内置 MCP 服务增强：可自定义监听地址并设置访问令牌保护，支持查看 WebSocket 二进制消息，敏感信息脱敏与工具说明更完善；\n'
+            '2. 十六进制（Hex）查看器浏览大内容更流畅，请求体页签切换后不再丢失浏览位置，并新增格式化文本与 CSS 预览；\n'
+            '3. 历史记录支持多选与全选，可批量管理请求；\n'
+            '4. 新增 AMOLED 纯黑主题；\n'
+            '5. 搜索体验优化，详情中过长的 Cookie 名称会自动换行显示；\n'
+            '6. 修复连接关闭后资源未及时释放导致的占用累积、请求内容偶发显示旧数据等稳定性问题；\n'
+            '7. 优化 Windows 多窗口：窗口在不同缩放比例的显示器之间移动时尺寸不再出错，新窗口打开时不再闪烁；\n'
+            '8. 修复安卓小窗模式下系统代理设置失效、Linux 版打包失败、检查更新偶发失败等问题，并新增更多界面语言。\n'
         : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
-            '1. Brand-new UI: desktop left-side navigation, pinnable quick toolbar with a traffic control page, redesigned dark mode and SVG icons; mobile navigation pages and toolbox revamped as well;\n'
-            '2. Support importing mTLS client certificates (#680);\n'
-            '3. Added replay task management to save and replay requests in batches;\n'
-            '4. Capture MQTT over TLS traffic, displayed as a packet stream with originating app attribution (#949);\n'
-            '5. Form-based editing for form-data and form-urlencoded bodies; selected text can be sent directly to the Decoder or AES tools;\n'
-            '6. Enhanced copy-as-Python-requests and curl import parsing;\n'
-            '7. Fixed display of compressed and non-standard SSE bodies, close-delimited response body handling (#956), app filter loading failures, and other issues; minimum iOS version raised to iOS 15.\n';
+            '1. Improved the built-in MCP server: customizable listen address with access-token protection, binary WebSocket message support, and better sensitive-data redaction and tool documentation;\n'
+            '2. Smoother Hex viewer for large content; body tabs now keep their position when switching, with new formatted-text and CSS preview views;\n'
+            '3. History items support multi-select and select-all for batch management;\n'
+            '4. Added an AMOLED black theme;\n'
+            '5. Smoother search experience; long cookie names now wrap automatically in the details view;\n'
+            '6. Fixed resource buildup after connections close, request content occasionally showing stale data, and other stability issues;\n'
+            '7. Improved Windows multi-window behavior: windows keep the correct size when moved across monitors with different scaling, and no longer flicker when opening;\n'
+            '8. Fixed the system proxy being reset in Android window mode, Linux package builds, and occasional update-check failures; added more UI languages.\n';
     showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
         () {
-      widget.appConfiguration.upgradeNoticeV40 = false;
+      widget.appConfiguration.upgradeNoticeV41 = false;
       widget.appConfiguration.flushConfig();
     });
   }
@@ -480,21 +482,20 @@ class RequestPageState extends State<RequestPage> {
     ]);
   }
 
-  /// 设计稿：运行中 = 绿底白 ⏹，已停止 = 灰底白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
+  /// 主题色底，运行中 = 白 ⏹，已停止 = 白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
   Widget _launchActionButton() {
     return ValueListenableBuilder<ValueWrap<bool>>(
         valueListenable: SocketLaunch.startStatus,
         builder: (context, status, _) {
-          var running = status.get() == true;
           var theme = Theme.of(context);
-          // 46px 正圆右下悬浮（设计稿 .p-fab）；配色用户拍板：运行=绿 #1F8B4C / 停止=主题主色，图标恒白
+          // 46px 正圆右下悬浮（设计稿 .p-fab）；启停统一主题主色，图标恒白，以图标区分状态
           return SizedBox(
             width: 46,
             height: 46,
             child: FloatingActionButton(
               onPressed: null,
               shape: const CircleBorder(),
-              backgroundColor: running ? okColor(theme) : theme.colorScheme.primary,
+              backgroundColor: theme.colorScheme.primary,
               child: SocketLaunch(
                 proxyServer: proxyServer,
                 size: 22,

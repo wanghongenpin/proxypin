@@ -566,7 +566,7 @@ class _RequestParamsState extends State<RequestParams> {
   }
 }
 
-class Overview extends StatelessWidget {
+class Overview extends StatefulWidget {
   final ValueWrap<HttpRequest> request;
 
   final ValueWrap<HttpResponse> response;
@@ -574,13 +574,35 @@ class Overview extends StatelessWidget {
   const Overview(this.request, this.response, {super.key});
 
   @override
+  State<Overview> createState() => _OverviewState();
+}
+
+class _OverviewState extends State<Overview> {
+  final GlobalKey _infoCardKey = GlobalKey();
+
+  /// 信息卡实测高度；首帧为 null，post-frame 测量后更新
+  double? _infoCardHeight;
+
+  void _scheduleMeasureInfoCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final renderBox = _infoCardKey.currentContext?.findRenderObject();
+      if (renderBox is RenderBox && renderBox.hasSize && mounted) {
+        final height = renderBox.size.height;
+        if (height != _infoCardHeight) {
+          setState(() => _infoCardHeight = height);
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var request = this.request.get();
+    var request = widget.request.get();
     if (request == null) {
       return const SizedBox();
     }
     var localizations = AppLocalizations.of(context)!;
-    var response = this.response.get();
+    var response = widget.response.get();
     String requestUrl = request.requestUrl;
     try {
       requestUrl = Uri.decodeFull(request.requestUrl);
@@ -602,32 +624,60 @@ class Overview extends StatelessWidget {
     // 设计稿 Overview 卡：状态码/协议/耗时/大小/远程地址/请求时间/App 七行（桌面端严格对齐）；
     // URL/方法/双 Content-Type 仅手机端 General 保留（桌面端 URL+方法已在顶部标题栏，类型见 Body 分区标签）
     var isDesktop = Platforms.isDesktop();
-    return Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: ListView(padding: const EdgeInsets.only(top: 2, bottom: 12), children: [
-          overviewCard(context, [
-            overviewRow(context, localizations.statusCode, response?.status.toString(),
-                valueColor: statusColor(response?.status.code, Theme.of(context))),
-            overviewRow(context, localizations.protocol, request.protocolVersion),
-            overviewRow(context, localizations.duration, _durationText(response)),
-            overviewRow(context, localizations.size, _sizeText(context, request, response)),
-            overviewRow(context, localizations.remoteAddress,
-                '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
-            overviewRow(context, localizations.requestTime, request.requestTime.formatMillisecond()),
-            if (request.processInfo != null) overviewRow(context, localizations.app, request.processInfo!.name),
-            if (!isDesktop) ...[
-              overviewRow(context, localizations.requestUrl, requestUrl),
-              overviewRow(context, localizations.requestMethod, request.method.name),
-              overviewRow(context, localizations.requestType, request.headers.contentType),
-              overviewRow(context, localizations.responseType, response?.headers.contentType),
+    return LayoutBuilder(builder: (context, constraints) {
+      _scheduleMeasureInfoCard();
+      // 预览吃掉信息卡之外的全部剩余视口高度；首帧未测出信息卡高度时用比例公式兜底
+      final previewMaxHeight =
+          responsePreviewMaxHeight(constraints.maxHeight, infoCardHeight: _infoCardHeight);
+      return Container(
+          color: Theme.of(context).colorScheme.surface,
+          child: ListView(padding: const EdgeInsets.only(top: 2, bottom: 12), children: [
+            overviewCard(context, [
+              overviewRow(context, localizations.statusCode, response?.status.toString(),
+                  valueColor: statusColor(response?.status.code, Theme.of(context))),
+              overviewRow(context, localizations.protocol, request.protocolVersion),
+              overviewRow(context, localizations.duration, _durationText(response)),
+              overviewRow(context, localizations.size, _sizeText(context, request, response)),
+              overviewRow(context, localizations.remoteAddress,
+                  '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
+              overviewRow(context, localizations.requestTime, request.requestTime.formatMillisecond()),
+              if (request.processInfo != null) overviewRow(context, localizations.app, request.processInfo!.name),
+              if (!isDesktop) ...[
+                overviewRow(context, localizations.requestUrl, requestUrl),
+                overviewRow(context, localizations.requestMethod, request.method.name),
+                overviewRow(context, localizations.requestType, request.headers.contentType),
+                overviewRow(context, localizations.responseType, response?.headers.contentType),
+              ],
+            ], key: _infoCardKey),
+            if (response != null && (response.body?.isNotEmpty ?? false)) ...[
+              const SizedBox(height: 12),
+              ResponsePreviewCard(response, maxHeight: previewMaxHeight),
             ],
-          ]),
-          if (response != null && (response.body?.isNotEmpty ?? false)) ...[
-            const SizedBox(height: 12),
-            ResponsePreviewCard(response),
-          ],
-        ]));
+          ]));
+    });
   }
+}
+
+/// 响应体预览在矮窗口下的最小限高，再小则由卡片内部滚动承接、外层 ListView 滚动
+const double _previewMinHeight = 120;
+
+/// 信息卡之外的固定垂直开销：ListView 上下内边距(2+12)、卡间距(12)、预览卡头(36+1)
+const double _overviewChromeHeight = 2 + 12 + 12 + 36 + 1;
+
+/// 计算响应体预览（卡片内部滚动区）限高。
+///
+/// 已测出 [infoCardHeight] 时：预览占掉信息卡之外的全部剩余视口高度，消除底部留白；
+/// 首帧未测出（null）或高度无界时回退到视口 45%、夹在 [_previewMinHeight] 与
+/// [ResponsePreviewCard.maxHeightCap] 之间的兜底值。
+double responsePreviewMaxHeight(double viewportHeight, {double? infoCardHeight}) {
+  if (!viewportHeight.isFinite) {
+    return ResponsePreviewCard.maxHeightCap;
+  }
+  if (infoCardHeight == null) {
+    return (viewportHeight * 0.45).clamp(_previewMinHeight, ResponsePreviewCard.maxHeightCap);
+  }
+  final remaining = viewportHeight - infoCardHeight - _overviewChromeHeight;
+  return remaining.clamp(_previewMinHeight, viewportHeight);
 }
 
 /// 设计稿 Overview 耗时长："342 ms"（数值与单位间空格；costTime 原始格式 "84ms"/"1.23s"）
@@ -723,7 +773,7 @@ Color? statusColor(int? status, ThemeData theme) {
   return dark ? DarkPalette.err : const Color(0xFFC4321F);
 }
 
-Widget overviewCard(BuildContext context, List<Widget> rows) {
+Widget overviewCard(BuildContext context, List<Widget> rows, {Key? key}) {
   var theme = Theme.of(context);
   var children = <Widget>[];
   for (var i = 0; i < rows.length; i++) {
@@ -733,6 +783,7 @@ Widget overviewCard(BuildContext context, List<Widget> rows) {
     children.add(rows[i]);
   }
   return Container(
+      key: key,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: cardBorderColor(theme)),
@@ -761,16 +812,20 @@ Widget overviewRow(BuildContext context, String label, String? value, {Color? va
 
 /// Overview 响应体预览卡（设计稿 .code-card）：卡头 Response Body + JSON/Raw/Preview 分段，限高内部滚动
 class ResponsePreviewCard extends StatefulWidget {
+  /// 首帧信息卡高度未测出、或无界高度时的兜底限高；正常布局下预览会填满剩余视口，不受此值限制
+  static const double maxHeightCap = 520;
+
   final HttpResponse response;
 
-  const ResponsePreviewCard(this.response, {super.key});
+  final double maxHeight;
+
+  const ResponsePreviewCard(this.response, {super.key, this.maxHeight = maxHeightCap});
 
   @override
   State<ResponsePreviewCard> createState() => _ResponsePreviewCardState();
 }
 
 class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
-  static const double _maxHeight = 320;
   late final List<String> views;
   int viewIndex = 0;
 
@@ -817,7 +872,7 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
                       ]))),
               Divider(height: 1, thickness: 1, color: theme.dividerColor.withValues(alpha: 0.35)),
               ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: _maxHeight),
+                  constraints: BoxConstraints(maxHeight: widget.maxHeight),
                   child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       child: SizedBox(width: double.infinity, child: bodyView()))),

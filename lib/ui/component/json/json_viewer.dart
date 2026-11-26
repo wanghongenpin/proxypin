@@ -24,6 +24,7 @@ import 'package:proxypin/ui/component/json/toast.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/platform.dart';
 
+import '../search/active_viewer_scope.dart';
 import '../search/search_controller.dart';
 
 class JsonViewer extends StatelessWidget {
@@ -49,10 +50,13 @@ class JsonViewer extends StatelessWidget {
           final contentWidget = DefaultTextStyle.merge(
               style: const TextStyle(fontWeight: FontWeight.w600),
               child: getContentWidget(jsonObj, matchTotalCount: matchTotalCount, matchKeys: matchKeys));
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            searchController?.updateMatchCount(matchTotalCount.get()!);
-            scrollToMatch(matchKeys);
-          });
+          // 懒保活下隐藏查看器不回写共享搜索计数，也不做匹配项自动滚动。
+          if (ActiveViewerScope.isActive(context)) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              searchController?.updateMatchCount(matchTotalCount.get()!);
+              scrollToMatch(matchKeys);
+            });
+          }
           return contentWidget;
         });
   }
@@ -122,6 +126,7 @@ class JsonObjectViewerState extends State<JsonObjectViewer> {
     openFlag.clear();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     if (widget.notRoot) {
@@ -256,6 +261,7 @@ class _JsonArrayViewerState extends State<JsonArrayViewer> {
     openFlag.clear();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     if (widget.notRoot) {

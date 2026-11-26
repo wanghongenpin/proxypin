@@ -156,6 +156,8 @@
   "domainListSubtitle": "最后请求时间: {time},  次数: {count}",
   "selectAction": "选择操作",
   "select": "选择",
+  "selectAll": "全选",
+  "selectedItems": "已选 {count} 项",
   "copy": "复制",
   "copyHost": "复制域名",
   "copyUrl": "复制URL",

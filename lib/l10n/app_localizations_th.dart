@@ -486,6 +486,14 @@ class AppLocalizationsTh extends AppLocalizations {
   String get select => 'เลือก';
 
   @override
+  String get selectAll => 'เลือกทั้งหมด';
+
+  @override
+  String selectedItems(int count) {
+    return 'เลือกแล้ว $count รายการ';
+  }
+
+  @override
   String get copy => 'คัดลอก';
 
   @override

@@ -486,6 +486,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get select => 'Pilih';
 
   @override
+  String get selectAll => 'Pilih semua';
+
+  @override
+  String selectedItems(int count) {
+    return '$count dipilih';
+  }
+
+  @override
   String get copy => 'Salin';
 
   @override

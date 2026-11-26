@@ -2,7 +2,7 @@ name: proxypin
 description: ProxyPin
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.4.0+41
+version: 1.4.1+42
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
   intl: any
   cupertino_icons: ^2.0.0
-  flutter_svg: ^2.2.1
+  flutter_svg: ^2.5.0
   pointycastle: ^4.0.0
   logger: ^2.8.0
   date_format: ^2.0.9
@@ -22,7 +22,7 @@ dependencies:
   screen_retriever: ^0.2.2
   desktop_multi_window: ^0.3.1
   path_provider: ^2.1.5
-  file_picker: ^13.1.0
+  file_picker: ^13.4.1
   mime: ^2.1.0
   proxy_manager: ^0.0.3
   permission_handler: ^12.0.1
@@ -33,9 +33,11 @@ dependencies:
   device_info_plus: ^13.3.0
   shared_preferences: ^2.5.6
   url_launcher: ^6.3.3
-  toastification: ^3.0.2
+  toastification: ^3.2.2
   get: ^4.7.3
-  zstandard: ^1.5.0
+  # 1.5.6 的 CocoaPods 同步脚本无法在 Pub 缓存中定位 zstandard_native 源码（macOS/iOS 均受影响），
+  # 联邦插件通过下方 dependency_overrides 锁回 1.5.0（其脚本保留了 pub 缓存通配符扫描）。
+  zstandard: 1.5.0
   qr_flutter: ^4.1.0
   flutter_qr_reader_plus: ^1.0.6
   brotli: ^0.6.0
@@ -46,9 +48,16 @@ dependencies:
   scrollable_positioned_list_nic: ^0.0.2
   tray_manager: ^0.5.3
   code_forge: ^10.11.0
+  # 语法高亮模式与 atom-one 配色：code_forge 渲染器与旧 SelectableText 高亮都基于它，
+  # 共享查看器直接引用其 Mode/主题，显式声明依赖版本与 code_forge 对齐。
+  re_highlight: ^0.0.3
   # 必须与 code_forge 的 codegen 版本精确一致（flutter_rust_bridge 要求 codegen==runtime），
   flutter_rust_bridge: 2.12.0
-  archive: ^4.5.2
+  archive: ^4.7.1
+
+dependency_overrides:
+  zstandard_macos: 1.5.0
+  zstandard_ios: 1.5.0
 
 dev_dependencies:
   flutter_test:

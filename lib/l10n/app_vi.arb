@@ -203,6 +203,8 @@
   "scrollEnd": "Cuộn tới cuối",
   "search": "Tìm kiếm",
   "select": "Chọn",
+  "selectAll": "Chọn tất cả",
+  "selectedItems": "Đã chọn {count} mục",
   "selectAction": "Chọn thao tác",
   "selectFile": "Chọn tệp",
   "serverNotStart": "Chưa khởi động proxy",

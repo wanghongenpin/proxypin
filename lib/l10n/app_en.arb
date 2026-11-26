@@ -156,6 +156,15 @@
   "domainListSubtitle": "Last Request Time: {time},  Count: {count}",
   "selectAction": "Select action",
   "select": "Select",
+  "selectAll": "Select All",
+  "selectedItems": "{count} selected",
+  "@selectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "copy": "Copy",
   "copyHost": "Copy Host",
   "copyUrl": "Copy URL",

@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:get/get.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/host_port.dart';
@@ -32,6 +33,7 @@ import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/history_cache_time.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
@@ -87,7 +89,10 @@ class _MobileHistoryState extends State<MobileHistory> {
   static bool _sessionSaved = false;
   late Configuration configuration;
   var storageInstance = HistoryStorage.instance;
+  HistoryStorage? _storage;
   late final OnchangeListEvent<HistoryItem> _historyListener;
+  late final MultiSelectListener<String> _selectionListener;
+  final MultiSelectController selectionController = MultiSelectController();
   bool _autoOpened = false;
 
   @override
@@ -95,16 +100,33 @@ class _MobileHistoryState extends State<MobileHistory> {
     super.initState();
     configuration = widget.proxyServer.configuration;
     _historyListener = OnchangeListEvent<HistoryItem>(() {
+      if (!mounted) {
+        return;
+      }
+      //存储变动（定时清理、远程导入、删除）后剔除已不存在的选择
+      final storage = _storage;
+      if (storage != null) {
+        selectionController.prune(storage.histories.map((item) => item.stableId.toString()));
+      }
+      setState(() {});
+    });
+    _selectionListener = MultiSelectListener<String>((_) {
       if (mounted) {
         setState(() {});
       }
     });
-    storageInstance.then((storage) => storage.addListener(_historyListener));
+    selectionController.selectedIds.addListener(_selectionListener);
+    storageInstance.then((storage) {
+      _storage = storage;
+      storage.addListener(_historyListener);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _openImportedHistoryIfNeeded());
   }
 
   @override
   void dispose() {
+    selectionController.selectedIds.removeListener(_selectionListener);
+    selectionController.clear();
     storageInstance.then((storage) => storage.removeListener(_historyListener));
     super.dispose();
   }
@@ -144,45 +166,72 @@ class _MobileHistoryState extends State<MobileHistory> {
   @override
   Widget build(BuildContext context) {
     return futureWidget(storageInstance, (storage) {
-      List<Widget> children = [];
+      return Obx(() {
+        final selectionMode = selectionController.isSelectionMode;
+        final histories = storage.histories;
+        //当前可见 id（最新在前），全选以可见项为准，不包含未保存会话 banner
+        final visibleIds = [
+          for (int i = histories.length - 1; i >= 0; i--) histories.elementAt(i).stableId.toString()
+        ];
 
-      if (widget.container.isNotEmpty == true && !_sessionSaved && widget.historyTask.history == null) {
-        //当前会话未保存，是否保存当前会话
-        children.add(buildSaveSession(storage));
-      }
+        List<Widget> children = [];
 
-      var histories = storage.histories;
-      for (int i = histories.length - 1; i >= 0; i--) {
-        var entry = histories.elementAt(i);
-        children.add(buildItem(storage, i, entry));
-      }
+        if (widget.container.isNotEmpty == true &&
+            !_sessionSaved &&
+            widget.historyTask.history == null &&
+            !selectionMode) {
+          //当前会话未保存，是否保存当前会话
+          children.add(buildSaveSession(storage));
+        }
 
-      return Scaffold(
-          appBar: AppBar(
-              title: Text(localizations.history, style: const TextStyle(fontSize: 16)),
-              centerTitle: true,
-              actions: [
-                IconButton(
-                    onPressed: () => import(storage),
-                    icon: const Icon(Icons.input, size: 18),
-                    tooltip: localizations.import),
-                const SizedBox(width: 3),
-                HistoryCacheTime(configuration, onSelected: (val) {
-                  if (val == 0) {
-                    widget.container.removeListener(widget.historyTask);
-                  } else {
-                    widget.container.addListener(widget.historyTask);
-                  }
-                }),
-                const SizedBox(width: 5)
-              ]),
-          body: children.isEmpty
-              ? Center(child: Text(localizations.emptyData))
-              : ListView.separated(
-                  itemCount: children.length,
-                  itemBuilder: (context, index) => children[index],
-                  separatorBuilder: (_, index) => const Divider(thickness: 0.3, height: 0),
-                ));
+        for (int i = histories.length - 1; i >= 0; i--) {
+          var entry = histories.elementAt(i);
+          children.add(buildItem(storage, i, entry));
+        }
+
+        return PopScope(
+            canPop: !selectionMode,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop && selectionMode) {
+                selectionController.clear();
+              }
+            },
+            child: Scaffold(
+                appBar: AppBar(
+                    title: Text(localizations.history, style: const TextStyle(fontSize: 16)),
+                    centerTitle: true,
+                    actions: [
+                      IconButton(
+                          onPressed: () => import(storage),
+                          icon: const Icon(Icons.input, size: 18),
+                          tooltip: localizations.import),
+                      const SizedBox(width: 3),
+                      HistoryCacheTime(configuration, onSelected: (val) {
+                        if (val == 0) {
+                          widget.container.removeListener(widget.historyTask);
+                        } else {
+                          widget.container.addListener(widget.historyTask);
+                        }
+                      }),
+                      const SizedBox(width: 5)
+                    ]),
+                body: Column(children: [
+                  if (selectionMode)
+                    SelectionActionBar(
+                        selectionController: selectionController,
+                        onDelete: deleteSelectedHistories,
+                        onSelectAll: () => selectionController.toggleSelectAll(visibleIds),
+                        visibleCount: () => visibleIds.length),
+                  Expanded(
+                      child: children.isEmpty
+                          ? Center(child: Text(localizations.emptyData))
+                          : ListView.separated(
+                              itemCount: children.length,
+                              itemBuilder: (context, index) => children[index],
+                              separatorBuilder: (_, index) => const Divider(thickness: 0.3, height: 0),
+                            ))
+                ])));
+      });
     });
   }
 
@@ -233,14 +282,25 @@ class _MobileHistoryState extends State<MobileHistory> {
 
   //构建历史记录
   Widget buildItem(HistoryStorage storage, int index, HistoryItem item) {
+    final id = item.stableId.toString();
+    final selectionMode = selectionController.isSelectionMode;
+
     return GestureDetector(
         onLongPressStart: (detail) async {
           if (Platform.isAndroid) HapticFeedback.mediumImpact();
+          //选择态长按直接切换勾选，不弹单条菜单
+          if (selectionMode) {
+            selectionController.toggle(id);
+            return;
+          }
+
           setState(() {
             selectIndex = index;
           });
 
           final menuItems = <PopupMenuEntry>[
+            PopupMenuItem(
+                child: Text(localizations.select), onTap: () => selectionController.selectOnly(id)),
             PopupMenuItem(child: Text(localizations.rename), onTap: () => renameHistory(storage, item)),
             PopupMenuItem(
                 child: Text(localizations.share), onTap: () => export(storage, item, offset: detail.globalPosition)),
@@ -277,9 +337,23 @@ class _MobileHistoryState extends State<MobileHistory> {
         child: ListTile(
           dense: true,
           selected: selectIndex == index,
+          leading: selectionMode
+              ? Icon(
+                  selectionController.contains(id)
+                      ? Icons.check_box_outlined
+                      : Icons.check_box_outline_blank_outlined,
+                  size: 20,
+                  color: selectionController.contains(id) ? Theme.of(context).colorScheme.primary : null)
+              : null,
           title: Text(item.name),
           subtitle: Text(localizations.historySubtitle(item.requestLength, item.size)),
-          onTap: () => toRequestsView(item, storage),
+          onTap: () {
+            if (selectionMode) {
+              selectionController.toggle(id);
+              return;
+            }
+            toRequestsView(item, storage);
+          },
         ));
   }
 
@@ -370,6 +444,30 @@ class _MobileHistoryState extends State<MobileHistory> {
               ),
             ],
           );
+        });
+  }
+
+  //批量删除选中的历史记录
+  void deleteSelectedHistories() {
+    final selectedIds = selectionController.selectedIds.map(int.parse).toSet();
+    if (selectedIds.isEmpty) {
+      return;
+    }
+
+    showConfirmDialog(context,
+        content: localizations.historyDeleteConfirm,
+        onConfirm: () async {
+          final storage = await storageInstance;
+          //正在录制的会话被删时先停掉写入任务
+          if (widget.historyTask.history != null &&
+              selectedIds.contains(widget.historyTask.history!.stableId)) {
+            widget.historyTask.cancelTask();
+          }
+          await storage.removeHistories(selectedIds);
+          selectionController.clear();
+          if (mounted) {
+            FlutterToastr.show(localizations.deleteSuccess, context);
+          }
         });
   }
 

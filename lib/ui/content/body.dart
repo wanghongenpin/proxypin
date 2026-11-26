@@ -43,11 +43,12 @@ import 'package:proxypin/utils/css_formatter.dart';
 import 'package:proxypin/utils/html_formatter.dart';
 import 'package:proxypin/utils/js_formatter.dart';
 import 'package:proxypin/utils/lang.dart';
-import 'package:proxypin/utils/num.dart';
 import 'package:proxypin/utils/platform.dart';
 import 'package:proxypin/utils/xml_formatter.dart';
 
 import '../component/json/json_text.dart';
+import 'hex_viewer.dart';
+import '../component/search/active_viewer_scope.dart';
 import '../component/search/highlight_text.dart';
 import '../component/search/search_controller.dart';
 import '../component/search/virtualized_highlight_text.dart';
@@ -82,13 +83,15 @@ class HttpBodyWidget extends StatefulWidget {
 
 class HttpBodyState extends State<HttpBodyWidget> {
   var bodyKey = GlobalKey<_BodyState>();
-  int tabIndex = 0;
+  ViewType? selectedViewType;
   final searchIconKey = GlobalKey();
   final SearchTextController searchController = SearchTextController();
 
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   bool showDecoded = false;
   CryptoDecodedResult? decoded;
+
+  ViewType _currentViewType(Tabs tabs) => tabs.list.contains(selectedViewType) ? selectedViewType! : tabs.list.first;
 
   //当前请求是否命中已启用的重写规则
   final RxBool rewriteEnabled = false.obs;
@@ -173,9 +176,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     }
 
     var tabs = Tabs.of(widget.httpMessage?.contentType, isJsonText());
-
-    if (tabIndex > 0 && tabIndex >= tabs.list.length) tabIndex = tabs.list.length - 1;
-    bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[tabIndex]);
+    final viewType = _currentViewType(tabs);
 
     List<Widget> list = [
       widget.inNewWindow ? const SizedBox() : titleWidget(tabs: tabs),
@@ -185,7 +186,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
           child: _Body(
               key: bodyKey,
               message: widget.httpMessage,
-              viewType: tabs.list[tabIndex],
+              viewType: viewType,
               scrollController: widget.scrollController,
               searchController: searchController)) //body
     ];
@@ -252,29 +253,29 @@ class HttpBodyState extends State<HttpBodyWidget> {
     }
     var theme = Theme.of(context);
     var text3 = theme.brightness == Brightness.light ? const Color(0xFF8F959E) : DarkPalette.text3;
+    final currentViewType = _currentViewType(tabs);
     return [
-      for (var i = 0; i < tabs.list.length; i++)
+      for (final viewType in tabs.list)
         Padding(
             padding: const EdgeInsets.only(right: 4),
             // 选中底色由 Material 绘制，InkWell 的 hover/水波纹才能显示在底色之上
             child: Material(
-                color: i == tabIndex ? primarySoftBg(theme, lightAlpha: 0.12) : Colors.transparent,
+                color: viewType == currentViewType ? primarySoftBg(theme, lightAlpha: 0.12) : Colors.transparent,
                 borderRadius: BorderRadius.circular(5),
                 child: InkWell(
                     borderRadius: BorderRadius.circular(5),
                     // 设计稿小控件 hover：浅色 #F0F1F3，暗黑 --hover
                     hoverColor: theme.brightness == Brightness.light ? const Color(0xFFF0F1F3) : DarkPalette.hover,
                     onTap: () {
-                      setState(() => tabIndex = i);
-                      bodyKey.currentState?.changeState(widget.httpMessage, tabs.list[i]);
+                      setState(() => selectedViewType = viewType);
                     },
                     child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        child: Text(tabs.list[i].title,
+                        child: Text(viewType.title,
                             style: TextStyle(
                                 fontSize: 11,
-                                fontWeight: i == tabIndex ? FontWeight.w500 : FontWeight.w400,
-                                color: i == tabIndex ? theme.colorScheme.primary : text3)))))),
+                                fontWeight: viewType == currentViewType ? FontWeight.w500 : FontWeight.w400,
+                                color: viewType == currentViewType ? theme.colorScheme.primary : text3)))))),
     ];
   }
 
@@ -331,8 +332,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     final rewriteBtn = IconButton(
       visualDensity: visualDensity,
       iconSize: 15,
-      icon: Obx(() => SvgIcon('pencil', size: 15,
-          color: rewriteEnabled.value ? Colors.deepOrangeAccent : iconColor)),
+      icon: Obx(() => SvgIcon('pencil', size: 15, color: rewriteEnabled.value ? Colors.deepOrangeAccent : iconColor)),
       tooltip: localizations.requestRewrite,
       onPressed: showRequestRewrite,
     );
@@ -463,8 +463,7 @@ class HttpBodyState extends State<HttpBodyWidget> {
     ];
 
     return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: list));
+        scrollDirection: Axis.horizontal, child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: list));
   }
 
   ///下载图片
@@ -475,12 +474,12 @@ class HttpBodyState extends State<HttpBodyWidget> {
         icon: SvgIcon('download', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         tooltip: localizations.saveImage,
         onPressed: () async {
-          var body = bodyKey.currentState?.message?.body;
+          var body = bodyKey.currentState?.widget.message?.body;
           if (body == null) {
             return;
           }
           var bytes = Uint8List.fromList(body);
-          var extension = _imageExtension(bytes, bodyKey.currentState?.message?.headers.contentType);
+          var extension = _imageExtension(bytes, bodyKey.currentState?.widget.message?.headers.contentType);
           var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.$extension";
           if (Platform.isIOS) {
             String? path = await ImagePickers.saveByteDataImageToGallery(bytes);
@@ -647,31 +646,76 @@ String _formatTextBodyIsolate(Map<String, String> args) {
 class _BodyState extends State<_Body> {
   static const int _virtualizedThreshold = 100000;
 
-  late ViewType viewType;
-  HttpMessage? message;
+  // 由 HexViewer 在（重新）格式化时回传，工具栏复制/编码据此取当前消息完整 Hex 文本。
+  Future<String>? _hexFormattedText;
 
-  @override
-  void initState() {
-    super.initState();
-    viewType = widget.viewType;
-    message = widget.message;
-  }
-
-  void changeState(HttpMessage? message, ViewType viewType) {
-    setState(() {
-      this.message = message;
-      this.viewType = viewType;
-    });
-  }
+  // 懒保活：访问过的 tab 整树保留（选区、滚动、搜索状态不丢），未访问的 tab 不构建；
+  // 切换消息（或解码态变化）时整表清空，旧查看器随之 dispose，内存只保留当前消息的已看 tab。
+  final Map<ViewType, Widget> _keptAliveViewers = {};
+  int? _keptMessageHash;
+  bool? _keptDecodedMode;
 
   @override
   Widget build(BuildContext context) {
-    return _getBody(viewType);
+    final parent = context.findAncestorStateOfType<HttpBodyState>();
+    final decodedMode = parent?.showDecoded == true && parent?.decoded != null;
+    final messageHash = widget.message == null ? null : identityHashCode(widget.message);
+
+    // 解码态切换后 _DecodedHttpMessage 是新实例，旧缓存内容已失效，整体清空。
+    if (_keptMessageHash != messageHash || _keptDecodedMode != decodedMode) {
+      _keptAliveViewers.clear();
+      _keptMessageHash = messageHash;
+      _keptDecodedMode = decodedMode;
+      _hexFormattedText = null;
+    }
+
+    final viewer = _buildViewer(widget.viewType);
+    // WebSocket/SSE/空 body 等分支没有 tab 概念，保持原样直接渲染，不进保活容器。
+    if (!_isCacheable(widget.viewType)) {
+      return viewer;
+    }
+
+    // 只存裸查看器 widget：当前类型每帧用新实例覆盖（同位置 Element/State 复用，走 didUpdateWidget），
+    // 其它已访问过的 tab 保留上次的实例不动，从而保住选区、滚动和搜索状态。
+    _keptAliveViewers[widget.viewType] = viewer;
+
+    // 用 Stack + Offstage 而非 IndexedStack：Offstage 子树报零尺寸，隐藏的固定高查看器
+    // （如 HexViewer 的 SizedBox）不会把外层 SingleChildScrollView 撑出多余空白。
+    // TickerMode 停掉隐藏子树的帧回调（code_forge 光标闪烁等），省掉隐藏期的绘制开销。
+    // 每个 child 的包裹结构在帧间保持恒定，Element 才能稳定复用、不触发重新挂载。
+    return Stack(
+      children: [
+        for (final entry in _keptAliveViewers.entries)
+          Offstage(
+            offstage: entry.key != widget.viewType,
+            child: TickerMode(
+              enabled: entry.key == widget.viewType,
+              child: ActiveViewerScope(
+                active: entry.key == widget.viewType,
+                child: entry.value,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 只有带 tab 的常规内容类型进保活；流式消息、空 body 走即时渲染分支。
+  // 判断需与 _buildViewer 开头的早返回分支保持一致。
+  bool _isCacheable(ViewType type) {
+    final parent = context.findAncestorStateOfType<HttpBodyState>();
+    final message = _effectiveMessage(parent);
+    if (message == null || message.body == null) return false;
+    if (message.isWebSocket || (message.contentType == ContentType.sse && message.messages.isNotEmpty)) {
+      return false;
+    }
+    return true;
   }
 
   HttpMessage? _effectiveMessage(HttpBodyState? parent) {
+    final message = widget.message;
     if (parent?.showDecoded == true && parent?.decoded != null && message != null) {
-      return _DecodedHttpMessage(message!, parent!.decoded!);
+      return _DecodedHttpMessage(message, parent!.decoded!);
     }
     return message;
   }
@@ -727,22 +771,22 @@ class _BodyState extends State<_Body> {
       return null;
     }
 
-    if (viewType == ViewType.hex) {
-      return currentMessage.body!.map(intToHex).join(" ");
+    if (widget.viewType == ViewType.hex) {
+      return await _hexFormattedText ?? '';
     }
 
     final body = parent?.showDecoded == true && parent?.decoded?.text != null
         ? parent!.decoded!.text!
         : await currentMessage.decodeBodyString();
 
-    if (viewType == ViewType.text) {
+    if (widget.viewType == ViewType.text) {
       return body;
     }
 
-    return await _formatTextBody(viewType, body);
+    return await _formatTextBody(widget.viewType, body);
   }
 
-  Widget _getBody(ViewType type) {
+  Widget _buildViewer(ViewType type) {
     final parent = context.findAncestorStateOfType<HttpBodyState>();
     final message = _effectiveMessage(parent);
 
@@ -788,7 +832,14 @@ class _BodyState extends State<_Body> {
       return const Center(child: Text("video not support preview"));
     }
     if (type == ViewType.hex) {
-      return HexViewer(data: Uint8List.fromList(message.body!), searchController: widget.searchController);
+      return HexViewer(
+        data: message.body!,
+        searchController: widget.searchController,
+        // 详情面板外层 SingleChildScrollView 的 controller：Hex 滚到边后把剩余滚动量
+        // 级联给 header 所在的外层滚动视图；其它调用点为 null，自动不启用。
+        outerScrollController: widget.scrollController,
+        onFormattedText: (future) => _hexFormattedText = future,
+      );
     }
 
     if (type == ViewType.formUrl) {
@@ -798,32 +849,34 @@ class _BodyState extends State<_Body> {
           contextMenuBuilder: bodyContextMenu);
     }
 
-    return futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
-      try {
-        if (type == ViewType.jsonText) {
-          var jsonObject = json.decode(body);
-          return JsonText(
-              json: jsonObject,
-              indent: Platforms.isDesktop() ? '    ' : '  ',
-              colorTheme: ColorTheme.of(context),
-              searchController: widget.searchController,
-              scrollController: widget.scrollController,
-              contextMenuBuilder: bodyContextMenu);
-        }
+    return KeyedSubtree(
+        key: ValueKey('body-${identityHashCode(message)}-${type.name}'),
+        child: futureWidget(message.decodeBodyString(), initialData: message.getBodyString(), (body) {
+          try {
+            if (type == ViewType.jsonText) {
+              var jsonObject = json.decode(body);
+              return JsonText(
+                  json: jsonObject,
+                  indent: Platforms.isDesktop() ? '    ' : '  ',
+                  colorTheme: ColorTheme.of(context),
+                  searchController: widget.searchController,
+                  scrollController: widget.scrollController,
+                  contextMenuBuilder: bodyContextMenu);
+            }
 
-        if (type == ViewType.json) {
-          return JsonViewer(json.decode(body),
-              colorTheme: ColorTheme.of(context), searchController: widget.searchController);
-        }
+            if (type == ViewType.json) {
+              return JsonViewer(json.decode(body),
+                  colorTheme: ColorTheme.of(context), searchController: widget.searchController);
+            }
 
-        return _buildTextBodyViewer(type, body, message: message);
-      } catch (e) {
-        logger.e(e, stackTrace: StackTrace.current);
-      }
+            return _buildTextBodyViewer(type, body, message: message);
+          } catch (e) {
+            logger.e(e, stackTrace: StackTrace.current);
+          }
 
-      return HighlightTextWidget(
-          text: body, searchController: widget.searchController, contextMenuBuilder: bodyContextMenu);
-    });
+          return HighlightTextWidget(
+              text: body, searchController: widget.searchController, contextMenuBuilder: bodyContextMenu);
+        }));
   }
 
   String? _languageForViewType(ViewType type, HttpMessage? message) {
@@ -855,25 +908,28 @@ class _BodyState extends State<_Body> {
     // Format asynchronously (may use compute)
     final futureFormatted = _formatTextBody(type, text);
 
-    return futureWidget(
-      initialData: text.substring(0, min(text.length, 10000)), // Show a preview while formatting
-      futureFormatted,
-      (formattedText) {
-        if (showVirtualized) {
-          return VirtualizedHighlightText(
-            text: formattedText,
-            language: language,
-            searchController: widget.searchController,
-            scrollController: widget.scrollController,
-          );
-        }
+    return KeyedSubtree(
+      key: ValueKey('formatted-body-${identityHashCode(message)}-${type.name}'),
+      child: futureWidget(
+        initialData: text.substring(0, min(text.length, 10000)), // Show a preview while formatting
+        futureFormatted,
+        (formattedText) {
+          if (showVirtualized) {
+            return VirtualizedHighlightText(
+              text: formattedText,
+              language: language,
+              searchController: widget.searchController,
+              scrollController: widget.scrollController,
+            );
+          }
 
-        return HighlightTextWidget(
-            language: language,
-            text: formattedText,
-            searchController: widget.searchController,
-            contextMenuBuilder: bodyContextMenu);
-      },
+          return HighlightTextWidget(
+              language: language,
+              text: formattedText,
+              searchController: widget.searchController,
+              contextMenuBuilder: bodyContextMenu);
+        },
+      ),
     );
   }
 }
@@ -950,59 +1006,6 @@ enum ViewType {
       }
     }
     return null;
-  }
-}
-
-class HexViewer extends StatelessWidget {
-  final Uint8List data;
-  final int bytesPerRow;
-  final SearchTextController searchController;
-
-  const HexViewer({super.key, required this.data, this.bytesPerRow = 16, required this.searchController});
-
-  @override
-  Widget build(BuildContext context) {
-    return HighlightTextWidget(
-        style: const TextStyle(fontFamily: 'Courier', fontSize: 14),
-        text: _formatHex(data, bytesPerRow),
-        searchController: searchController,
-        contextMenuBuilder: bodyContextMenu);
-  }
-
-  String _formatHex(Uint8List data, int bytesPerRow) {
-    final StringBuffer buffer = StringBuffer();
-    for (int i = 0; i < data.length; i += bytesPerRow) {
-      // Address
-      // buffer.write(i.toRadixString(16).padLeft(8, '0'));
-      // buffer.write('  ');
-
-      // Hex values
-      for (int j = 0; j < bytesPerRow; j++) {
-        if (i + j < data.length) {
-          buffer.write(data[i + j].toRadixString(16).padLeft(2, '0'));
-        } else {
-          buffer.write('  ');
-        }
-        buffer.write(' ');
-      }
-
-      buffer.write('    ');
-
-      // ASCII representation
-      for (int j = 0; j < bytesPerRow; j++) {
-        if (i + j < data.length) {
-          final byte = data[i + j];
-          if (byte >= 32 && byte <= 126) {
-            buffer.write(String.fromCharCode(byte));
-          } else {
-            buffer.write('.');
-          }
-        }
-      }
-
-      buffer.writeln();
-    }
-    return buffer.toString();
   }
 }
 

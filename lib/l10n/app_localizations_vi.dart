@@ -486,6 +486,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get select => 'Chọn';
 
   @override
+  String get selectAll => 'Chọn tất cả';
+
+  @override
+  String selectedItems(int count) {
+    return 'Đã chọn $count mục';
+  }
+
+  @override
   String get copy => 'Sao chép';
 
   @override

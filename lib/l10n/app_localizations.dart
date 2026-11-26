@@ -1048,6 +1048,18 @@ abstract class AppLocalizations {
   /// **'Select'**
   String get select;
 
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @selectedItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedItems(int count);
+
   /// No description provided for @copy.
   ///
   /// In en, this message translates to:

@@ -198,6 +198,11 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     return view.where((request) => selectedIds.contains(request.requestId)).toList();
   }
 
+  ///全选/取消全选当前视图（含搜索过滤结果）
+  void toggleSelectAll() {
+    selectionController.toggleSelectAll(view.map((request) => request.requestId));
+  }
+
   void changeState() {
     //防止频繁刷新
     if (!changing) {
@@ -226,7 +231,9 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
               selectionController: selectionController,
               onRepeat: repeatSelected,
               onExport: exportSelected,
-              onDelete: deleteSelected),
+              onDelete: deleteSelected,
+              onSelectAll: toggleSelectAll,
+              visibleCount: () => view.length),
         Expanded(
             child: Scrollbar(
                 controller: PrimaryScrollController.maybeOf(context),

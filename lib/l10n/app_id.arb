@@ -203,6 +203,8 @@
   "scrollEnd": "Lompat ke akhir",
   "search": "Cari",
   "select": "Pilih",
+  "selectAll": "Pilih semua",
+  "selectedItems": "{count} dipilih",
   "selectAction": "Pilih aksi",
   "selectFile": "Pilih berkas",
   "serverNotStart": "Server proxy belum dimulai",

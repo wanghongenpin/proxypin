@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
 import 'package:proxypin/ui/component/search/highlight_text_document.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -42,6 +43,8 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   bool _searchUpdateScheduled = false;
   int _scrollRequestId = 0;
   String _selectedText = '';
+  // 懒保活下只有活动查看器能回写共享搜索控制器；build 中随 ActiveViewerScope 更新。
+  bool _isActive = true;
 
   // 缓存机制，避免重复计算
   HighlightTextDocument? _cachedDocument;
@@ -69,6 +72,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   @override
   Widget build(BuildContext context) {
     final viewHeight = widget.height ?? max(240, MediaQuery.sizeOf(context).height - 210);
+    _isActive = ActiveViewerScope.isActive(context);
 
     return AnimatedBuilder(
       animation: widget.searchController,
@@ -119,7 +123,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           final chunk = chunks[index];
           final chunkSpans = _chunkSpanCache.putIfAbsent(
             index,
-                () => _buildSpansForChunk(
+            () => _buildSpansForChunk(
               context,
               _cachedDocument!,
               chunk,
@@ -144,8 +148,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       height: viewHeight,
       child: SelectionArea(
         onSelectionChanged: (content) => _selectedText = content?.plainText ?? '',
-        contextMenuBuilder: (context, state) =>
-            selectableRegionContextMenu(context, state, _selectedText),
+        contextMenuBuilder: (context, state) => selectableRegionContextMenu(context, state, _selectedText),
         child: ScrollablePositionedList.builder(
           key: const ValueKey('virtualized-highlight-text'),
           physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
@@ -173,7 +176,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchUpdateScheduled = false;
-      if (!mounted) return;
+      if (!mounted || !_isActive) return;
       // 使用缓存的文档，确保使用最新的数据
       final cachedDoc = _cachedDocument;
       if (cachedDoc == null) return;
@@ -274,7 +277,6 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
     }
   }
 
-
   ScrollController _trackingScroll() {
     if (trackingScrollController != null) {
       return trackingScrollController!;
@@ -302,11 +304,8 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
   /// 为指定块构建 InlineSpan 列表
   List<InlineSpan> _buildSpansForChunk(
-      BuildContext context,
-      HighlightTextDocument document,
-      HighlightDocumentChunk chunk,
-      {required int currentMatchIndex}
-      ) {
+      BuildContext context, HighlightTextDocument document, HighlightDocumentChunk chunk,
+      {required int currentMatchIndex}) {
     final spans = <InlineSpan>[];
 
     for (var i = chunk.startLineIndex; i < chunk.endLineIndex; i++) {

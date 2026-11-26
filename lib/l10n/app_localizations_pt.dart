@@ -486,6 +486,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get select => 'Select';
 
   @override
+  String get selectAll => 'Select All';
+
+  @override
+  String selectedItems(int count) {
+    return '$count selected';
+  }
+
+  @override
   String get copy => 'Copy';
 
   @override
@@ -1853,6 +1861,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get select => 'Selecionar';
+
+  @override
+  String get selectAll => 'Selecionar tudo';
+
+  @override
+  String selectedItems(int count) {
+    return '$count selecionados';
+  }
 
   @override
   String get copy => 'Copiar';

@@ -57,22 +57,17 @@ post_install do |installer|
       # Fix for AFNetworking private header warnings (netinet6/in6.h)
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     end
-
-    # Specifically fix AFNetworking module
-    if target.name == 'AFNetworking'
-      target.build_configurations.each do |config|
-        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-      end
-    end
-  Dir.glob('Pods/**/*.{m,mm}').each do |file|
-    content = File.read(file)
-    if content.include?("#import <netinet6/in6.h>")
-      content.gsub!("#import <netinet6/in6.h>\n", '')
-      File.chmod(0644, file)
-      File.write(file, content)
-      puts "✅ 已修复 #{file} 的 netinet6/in6.h 问题"
-    end
   end
 
+  # AFNetworking 4.0.1 直接 #import <netinet6/in6.h>，在新版 Xcode 下被判定为引用模块私有头。
+  # netinet/in.h 已包含所需定义，移除该 import 即可。用 installer.sandbox.root 绝对路径，
+  # 避免 pod install 的工作目录不在 ios/ 时相对 glob 命中 0 个文件而失效。
+  Dir.glob(File.join(installer.sandbox.root, '**', '*.{m,mm}')).each do |file|
+    content = File.read(file)
+    if content.include?('#import <netinet6/in6.h>')
+      File.chmod(0644, file)
+      File.write(file, content.gsub(/#import <netinet6\/in6\.h>\r?\n/, ''))
+      puts "✅ 已修复 #{file} 的 netinet6/in6.h 问题"
+    end
   end
 end
