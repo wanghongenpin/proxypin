@@ -114,6 +114,30 @@ void main() {
 
       expect(controller.selectedIds, {'a'});
     });
+
+    test('selectAll sets anchor to last id so later range selection extends from it', () {
+      final controller = MultiSelectController();
+      final visibleIds = ['a', 'b', 'c', 'd'];
+
+      controller.selectAll(visibleIds);
+      controller.selectRange(visibleIds, 'b');
+
+      // anchor 为全选时的最后一项 d，范围选择覆盖 b..d
+      expect(controller.selectedIds, {'b', 'c', 'd'});
+    });
+
+    test('prune after selectAll keeps intersection and exits mode when nothing remains', () {
+      final controller = MultiSelectController();
+      controller.selectAll(['a', 'b', 'c']);
+
+      controller.prune(['b', 'c', 'd']);
+      expect(controller.isSelectionMode, isTrue);
+      expect(controller.selectedIds, {'b', 'c'});
+
+      controller.prune(['d']);
+      expect(controller.isSelectionMode, isFalse);
+      expect(controller.selectedIds, isEmpty);
+    });
   });
 }
 

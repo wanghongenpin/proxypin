@@ -616,6 +616,105 @@ void main() {
     client.close();
   });
 
+  test('messages view: binary frames opt-in base64 with byte budget', () {
+    WebSocketFrame textFrame(String s) => WebSocketFrame(
+        fin: true,
+        opcode: 0x01,
+        mask: false,
+        maskingKey: 0,
+        payloadLength: s.length,
+        payloadData: Uint8List.fromList(utf8.encode(s)));
+
+    WebSocketFrame binaryFrame(List<int> bytes) => WebSocketFrame(
+        fin: true,
+        opcode: 0x02,
+        mask: false,
+        maskingKey: 0,
+        payloadLength: bytes.length,
+        payloadData: Uint8List.fromList(bytes));
+
+    var frames = [
+      textFrame('hello'),
+      binaryFrame([0x00, 0x01, 0x02, 0xff]),
+      binaryFrame(List.generate(10, (i) => i)),
+    ];
+
+    // 默认：二进制只给占位，无 data/encoding 字段
+    var plain = FlowView.messages(frames);
+    var plainItems = (plain['frames'] as List).cast<Map>();
+    check(plainItems[0]['text'] == 'hello', 'text frame payload returned');
+    check(plainItems[1]['binary'] == true, 'binary flagged');
+    check(plainItems[1]['text'] == '<binary frame 4 bytes>', 'binary placeholder by default');
+    check(!plainItems[1].containsKey('data'), 'no base64 data by default');
+    check(plainItems[1]['truncated'] == false, 'placeholder not marked truncated');
+
+    // 显式 opt-in：base64 原文 + 元数据，文本帧不受影响
+    var withBin = FlowView.messages(frames, includeBinary: true);
+    var items = (withBin['frames'] as List).cast<Map>();
+    check(items[0]['text'] == 'hello', 'text frame unchanged with includeBinary');
+    check(!items[0].containsKey('data'), 'text frame has no data field');
+    check(items[1]['binary'] == true, 'binary flagged');
+    check(items[1]['encoding'] == 'base64', 'base64 encoding declared');
+    check(items[1]['data'] == base64Encode([0x00, 0x01, 0x02, 0xff]), 'binary payload round-trips');
+    check(items[1]['returnedBytes'] == 4, 'returnedBytes equals full size');
+    check(items[1]['truncated'] == false, 'small frame not truncated');
+
+    // 预算耗尽：最新帧优先，旧帧降级为占位并标记 truncated，帧不丢失
+    var huge = binaryFrame(List.generate(FlowView.maxWsBinaryBytes + 100, (i) => i % 256));
+    var budgetView = FlowView.messages([binaryFrame([0xab]), huge], includeBinary: true);
+    var budgetItems = (budgetView['frames'] as List).cast<Map>();
+    check(budgetItems.length == 2, 'no frame dropped when binary budget exhausted');
+    check(budgetItems[1]['truncated'] == true, 'oversized newest frame truncated');
+    check(budgetItems[1]['returnedBytes'] == FlowView.maxWsBinaryBytes, 'capped at binary budget');
+    check(budgetItems[0]['truncated'] == true, 'older frame omitted after budget spent');
+    check(!budgetItems[0].containsKey('data'), 'older frame falls back to placeholder');
+    check(budgetItems[0]['text'] == '<binary frame 1 bytes>', 'placeholder kept after budget');
+  });
+
+  test('get_flow_messages include_binary round-trips through MCP', () async {
+    var request = HttpRequest(HttpMethod.get, 'https://ws.example.com/chat');
+    var store = FlowStore();
+    store.backfill([request]);
+    var mcp = McpServer(store: store, redactEnabled: () => true);
+
+    var server = await ServerSocket.bind('127.0.0.1', 0);
+    var client = await Socket.connect('127.0.0.1', server.port);
+    var channel = Channel(client);
+    store.onMessage(
+        channel,
+        request,
+        WebSocketFrame(
+            fin: true,
+            opcode: 0x02,
+            mask: false,
+            maskingKey: 0,
+            payloadLength: 3,
+            payloadData: Uint8List.fromList([0xde, 0xad, 0xbe])));
+
+    Future<Map> callTool(Map args) async {
+      var res = await mcp.handle({
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'tools/call',
+        'params': {'name': 'get_flow_messages', 'arguments': args}
+      });
+      return jsonDecode(res!['result']['content'][0]['text'] as String) as Map;
+    }
+
+    var defaultRes = await callTool({'id': request.requestId});
+    var defaultFrame = ((defaultRes['frames'] as List).first as Map);
+    check(!defaultFrame.containsKey('data'), 'tool defaults to no binary data');
+
+    var binRes = await callTool({'id': request.requestId, 'include_binary': true});
+    var frame = ((binRes['frames'] as List).first as Map);
+    check(frame['encoding'] == 'base64', 'tool returns base64 encoding');
+    check(base64Decode(frame['data'] as String).toString() == ([0xde, 0xad, 0xbe]).toString(),
+        'tool binary payload round-trips');
+
+    server.close();
+    client.close();
+  });
+
   test('mcp history sessions: read + write tools via history_id', () async {
     var histFlow = buildFlow(responseSize: 100);
     histFlow.uri = 'https://hist.example.com/v1/data';

@@ -20,8 +20,10 @@ import 'dart:math';
 import 'package:date_format/date_format.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
+import 'package:get/get.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -29,6 +31,8 @@ import 'package:proxypin/network/http/http_client.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/storage/histories.dart';
 import 'package:proxypin/ui/component/history_cache_time.dart';
+import 'package:proxypin/ui/component/multi_select_controller.dart';
+import 'package:proxypin/ui/component/selection_action_bar.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/har.dart';
@@ -123,6 +127,10 @@ class _HistoryListState extends State<_HistoryListWidget> {
   late ListenableList<HttpRequest> container;
   late ProxyServer proxyServer;
 
+  final MultiSelectController selectionController = MultiSelectController();
+  late final OnchangeListEvent<HistoryItem> _historyListener;
+  late final MultiSelectListener<String> _selectionListener;
+
   AppLocalizations get localizations => AppLocalizations.of(context)!;
 
   @override
@@ -132,28 +140,78 @@ class _HistoryListState extends State<_HistoryListWidget> {
     container = widget.container;
     proxyServer = widget.proxyServer;
 
+    _historyListener = OnchangeListEvent<HistoryItem>(() {
+      if (!mounted) {
+        return;
+      }
+      //存储变动（定时清理、远程导入、删除）后剔除已不存在的选择
+      selectionController.prune(storage.histories.map((item) => item.stableId.toString()));
+      setState(() {});
+    });
+    _selectionListener = MultiSelectListener<String>((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+    selectionController.selectedIds.addListener(_selectionListener);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      storage.addListener(OnchangeListEvent(() {
-        if (mounted) setState(() {});
-      }));
+      storage.addListener(_historyListener);
     });
   }
 
   @override
+  void dispose() {
+    storage.removeListener(_historyListener);
+    selectionController.selectedIds.removeListener(_selectionListener);
+    selectionController.clear();
+    super.dispose();
+  }
+
+  bool _isTextInputFocused() {
+    return FocusManager.instance.primaryFocus?.context?.widget is EditableText;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final selectionMode = selectionController.isSelectionMode;
+    var histories = storage.histories;
+    //当前可见 id（最新在前），全选/Shift 范围选择均以此为准，不包含未保存会话 banner
+    final visibleIds = [
+      for (int i = histories.length - 1; i >= 0; i--) histories.elementAt(i).stableId.toString()
+    ];
+
     List<Widget> children = [];
-    if (!_sessionSaved && proxyServer.configuration.historyCacheTime == 0 && widget.historyTask.history == null) {
+    if (!selectionMode &&
+        !_sessionSaved &&
+        proxyServer.configuration.historyCacheTime == 0 &&
+        widget.historyTask.history == null) {
       //当前会话未保存，是否保存当前会话
       children.add(buildSaveSession());
     }
 
-    var histories = storage.histories;
     for (int i = histories.length - 1; i >= 0; i--) {
       var entry = histories.elementAt(i);
-      children.add(buildItem(context, i, entry));
+      children.add(buildItem(context, i, entry, visibleIds));
     }
 
-    return Scaffold(
+    return FocusableActionDetector(
+        autofocus: true,
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.escape): ClearSelectionIntent(),
+        },
+        actions: {
+          ClearSelectionIntent: CallbackAction<ClearSelectionIntent>(onInvoke: (intent) {
+            if (_isTextInputFocused()) {
+              return null;
+            }
+            if (selectionMode) {
+              selectionController.clear();
+            }
+            return null;
+          }),
+        },
+        child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: PreferredSize(
             preferredSize: const Size.fromHeight(36),
@@ -186,11 +244,21 @@ class _HistoryListState extends State<_HistoryListWidget> {
                 const SizedBox(width: 5)
               ],
             )),
-        body: ListView.separated(
-          itemCount: children.length,
-          itemBuilder: (_, index) => children[index],
-          separatorBuilder: (_, index) => const Divider(thickness: 0.3, height: 0),
-        ));
+        body: Column(children: [
+          Obx(() => selectionController.selectionMode.value
+              ? SelectionActionBar(
+                  selectionController: selectionController,
+                  onDelete: deleteSelectedHistories,
+                  onSelectAll: () => selectionController.toggleSelectAll(visibleIds),
+                  visibleCount: () => visibleIds.length)
+              : const SizedBox(height: 0)),
+          Expanded(
+              child: ListView.separated(
+            itemCount: children.length,
+            itemBuilder: (_, index) => children[index],
+            separatorBuilder: (_, index) => const Divider(thickness: 0.3, height: 0),
+          ))
+        ])));
   }
 
   //导入har
@@ -238,13 +306,50 @@ class _HistoryListState extends State<_HistoryListWidget> {
   }
 
   //构建历史记录
-  Widget buildItem(BuildContext rootContext, int index, HistoryItem item) {
+  Widget buildItem(BuildContext rootContext, int index, HistoryItem item, List<String> visibleIds) {
+    final id = item.stableId.toString();
+    final selectionMode = selectionController.isSelectionMode;
+
     return GestureDetector(
+        onLongPress: () {
+          if (!selectionMode) {
+            selectionController.selectOnly(id);
+          }
+        },
         onSecondaryTapDown: (details) {
           setState(() {
             selectIndex = index;
           });
+          if (selectionMode) {
+            //右键未选中的条目时先只选它，批量操作始终作用于当前选择
+            if (!selectionController.contains(id)) {
+              selectionController.selectOnly(id);
+            }
+            showContextMenu(rootContext, details.globalPosition, items: [
+              CustomPopupMenuItem(
+                  height: 35,
+                  onTap: deleteSelectedHistories,
+                  child: Text('${localizations.delete} (${selectionController.selectedCount})',
+                      style: const TextStyle(fontSize: 13))),
+              const PopupMenuDivider(height: 3),
+              CustomPopupMenuItem(
+                  height: 35,
+                  child: Text(localizations.cancel, style: const TextStyle(fontSize: 13)),
+                  onTap: () => selectionController.clear()),
+            ]).whenComplete(() => setState(() => selectIndex = -1));
+            return;
+          }
+
           showContextMenu(rootContext, details.globalPosition, items: [
+            CustomPopupMenuItem(
+                height: 35,
+                child: Text(localizations.select, style: const TextStyle(fontSize: 13)),
+                onTap: () => selectionController.selectOnly(id)),
+            CustomPopupMenuItem(
+                height: 35,
+                child: Text(localizations.selectAll, style: const TextStyle(fontSize: 13)),
+                onTap: () => selectionController.selectAll(visibleIds)),
+            const PopupMenuDivider(height: 3),
             CustomPopupMenuItem(
                 height: 35,
                 child: Text(localizations.rename, style: const TextStyle(fontSize: 13)),
@@ -278,9 +383,54 @@ class _HistoryListState extends State<_HistoryListWidget> {
         child: ListTile(
             selected: selectIndex == index,
             dense: true,
+            leading: selectionMode
+                ? Icon(
+                    selectionController.contains(id)
+                        ? Icons.check_box_outlined
+                        : Icons.check_box_outline_blank_outlined,
+                    size: 20,
+                    color: selectionController.contains(id) ? Theme.of(context).colorScheme.primary : null)
+                : null,
             title: Text(item.name),
             subtitle: Text(localizations.historySubtitle(item.requestLength, item.size)),
-            onTap: () => toRequestsView(item)));
+            onTap: () => onItemTap(id, visibleIds, item)));
+  }
+
+  //点击：Shift 范围选择、Ctrl/Cmd 或选择态下切换勾选，否则打开历史会话
+  void onItemTap(String id, List<String> visibleIds, HistoryItem item) {
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isShiftPressed) {
+      selectionController.selectRange(visibleIds, id);
+      return;
+    }
+    if (selectionController.isSelectionMode || keyboard.isMetaPressed || keyboard.isControlPressed) {
+      selectionController.toggle(id);
+      return;
+    }
+    toRequestsView(item);
+  }
+
+  //批量删除选中的历史记录
+  void deleteSelectedHistories() {
+    final selectedIds = selectionController.selectedIds.map(int.parse).toSet();
+    if (selectedIds.isEmpty) {
+      return;
+    }
+
+    showConfirmDialog(context,
+        content: localizations.historyDeleteConfirm,
+        onConfirm: () async {
+          //正在录制的会话被删时先停掉写入任务
+          if (widget.historyTask.history != null &&
+              selectedIds.contains(widget.historyTask.history!.stableId)) {
+            widget.historyTask.cancelTask();
+          }
+          await storage.removeHistories(selectedIds);
+          selectionController.clear();
+          if (mounted) {
+            FlutterToastr.show(localizations.deleteSuccess, context);
+          }
+        });
   }
 
   void toRequestsView(HistoryItem item) {
