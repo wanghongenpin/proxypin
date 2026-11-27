@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/component/theme_palette_setting.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
@@ -57,9 +59,7 @@ class _PreferenceState extends State<Preference> {
     Widget section(List<Widget> tiles) => Card(
           color: Colors.transparent,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-              side: BorderSide(color: borderColor),
-              borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(side: BorderSide(color: borderColor), borderRadius: BorderRadius.circular(10)),
           child: Column(children: tiles),
         );
 
@@ -77,10 +77,11 @@ class _PreferenceState extends State<Preference> {
               Divider(height: 0, thickness: 0.3, color: dividerColor),
               MobileThemeSetting(appConfiguration: appConfiguration),
               Divider(height: 0, thickness: 0.3, color: dividerColor),
-              ListTile(title: Text(localizations.themeColor)),
               Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                  child: themeColor(context)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16), child: ThemePaletteSetting(appConfiguration)),
+              if (appConfiguration.themePreset == ThemePreset.custom) ListTile(title: Text(localizations.themeColor)),
+              if (appConfiguration.themePreset == ThemePreset.custom)
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8), child: themeColor(context)),
             ]),
             const SizedBox(height: 12),
             section([

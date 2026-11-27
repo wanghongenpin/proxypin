@@ -49,6 +49,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   // 缓存机制，避免重复计算
   HighlightTextDocument? _cachedDocument;
   String? _cachedText;
+  ThemeData? _cachedTheme;
   SearchSettings? _cachedSearchSettings;
   int? _cachedEffectiveChunkLines;
   late final Map<int, List<InlineSpan>> _chunkSpanCache;
@@ -86,11 +87,14 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           currentMatchIndex: 0, // 忽略currentMatchIndex用于比较
         );
 
-        final shouldRebuildDocument = _cachedText != widget.text || _cachedSearchSettings != newSearchSettings;
+        final theme = Theme.of(context);
         // 搜索激活时切换为逐行虚拟化，保证自动滚动能精确定位到匹配行。
         final effectiveChunkLines = widget.searchController.shouldSearch() ? 1 : widget.chunkLines;
+        final searchLayoutChanged = _cachedText != widget.text ||
+            _cachedSearchSettings != newSearchSettings ||
+            _cachedEffectiveChunkLines != effectiveChunkLines;
 
-        if (shouldRebuildDocument || _cachedEffectiveChunkLines != effectiveChunkLines) {
+        if (searchLayoutChanged || _cachedTheme != theme) {
           _cachedDocument = HighlightTextDocument.create(
             context,
             text: widget.text,
@@ -99,6 +103,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
             searchController: widget.searchController,
           );
           _cachedText = widget.text;
+          _cachedTheme = theme;
           _cachedSearchSettings = newSearchSettings;
           _cachedEffectiveChunkLines = effectiveChunkLines;
           // 清除旧的块缓存
@@ -106,7 +111,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           // 重新分块
           chunks = _buildChunks(_cachedDocument!, effectiveChunkLines);
           // 搜索文档重建后重置滚动状态，确保首次匹配也会触发自动跳转
-          _lastScrolledMatchIndex = -1;
+          if (searchLayoutChanged) _lastScrolledMatchIndex = -1;
           _lastRenderedMatchIndex = -1;
         }
 

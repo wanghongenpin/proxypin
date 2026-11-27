@@ -23,7 +23,7 @@ import 'package:code_forge/code_forge.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:re_highlight/styles/monokai-sublime.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:re_highlight/languages/javascript.dart';
 import 'package:proxypin/network/components/manager/script_manager.dart';
@@ -480,6 +480,8 @@ class _ScriptEditState extends State<ScriptEdit> {
   @override
   Widget build(BuildContext context) {
     GlobalKey formKey = GlobalKey<FormState>();
+    final editorTheme = codeEditorTheme(context);
+    final colors = Theme.of(context).colorScheme;
     bool isCN = Localizations.localeOf(context) == const Locale.fromSubtags(languageCode: 'zh');
 
     return Scaffold(
@@ -748,20 +750,21 @@ class _ScriptEditState extends State<ScriptEdit> {
                             borderRadius: BorderRadius.circular(6),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade900,
-                                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                                color: editorTheme['root']!.backgroundColor,
+                                border: Border.all(color: colors.outlineVariant),
                               ),
                               child: Stack(
                                 children: [
                                   SizedBox(
                                       height: 360,
                                       child: CodeForge(
+                                        key: codeEditorThemeKey(null, editorTheme),
                                         controller: script,
                                         language: langJavascript,
-                                        editorTheme: monokaiSublimeTheme,
+                                        editorTheme: editorTheme,
                                         readOnly: _useRemote,
                                         enableGuideLines: false,
-                                        textStyle: const TextStyle(fontSize: 13, color: Colors.white),
+                                        textStyle: const TextStyle(fontSize: 13),
                                       )),
                                   if (_useRemote && script.text.trim().isEmpty)
                                     Positioned.fill(
@@ -769,12 +772,12 @@ class _ScriptEditState extends State<ScriptEdit> {
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.28),
+                                            color: colors.surfaceContainerHigh,
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                           child: RichText(
                                             text: TextSpan(
-                                              style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                              style: TextStyle(fontSize: 12, color: colors.onSurface),
                                               children: [
                                                 TextSpan(text: '${localizations.click} “'),
                                                 TextSpan(

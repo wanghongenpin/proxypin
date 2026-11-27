@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 
 class ColorTheme {
   static ColorTheme light(ColorScheme colorScheme) => ColorTheme(
@@ -45,7 +46,17 @@ class ColorTheme {
 
   static ColorTheme of(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? ColorTheme.dark(colorScheme) : ColorTheme.light(colorScheme);
+    final syntax = codeEditorTheme(context, followAppPalette: true);
+    final foreground = syntax['root']!.color!;
+    return ColorTheme(
+      background: syntax['root']!.backgroundColor!,
+      propertyKey: syntax['attr']?.color ?? foreground,
+      colon: foreground,
+      string: syntax['string']?.color ?? foreground,
+      number: syntax['number']?.color ?? foreground,
+      keyword: syntax['literal']?.color ?? foreground,
+      searchMatchColor: colorScheme.inversePrimary,
+      searchMatchCurrentColor: colorScheme.primary,
+    );
   }
 }

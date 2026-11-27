@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:proxypin/mcp/mcp_listen_options.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:proxypin/utils/platform.dart';
 
 /// @author wanghongen
@@ -188,6 +189,27 @@ class AppConfiguration {
 
   Color get themeColor => _theme.themeColor;
 
+  ThemePreset _themePreset = ThemePreset.custom;
+  EditorColorScheme _editorColorScheme = EditorColorScheme.followTheme;
+
+  ThemePreset get themePreset => _themePreset;
+
+  set themePreset(ThemePreset preset) {
+    if (_themePreset == preset) return;
+    _themePreset = preset;
+    globalChange.value = !globalChange.value;
+    flushConfig();
+  }
+
+  EditorColorScheme get editorColorScheme => _editorColorScheme;
+
+  set editorColorScheme(EditorColorScheme scheme) {
+    if (_editorColorScheme == scheme) return;
+    _editorColorScheme = scheme;
+    globalChange.value = !globalChange.value;
+    flushConfig();
+  }
+
   set setThemeColor(String colorName) {
     var color = ColorMapping.colors[colorName];
     if (color == null || color == themeColor) return;
@@ -242,6 +264,11 @@ class AppConfiguration {
       _theme =
           ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true, useAmoled: config['useAmoled'] ?? false);
       _theme.color = config['themeColor'] ?? "Blue";
+      _themePreset = ThemePreset.values.firstWhere(
+        (preset) => preset.name == config['themePreset'],
+        orElse: () => ThemePreset.custom,
+      );
+      _editorColorScheme = EditorColorScheme.fromConfig(config['editorColorScheme']);
 
       upgradeNoticeV41 = config['upgradeNoticeV41'] ?? true;
       _language = config['language'] == null
@@ -306,6 +333,8 @@ class AppConfiguration {
     return {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
+      'themePreset': themePreset.name,
+      'editorColorScheme': editorColorScheme.name,
       'useMaterial3': _theme.useMaterial3,
       'useAmoled': _theme.useAmoled,
       'upgradeNoticeV41': upgradeNoticeV41,

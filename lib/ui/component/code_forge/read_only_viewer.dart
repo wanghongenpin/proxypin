@@ -20,8 +20,7 @@ import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:re_highlight/re_highlight.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 
 import '../search/active_viewer_scope.dart';
 import '../search/search_controller.dart';
@@ -406,8 +405,8 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
     if (!_vScrollController.hasClients) return;
     final position = _vScrollController.position;
     final targetY = line * widget.lineHeight;
-    final target = (targetY + widget.lineHeight / 2 - position.viewportDimension / 2)
-        .clamp(0.0, position.maxScrollExtent);
+    final target =
+        (targetY + widget.lineHeight / 2 - position.viewportDimension / 2).clamp(0.0, position.maxScrollExtent);
     position.animateTo(
       target.toDouble(),
       duration: const Duration(milliseconds: 300),
@@ -606,19 +605,6 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
     _onFindChanged();
   }
 
-  Map<String, TextStyle> _resolveEditorTheme(BuildContext context) {
-    final custom = widget.editorTheme;
-    if (custom != null) return custom;
-    final brightness = Theme.of(context).brightness;
-    final base = brightness == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
-    // code_forge 的右键菜单底色直接取 root.backgroundColor；atom-one 的 root 自带背景色，
-    // 换成宿主卡片的 surface 视觉无变化，但菜单随之不透明，与其它视图的选区菜单配色一致。
-    return {
-      ...base,
-      'root': (base['root'] ?? const TextStyle()).copyWith(backgroundColor: Theme.of(context).colorScheme.surface),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
     final viewportHeight = max(widget.minHeight, MediaQuery.sizeOf(context).height - widget.viewportTopOffset);
@@ -649,6 +635,7 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
     final height = max(widget.minHeight, min(viewportHeight, contentHeight));
 
     final theme = Theme.of(context);
+    final editorTheme = widget.editorTheme ?? codeEditorTheme(context);
     return SizedBox(
       width: double.infinity,
       height: height,
@@ -669,7 +656,7 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
                 // 同步路径没有 loading 帧、CodeForge 不会自然卸载，这里用随 _loadId 变化的 key 强制重建，
                 // 让新 State 重新捕获当前的 ScrollController，否则会继续持有已被释放的旧实例。
                 // lineWrap 在渲染对象里是 late final、didUpdateWidget 不响应切换，一并纳入 key 强制重建。
-                key: ValueKey<String>('$_loadId-${widget.lineWrap}'),
+                key: codeEditorThemeKey((_loadId, widget.lineWrap), editorTheme),
                 controller: controller,
                 findController: _findController,
                 focusNode: _editorFocusNode,
@@ -695,7 +682,7 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
                 enableGuideLines: false,
                 enableLocalSuggestions: false,
                 enableKeyboardSuggestions: false,
-                editorTheme: _resolveEditorTheme(context),
+                editorTheme: editorTheme,
                 textStyle: TextStyle(fontFamily: widget.fontFamily, fontSize: widget.fontSize),
                 selectionStyle: CodeSelectionStyle(
                   selectionColor: theme.colorScheme.primary.withValues(alpha: 0.3),

@@ -21,8 +21,7 @@ import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/ui/component/search/finder.dart';
@@ -412,15 +411,7 @@ class _TextDiffPageState extends State<TextDiffPage> {
   }
 
   Widget _editor(CodeForgeController controller, String title, {required bool isLeft}) {
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
-    final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
-    final pageBg = Theme.of(context).colorScheme.surface;
-    final editorTheme = isDark
-        ? {
-            ...baseTheme,
-            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-          }
-        : baseTheme;
+    final editorTheme = codeEditorTheme(context);
 
     // 字符级差异：左边删除（深红底），右边新增（深绿底）。
     // 用接近不透明的 alpha：CodeForge 渲染顺序是 SearchHighlight 在 LineDecoration
@@ -455,7 +446,7 @@ class _TextDiffPageState extends State<TextDiffPage> {
           child: CodeForge(
             // CodeForge 的 lineWrap 是 late final，切换得新 key 重建；
             // controller 在 State 持有，重建不丢文本与撤销栈。
-            key: ValueKey('diff-$title-$_wrap'),
+            key: codeEditorThemeKey((isLeft, _wrap), editorTheme),
             controller: controller,
             lineWrap: _wrap,
             enableGuideLines: false,

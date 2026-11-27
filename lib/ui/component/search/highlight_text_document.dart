@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:highlight/highlight.dart' show Node, highlight;
 
 import 'search_controller.dart';
@@ -38,7 +37,8 @@ class HighlightTextDocument {
     final matches = buildSearchMatches(text, searchController);
     final lines = buildHighlightDocumentLines(segments);
     final groupedMatches = _groupMatchesByLine(lines, matches);
-    final currentMatchIndex = matches.isEmpty ? -1 : searchController.currentMatchIndex.value.clamp(0, matches.length - 1);
+    final currentMatchIndex =
+        matches.isEmpty ? -1 : searchController.currentMatchIndex.value.clamp(0, matches.length - 1);
     final matchLineIndexes = _buildMatchLineIndexes(groupedMatches, matches.length);
 
     return HighlightTextDocument._(
@@ -143,7 +143,7 @@ class HighlightTextDocument {
 }
 
 TextStyle highlightRootStyle(BuildContext context, [TextStyle? style]) {
-  final theme = Theme.brightnessOf(context) == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
+  final theme = codeEditorTheme(context, useAppSurface: true);
   return _stripBackground((theme['root'] ?? const TextStyle(fontFamily: 'monospace', fontSize: 14.5)).merge(style)) ??
       const TextStyle(fontFamily: 'monospace', fontSize: 14.5);
 }
@@ -160,7 +160,7 @@ List<HighlightStyledSegment> buildHighlightBaseSegments(
 
   try {
     final parsed = highlight.parse(text, language: language).nodes ?? const <Node>[];
-    final theme = Theme.brightnessOf(context) == Brightness.light ? atomOneLightTheme : atomOneDarkTheme;
+    final theme = codeEditorTheme(context, useAppSurface: true);
 
     List<HighlightStyledSegment> convert(List<Node> nodes, [TextStyle? inheritedStyle]) {
       final spans = <HighlightStyledSegment>[];

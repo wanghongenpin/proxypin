@@ -129,6 +129,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeColor => '主题颜色';
 
   @override
+  String get themePalette => '主题配色';
+
+  @override
+  String get themePaletteDefault => '默认';
+
+  @override
+  String get editorColorScheme => '编辑器配色';
+
+  @override
+  String get editorColorSchemeFollowTheme => '跟随应用主题';
+
+  @override
   String get themeLight => '浅色';
 
   @override
@@ -1603,6 +1615,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get themeColor => '主題顏色';
+
+  @override
+  String get themePalette => '主題配色';
+
+  @override
+  String get themePaletteDefault => '預設';
+
+  @override
+  String get editorColorScheme => '編輯器配色';
+
+  @override
+  String get editorColorSchemeFollowTheme => '跟隨應用程式主題';
 
   @override
   String get themeLight => '淺色';

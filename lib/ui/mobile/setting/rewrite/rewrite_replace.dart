@@ -17,8 +17,7 @@ import 'package:code_forge/code_forge.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/components/manager/rewrite_rule.dart';
 import 'package:proxypin/ui/component/search/finder.dart';
@@ -234,14 +233,15 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
               };
               bodyTextController.addListener(_bodyListener!);
 
+              final editorTheme = codeEditorTheme(context);
               return CodeForge(
+                key: codeEditorThemeKey(null, editorTheme),
                 controller: bodyTextController,
                 findController: findController,
                 lineWrap: true,
                 language: isJsonText() ? langJson : null,
                 enableGuideLines: false,
-                selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                editorTheme: editorTheme,
                 textStyle: const TextStyle(fontSize: 14),
                 finderBuilder: (c, controller) => FindPanelView(controller: controller),
               );

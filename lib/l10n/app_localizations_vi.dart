@@ -129,6 +129,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String get themeColor => 'Màu giao diện';
 
   @override
+  String get themePalette => 'Color palette';
+
+  @override
+  String get themePaletteDefault => 'Default';
+
+  @override
+  String get editorColorScheme => 'Editor colors';
+
+  @override
+  String get editorColorSchemeFollowTheme => 'Follow app theme';
+
+  @override
   String get themeLight => 'Sáng';
 
   @override

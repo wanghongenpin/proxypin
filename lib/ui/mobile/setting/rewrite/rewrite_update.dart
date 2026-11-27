@@ -17,10 +17,8 @@
 import 'package:code_forge/code_forge/code_area.dart';
 import 'package:code_forge/code_forge/controller.dart';
 import 'package:code_forge/code_forge/find_controller.dart';
-import 'package:code_forge/code_forge/styling.dart';
 import 'package:flutter/material.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:get/get.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
@@ -168,6 +166,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
   @override
   Widget build(BuildContext context) {
     bool isDelete = rewriteType == RewriteType.removeQueryParam || rewriteType == RewriteType.removeHeader;
+    final editorTheme = codeEditorTheme(context);
     bool isUpdate =
         [RewriteType.updateBody, RewriteType.updateHeader, RewriteType.updateQueryParam].contains(rewriteType);
 
@@ -288,10 +287,10 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                   height: MediaQuery.of(context).size.height * 0.45,
                   decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
                   child: CodeForge(
+                    key: codeEditorThemeKey(null, editorTheme),
                     controller: _codeDataController,
                     language: isJsonText() ? langJson : null,
-                    selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                    editorTheme: Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                    editorTheme: editorTheme,
                     enableGuideLines: false,
                     textStyle: const TextStyle(fontSize: 14),
                   )),
