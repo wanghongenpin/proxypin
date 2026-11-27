@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:code_forge/code_forge.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:re_highlight/styles/monokai-sublime.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:flutter_js/flutter_js.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/ui/component/search/finder.dart';
@@ -34,7 +34,7 @@ class _JavaScriptState extends State<JavaScript> {
 
   late CodeForgeController code;
 
-  List<Text> outLines = [];
+  final List<({String text, bool error})> outLines = [];
 
   ScrollController outputScrollController = ScrollController();
 
@@ -72,14 +72,16 @@ class _JavaScriptState extends State<JavaScript> {
     String output = args.join(' ');
     if (level == 'info') level = 'warn';
     setState(() {
-      outLines.add(Text(output, style: TextStyle(color: level == 'error' ? Colors.red : Colors.white, fontSize: 13)));
+      outLines.add((text: output, error: level == 'error'));
       print(outLines);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    Color primaryColor = Theme.of(context).colorScheme.primary;
+    final colors = Theme.of(context).colorScheme;
+    final primaryColor = colors.primary;
+    final editorTheme = codeEditorTheme(context);
     return Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(title: const Text("JavaScript", style: TextStyle(fontSize: 16)), centerTitle: true),
@@ -122,8 +124,7 @@ class _JavaScriptState extends State<JavaScript> {
                         }
                         if (jsResult.isError) {
                           setState(() {
-                            outLines.add(
-                                Text(jsResult.toString(), style: const TextStyle(color: Colors.red, fontSize: 13)));
+                            outLines.add((text: jsResult.toString(), error: true));
                           });
                         }
                       },
@@ -136,9 +137,10 @@ class _JavaScriptState extends State<JavaScript> {
               SizedBox(
                   height: MediaQuery.of(context).size.height * 0.43,
                   child: CodeForge(
+                    key: codeEditorThemeKey(null, editorTheme),
                     controller: code,
                     language: langJavascript,
-                    editorTheme: monokaiSublimeTheme,
+                    editorTheme: editorTheme,
                     autoFocus: true,
                     enableGuideLines: false,
                     finderBuilder: (c, controller) => FindPanelView(controller: controller),
@@ -153,7 +155,7 @@ class _JavaScriptState extends State<JavaScript> {
                 IconButton(
                     icon: Icon(Icons.copy, color: primaryColor, size: 18),
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: outLines.join("\n")));
+                      Clipboard.setData(ClipboardData(text: outLines.map((line) => line.text).join("\n")));
                       FlutterToastr.show(localizations.copied, context, duration: 3);
                     }),
               ]),
@@ -161,7 +163,7 @@ class _JavaScriptState extends State<JavaScript> {
                   child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
-                      color: Colors.grey.shade800,
+                      color: colors.surfaceContainer,
                       child: Scrollbar(
                           controller: outputScrollController,
                           thumbVisibility: true,
@@ -169,7 +171,14 @@ class _JavaScriptState extends State<JavaScript> {
                           child: SingleChildScrollView(
                               controller: outputScrollController,
                               child: SelectionArea(
-                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: outLines)))))),
+                                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                for (final line in outLines)
+                                  Text(line.text,
+                                      style: TextStyle(
+                                        color: line.error ? colors.error : colors.onSurface,
+                                        fontSize: 13,
+                                      )),
+                              ])))))),
             ])));
   }
 }

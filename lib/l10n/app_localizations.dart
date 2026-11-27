@@ -346,6 +346,30 @@ abstract class AppLocalizations {
   /// **'Theme Color'**
   String get themeColor;
 
+  /// No description provided for @themePalette.
+  ///
+  /// In en, this message translates to:
+  /// **'Color palette'**
+  String get themePalette;
+
+  /// No description provided for @themePaletteDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get themePaletteDefault;
+
+  /// No description provided for @editorColorScheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Editor colors'**
+  String get editorColorScheme;
+
+  /// No description provided for @editorColorSchemeFollowTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow app theme'**
+  String get editorColorSchemeFollowTheme;
+
   /// No description provided for @themeLight.
   ///
   /// In en, this message translates to:

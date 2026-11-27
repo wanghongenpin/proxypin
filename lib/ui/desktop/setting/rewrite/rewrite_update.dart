@@ -25,8 +25,7 @@ import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/ui/component/widgets.dart';
 import 'package:proxypin/utils/lang.dart';
 import 'package:re_highlight/languages/json.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 
 /// @author wanghongen
 /// 2023/10/8
@@ -163,6 +162,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
   @override
   Widget build(BuildContext context) {
     bool isDelete = rewriteType == RewriteType.removeQueryParam || rewriteType == RewriteType.removeHeader;
+    final editorTheme = codeEditorTheme(context);
     bool isUpdate =
         [RewriteType.updateBody, RewriteType.updateHeader, RewriteType.updateQueryParam].contains(rewriteType);
 
@@ -290,13 +290,12 @@ class _RewriteUpdateAddState extends State<RewriteUpdateAddDialog> {
                   const SizedBox(height: 5),
                   Container(
                       height: 230,
-                      decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
+                      decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor)),
                       child: CodeForge(
+                        key: codeEditorThemeKey(null, editorTheme),
                         controller: _codeDataController,
                         language: isJsonText() ? langJson : null,
-                        selectionStyle: CodeSelectionStyle(cursorColor: Theme.of(context).colorScheme.primary),
-                        editorTheme:
-                            Theme.brightnessOf(context) == Brightness.dark ? atomOneDarkTheme : atomOneLightTheme,
+                        editorTheme: editorTheme,
                         enableGuideLines: false,
                         textStyle: const TextStyle(fontSize: 14),
                       )),

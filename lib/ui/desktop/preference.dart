@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/component/theme_palette_setting.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/bin/configuration.dart';
@@ -124,13 +126,14 @@ class _PreferenceState extends State<Preference> {
                           ))
                     ],
                   )),
-              //主题颜色
-              Row(children: [
-                SizedBox(
-                    width: 120,
-                    child: Text("${localizations.themeColor}: ", style: titleStyle, textAlign: TextAlign.start)),
-              ]),
-              themeColor(context),
+              ThemePaletteSetting(appConfiguration),
+              if (appConfiguration.themePreset == ThemePreset.custom)
+                Row(children: [
+                  SizedBox(
+                      width: 120,
+                      child: Text("${localizations.themeColor}: ", style: titleStyle, textAlign: TextAlign.start)),
+                ]),
+              if (appConfiguration.themePreset == ThemePreset.custom) themeColor(context),
               const Divider(),
               ListTile(
                   contentPadding: EdgeInsets.zero,

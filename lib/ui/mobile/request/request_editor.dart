@@ -19,8 +19,7 @@ import 'dart:convert';
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:re_highlight/styles/atom-one-dark.dart';
-import 'package:re_highlight/styles/atom-one-light.dart';
+import 'package:proxypin/ui/component/theme_presets.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -429,8 +428,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
       case _BodyLanguage.formUrl:
         return FormUrl.buildBytes(formData);
       case _BodyLanguage.formData:
-        headerKey.currentState
-            ?.setParam('Content-Type', 'multipart/form-data; boundary=$_boundary');
+        headerKey.currentState?.setParam('Content-Type', 'multipart/form-data; boundary=$_boundary');
         return Multipart.buildBytes(formData, boundary: _boundary);
       default:
         final text = body?.text ?? '';
@@ -592,7 +590,8 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         _bodyToolbar(),
         const SizedBox(height: 4),
-        Expanded(child: FormBodyEditor(
+        Expanded(
+            child: FormBodyEditor(
           key: formEditorKey,
           form: formData,
           allowFiles: _bodyLanguage == _BodyLanguage.formData,
@@ -604,15 +603,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
     final isNone = _bodyLanguage == _BodyLanguage.none;
     final ct = _bodyLanguageToContentType[_bodyLanguage];
     final language = ct == null ? null : HighlightLanguages.getLanguage(ct);
-    final isDark = Theme.brightnessOf(context) == Brightness.dark;
-    final baseTheme = isDark ? atomOneDarkTheme : atomOneLightTheme;
-    final pageBg = Theme.of(context).colorScheme.surface;
-    final editorTheme = isDark
-        ? {
-            ...baseTheme,
-            'root': const TextStyle(color: Color(0xffabb2bf)).copyWith(backgroundColor: pageBg),
-          }
-        : baseTheme;
+    final editorTheme = codeEditorTheme(context);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _bodyToolbar(),
@@ -631,7 +622,7 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
                   // CodeForge 把 language 当作 late final 在 initState 里固定，
                   // 切换数据类型/换行后必须靠新的 key 重建组件才能生效；
                   // controller 由本 State 持有，重建不会丢文本。
-                  key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
+                  key: codeEditorThemeKey((_bodyLanguage, _bodyWrap), editorTheme),
                   controller: body!,
                   lineWrap: _bodyWrap,
                   language: language,
@@ -684,8 +675,8 @@ class _HttpState extends State<_HttpWidget> with SingleTickerProviderStateMixin,
             const Spacer(),
             // 中文"添加文本"不空格，英文"Add Text"需空格
             () {
-              final addTextLabel = isCN ? '${localizations.add}${localizations.text}'
-                  : '${localizations.add} ${localizations.text}';
+              final addTextLabel =
+                  isCN ? '${localizations.add}${localizations.text}' : '${localizations.add} ${localizations.text}';
               return narrow
                   ? IconButton(
                       onPressed: () => formEditorKey.currentState?.addTextField(),
