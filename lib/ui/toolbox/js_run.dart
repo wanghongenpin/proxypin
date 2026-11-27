@@ -147,6 +147,7 @@ class _JavaScriptState extends State<JavaScript> {
                     data: CodeThemeData(styles: monokaiSublimeTheme),
                     child: CodeField(
                       controller: code,
+                      expands: true,
                       textStyle: const TextStyle(fontSize: 13),
                     ),
                   )),

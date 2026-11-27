@@ -61,6 +61,7 @@ async function onRequest(context, request) {
         data: CodeThemeData(styles: monokaiSublimeTheme),
         child: CodeField(
           controller: script,
+          expands: true,
           textStyle: const TextStyle(fontSize: 13),
         ),
       ),

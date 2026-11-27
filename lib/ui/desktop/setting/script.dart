@@ -681,6 +681,7 @@ class _ScriptEditState extends State<ScriptEdit> {
                                     data: CodeThemeData(styles: monokaiSublimeTheme),
                                     child: CodeField(
                                       controller: script,
+                                      expands: true,
                                       readOnly: _useRemote,
                                       textStyle: const TextStyle(fontSize: 13, color: Colors.white),
                                     ),

@@ -58,6 +58,7 @@ void main(List<String> args) async {
     if (appConfiguration.themeMode != ThemeMode.system) {
       windowManager.setBrightness(appConfiguration.themeMode == ThemeMode.dark ? Brightness.dark : Brightness.light);
     }
+    DesktopMultiWindow.prepareWindow();
     runApp(FluentApp(multiWindow(windowId, argument), appConfiguration));
     return;
   }
@@ -109,13 +110,14 @@ class FluentApp extends StatelessWidget {
   ThemeData theme(Brightness brightness) {
     bool useMaterial3 = appConfiguration.useMaterial3;
     bool isDark = brightness == Brightness.dark;
+    bool useAmoled = isDark && appConfiguration.useAmoled;
 
     final Color themeColor = appConfiguration.themeColor;
-    final Color cardColor = isDark ? DarkPalette.panel : Colors.white;
+    final Color cardColor = isDark ? (useAmoled ? Colors.black : DarkPalette.panel) : Colors.white;
     final Color scaffoldBg = isDark
-        ? DarkPalette.bg
+        ? (useAmoled ? Colors.black : DarkPalette.bg)
         : (Platforms.isMobile() ? Colors.white : const Color(0xFFF5F6F8));
-    final Color surfaceContainer = isDark ? DarkPalette.panel : Colors.white;
+    final Color surfaceContainer = isDark ? (useAmoled ? Colors.black : DarkPalette.panel) : Colors.white;
     final Color dividerColor = isDark ? DarkPalette.border : const Color(0xFFE4E6EB);
 
     Color? secondary = useMaterial3 ? null : themeColor;
@@ -151,7 +153,7 @@ class FluentApp extends StatelessWidget {
       colorScheme = colorScheme.copyWith(
         // 默认蓝（设计稿 #4A6CF7）在深底上偏暗，切换为暗黑设计稿 --primary #5D7CFA；用户自选主题色不干预
         primary: appConfiguration.themeColor == const Color(0xFF4A6CF7) ? DarkPalette.primary : null,
-        surface: DarkPalette.panel,
+        surface: useAmoled ? Colors.black : DarkPalette.panel,
         onSurface: DarkPalette.text1,
         onSurfaceVariant: DarkPalette.text2,
         outlineVariant: DarkPalette.border,

@@ -296,6 +296,7 @@ class _RewriteUpdateAddState extends State<RewriteUpdateEdit> {
                             : atomOneLightTheme),
                     child: CodeField(
                       controller: _codeDataController,
+                      expands: true,
                       cursorColor: Theme.of(context).colorScheme.primary,
                       textStyle: const TextStyle(fontSize: 14),
                     ),

@@ -651,6 +651,7 @@ class _HttpState extends State<_HttpWidget> {
               child: CodeField(
                 key: ValueKey('body-editor-${_bodyLanguage.name}-$_bodyWrap'),
                 controller: body!,
+                expands: true,
                 wrap: _bodyWrap,
                 cursorColor: Theme.of(context).colorScheme.primary,
                 textStyle: const TextStyle(fontSize: 14.2),

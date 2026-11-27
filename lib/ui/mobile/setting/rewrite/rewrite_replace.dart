@@ -244,6 +244,7 @@ class RewriteReplaceState extends State<MobileRewriteReplace> {
                 data: CodeThemeData(styles: editorTheme),
                 child: CodeField(
                   controller: bodyTextController,
+                  expands: true,
                   wrap: true,
                   cursorColor: Theme.of(context).colorScheme.primary,
                   textStyle: const TextStyle(fontSize: 14),
