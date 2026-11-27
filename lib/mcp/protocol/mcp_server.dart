@@ -270,7 +270,7 @@ class McpServer {
         McpTool(
           name: 'get_flow_detail',
           description:
-              'Get full detail of one flow: headers (sensitive values redacted by default), query, and a truncated body preview. Use get_flow_body to page the rest.',
+              'Get full detail of one flow: headers, query, and a truncated body preview. Use get_flow_body to page the rest.',
           inputSchema: {
             'type': 'object',
             'properties': {
@@ -282,7 +282,7 @@ class McpServer {
               'redact': {
                 'type': 'boolean',
                 'description':
-                    'Redact Authorization/Cookie. Forced true unless the user has disabled redaction in app settings.'
+                    'Redact Authorization/Cookie. Defaults to the app setting; pass false to return original values when redaction is disabled.'
               },
               'preview_bytes': {'type': 'integer', 'description': 'Body preview bytes, default 8192'},
             },
@@ -330,7 +330,10 @@ class McpServer {
         ),
         McpTool(
           name: 'get_flow_messages',
-          description: 'Page WebSocket frames of a flow (newest have byte-budget priority). Text frames include payload text.',
+          description:
+              'Page WebSocket frames of a flow (newest have byte-budget priority). Text frames include payload text. '
+              'Binary frames are placeholders by default; pass include_binary=true to get their payload as base64 '
+              '(capped at 64KB of raw bytes per response, newest frames first, truncated frames carry returnedBytes).',
           inputSchema: {
             'type': 'object',
             'properties': {
@@ -341,6 +344,10 @@ class McpServer {
               },
               'offset': {'type': 'integer'},
               'limit': {'type': 'integer', 'description': 'Max frames, default/max 200'},
+              'include_binary': {
+                'type': 'boolean',
+                'description': 'Return binary frame payloads as base64 (data field). Default false: placeholder only.'
+              },
             },
             'required': ['id'],
           },
@@ -355,6 +362,7 @@ class McpServer {
               store.frames(id ?? ''),
               offset: _intArgOr(args['offset'], 0),
               limit: _intArgOr(args['limit'], FlowView.maxWsFrames),
+              includeBinary: args['include_binary'] == true,
             );
           },
         ),
@@ -382,7 +390,7 @@ class McpServer {
         ),
         McpTool(
           name: 'export_flow_curl',
-          description: 'Export a captured request as a runnable cURL command. Sensitive headers are redacted by default.',
+          description: 'Export a captured request as a runnable cURL command.',
           inputSchema: {
             'type': 'object',
             'properties': {
@@ -394,7 +402,7 @@ class McpServer {
               'redact': {
                 'type': 'boolean',
                 'description':
-                    'Forced true unless the user has disabled redaction in app settings.'
+                    'Redact Authorization/Cookie. Defaults to the app setting; pass false to return original values when redaction is disabled.'
               },
             },
             'required': ['id'],
@@ -446,9 +454,7 @@ class McpServer {
     return request;
   }
 
-  /// 生效脱敏状态：用户设置是硬门槛。
-  /// 脱敏开启（默认）时，工具参数无法关闭；用户在设置中主动关闭后，未传参数遵循设置，
-  /// 显式传 redact:true 仍可脱敏。
+  /// 脱敏开启时强制打码；关闭后遵循工具参数，未传参数时返回原文。
   static bool _effectiveRedact(dynamic arg, bool settingEnabled) => settingEnabled || arg == true;
 
   static int? _intArg(dynamic value) {

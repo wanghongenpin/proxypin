@@ -474,6 +474,13 @@
 				en,
 				Base,
 				"zh-Hans",
+				"zh-Hant",
+				id,
+				es,
+				vi,
+				pt,
+				"pt-BR",
+				th,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;

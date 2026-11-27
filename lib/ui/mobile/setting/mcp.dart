@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
-import 'package:proxypin/mcp/mcp_names.dart';
+import 'package:proxypin/mcp/mcp_listen_options.dart';
 import 'package:proxypin/mcp/mcp_service.dart';
 import 'package:proxypin/network/bin/server.dart';
 import 'package:proxypin/ui/configuration.dart';
 import 'package:proxypin/ui/component/mcp_docs.dart';
 import 'package:proxypin/ui/component/port_edit_dialog.dart';
 import 'package:proxypin/ui/mobile/mobile.dart';
+import 'package:proxypin/ui/mobile/setting/mcp_client_config.dart';
 import 'package:proxypin/utils/flutter_compat.dart';
 import 'package:proxypin/utils/ip.dart';
 
-/// 移动端 MCP 设置：在局域网内暴露 MCP HTTP 服务，电脑上的 AI 客户端
-/// （Claude Code / Codex 等）通过 Bearer token 远程连接。
+/// 移动端 MCP 设置：本机或局域网内的 AI 客户端可选择是否通过 Bearer token 连接。
 ///
 /// @author wanghongen
 class MobileMcpSetting extends StatefulWidget {
@@ -56,7 +54,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
   @override
   void initState() {
     super.initState();
-    _refreshIp();
+    if (cfg.mcpBindAddress == McpListenOptions.anyAddress) _refreshIp();
   }
 
   Future<void> _refreshIp() async {
@@ -66,11 +64,46 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
 
   bool get _running => McpService.instance.isRunning;
 
-  String? get _endpoint {
+  bool get _lanMode => _running ? McpService.instance.lanMode : cfg.mcpBindAddress == McpListenOptions.anyAddress;
+
+  String? get _loopbackEndpoint {
+    var port = McpService.instance.port;
+    return port == null ? null : 'http://${McpListenOptions.loopbackAddress}:$port/mcp';
+  }
+
+  String? get _lanEndpoint {
     var ip = _lanIp;
     var port = McpService.instance.port;
     if (ip == null || port == null) return null;
     return 'http://$ip:$port/mcp';
+  }
+
+  String? get _endpoint => _lanMode ? _lanEndpoint : _loopbackEndpoint;
+
+  bool get _authEnabled => McpService.instance.token != null;
+
+  /// 运行中的服务重启后需回填抓包列表，避免配置变更后历史请求对 AI 不可见。
+  Future<void> _restartIfRunning() async {
+    if (!_running) return;
+    await McpService.instance.stop();
+    McpService.instance.attach(widget.proxyServer, existing: MobileApp.container.source);
+    await McpService.instance.start(cfg);
+  }
+
+  Future<void> _changeAuthEnabled(bool enabled) async {
+    if (enabled == cfg.mcpAuthEnabled) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    cfg.mcpAuthEnabled = enabled;
+    cfg.flushConfig();
+    try {
+      await _restartIfRunning();
+    } catch (e) {
+      _error = '${l.mcpStartFailed}: $e';
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
   Future<void> _toggle(bool enabled) async {
@@ -95,8 +128,28 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     cfg.flushConfig();
     if (mounted) {
       setState(() => _busy = false);
-      // 启动后实际端口才可用，刷新一次 IP 展示
-      _refreshIp();
+      // 启动后实际端口才可用，局域网模式下刷新一次 IP 展示
+      if (_lanMode) _refreshIp();
+    }
+  }
+
+  /// 修改监听地址：停止时仅保存，运行中重启服务使新地址生效。
+  Future<void> _changeBindAddress(String address) async {
+    if (address == cfg.mcpBindAddress) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    cfg.mcpBindAddress = address;
+    cfg.flushConfig();
+    try {
+      await _restartIfRunning();
+    } catch (e) {
+      _error = '${l.mcpStartFailed}: $e';
+    }
+    if (mounted) {
+      setState(() => _busy = false);
+      if (_lanMode) _refreshIp();
     }
   }
 
@@ -109,12 +162,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     cfg.mcpToken = McpService.generateToken();
     cfg.flushConfig();
     try {
-      if (_running) {
-        await McpService.instance.stop();
-        // 同 _editPort：stop() 已清空索引，重启前回填，避免重置令牌后历史请求对 AI 不可见
-        McpService.instance.attach(widget.proxyServer, existing: MobileApp.container.source);
-        await McpService.instance.start(cfg);
-      }
+      await _restartIfRunning();
     } catch (e) {
       _error = '${l.mcpStartFailed}: $e';
     }
@@ -137,27 +185,20 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
     cfg.mcpPort = newPort;
     cfg.flushConfig();
     try {
-      if (_running) {
-        await McpService.instance.stop();
-        // stop() 会清空抓包索引，重启前回填当前列表，否则改端口后历史请求对 AI 不可见
-        McpService.instance.attach(widget.proxyServer, existing: MobileApp.container.source);
-        await McpService.instance.start(cfg);
-      }
+      await _restartIfRunning();
     } catch (e) {
       _error = '${l.mcpStartFailed}: $e';
     }
     if (mounted) {
       setState(() => _busy = false);
-      _refreshIp();
+      if (_lanMode) _refreshIp();
     }
   }
 
   void _copy(String text) {
     Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l.mcpCopied), duration: const Duration(seconds: 2)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.copied), duration: const Duration(seconds: 2)));
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -179,8 +220,8 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
             onChanged: _busy ? null : _toggle,
             activeColor: cs.primary,
             title: Text(l.mcpEnable),
-            subtitle: Text(l.mcpServiceDescribe,
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
+            subtitle:
+                Text(l.mcpServiceDescribe, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
           ),
           if (_busy) const LinearProgressIndicator(minHeight: 2),
           Padding(
@@ -189,11 +230,55 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           ),
         ]),
         const SizedBox(height: 12),
+        _card([
+          ListTile(
+            dense: true,
+            leading: Icon(Icons.settings_ethernet_rounded, color: cs.primary),
+            title: Text(l.mcpListenAddress, style: const TextStyle(fontSize: 14)),
+            subtitle: Text(
+              l.mcpListenAddressDescribe,
+              style: TextStyle(fontSize: 11.5, color: cs.onSurfaceVariant, height: 1.4),
+            ),
+            trailing: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: cfg.mcpBindAddress,
+                isDense: true,
+                items: const [
+                  DropdownMenuItem(
+                    value: McpListenOptions.loopbackAddress,
+                    child: Text(McpListenOptions.loopbackAddress),
+                  ),
+                  DropdownMenuItem(
+                    value: McpListenOptions.anyAddress,
+                    child: Text(McpListenOptions.anyAddress),
+                  ),
+                ],
+                onChanged: _busy
+                    ? null
+                    : (address) {
+                        if (address != null) _changeBindAddress(address);
+                      },
+              ),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        _card([
+          SwitchListTile(
+            value: cfg.mcpAuthEnabled,
+            onChanged: _busy ? null : _changeAuthEnabled,
+            activeColor: cs.primary,
+            title: Text(l.mcpAuthEnabled, style: const TextStyle(fontSize: 14)),
+            subtitle:
+                Text(l.mcpAuthEnabledDescribe, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
+          ),
+        ]),
+        const SizedBox(height: 12),
         if (_running) ...[
           _card([
             ListTile(
               dense: true,
-              leading: Icon(Icons.lan_outlined, color: cs.primary),
+              leading: Icon(_lanMode ? Icons.lan_outlined : Icons.smartphone_rounded, color: cs.primary),
               title: Text(l.mcpEndpoint, style: const TextStyle(fontSize: 14)),
               subtitle: SelectableText(
                 _endpoint ?? '…',
@@ -211,58 +296,61 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
                 ),
               ]),
             ),
-            Divider(height: 0, thickness: 0.3, color: theme.dividerColor.withValues(alpha: 0.22)),
-            ListTile(
-              dense: true,
-              leading: Icon(Icons.key_rounded, color: cs.primary),
-              title: Text(l.mcpAccessToken, style: const TextStyle(fontSize: 14)),
-              subtitle: SelectableText(
-                McpService.instance.token ?? '',
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+            if (_authEnabled) ...[
+              Divider(height: 0, thickness: 0.3, color: theme.dividerColor.withValues(alpha: 0.22)),
+              ListTile(
+                dense: true,
+                leading: Icon(Icons.key_rounded, color: cs.primary),
+                title: Text(l.mcpAccessToken, style: const TextStyle(fontSize: 14)),
+                subtitle: SelectableText(
+                  McpService.instance.token ?? '',
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+                ),
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(
+                    tooltip: l.mcpRegenerateToken,
+                    icon: const Icon(Icons.refresh_rounded, size: 19),
+                    onPressed: _busy ? null : _regenerateToken,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_all_rounded, size: 19),
+                    onPressed: () {
+                      var t = McpService.instance.token;
+                      if (t != null) _copy(t);
+                    },
+                  ),
+                ]),
               ),
-              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                IconButton(
-                  tooltip: l.mcpRegenerateToken,
-                  icon: const Icon(Icons.refresh_rounded, size: 19),
-                  onPressed: _busy ? null : _regenerateToken,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy_all_rounded, size: 19),
-                  onPressed: () {
-                    var t = McpService.instance.token;
-                    if (t != null) _copy(t);
-                  },
-                ),
-              ]),
-            ),
+            ],
           ]),
           const SizedBox(height: 12),
           _card([
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Text(l.mcpLanGuide,
-                  style: TextStyle(fontSize: 12.5, height: 1.5, color: cs.onSurfaceVariant)),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
-              child: Text(l.mcpOneClick,
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: cs.primary)),
-            ),
-            _commandBlock(cs, 'macOS / Linux', _oneClickSh()),
-            _commandBlock(cs, 'Windows (PowerShell)', _oneClickPs1()),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Text(l.mcpOneClickHint,
-                  style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
-            ),
+            if (_lanMode) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Text(l.mcpLanGuide, style: TextStyle(fontSize: 12.5, height: 1.5, color: cs.onSurfaceVariant)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+                child: Text(l.mcpOneClick,
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: cs.primary)),
+              ),
+              _commandBlock(cs, 'macOS / Linux', _oneClickSh()),
+              _commandBlock(cs, 'Windows (PowerShell)', _oneClickPs1()),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(l.mcpOneClickHint, style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
+              ),
+            ],
             _commandBlock(cs, 'Claude Code', _claudeCommand()),
             _commandBlock(cs, 'Codex', _codexCommand()),
             _otherClientsBlock(cs),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-              child: Text(l.mcpLanTokenNote,
-                  style: TextStyle(fontSize: 11.5, height: 1.5, color: cs.onSurfaceVariant)),
-            ),
+            if (_authEnabled)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                child:
+                    Text(l.mcpLanTokenNote, style: TextStyle(fontSize: 11.5, height: 1.5, color: cs.onSurfaceVariant)),
+              ),
           ]),
           const SizedBox(height: 12),
         ],
@@ -275,21 +363,20 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
               cfg.flushConfig();
             },
             title: Text(l.mcpRedact, style: const TextStyle(fontSize: 14)),
-            subtitle: Text(l.mcpRedactDescribe,
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
+            subtitle:
+                Text(l.mcpRedactDescribe, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant, height: 1.4)),
           ),
         ]),
         const SizedBox(height: 12),
         _card([
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-            child: Text(l.mcpAboutTitle,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface)),
+            child:
+                Text(l.mcpAboutTitle, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface)),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
-            child: Text(l.mcpAboutText,
-                style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
+            child: Text(l.mcpAboutText, style: TextStyle(fontSize: 12, height: 1.5, color: cs.onSurfaceVariant)),
           ),
         ]),
         const SizedBox(height: 12),
@@ -321,9 +408,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Icon(Icons.error_outline_rounded, size: 17, color: cs.error),
               const SizedBox(width: 8),
-              Expanded(
-                  child: Text(_error!,
-                      style: TextStyle(fontSize: 12, color: cs.onErrorContainer, height: 1.4))),
+              Expanded(child: Text(_error!, style: TextStyle(fontSize: 12, color: cs.onErrorContainer, height: 1.4))),
             ]),
           ),
         ],
@@ -348,60 +433,41 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
       color: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(
-          side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.13)),
-          borderRadius: BorderRadius.circular(10)),
+          side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.13)), borderRadius: BorderRadius.circular(10)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
 
-  String _claudeCommand() {
-    var token = McpService.instance.token ?? '';
-    return 'claude mcp add ${McpClientNames.mobile} -s user --transport http ${_endpoint ?? ''} '
-        '--header "Authorization: Bearer $token"';
-  }
+  String _claudeCommand() => McpMobileClientConfig.claudeCommand(
+        endpoint: _endpoint ?? '',
+        token: McpService.instance.token,
+      );
 
   /// Codex 远程 MCP 的 token 必须通过环境变量传入（CLI 不支持 --header）
-  String _codexCommand() {
-    var token = McpService.instance.token ?? '';
-    return 'export PROXYPIN_MOBILE_TOKEN="$token"\n'
-        'codex mcp remove ${McpClientNames.mobile} 2>/dev/null || true\n'
-        'codex mcp add ${McpClientNames.mobile} --url ${_endpoint ?? ''} '
-        '--bearer-token-env-var PROXYPIN_MOBILE_TOKEN';
-  }
+  String _codexCommand() => McpMobileClientConfig.codexCommand(
+        endpoint: _endpoint ?? '',
+        token: McpService.instance.token,
+      );
 
   /// 电脑端一键配置（macOS/Linux）：拉取手机下发的 shell 脚本并执行，
   /// 自动探测并配置已安装的 Claude Code / Codex / Cursor / Gemini CLI。
-  String _oneClickSh() {
-    var token = McpService.instance.token ?? '';
-    var ip = _lanIp ?? '';
-    var port = McpService.instance.port;
-    return 'curl -s -H "Authorization: Bearer $token" '
-        'http://$ip:$port/mcp/setup.sh | sh';
-  }
+  String _oneClickSh() => McpMobileClientConfig.oneClickShell(
+        endpoint: _lanEndpoint ?? '',
+        token: McpService.instance.token,
+      );
 
   /// 电脑端一键配置（Windows PowerShell）
-  String _oneClickPs1() {
-    var token = McpService.instance.token ?? '';
-    var ip = _lanIp ?? '';
-    var port = McpService.instance.port;
-    return 'irm -Headers @{ Authorization = "Bearer $token" } '
-        'http://$ip:$port/mcp/setup.ps1 | iex';
-  }
+  String _oneClickPs1() => McpMobileClientConfig.oneClickPowershell(
+        endpoint: _lanEndpoint ?? '',
+        token: McpService.instance.token,
+      );
 
   /// 通用 Streamable HTTP 配置（mcpServers JSON），覆盖 Cursor / Cline / Gemini CLI /
   /// Cherry Studio / VS Code Copilot 等所有支持 HTTP 传输的 MCP 客户端。
-  String _genericHttpConfig() {
-    var entry = {
-      'type': 'http',
-      'url': _endpoint ?? '',
-      'headers': {
-        'Authorization': 'Bearer ${McpService.instance.token ?? ''}',
-      },
-    };
-    return const JsonEncoder.withIndent('  ').convert({
-      'mcpServers': {McpClientNames.mobile: entry}
-    });
-  }
+  String _genericHttpConfig() => McpMobileClientConfig.genericHttpConfig(
+        endpoint: _endpoint ?? '',
+        token: McpService.instance.token,
+      );
 
   Widget _commandBlock(ColorScheme cs, String name, String command) {
     return Padding(
@@ -413,7 +479,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           TextButton.icon(
             onPressed: () => _copy(command),
             icon: const Icon(Icons.copy_all_rounded, size: 15),
-            label: Text(l.mcpCopy, style: const TextStyle(fontSize: 12.5)),
+            label: Text(l.copy, style: const TextStyle(fontSize: 12.5)),
           ),
         ]),
         Container(
@@ -423,8 +489,7 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
             color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: SelectableText(command,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.4)),
+          child: SelectableText(command, style: const TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.4)),
         ),
       ]),
     );
@@ -436,13 +501,12 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
       padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text(l.mcpOtherClients,
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: cs.primary)),
+          Text(l.mcpOtherClients, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: cs.primary)),
           const Spacer(),
           TextButton.icon(
             onPressed: () => _copy(_genericHttpConfig()),
             icon: const Icon(Icons.copy_all_rounded, size: 15),
-            label: Text(l.mcpCopy, style: const TextStyle(fontSize: 12.5)),
+            label: Text(l.copy, style: const TextStyle(fontSize: 12.5)),
           ),
         ]),
         Container(
@@ -455,11 +519,11 @@ class _MobileMcpSettingState extends State<MobileMcpSetting> {
           child: SelectableText(_genericHttpConfig(),
               style: const TextStyle(fontFamily: 'monospace', fontSize: 11.5, height: 1.4)),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6, right: 8),
-          child: Text(l.mcpOtherClientsHint,
-              style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
-        ),
+        if (_authEnabled)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, right: 8),
+            child: Text(l.mcpOtherClientsHint, style: TextStyle(fontSize: 11, height: 1.5, color: cs.onSurfaceVariant)),
+          ),
       ]),
     );
   }

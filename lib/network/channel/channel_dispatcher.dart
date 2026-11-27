@@ -415,8 +415,17 @@ class ChannelDispatcher extends ChannelHandler<Uint8List> {
       }
     }
 
-    channel.isOpen = false;
+    // 注意：此处不要预先把 channel.isOpen 置为 false。
+    // Dart 的 socket.onDone 只是「对端 FIN 已收到，不会再有数据」的通知，本端 fd 仍处于 CLOSE_WAIT。
+    // 真正释放 fd 需要调用 Socket.close()，而 Channel.close() 在 isClosed（即 !isOpen）时会提前 return。
+    // 若预标记 isOpen=false，handler 里 close 对端的调用会被短路，两端 socket 都永远 CLOSE_WAIT（issue #1014 / #674）。
+    // isOpen 由 Channel.close() 内部、socket.done 完成回调或异常路径负责置位。
     handler.channelInactive(channelContext, channel);
+
+    // 兜底：上层 handler 通常只关闭对端（如 HttpProxyChannelHandler 关 server、
+    // RelayHttpProxyChannelHandler 关 client），本端 socket 自身没人 close，会一直挂在 CLOSE_WAIT。
+    // close() 内部等 isWriting 清空再 _socket.close()；若 handler 已关过本端则提前 return，幂等。
+    channel.close();
   }
 }
 

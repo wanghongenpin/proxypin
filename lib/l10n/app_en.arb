@@ -41,6 +41,7 @@
   "themeColor": "Theme Color",
   "themeLight": "Light",
   "themeDark": "Dark",
+  "amoledBlack": "AMOLED Black",
   "language": "Language",
   "autoStartup": "Auto Start Recording Traffic",
   "autoStartupDescribe": "Automatically start recording traffic when the program starts",
@@ -155,6 +156,15 @@
   "domainListSubtitle": "Last Request Time: {time},  Count: {count}",
   "selectAction": "Select action",
   "select": "Select",
+  "selectAll": "Select All",
+  "selectedItems": "{count} selected",
+  "@selectedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "copy": "Copy",
   "copyHost": "Copy Host",
   "copyUrl": "Copy URL",
@@ -383,6 +393,7 @@
   "sponsorSupport": "Support ongoing development",
   "sponsorThanks": "Thank you for supporting this open-source project by choosing any of the following methods to help its long-term development.",
   "sponsorAfdian": "AFDIAN",
+  "privacy": "Privacy",
   "privacyPolicy": "Privacy Policy",
   "privacyContent": "This open-source packet capture tool runs entirely on your device. It has no backend server and does not collect, store, or upload any personal data. All captured traffic is processed locally and is only forwarded when you explicitly use remote forwarding. Permissions (e.g., network, storage, and camera for QR codes) are used solely to provide features. You can audit the behavior in the public source code.",
   "requestCrypto": "Request Crypto",
@@ -434,8 +445,12 @@
   "mcpAboutText": "MCP (Model Context Protocol) lets AI assistants like Claude interact with ProxyPin. AI can read captured HTTP traffic, create debugging rules (Map Local, Map Remote, Breakpoints), and help analyze network issues.",
   "mcpLearnMore": "Learn more about MCP",
   "mcpEndpoint": "MCP Endpoint",
+  "mcpListenAddress": "Listen address",
+  "mcpListenAddressDescribe": "127.0.0.1 allows only clients on this device; 0.0.0.0 allows clients on this device and the local network.",
   "mcpPortInvalid": "Please enter a valid port between 1024 and 65535",
   "mcpAccessToken": "Access Token",
+  "mcpAuthEnabled": "Require access token",
+  "mcpAuthEnabledDescribe": "When disabled, clients can connect without credentials. Disable only on a trusted device or network.",
   "mcpLanGuide": "Keep this phone and your computer on the same Wi-Fi, then run one of the commands below in your computer's terminal, or paste the configuration into your AI client's MCP settings.",
   "mcpLanTokenNote": "The token authorizes full access to the MCP tools. Tap the refresh button next to the token to revoke it and issue a new one.",
   "mcpOtherClients": "Other AI clients",
@@ -457,8 +472,6 @@
   "mcpSetupFail": "Setup failed: ",
   "mcpCliMissing": "CLI {cli} not found on PATH. Use \"Run in terminal\" instead.",
   "mcpUnsupported": "This client does not support auto setup, configure it manually.",
-  "mcpCopy": "Copy",
-  "mcpCopied": "Copied",
   "mcpStartFailed": "MCP service failed to start",
   "replayTasks": "Replay Tasks",
   "clearFinished": "Clear finished",

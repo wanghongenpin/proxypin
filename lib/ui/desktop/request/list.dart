@@ -135,7 +135,9 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
                                 selectionController: selectionController,
                                 onRepeat: repeatSelected,
                                 onExport: exportSelected,
-                                onDelete: deleteSelected)
+                                onDelete: deleteSelected,
+                                onSelectAll: toggleSelectAllCurrent,
+                                visibleCount: currentVisibleCount)
                             : SizedBox()),
                         Expanded(
                             child: TabBarView(physics: const NeverScrollableScrollPhysics(), children: [
@@ -339,6 +341,23 @@ class DesktopRequestListState extends State<DesktopRequestListWidget> with Autom
         domainListKey.currentState?.selectRange(request);
         break;
     }
+  }
+
+  ///当前 tab 可见的请求 id（搜索过滤后的视图；域名 tab 仅含展开分组中的请求）
+  List<String> currentVisibleRequestIds() {
+    switch (_tabController?.index) {
+      case 1:
+        return requestSequenceKey.currentState?.view.map((request) => request.requestId).toList() ?? const [];
+      case 0:
+      default:
+        return domainListKey.currentState?.currentView().map((request) => request.requestId).toList() ?? const [];
+    }
+  }
+
+  int currentVisibleCount() => currentVisibleRequestIds().length;
+
+  void toggleSelectAllCurrent() {
+    selectionController.toggleSelectAll(currentVisibleRequestIds());
   }
 
   void repeatSelected() {

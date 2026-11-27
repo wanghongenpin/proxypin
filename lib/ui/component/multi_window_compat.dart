@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:proxypin/network/util/logger.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
 export 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -10,6 +14,9 @@ typedef DesktopMultiWindowMethodHandler = Future<dynamic> Function(MethodCall ca
 
 class DesktopMultiWindow {
   static const String _mainWindowIdKey = '__mainWindowId';
+  static const String _mainWindowScreenKey = '__mainWindowScreen';
+  static const String _windowTitleKey = '__windowTitle';
+  static const String _windowSizeKey = '__windowSize';
   static const String _fromWindowIdKey = '__fromWindowId';
   static const String _argumentsKey = '__arguments';
   static const String _mainWindowChannelName = 'proxypin/main_window';
@@ -21,6 +28,10 @@ class DesktopMultiWindow {
 
   static String? _currentWindowId;
   static String? _mainWindowId;
+  static Rect? _mainWindowScreen;
+  static double? _mainWindowScreenScale;
+  static String? _windowTitle;
+  static Size? _windowSize;
   static DesktopMultiWindowMethodHandler? _handler;
 
   static String? get currentWindowId => _currentWindowId;
@@ -39,11 +50,78 @@ class DesktopMultiWindow {
     if (mainWindowId != null && mainWindowId.isNotEmpty) {
       _mainWindowId = mainWindowId;
     }
+    final screen = arguments.remove(_mainWindowScreenKey);
+    _mainWindowScreen = _rectFromJson(screen);
+    final scale = screen is Map ? screen['scale'] : null;
+    _mainWindowScreenScale = scale is num && _validScale(scale.toDouble()) ? scale.toDouble() : null;
+    _windowTitle = arguments.remove(_windowTitleKey) as String?;
+    _windowSize = _sizeFromJson(arguments.remove(_windowSizeKey));
   }
 
-  static Future<WindowController> createWindow(String arguments) async {
-    final configurationArguments = _withMainWindowId(arguments);
-    return WindowController.create(WindowConfiguration(arguments: configurationArguments));
+  /// [size] 使用 Flutter 逻辑尺寸，由子窗口按目标显示器的 DPI 换算。
+  static Future<WindowController> createWindow(String arguments, {String? title, Size? size}) async {
+    final configurationArguments = await _withWindowContext(arguments, title: title, size: size);
+    return WindowController.create(WindowConfiguration(
+      arguments: configurationArguments,
+      hiddenAtLaunch: true,
+    ));
+  }
+
+  /// 首帧初始化 Flutter surface 后调整隐藏窗口，并等待 resize 后的帧完成再显示。
+  static void prepareWindow() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final title = _windowTitle;
+        if (title != null) {
+          await windowManager.setTitle(title);
+        }
+        final size = _windowSize;
+        final screen = _mainWindowScreen;
+        final screenScale = _mainWindowScreenScale;
+        if (Platform.isWindows && screen != null && screenScale != null) {
+          await _resizeAndCenterOnMainScreen(screen, screenScale, size);
+        } else {
+          if (size != null) {
+            await windowManager.setSize(size);
+          }
+          await windowManager.center();
+        }
+        await WidgetsBinding.instance.endOfFrame;
+      } catch (error, stackTrace) {
+        logger.e('Prepare child window failed, showing fallback window', error: error, stackTrace: stackTrace);
+      } finally {
+        try {
+          await windowManager.show();
+        } catch (error, stackTrace) {
+          logger.e('Show child window failed, closing hidden window', error: error, stackTrace: stackTrace);
+          try {
+            await windowManager.close();
+          } catch (closeError, closeStackTrace) {
+            logger.e('Close hidden child window failed', error: closeError, stackTrace: closeStackTrace);
+          }
+        }
+      }
+    });
+  }
+
+  /// 同 DPI 直接设置最终尺寸；跨 DPI 先移动隐藏窗口，避免 WM_DPICHANGED 二次缩放目标尺寸。
+  static Future<void> _resizeAndCenterOnMainScreen(Rect screen, double screenScale, Size? size) async {
+    var scale = _windowPixelRatio();
+    if (scale != screenScale) {
+      final initialSize = await windowManager.getSize();
+      final initialPosition = centeredWindowPosition(screen, initialSize * scale);
+      await windowManager.setPosition(initialPosition / scale);
+      await WidgetsBinding.instance.endOfFrame;
+      scale = _windowPixelRatio();
+    }
+
+    if (size != null) {
+      // setSize 内部会乘以当前窗口 DPI；跨 DPI 时换算成目标屏幕的物理尺寸。
+      await windowManager.setSize(scale == screenScale ? size : size * screenScale / scale);
+    }
+    final windowSize = await windowManager.getSize();
+    final position = centeredWindowPosition(screen, windowSize * scale);
+    await windowManager.setPosition(position / scale);
   }
 
   static Future<T?> invokeMainWindowMethod<T>(String method, [dynamic arguments]) async {
@@ -91,16 +169,31 @@ class DesktopMultiWindow {
     return _handler?.call(call, '');
   }
 
-  static String _withMainWindowId(String arguments) {
-    final mainWindowId = _mainWindowId ?? _currentWindowId;
-    if (mainWindowId == null || mainWindowId.isEmpty) {
-      return arguments;
-    }
-
+  static Future<String> _withWindowContext(String arguments, {String? title, Size? size}) async {
     try {
       final decoded = jsonDecode(arguments);
       if (decoded is Map<String, dynamic>) {
-        return jsonEncode({_mainWindowIdKey: mainWindowId, ...decoded});
+        final context = Map<String, dynamic>.from(decoded);
+        final mainWindowId = _mainWindowId ?? _currentWindowId;
+        if (mainWindowId != null && mainWindowId.isNotEmpty) {
+          context[_mainWindowIdKey] = mainWindowId;
+        }
+        if (Platform.isWindows) {
+          final screen = await _currentWindowScreen();
+          if (screen != null) {
+            context[_mainWindowScreenKey] = {
+              ..._rectToJson(screen),
+              'scale': _windowPixelRatio(),
+            };
+          }
+        }
+        if (title != null) {
+          context[_windowTitleKey] = title;
+        }
+        if (size != null) {
+          context[_windowSizeKey] = {'width': size.width, 'height': size.height};
+        }
+        return jsonEncode(context);
       }
     } catch (_) {
       // Keep non-JSON arguments unchanged.
@@ -108,32 +201,136 @@ class DesktopMultiWindow {
     return arguments;
   }
 
+  static Future<Rect?> _currentWindowScreen() async {
+    try {
+      // window_manager 和 screen_retriever 在 Windows 上使用不同 DPI 换算，
+      // 统一还原成物理坐标后再判断父窗口属于哪个显示器。
+      final scale = _windowPixelRatio();
+      final bounds = await windowManager.getBounds();
+      final windowBounds = Rect.fromLTWH(
+        bounds.left * scale,
+        bounds.top * scale,
+        bounds.width * scale,
+        bounds.height * scale,
+      );
+      return displayRectForWindow(
+        windowBounds: windowBounds,
+        displays: await screenRetriever.getAllDisplays(),
+      );
+    } catch (_) {
+      // 获取显示器失败时回退到 window_manager 的默认居中行为。
+      return null;
+    }
+  }
+
+  @visibleForTesting
+  static Rect? displayRectForWindow({
+    required Rect windowBounds,
+    required List<Display> displays,
+  }) {
+    if (!_validRect(windowBounds)) return null;
+
+    Rect? bestRect;
+    var bestOverlap = 0.0;
+    for (final display in displays) {
+      final scale = display.scaleFactor?.toDouble();
+      if (!_validScale(scale)) continue;
+
+      final origin = display.visiblePosition ?? Offset.zero;
+      final size = display.visibleSize ?? display.size;
+      final rect = Rect.fromLTWH(
+        origin.dx * scale!,
+        origin.dy * scale,
+        size.width * scale,
+        size.height * scale,
+      );
+      if (!_validRect(rect)) continue;
+      if (rect.contains(windowBounds.center)) return rect;
+
+      final overlapWidth = _min(windowBounds.right, rect.right) - _max(windowBounds.left, rect.left);
+      final overlapHeight = _min(windowBounds.bottom, rect.bottom) - _max(windowBounds.top, rect.top);
+      if (overlapWidth <= 0 || overlapHeight <= 0) continue;
+      final overlap = overlapWidth * overlapHeight;
+      if (overlap > bestOverlap) {
+        bestOverlap = overlap;
+        bestRect = rect;
+      }
+    }
+    return bestRect;
+  }
+
+  @visibleForTesting
+  static Offset centeredWindowPosition(Rect screen, Size windowSize) {
+    final position = Offset(
+      screen.left + (screen.width - windowSize.width) / 2,
+      screen.top + (screen.height - windowSize.height) / 2,
+    );
+    return Offset(
+      windowSize.width < screen.width
+          ? position.dx.clamp(screen.left, screen.right - windowSize.width).toDouble()
+          : position.dx,
+      windowSize.height < screen.height
+          ? position.dy.clamp(screen.top, screen.bottom - windowSize.height).toDouble()
+          : position.dy,
+    );
+  }
+
+  static double _windowPixelRatio() {
+    if (!Platform.isWindows) return 1;
+    final scale = windowManager.getDevicePixelRatio();
+    return _validScale(scale) ? scale : 1;
+  }
+
+  static bool _validScale(double? scale) => scale != null && scale.isFinite && scale > 0;
+
+  static bool _validRect(Rect rect) {
+    return rect.left.isFinite &&
+        rect.top.isFinite &&
+        rect.width.isFinite &&
+        rect.height.isFinite &&
+        rect.width > 0 &&
+        rect.height > 0;
+  }
+
+  static double _min(double a, double b) => a < b ? a : b;
+
+  static double _max(double a, double b) => a > b ? a : b;
+
+  static Map<String, double> _rectToJson(Rect rect) {
+    return {'left': rect.left, 'top': rect.top, 'width': rect.width, 'height': rect.height};
+  }
+
+  static Rect? _rectFromJson(dynamic value) {
+    if (value is! Map) return null;
+    final left = value['left'];
+    final top = value['top'];
+    final width = value['width'];
+    final height = value['height'];
+    if (left is! num || top is! num || width is! num || height is! num) return null;
+    final rect = Rect.fromLTWH(left.toDouble(), top.toDouble(), width.toDouble(), height.toDouble());
+    return _validRect(rect) ? rect : null;
+  }
+
+  static Size? _sizeFromJson(dynamic value) {
+    if (value is! Map) return null;
+    final width = value['width'];
+    final height = value['height'];
+    if (width is! num || height is! num) return null;
+    final size = Size(width.toDouble(), height.toDouble());
+    return size.width.isFinite && size.height.isFinite && size.width > 0 && size.height > 0 ? size : null;
+  }
+
   static Future<void> _setWindowMethodHandler(WindowController controller) {
     return controller.setWindowMethodHandler((call) async {
       switch (call.method) {
         case 'window_close':
           return windowManager.close();
-        case 'window_center':
-          return windowManager.center();
         case 'window_focus':
           // 最小化（含 macOS 缩到 Dock）先还原，再置顶聚焦
           if (await windowManager.isMinimized()) {
             await windowManager.restore();
           }
           return windowManager.focus();
-        case 'window_setTitle':
-          return windowManager.setTitle(call.arguments as String);
-        case 'window_setTitleBarStyle':
-          return windowManager.setTitleBarStyle(
-            call.arguments == 'hidden' ? TitleBarStyle.hidden : TitleBarStyle.normal,
-          );
-        case 'window_setSize':
-          final arguments = call.arguments as Map<dynamic, dynamic>;
-
-          return windowManager.setSize(Size(
-            (arguments['width'] as num).toDouble(),
-            (arguments['height'] as num).toDouble(),
-          ));
       }
 
       return _handleMethodCall(call);
@@ -146,19 +343,8 @@ extension WindowControllerCompat on WindowController {
     return _invokeWindowMethod('window_close');
   }
 
-  Future<void> center() {
-    return _invokeWindowMethod('window_center');
-  }
-
-  Future<void> setTitle(String title) {
-    return _invokeWindowMethod('window_setTitle', title);
-  }
-
-  Future<void> setSize(Size size) {
-    return _invokeWindowMethod('window_setSize', {
-      'width': size.width,
-      'height': size.height,
-    });
+  Future<void> focus() {
+    return _invokeWindowMethod('window_focus');
   }
 
   Future<void> _invokeWindowMethod(String method, [dynamic arguments]) async {

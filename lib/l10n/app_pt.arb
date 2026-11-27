@@ -9,6 +9,7 @@
   "statusPaused": "Pausado",
   "pause": "Pausar",
   "resume": "Retomar",
-  "overview": "Visão geral"
+  "overview": "Visão geral",
+  "mcpAuthEnabled": "Exigir token de acesso"
 }
 

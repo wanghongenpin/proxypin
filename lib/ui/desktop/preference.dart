@@ -93,14 +93,22 @@ class _PreferenceState extends State<Preference> {
               //主题
               Row(children: [
                 SizedBox(width: 100, child: Text("${localizations.theme}: ", style: titleStyle)),
-                DropdownButton<ThemeMode>(
-                    value: appConfiguration.themeMode,
-                    onChanged: (ThemeMode? value) => appConfiguration.themeMode = value!,
+                DropdownButton<String>(
+                    value: appConfiguration.useAmoled && appConfiguration.themeMode == ThemeMode.dark
+                        ? 'amoled'
+                        : appConfiguration.themeMode.name,
+                    onChanged: (String? value) {
+                      appConfiguration.useAmoled = value == 'amoled';
+                      appConfiguration.themeMode = value == 'amoled'
+                          ? ThemeMode.dark
+                          : ThemeMode.values.firstWhere((mode) => mode.name == value);
+                    },
                     focusColor: Colors.transparent,
                     items: [
-                      DropdownMenuItem(value: ThemeMode.system, child: Text(localizations.followSystem)),
-                      DropdownMenuItem(value: ThemeMode.light, child: Text(localizations.themeLight)),
-                      DropdownMenuItem(value: ThemeMode.dark, child: Text(localizations.themeDark)),
+                      DropdownMenuItem(value: ThemeMode.system.name, child: Text(localizations.followSystem)),
+                      DropdownMenuItem(value: ThemeMode.light.name, child: Text(localizations.themeLight)),
+                      DropdownMenuItem(value: ThemeMode.dark.name, child: Text(localizations.themeDark)),
+                      DropdownMenuItem(value: 'amoled', child: Text(localizations.amoledBlack)),
                     ]),
               ]),
               Tooltip(

@@ -135,6 +135,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get amoledBlack => 'AMOLED Black';
+
+  @override
   String get language => 'Português';
 
   @override
@@ -481,6 +484,14 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get select => 'Select';
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String selectedItems(int count) {
+    return '$count selected';
+  }
 
   @override
   String get copy => 'Copy';
@@ -1162,6 +1173,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sponsorAfdian => 'AFDIAN';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
   String get privacyPolicy => 'Privacy Policy';
 
   @override
@@ -1299,10 +1313,24 @@ class AppLocalizationsPt extends AppLocalizations {
   String get mcpEndpoint => 'MCP Endpoint';
 
   @override
+  String get mcpListenAddress => 'Listen address';
+
+  @override
+  String get mcpListenAddressDescribe =>
+      '127.0.0.1 allows only clients on this device; 0.0.0.0 allows clients on this device and the local network.';
+
+  @override
   String get mcpPortInvalid => 'Please enter a valid port between 1024 and 65535';
 
   @override
   String get mcpAccessToken => 'Access Token';
+
+  @override
+  String get mcpAuthEnabled => 'Exigir token de acesso';
+
+  @override
+  String get mcpAuthEnabledDescribe =>
+      'When disabled, clients can connect without credentials. Disable only on a trusted device or network.';
 
   @override
   String get mcpLanGuide =>
@@ -1372,12 +1400,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get mcpUnsupported => 'This client does not support auto setup, configure it manually.';
-
-  @override
-  String get mcpCopy => 'Copy';
-
-  @override
-  String get mcpCopied => 'Copied';
 
   @override
   String get mcpStartFailed => 'MCP service failed to start';
@@ -1601,6 +1623,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get themeDark => 'Escuro';
+
+  @override
+  String get amoledBlack => 'Preto AMOLED';
 
   @override
   String get language => 'Idioma';
@@ -1836,6 +1861,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get select => 'Selecionar';
+
+  @override
+  String get selectAll => 'Selecionar tudo';
+
+  @override
+  String selectedItems(int count) {
+    return '$count selecionados';
+  }
 
   @override
   String get copy => 'Copiar';
@@ -2286,6 +2319,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get weakNetworkRules => 'Regras de URL';
+
+  @override
+  String get mcpServiceDescribe =>
+      'Inicia um servidor HTTP local para a comunicação do Model Context Protocol (MCP) com ferramentas de IA como o Claude.';
 
   @override
   String get replayTasks => 'Tarefas de repetição';

@@ -135,6 +135,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get themeDark => 'Tối';
 
   @override
+  String get amoledBlack => 'Đen AMOLED';
+
+  @override
   String get language => 'Ngôn ngữ';
 
   @override
@@ -481,6 +484,14 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get select => 'Chọn';
+
+  @override
+  String get selectAll => 'Chọn tất cả';
+
+  @override
+  String selectedItems(int count) {
+    return 'Đã chọn $count mục';
+  }
 
   @override
   String get copy => 'Sao chép';
@@ -1156,6 +1167,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get sponsorAfdian => 'AFDIAN';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
   String get privacyPolicy => 'Chính sách quyền riêng tư';
 
   @override
@@ -1257,7 +1271,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get mcpServiceDescribe =>
-      'Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.';
+      'Khởi động máy chủ HTTP cục bộ để Model Context Protocol (MCP) giao tiếp với các công cụ AI như Claude.';
 
   @override
   String get mcpEnable => 'Enable MCP Server';
@@ -1293,10 +1307,24 @@ class AppLocalizationsVi extends AppLocalizations {
   String get mcpEndpoint => 'MCP Endpoint';
 
   @override
+  String get mcpListenAddress => 'Listen address';
+
+  @override
+  String get mcpListenAddressDescribe =>
+      '127.0.0.1 allows only clients on this device; 0.0.0.0 allows clients on this device and the local network.';
+
+  @override
   String get mcpPortInvalid => 'Please enter a valid port between 1024 and 65535';
 
   @override
   String get mcpAccessToken => 'Access Token';
+
+  @override
+  String get mcpAuthEnabled => 'Yêu cầu mã truy cập';
+
+  @override
+  String get mcpAuthEnabledDescribe =>
+      'When disabled, clients can connect without credentials. Disable only on a trusted device or network.';
 
   @override
   String get mcpLanGuide =>
@@ -1366,12 +1394,6 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get mcpUnsupported => 'This client does not support auto setup, configure it manually.';
-
-  @override
-  String get mcpCopy => 'Copy';
-
-  @override
-  String get mcpCopied => 'Copied';
 
   @override
   String get mcpStartFailed => 'MCP service failed to start';

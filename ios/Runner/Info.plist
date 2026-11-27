@@ -21,7 +21,14 @@
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
-		<string>zh</string>
+		<string>zh-Hans</string>
+		<string>zh-Hant</string>
+		<string>id</string>
+		<string>es</string>
+		<string>vi</string>
+		<string>pt</string>
+		<string>pt-BR</string>
+		<string>th</string>
 	</array>
 	<key>CFBundleName</key>
 	<string>ProxyPin</string>

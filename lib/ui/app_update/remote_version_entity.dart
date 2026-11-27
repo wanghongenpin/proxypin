@@ -101,8 +101,7 @@ abstract class GithubReleaseParser {
   static RemoteVersionEntity parse(Map<String, dynamic> json) {
     final fullTag = json['tag_name'] as String;
     // 去掉版本前缀, 兼容 v / V 两种写法(如 v1.3.3、V1.3.3)
-    final tagWithoutPrefix =
-        fullTag.startsWith(RegExp('[vV]')) ? fullTag.substring(1) : fullTag;
+    final tagWithoutPrefix = fullTag.startsWith(RegExp('[vV]')) ? fullTag.substring(1) : fullTag;
     final fullVersion = tagWithoutPrefix.split("-").first.split("+");
     var version = fullVersion.first;
     var buildNumber = fullVersion.elementAtOrElse(1, (index) => "");
@@ -112,7 +111,7 @@ abstract class GithubReleaseParser {
 
     // release body 格式: "iOS/Google 链接 + V版本号 + 中文列表 + English: + 英文列表"
     // 中文环境取中文段, 其它取英文段; 没有分隔符时原样返回。
-    final bodyParts = json['body']?.toString().split("English: ");
+    final bodyParts = json['body']?.toString().split(RegExp(r'English:\s*'));
     String? content;
     if (bodyParts != null && bodyParts.isNotEmpty) {
       final isCN = Platform.localeName.startsWith('zh');

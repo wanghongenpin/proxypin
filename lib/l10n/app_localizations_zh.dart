@@ -135,6 +135,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeDark => '深色';
 
   @override
+  String get amoledBlack => '纯黑模式';
+
+  @override
   String get language => '语言';
 
   @override
@@ -479,6 +482,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get select => '选择';
+
+  @override
+  String get selectAll => '全选';
+
+  @override
+  String selectedItems(int count) {
+    return '已选 $count 项';
+  }
 
   @override
   String get copy => '复制';
@@ -1150,6 +1161,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sponsorAfdian => '爱发电赞助';
 
   @override
+  String get privacy => '隐私';
+
+  @override
   String get privacyPolicy => '隐私协议';
 
   @override
@@ -1286,10 +1300,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mcpEndpoint => 'MCP 服务地址';
 
   @override
+  String get mcpListenAddress => '监听地址';
+
+  @override
+  String get mcpListenAddressDescribe => '127.0.0.1 仅允许本设备连接；0.0.0.0 允许本设备及局域网内的客户端连接。';
+
+  @override
   String get mcpPortInvalid => '请输入 1024-65535 之间的有效端口';
 
   @override
   String get mcpAccessToken => '访问令牌';
+
+  @override
+  String get mcpAuthEnabled => '启用访问令牌鉴权';
+
+  @override
+  String get mcpAuthEnabledDescribe => '关闭后客户端无需凭据即可连接，请仅在可信设备或网络环境中关闭。';
 
   @override
   String get mcpLanGuide => '保持手机与电脑连接同一 Wi-Fi，在电脑终端运行下面任一命令，或将配置粘贴到 AI 客户端的 MCP 设置中。';
@@ -1357,12 +1383,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpUnsupported => '该客户端不支持一键配置，请手动配置。';
-
-  @override
-  String get mcpCopy => '复制';
-
-  @override
-  String get mcpCopied => '已复制';
 
   @override
   String get mcpStartFailed => 'MCP 服务启动失败';
@@ -1589,6 +1609,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get themeDark => '深色';
+
+  @override
+  String get amoledBlack => '純黑模式';
 
   @override
   String get language => '語言';
@@ -1929,6 +1952,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get select => '選擇';
+
+  @override
+  String get selectAll => '全選';
+
+  @override
+  String selectedItems(int count) {
+    return '已選 $count 項';
+  }
 
   @override
   String get copy => '複製';
@@ -2634,6 +2665,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get weakNetworkRules => 'URL 規則';
+
+  @override
+  String get mcpServiceDescribe => '啟動本機 HTTP 伺服器，讓 Model Context Protocol (MCP) 與 Claude 等 AI 工具通訊。';
+
+  @override
+  String get mcpAuthEnabled => '啟用存取權杖驗證';
+
+  @override
+  String get mcpAuthEnabledDescribe => '關閉後用戶端無需憑證即可連線，請僅在可信裝置或網路環境中關閉。';
 
   @override
   String get statusRunning => '執行中';

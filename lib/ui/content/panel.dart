@@ -101,22 +101,18 @@ class NetworkTabController extends StatefulWidget {
     return NetworkTabState();
   }
 
-  static NetworkTabController? get current =>
-      currentKey?.currentWidget as NetworkTabController?;
+  static NetworkTabController? get current => currentKey?.currentWidget as NetworkTabController?;
 }
 
-class NetworkTabState extends State<NetworkTabController>
-    with TickerProviderStateMixin {
+class NetworkTabState extends State<NetworkTabController> with TickerProviderStateMixin {
   late List<String> tabs;
   late bool _mqttTabs;
 
   final TextStyle textStyle = const TextStyle(fontSize: 14);
   late TabController _tabController;
 
-  final GlobalKey<HttpBodyState> requestHttpBodyKey =
-      GlobalKey<HttpBodyState>();
-  final GlobalKey<HttpBodyState> responseHttpBodyKey =
-      GlobalKey<HttpBodyState>();
+  final GlobalKey<HttpBodyState> requestHttpBodyKey = GlobalKey<HttpBodyState>();
+  final GlobalKey<HttpBodyState> responseHttpBodyKey = GlobalKey<HttpBodyState>();
 
   /// 当前请求的手动收藏状态，按 requestId 缓存避免每次 build 查存储
   String? _favoritedId;
@@ -170,13 +166,9 @@ class NetworkTabState extends State<NetworkTabController>
 
   void _configureTabs(bool mqtt) {
     _mqttTabs = mqtt;
-    tabs = mqtt
-        ? ['General', 'MQTT']
-        : ['General', 'Request', 'Response', 'Cookies'];
-    _tabController = TabController(
-        length: tabs.length,
-        vsync: this,
-        initialIndex: widget.initialTab.clamp(0, tabs.length - 1));
+    tabs = mqtt ? ['General', 'MQTT'] : ['General', 'Request', 'Response', 'Cookies'];
+    _tabController =
+        TabController(length: tabs.length, vsync: this, initialIndex: widget.initialTab.clamp(0, tabs.length - 1));
     _tabController.addListener(() {
       if (_tabController.index != 1) {
         requestHttpBodyKey.currentState?.hideSearchOverlay();
@@ -207,12 +199,10 @@ class NetworkTabState extends State<NetworkTabController>
   }
 
   bool onKeyEvent(KeyEvent event) {
-    if ((HardwareKeyboard.instance.isMetaPressed ||
-            HardwareKeyboard.instance.isControlPressed) &&
+    if ((HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed) &&
         event.logicalKey == LogicalKeyboardKey.keyW) {
       HardwareKeyboard.instance.removeHandler(onKeyEvent);
-      WindowController.fromWindowId(widget.windowId!)
-          .invokeMethod('window_close');
+      WindowController.fromWindowId(widget.windowId!).close();
       return true;
     }
 
@@ -223,13 +213,7 @@ class NetworkTabState extends State<NetworkTabController>
   Widget build(BuildContext context) {
     bool isMqtt = widget.request.get()?.protocolVersion == 'MQTT';
     bool isWebSocket = widget.request.get()?.isWebSocket == true;
-    bool isSse = widget.response
-            .get()
-            ?.headers
-            .contentType
-            .toLowerCase()
-            .startsWith('text/event-stream') ==
-        true;
+    bool isSse = widget.response.get()?.headers.contentType.toLowerCase().startsWith('text/event-stream') == true;
     bool isStreamMessages = isWebSocket || isSse;
     if (isMqtt) {
       tabs[tabs.length - 1] = 'MQTT';
@@ -250,21 +234,13 @@ class NetworkTabState extends State<NetworkTabController>
       dividerColor: Theme.of(context).dividerColor,
       labelPadding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 10),
       // 设计稿 .tab：12.5px，选中 primary 加粗，未选中 text-2
-      labelStyle: widget.tabStyle ??
-          (isDesktop
-              ? const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500)
-              : null),
-      unselectedLabelStyle: widget.tabStyle ??
-          (isDesktop
-              ? const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400)
-              : null),
-      unselectedLabelColor:
-          isDesktop ? Theme.of(context).colorScheme.onSurfaceVariant : null,
+      labelStyle: widget.tabStyle ?? (isDesktop ? const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500) : null),
+      unselectedLabelStyle:
+          widget.tabStyle ?? (isDesktop ? const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400) : null),
+      unselectedLabelColor: isDesktop ? Theme.of(context).colorScheme.onSurfaceVariant : null,
       tabs: tabs
-          .map((title) => Tab(
-              height: isDesktop ? 34 : null,
-              child:
-                  Text(tabLabel(title), style: widget.tabStyle, maxLines: 1)))
+          .map((title) =>
+              Tab(height: isDesktop ? 34 : null, child: Text(tabLabel(title), style: widget.tabStyle, maxLines: 1)))
           .toList(),
     );
 
@@ -276,9 +252,7 @@ class NetworkTabState extends State<NetworkTabController>
         centerTitle: true,
         actions: [
           ShareWidget(
-              proxyServer: widget.proxyServer,
-              request: widget.request.get(),
-              response: widget.response.get()),
+              proxyServer: widget.proxyServer, request: widget.request.get(), response: widget.response.get()),
           const SizedBox(width: 3),
           DetailMenuWidget(request: widget.request.get()),
           const SizedBox(width: 10),
@@ -288,8 +262,7 @@ class NetworkTabState extends State<NetworkTabController>
       var request = widget.request.get();
       if (request == null) {
         // 未选中请求：不展示标题栏和 tab 条，右侧面板留白
-        appBar =
-            const PreferredSize(preferredSize: Size.zero, child: SizedBox());
+        appBar = const PreferredSize(preferredSize: Size.zero, child: SizedBox());
       } else {
         appBar = PreferredSize(
             preferredSize: const Size.fromHeight(kTextTabBarHeight + 44),
@@ -308,8 +281,7 @@ class NetworkTabState extends State<NetworkTabController>
       if (request == null) {
         appBar = PreferredSize(
             preferredSize: tabBar.preferredSize,
-            child: Material(
-                color: Theme.of(context).colorScheme.surface, child: tabBar));
+            child: Material(color: Theme.of(context).colorScheme.surface, child: tabBar));
       } else {
         appBar = PreferredSize(
             preferredSize: const Size.fromHeight(kTextTabBarHeight + 44),
@@ -333,33 +305,27 @@ class NetworkTabState extends State<NetworkTabController>
       appBar: appBar,
       body: Padding(
           padding: EdgeInsets.only(
-              left: isDesktop ? 16 : 20,
-              right: isDesktop ? 16 : 20,
-              top: isDesktop ? 14 : 10),
+              left: isDesktop ? 16 : 20, right: isDesktop ? 16 : 20, top: isDesktop ? 14 : 10),
           child: isDesktop && widget.request.get() == null
               ? const SizedBox() // 未选中请求：空白，不渲染 tab 内容
               : TabBarView(
-                  physics: Platforms.isDesktop()
-                      ? const NeverScrollableScrollPhysics()
-                      : null, //桌面禁止滑动
-                  controller: _tabController,
-                  children: isMqtt
-                      ? [
-                          SelectionArea(
-                              child: Overview(widget.request, widget.response)),
-                          SelectionArea(child: MqttMessages(widget.request)),
-                        ]
-                      : [
-                          SelectionArea(
-                              child: Overview(widget.request, widget.response)),
-                          KeepAliveWrapper(child: request()),
-                          KeepAliveWrapper(child: response()),
-                          SelectionArea(
-                              child: isStreamMessages
-                                  ? Websocket(widget.request, widget.response)
-                                  : Cookies(widget.request, widget.response)),
-                        ],
-                )),
+            physics: Platforms.isDesktop() ? const NeverScrollableScrollPhysics() : null, //桌面禁止滑动
+            controller: _tabController,
+            children: isMqtt
+                ? [
+                    SelectionArea(child: Overview(widget.request, widget.response)),
+                    SelectionArea(child: MqttMessages(widget.request)),
+                  ]
+                : [
+                    SelectionArea(child: Overview(widget.request, widget.response)),
+                    KeepAliveWrapper(child: request()),
+                    KeepAliveWrapper(child: response()),
+                    SelectionArea(
+                        child: isStreamMessages
+                            ? Websocket(widget.request, widget.response)
+                            : Cookies(widget.request, widget.response)),
+                  ],
+          )),
     );
   }
 
@@ -374,8 +340,7 @@ class NetworkTabState extends State<NetworkTabController>
             color: theme.colorScheme.surface,
             border: Border.all(color: cardBorderColor(theme)),
             borderRadius: BorderRadius.circular(10)),
-        child:
-            ClipRRect(borderRadius: BorderRadius.circular(10), child: child));
+        child: ClipRRect(borderRadius: BorderRadius.circular(10), child: child));
   }
 
   Widget request() {
@@ -409,10 +374,8 @@ class NetworkTabState extends State<NetworkTabController>
         controller: scrollController,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // 设计稿：状态码值按状态码语义色（200 绿）
-          overviewRow(context, localizations.statusCode,
-              widget.response.get()?.status.toString(),
-              valueColor: statusColor(
-                  widget.response.get()?.status.code, Theme.of(context))),
+          overviewRow(context, localizations.statusCode, widget.response.get()?.status.toString(),
+              valueColor: statusColor(widget.response.get()?.status.code, Theme.of(context))),
           ...message(widget.response.get(), "Response", scrollController)
         ])));
   }
@@ -448,9 +411,7 @@ class NetworkTabState extends State<NetworkTabController>
                   letterSpacing: 0.5,
                   color: request.isWebSocket == true
                       // 设计稿 --ws：浅色 #6E3FC1，暗黑 #9B72E0
-                      ? (theme.brightness == Brightness.light
-                          ? const Color(0xFF6E3FC1)
-                          : DarkPalette.ws)
+                      ? (theme.brightness == Brightness.light ? const Color(0xFF6E3FC1) : DarkPalette.ws)
                       : methodColor(request.method, theme))),
           const SizedBox(width: 10),
           Expanded(
@@ -458,36 +419,27 @@ class NetworkTabState extends State<NetworkTabController>
                   maxLines: 1,
                   contextMenuBuilder: contextMenu,
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface))),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface))),
           const SizedBox(width: 4),
           miniAction(
               tooltip: localizations.copyUrl,
               icon: 'copy',
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: request.requestUrl))
-                    .then((_) {
-                  if (mounted)
-                    FlutterToastr.show(localizations.copied, context);
+                Clipboard.setData(ClipboardData(text: request.requestUrl)).then((_) {
+                  if (mounted) FlutterToastr.show(localizations.copied, context);
                 });
               }),
           miniAction(
-              tooltip: localizations.repeat,
-              icon: 'refresh',
-              onPressed: () => resendRequest(request)),
+              tooltip: localizations.repeat, icon: 'refresh', onPressed: () => resendRequest(request)),
           Builder(builder: (context) {
             _checkFavorited(request);
             var favorited = _favoritedId == request.requestId && _favorited;
             // 已收藏：琥珀色实心星（Material filled）；未收藏：中性灰线条星（设计 SVG）
-            var amber = Theme.of(context).brightness == Brightness.light
-                ? const Color(0xFFB76E00)
-                : DarkPalette.warn;
+            var amber = Theme.of(context).brightness == Brightness.light ? const Color(0xFFB76E00) : DarkPalette.warn;
             return miniAction(
                 tooltip: localizations.favorite,
                 icon: 'star',
-                iconWidget:
-                    favorited ? Icon(Icons.star, size: 16, color: amber) : null,
+                iconWidget: favorited ? Icon(Icons.star, size: 16, color: amber) : null,
                 onPressed: () => _toggleFavorite(request));
           }),
         ]));
@@ -510,12 +462,7 @@ class NetworkTabState extends State<NetworkTabController>
                 height: 26,
                 child: Center(
                     child: iconWidget ??
-                        SvgIcon(icon,
-                            size: 15,
-                            color: color ??
-                                Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant)))));
+                        SvgIcon(icon, size: 15, color: color ?? Theme.of(context).colorScheme.onSurfaceVariant)))));
   }
 
   void resendRequest(HttpRequest httpRequest) {
@@ -523,14 +470,11 @@ class NetworkTabState extends State<NetworkTabController>
     var proxyInfo = proxyServer != null && proxyServer.isRunning
         ? ProxyInfo.of("127.0.0.1", proxyServer.port)
         : null;
-    HttpClients.proxyRequest(httpRequest.copy(uri: httpRequest.requestUrl),
-        proxyInfo: proxyInfo);
-    FlutterToastr.show(localizations.reSendRequest, context,
-        rootNavigator: true);
+    HttpClients.proxyRequest(httpRequest.copy(uri: httpRequest.requestUrl), proxyInfo: proxyInfo);
+    FlutterToastr.show(localizations.reSendRequest, context, rootNavigator: true);
   }
 
-  List<Widget> message(
-      HttpMessage? message, String type, ScrollController scrollController) {
+  List<Widget> message(HttpMessage? message, String type, ScrollController scrollController) {
     Widget bodyWidgets = HttpBodyWidget(
         key: type == "Request" ? requestHttpBodyKey : responseHttpBodyKey,
         hideRequestRewrite: widget.windowId != null,
@@ -540,54 +484,39 @@ class NetworkTabState extends State<NetworkTabController>
     return [
       HeadersWidget(title: type, message: message, valueTextStyle: textStyle),
       // 卡片内统一 14px 水平内边距（设计稿 .kv/.d-sec padding 14）
-      Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: bodyWidgets),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: bodyWidgets),
     ];
   }
 }
 
 /// 设计稿 --text-3：浅色 #8F959E，暗黑 #6F747D
-Color text3Color(ThemeData theme) => theme.brightness == Brightness.light
-    ? const Color(0xFF8F959E)
-    : DarkPalette.text3;
+Color text3Color(ThemeData theme) =>
+    theme.brightness == Brightness.light ? const Color(0xFF8F959E) : DarkPalette.text3;
 
 /// 设计稿 行 hover（.row:hover / .rl-row:hover）：浅色 #F7F8FA，暗黑 --hover-weak #2A2D33
-Color rowHoverColor(ThemeData theme) => theme.brightness == Brightness.light
-    ? const Color(0xFFF7F8FA)
-    : DarkPalette.hoverWeak;
+Color rowHoverColor(ThemeData theme) =>
+    theme.brightness == Brightness.light ? const Color(0xFFF7F8FA) : DarkPalette.hoverWeak;
 
 /// 设计稿 .kv 行之间的 #F2F3F5 细分隔线
 Widget kvDivider(BuildContext context) {
-  return Divider(
-      height: 1,
-      thickness: 1,
-      color: Theme.of(context).dividerColor.withValues(alpha: 0.35));
+  return Divider(height: 1, thickness: 1, color: Theme.of(context).dividerColor.withValues(alpha: 0.35));
 }
 
 /// 可折叠分区小标题（Cookies/Query 参数共用）：文字 + 尾部 chevron，折叠时显示条数；整行 hover 效果
-Widget collapsibleSectionLabel(BuildContext context, String label, int count,
-    bool expanded, VoidCallback onTap) {
+Widget collapsibleSectionLabel(BuildContext context, String label, int count, bool expanded, VoidCallback onTap) {
   var theme = Theme.of(context);
   var text3 = text3Color(theme);
-  var style =
-      TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3);
+  var style = TextStyle(fontSize: 14, height: 1.5, letterSpacing: 0.3, color: text3);
   return InkWell(
       onTap: onTap,
       // 整行 hover 焦点效果：设计稿行 hover #F7F8FA
       hoverColor: rowHoverColor(theme),
       child: Padding(
-          padding:
-              const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 4),
+          padding: const EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 4),
           child: Row(children: [
             Text(label, style: style),
             const SizedBox(width: 2),
-            Icon(
-                expanded
-                    ? Icons.keyboard_arrow_down
-                    : Icons.keyboard_arrow_right,
-                size: 16,
-                color: text3),
+            Icon(expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, size: 16, color: text3),
             if (!expanded && count > 0) Text(' · $count', style: style),
           ])));
 }
@@ -630,9 +559,7 @@ class _RequestParamsState extends State<RequestParams> {
     var expanded = RequestParams.initiallyExpanded;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // 与 Cookies 同款可折叠小标题：chevron + 折叠时显示条数
-      collapsibleSectionLabel(
-          context, AppLocalizations.of(context)!.queryParams, count, expanded,
-          () {
+      collapsibleSectionLabel(context, AppLocalizations.of(context)!.queryParams, count, expanded, () {
         setState(() => RequestParams.initiallyExpanded = !expanded);
       }),
       if (expanded) ...content,
@@ -640,7 +567,7 @@ class _RequestParamsState extends State<RequestParams> {
   }
 }
 
-class Overview extends StatelessWidget {
+class Overview extends StatefulWidget {
   final ValueWrap<HttpRequest> request;
 
   final ValueWrap<HttpResponse> response;
@@ -648,13 +575,35 @@ class Overview extends StatelessWidget {
   const Overview(this.request, this.response, {super.key});
 
   @override
+  State<Overview> createState() => _OverviewState();
+}
+
+class _OverviewState extends State<Overview> {
+  final GlobalKey _infoCardKey = GlobalKey();
+
+  /// 信息卡实测高度；首帧为 null，post-frame 测量后更新
+  double? _infoCardHeight;
+
+  void _scheduleMeasureInfoCard() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final renderBox = _infoCardKey.currentContext?.findRenderObject();
+      if (renderBox is RenderBox && renderBox.hasSize && mounted) {
+        final height = renderBox.size.height;
+        if (height != _infoCardHeight) {
+          setState(() => _infoCardHeight = height);
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    var request = this.request.get();
+    var request = widget.request.get();
     if (request == null) {
       return const SizedBox();
     }
     var localizations = AppLocalizations.of(context)!;
-    var response = this.response.get();
+    var response = widget.response.get();
     String requestUrl = request.requestUrl;
     try {
       requestUrl = Uri.decodeFull(request.requestUrl);
@@ -662,64 +611,74 @@ class Overview extends StatelessWidget {
     if (request.protocolVersion == 'MQTT') {
       return Container(
           color: Theme.of(context).colorScheme.surface,
-          child: ListView(
-              padding: const EdgeInsets.only(top: 2, bottom: 12),
-              children: [
-                overviewCard(context, [
-                  overviewRow(context, 'Connection', requestUrl),
-                  overviewRow(context, 'Protocol', 'MQTT over TLS'),
-                  overviewRow(
-                      context, 'Packets', request.messages.length.toString()),
-                  overviewRow(context, 'Start Time',
-                      request.requestTime.formatMillisecond()),
-                  if (request.processInfo != null)
-                    overviewRow(context, 'App', request.processInfo!.name),
-                ])
-              ]));
+          child: ListView(padding: const EdgeInsets.only(top: 2, bottom: 12), children: [
+            overviewCard(context, [
+              overviewRow(context, 'Connection', requestUrl),
+              overviewRow(context, 'Protocol', 'MQTT over TLS'),
+              overviewRow(context, 'Packets', request.messages.length.toString()),
+              overviewRow(context, 'Start Time', request.requestTime.formatMillisecond()),
+              if (request.processInfo != null) overviewRow(context, 'App', request.processInfo!.name),
+            ])
+          ]));
     }
 
     // 设计稿 Overview 卡：状态码/协议/耗时/大小/远程地址/请求时间/App 七行（桌面端严格对齐）；
     // URL/方法/双 Content-Type 仅手机端 General 保留（桌面端 URL+方法已在顶部标题栏，类型见 Body 分区标签）
     var isDesktop = Platforms.isDesktop();
-    return Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: ListView(
-            padding: const EdgeInsets.only(top: 2, bottom: 12),
-            children: [
-              overviewCard(context, [
-                overviewRow(context, localizations.statusCode,
-                    response?.status.toString(),
-                    valueColor:
-                        statusColor(response?.status.code, Theme.of(context))),
-                overviewRow(
-                    context, localizations.protocol, request.protocolVersion),
-                overviewRow(
-                    context, localizations.duration, _durationText(response)),
-                overviewRow(context, localizations.size,
-                    _sizeText(context, request, response)),
-                overviewRow(context, localizations.remoteAddress,
-                    '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
-                overviewRow(context, localizations.requestTime,
-                    request.requestTime.formatMillisecond()),
-                if (request.processInfo != null)
-                  overviewRow(
-                      context, localizations.app, request.processInfo!.name),
-                if (!isDesktop) ...[
-                  overviewRow(context, localizations.requestUrl, requestUrl),
-                  overviewRow(context, localizations.requestMethod,
-                      request.method.name),
-                  overviewRow(context, localizations.requestType,
-                      request.headers.contentType),
-                  overviewRow(context, localizations.responseType,
-                      response?.headers.contentType),
-                ],
-              ]),
-              if (response != null && (response.body?.isNotEmpty ?? false)) ...[
-                const SizedBox(height: 12),
-                ResponsePreviewCard(response),
+    return LayoutBuilder(builder: (context, constraints) {
+      _scheduleMeasureInfoCard();
+      // 预览吃掉信息卡之外的全部剩余视口高度；首帧未测出信息卡高度时用比例公式兜底
+      final previewMaxHeight =
+          responsePreviewMaxHeight(constraints.maxHeight, infoCardHeight: _infoCardHeight);
+      return Container(
+          color: Theme.of(context).colorScheme.surface,
+          child: ListView(padding: const EdgeInsets.only(top: 2, bottom: 12), children: [
+            overviewCard(context, [
+              overviewRow(context, localizations.statusCode, response?.status.toString(),
+                  valueColor: statusColor(response?.status.code, Theme.of(context))),
+              overviewRow(context, localizations.protocol, request.protocolVersion),
+              overviewRow(context, localizations.duration, _durationText(response)),
+              overviewRow(context, localizations.size, _sizeText(context, request, response)),
+              overviewRow(context, localizations.remoteAddress,
+                  '${response?.remoteHost ?? ''}${response?.remotePort == null ? '' : ':${response?.remotePort}'}'),
+              overviewRow(context, localizations.requestTime, request.requestTime.formatMillisecond()),
+              if (request.processInfo != null) overviewRow(context, localizations.app, request.processInfo!.name),
+              if (!isDesktop) ...[
+                overviewRow(context, localizations.requestUrl, requestUrl),
+                overviewRow(context, localizations.requestMethod, request.method.name),
+                overviewRow(context, localizations.requestType, request.headers.contentType),
+                overviewRow(context, localizations.responseType, response?.headers.contentType),
               ],
-            ]));
+            ], key: _infoCardKey),
+            if (response != null && (response.body?.isNotEmpty ?? false)) ...[
+              const SizedBox(height: 12),
+              ResponsePreviewCard(response, maxHeight: previewMaxHeight),
+            ],
+          ]));
+    });
   }
+}
+
+/// 响应体预览在矮窗口下的最小限高，再小则由卡片内部滚动承接、外层 ListView 滚动
+const double _previewMinHeight = 120;
+
+/// 信息卡之外的固定垂直开销：ListView 上下内边距(2+12)、卡间距(12)、预览卡头(36+1)
+const double _overviewChromeHeight = 2 + 12 + 12 + 36 + 1;
+
+/// 计算响应体预览（卡片内部滚动区）限高。
+///
+/// 已测出 [infoCardHeight] 时：预览占掉信息卡之外的全部剩余视口高度，消除底部留白；
+/// 首帧未测出（null）或高度无界时回退到视口 45%、夹在 [_previewMinHeight] 与
+/// [ResponsePreviewCard.maxHeightCap] 之间的兜底值。
+double responsePreviewMaxHeight(double viewportHeight, {double? infoCardHeight}) {
+  if (!viewportHeight.isFinite) {
+    return ResponsePreviewCard.maxHeightCap;
+  }
+  if (infoCardHeight == null) {
+    return (viewportHeight * 0.45).clamp(_previewMinHeight, ResponsePreviewCard.maxHeightCap);
+  }
+  final remaining = viewportHeight - infoCardHeight - _overviewChromeHeight;
+  return remaining.clamp(_previewMinHeight, viewportHeight);
 }
 
 /// 设计稿 Overview 耗时长："342 ms"（数值与单位间空格；costTime 原始格式 "84ms"/"1.23s"）
@@ -728,21 +687,18 @@ String? _durationText(HttpResponse? response) {
   if (cost == null || cost.isEmpty) {
     return cost;
   }
-  return cost.replaceAllMapped(
-      RegExp(r'(\d)(ms|s)$'), (m) => '${m[1]} ${m[2]}');
+  return cost.replaceAllMapped(RegExp(r'(\d)(ms|s)$'), (m) => '${m[1]} ${m[2]}');
 }
 
 /// 设计稿 Overview 大小行：请求 1.2 KB · 响应 8.6 KB (gzip)
-String _sizeText(
-    BuildContext context, HttpRequest request, HttpResponse? response) {
+String _sizeText(BuildContext context, HttpRequest request, HttpResponse? response) {
   var localizations = AppLocalizations.of(context)!;
   var reqSize = _kbText(request.packageSize);
   var respSize = _kbText(response?.packageSize);
   if (respSize.isEmpty) {
     return '${localizations.request} $reqSize';
   }
-  var text =
-      '${localizations.request} $reqSize · ${localizations.response} $respSize';
+  var text = '${localizations.request} $reqSize · ${localizations.response} $respSize';
   if (response?.headers.isGzip == true) {
     text += ' (gzip)';
   }
@@ -776,20 +732,14 @@ Widget mobileDetailTitle(BuildContext context, HttpRequest request) {
       TextSpan(children: [
         TextSpan(
             text: '${request.method.name} ',
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: methodColor(request.method, theme))),
-        TextSpan(
-            text: '$host${request.pathAndQuery}',
-            style: const TextStyle(fontSize: 15)),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: methodColor(request.method, theme))),
+        TextSpan(text: '$host${request.pathAndQuery}', style: const TextStyle(fontSize: 15)),
       ]));
 }
 
 /// 卡片描边色：浅色在设计稿 --border 基础上降透明度弱化；暗黑直接用设计稿 --border（深底上对比已足够低）
-Color cardBorderColor(ThemeData theme) => theme.brightness == Brightness.light
-    ? theme.dividerColor.withValues(alpha: 0.6)
-    : theme.dividerColor;
+Color cardBorderColor(ThemeData theme) =>
+    theme.brightness == Brightness.light ? theme.dividerColor.withValues(alpha: 0.6) : theme.dividerColor;
 
 /// 方法颜色按设计稿：浅色 --get #1F8B4C / --post #B76E00 / --put #0E6BB8 / --delete #C4321F；
 /// 暗黑对应 --get #3FB96A / --post #E8A33D / --put #4C9BE8 / --delete #E35B48
@@ -824,42 +774,32 @@ Color? statusColor(int? status, ThemeData theme) {
   return dark ? DarkPalette.err : const Color(0xFFC4321F);
 }
 
-Widget overviewCard(BuildContext context, List<Widget> rows) {
+Widget overviewCard(BuildContext context, List<Widget> rows, {Key? key}) {
   var theme = Theme.of(context);
   var children = <Widget>[];
   for (var i = 0; i < rows.length; i++) {
     if (i > 0) {
-      children.add(Divider(
-          height: 1,
-          thickness: 1,
-          color: theme.dividerColor.withValues(alpha: 0.35)));
+      children.add(Divider(height: 1, thickness: 1, color: theme.dividerColor.withValues(alpha: 0.35)));
     }
     children.add(rows[i]);
   }
   return Container(
+      key: key,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: cardBorderColor(theme)),
           color: theme.colorScheme.surface),
-      child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Column(children: children)));
+      child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Column(children: children)));
 }
 
-Widget overviewRow(BuildContext context, String label, String? value,
-    {Color? valueColor}) {
+Widget overviewRow(BuildContext context, String label, String? value, {Color? valueColor}) {
   var theme = Theme.of(context);
   return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         SizedBox(
             width: 130,
-            child: Text(label,
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.visible,
-                style: TextStyle(
-                    fontSize: 13, height: 1.5, color: text3Color(theme)))),
+            child: Text(label, style: TextStyle(fontSize: 13, height: 1.5, color: text3Color(theme)))),
         Expanded(
             child: SelectableText(value ?? '',
                 contextMenuBuilder: contextMenu,
@@ -873,16 +813,20 @@ Widget overviewRow(BuildContext context, String label, String? value,
 
 /// Overview 响应体预览卡（设计稿 .code-card）：卡头 Response Body + JSON/Raw/Preview 分段，限高内部滚动
 class ResponsePreviewCard extends StatefulWidget {
+  /// 首帧信息卡高度未测出、或无界高度时的兜底限高；正常布局下预览会填满剩余视口，不受此值限制
+  static const double maxHeightCap = 520;
+
   final HttpResponse response;
 
-  const ResponsePreviewCard(this.response, {super.key});
+  final double maxHeight;
+
+  const ResponsePreviewCard(this.response, {super.key, this.maxHeight = maxHeightCap});
 
   @override
   State<ResponsePreviewCard> createState() => _ResponsePreviewCardState();
 }
 
 class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
-  static const double _maxHeight = 320;
   late final List<String> views;
   int viewIndex = 0;
 
@@ -923,23 +867,16 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: Row(children: [
                         Text(AppLocalizations.of(context)!.responseBody,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: theme.colorScheme.onSurfaceVariant)),
+                            style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
                         const Spacer(),
                         for (var i = 0; i < views.length; i++) fmtButton(i),
                       ]))),
-              Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: theme.dividerColor.withValues(alpha: 0.35)),
+              Divider(height: 1, thickness: 1, color: theme.dividerColor.withValues(alpha: 0.35)),
               ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: _maxHeight),
+                  constraints: BoxConstraints(maxHeight: widget.maxHeight),
                   child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
-                      child:
-                          SizedBox(width: double.infinity, child: bodyView()))),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: SizedBox(width: double.infinity, child: bodyView()))),
             ])));
   }
 
@@ -950,34 +887,26 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
     return Padding(
         padding: const EdgeInsets.only(left: 4),
         child: Material(
-            color: selected
-                ? primarySoftBg(theme, lightAlpha: 0.12)
-                : Colors.transparent,
+            color: selected ? primarySoftBg(theme, lightAlpha: 0.12) : Colors.transparent,
             borderRadius: BorderRadius.circular(5),
             child: InkWell(
                 borderRadius: BorderRadius.circular(5),
                 // 设计稿小控件 hover：浅色 #F0F1F3，暗黑 --hover #31343B
-                hoverColor: theme.brightness == Brightness.light
-                    ? const Color(0xFFF0F1F3)
-                    : DarkPalette.hover,
+                hoverColor: theme.brightness == Brightness.light ? const Color(0xFFF0F1F3) : DarkPalette.hover,
                 onTap: () => setState(() => viewIndex = index),
                 child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     child: Text(views[index],
                         style: TextStyle(
                             fontSize: 11,
-                            color: selected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurfaceVariant))))));
+                            color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant))))));
   }
 
   Widget bodyView() {
     var view = views[viewIndex];
     if (view == 'Preview' && _isImage()) {
       return Center(
-          child: Image.memory(Uint8List.fromList(widget.response.body ?? []),
-              fit: BoxFit.scaleDown));
+          child: Image.memory(Uint8List.fromList(widget.response.body ?? []), fit: BoxFit.scaleDown));
     }
     return futureWidget(widget.response.decodeBodyString(), (body) {
       if (view == 'JSON') {
@@ -993,8 +922,7 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
       }
       return SelectableText(body,
           contextMenuBuilder: contextMenu,
-          style: const TextStyle(
-              fontFamily: 'monospace', fontSize: 13, height: 1.5));
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 13, height: 1.5));
     }, initialData: widget.response.getBodyString());
   }
 }
@@ -1032,30 +960,19 @@ class _CookiesState extends State<Cookies> {
     var requestCookies = widget.request.get()?.cookies;
     var responseCookies = widget.response.get()?.headers.getList("Set-Cookie");
 
-    var requestRows = requestCookies
-        ?.expand((cookie) => _cookieWidget(context, cookie)!)
-        .toList();
-    var responseRows =
-        responseCookies?.expand((e) => _cookieWidget(context, e)!).toList();
+    var requestRows = requestCookies?.expand((cookie) => _cookieWidget(context, cookie)!).toList();
+    var responseRows = responseCookies?.expand((e) => _cookieWidget(context, e)!).toList();
 
     var localizations = AppLocalizations.of(context)!;
     var content = ListView(children: [
       if (requestRows != null) ...[
-        collapsibleSectionLabel(
-            context,
-            localizations.requestCookies,
-            _requestCookieCount(requestCookies),
-            _requestExpanded,
-            () => setState(() => _requestExpanded = !_requestExpanded)),
+        collapsibleSectionLabel(context, localizations.requestCookies, _requestCookieCount(requestCookies),
+            _requestExpanded, () => setState(() => _requestExpanded = !_requestExpanded)),
         if (_requestExpanded) ...requestRows,
       ],
       if (responseRows != null) ...[
-        collapsibleSectionLabel(
-            context,
-            localizations.responseCookies,
-            responseCookies?.length ?? 0,
-            _responseExpanded,
-            () => setState(() => _responseExpanded = !_responseExpanded)),
+        collapsibleSectionLabel(context, localizations.responseCookies, responseCookies?.length ?? 0,
+            _responseExpanded, () => setState(() => _responseExpanded = !_responseExpanded)),
         if (_responseExpanded) ...responseRows,
       ],
     ]);
@@ -1069,18 +986,13 @@ class _CookiesState extends State<Cookies> {
             color: theme.colorScheme.surface,
             border: Border.all(color: cardBorderColor(theme)),
             borderRadius: BorderRadius.circular(10)),
-        child:
-            ClipRRect(borderRadius: BorderRadius.circular(10), child: content));
+        child: ClipRRect(borderRadius: BorderRadius.circular(10), child: content));
   }
 
   Iterable<Widget>? _cookieWidget(BuildContext context, String? cookie) {
     var headers = <Widget>[];
 
-    cookie
-        ?.split(";")
-        .map((e) => Strings.splitFirst(e, "="))
-        .where((element) => element != null)
-        .forEach((e) {
+    cookie?.split(";").map((e) => Strings.splitFirst(e, "=")).where((element) => element != null).forEach((e) {
       if (headers.isNotEmpty) {
         headers.add(kvDivider(context));
       }

@@ -135,6 +135,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get themeDark => 'Gelap';
 
   @override
+  String get amoledBlack => 'Hitam AMOLED';
+
+  @override
   String get language => 'Bahasa';
 
   @override
@@ -481,6 +484,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get select => 'Pilih';
+
+  @override
+  String get selectAll => 'Pilih semua';
+
+  @override
+  String selectedItems(int count) {
+    return '$count dipilih';
+  }
 
   @override
   String get copy => 'Salin';
@@ -1158,6 +1169,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get sponsorAfdian => 'AFDIAN';
 
   @override
+  String get privacy => 'Privacy';
+
+  @override
   String get privacyPolicy => 'Kebijakan privasi';
 
   @override
@@ -1259,7 +1273,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get mcpServiceDescribe =>
-      'Starts a local HTTP server for Model Context Protocol (MCP) communication with AI tools such as Claude.';
+      'Menjalankan server HTTP lokal untuk komunikasi Model Context Protocol (MCP) dengan alat AI seperti Claude.';
 
   @override
   String get mcpEnable => 'Enable MCP Server';
@@ -1295,10 +1309,24 @@ class AppLocalizationsId extends AppLocalizations {
   String get mcpEndpoint => 'MCP Endpoint';
 
   @override
+  String get mcpListenAddress => 'Listen address';
+
+  @override
+  String get mcpListenAddressDescribe =>
+      '127.0.0.1 allows only clients on this device; 0.0.0.0 allows clients on this device and the local network.';
+
+  @override
   String get mcpPortInvalid => 'Please enter a valid port between 1024 and 65535';
 
   @override
   String get mcpAccessToken => 'Access Token';
+
+  @override
+  String get mcpAuthEnabled => 'Wajibkan token akses';
+
+  @override
+  String get mcpAuthEnabledDescribe =>
+      'When disabled, clients can connect without credentials. Disable only on a trusted device or network.';
 
   @override
   String get mcpLanGuide =>
@@ -1368,12 +1396,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get mcpUnsupported => 'This client does not support auto setup, configure it manually.';
-
-  @override
-  String get mcpCopy => 'Copy';
-
-  @override
-  String get mcpCopied => 'Copied';
 
   @override
   String get mcpStartFailed => 'MCP service failed to start';

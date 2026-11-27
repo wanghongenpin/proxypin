@@ -44,6 +44,10 @@ class FlowView {
   /// WebSocket 帧文本总量上限
   static const int maxWsPayloadBytes = 1024 * 1024;
 
+  /// include_binary 时，单次响应内联的二进制帧原始字节总上限（base64 前），
+  /// 与文本预算独立，最新帧优先分配，防止大帧撑爆 MCP 响应。
+  static const int maxWsBinaryBytes = 64 * 1024;
+
 
   /// 列表项元数据（不含 headers/body）
   static Map<String, dynamic> summary(HttpRequest request) {
@@ -144,8 +148,13 @@ class FlowView {
   }
 
   /// WebSocket/SSE 帧（最近 [maxWsFrames] 条，文本总量封顶）
+  ///
+  /// 文本帧始终返回 payload 文本；非文本帧（binary/continuation/control）默认只给
+  /// `<binary frame N bytes>` 占位。[includeBinary] 为 true 时，非文本帧在独立的
+  /// [maxWsBinaryBytes] 字节预算内以 base64 返回原始 payload，最新帧优先分配预算，
+  /// 预算耗尽后的帧保留占位并标记 truncated，帧本身不会被丢弃。
   static Map<String, dynamic> messages(List<WebSocketFrame> frames,
-      {int offset = 0, int limit = maxWsFrames}) {
+      {int offset = 0, int limit = maxWsFrames, bool includeBinary = false}) {
     var total = frames.length;
     limit = limit.clamp(1, maxWsFrames);
     if (offset < 0) offset = 0;
@@ -154,24 +163,46 @@ class FlowView {
 
     var items = <Map<String, dynamic>>[];
     var budget = maxWsPayloadBytes;
+    var binaryBudget = maxWsBinaryBytes;
     // 倒序挑选后再正序输出，保证最新的帧优先获得字节预算
     for (var i = end - 1; i >= offset; i--) {
       var frame = frames[i];
-      var text = frame.isText ? frame.payloadDataAsString : '<binary frame ${frame.payloadLength} bytes>';
-      if (text.length > budget) {
-        text = text.substring(0, budget.clamp(0, text.length));
-      }
-      budget -= text.length;
-      items.insert(0, {
+      var item = <String, dynamic>{
         'index': i,
         'from': frame.isFromClient ? 'client' : 'server',
         'opcode': frame.opcode,
         'time': frame.time.toUtc().toIso8601String(),
         'payloadLength': frame.payloadLength,
-        'truncated': text.length < (frame.isText ? frame.payloadDataAsString.length : 0),
-        'text': text,
-      });
-      if (budget <= 0) break;
+      };
+
+      if (frame.isText) {
+        var full = frame.payloadDataAsString;
+        var text = full;
+        if (text.length > budget) {
+          text = text.substring(0, budget.clamp(0, text.length));
+        }
+        budget -= text.length;
+        item['truncated'] = text.length < full.length;
+        item['text'] = text;
+      } else {
+        item['binary'] = true;
+        var raw = frame.payloadData;
+        if (includeBinary && binaryBudget > 0 && raw.isNotEmpty) {
+          var take = raw.length < binaryBudget ? raw.length : binaryBudget;
+          item['encoding'] = 'base64';
+          item['data'] = base64Encode(raw.sublist(0, take));
+          item['returnedBytes'] = take;
+          item['truncated'] = take < raw.length;
+          binaryBudget -= take;
+        } else {
+          item['text'] = '<binary frame ${frame.payloadLength} bytes>';
+          // 请求了二进制但预算已耗尽：数据被省略而非完整返回
+          item['truncated'] = includeBinary && raw.isNotEmpty;
+        }
+      }
+      items.insert(0, item);
+
+      if (budget <= 0 && (!includeBinary || binaryBudget <= 0)) break;
     }
 
     return {'total': total, 'offset': offset, 'returned': items.length, 'truncated': end < total, 'frames': items};

@@ -38,11 +38,11 @@ class McpSetupScript {
       .replaceAll(_namePlaceholder, McpClientNames.mobile)
       .replaceAll(_legacyPlaceholder, McpClientNames.legacy);
 
-  static String shell({required String endpoint, required String token}) =>
-      _render(_shellTemplate, endpoint: endpoint, token: token);
+  static String shell({required String endpoint, required String? token}) =>
+      _render(_shellTemplate, endpoint: endpoint, token: token ?? '');
 
-  static String powershell({required String endpoint, required String token}) =>
-      _render(_psTemplate, endpoint: endpoint, token: token);
+  static String powershell({required String endpoint, required String? token}) =>
+      _render(_psTemplate, endpoint: endpoint, token: token ?? '');
 
   // 脚本中 $ 变量需转义为 \$；占位符在运行时替换为实际 endpoint/token。
   static const String _shellTemplate = r'''
@@ -65,7 +65,12 @@ if command -v claude >/dev/null 2>&1; then
   claude mcp remove "$NAME" -s local >/dev/null 2>&1 || true
   # Remove legacy entry left in user scope by older app versions (never touch local: it belongs to desktop).
   claude mcp remove __PROXYPIN_LEGACY__ -s user >/dev/null 2>&1 || true
-  if claude mcp add "$NAME" -s user --transport http "$ENDPOINT" --header "Authorization: Bearer $TOKEN" >/dev/null 2>&1; then
+  if [ -n "$TOKEN" ]; then
+    claude mcp add "$NAME" -s user --transport http "$ENDPOINT" --header "Authorization: Bearer $TOKEN" >/dev/null 2>&1
+  else
+    claude mcp add "$NAME" -s user --transport http "$ENDPOINT" >/dev/null 2>&1
+  fi
+  if [ $? -eq 0 ]; then
     printf '  [OK] Claude Code\n'; ok=1
   else
     printf '  [!!] Claude Code found but setup failed\n'
@@ -90,10 +95,14 @@ if command -v codex >/dev/null 2>&1 || [ -d "$HOME/.codex" ]; then
 
 [mcp_servers.$NAME]
 url = "$ENDPOINT"
+EOF
+  if [ -n "$TOKEN" ]; then
+    cat >> "$CODEX_TOML" <<EOF
 
 [mcp_servers.$NAME.http_headers]
 Authorization = "Bearer $TOKEN"
 EOF
+  fi
   printf '  [OK] Codex (~/.codex/config.toml)\n'; ok=1
 else
   printf '  [--] Codex not installed\n'
@@ -123,11 +132,9 @@ servers = root.setdefault("mcpServers", {})
 if not isinstance(servers, dict):
     servers = {}
     root["mcpServers"] = servers
-servers[name] = {
-    "type": "http",
-    "url": url,
-    "headers": {"Authorization": "Bearer " + token},
-}
+servers[name] = {"type": "http", "url": url}
+if token:
+    servers[name]["headers"] = {"Authorization": "Bearer " + token}
 with open(path, "w", encoding="utf-8") as f:
     json.dump(root, f, indent=2, ensure_ascii=False)
     f.write("\n")
@@ -189,7 +196,9 @@ if (Test-Cmd claude) {
   claude mcp remove $Name -s local 2>$null | Out-Null
   # Remove legacy entry left in user scope by older app versions (never touch local: it belongs to desktop)
   claude mcp remove __PROXYPIN_LEGACY__ -s user 2>$null | Out-Null
-  claude mcp add $Name -s user --transport http $Endpoint --header "Authorization: Bearer $Token" | Out-Null
+  $claudeArgs = @('mcp', 'add', $Name, '-s', 'user', '--transport', 'http', $Endpoint)
+  if ($Token) { $claudeArgs += @('--header', "Authorization: Bearer $Token") }
+  claude @claudeArgs | Out-Null
   if ($LASTEXITCODE -eq 0) {
     Write-Host '  [OK] Claude Code'; $script:ok = $true
   } else {
@@ -220,10 +229,15 @@ if ((Test-Cmd codex) -or (Test-Path (Join-Path $HOME '.codex'))) {
 
 [mcp_servers.$Name]
 url = "$Endpoint"
+"@
+  if ($Token) {
+    $block += @"
+
 
 [mcp_servers.$Name.http_headers]
 Authorization = "Bearer $Token"
 "@
+  }
   [System.IO.File]::AppendAllText($codexToml, $block + "`n", $Utf8)
   Write-Host '  [OK] Codex (~/.codex/config.toml)'; $script:ok = $true
 } else {
@@ -243,7 +257,9 @@ function Set-McpServerJson($path) {
   $server = [pscustomobject]@{
     type = 'http'
     url = $Endpoint
-    headers = [pscustomobject]@{ Authorization = "Bearer $Token" }
+  }
+  if ($Token) {
+    $server | Add-Member -NotePropertyName headers -NotePropertyValue ([pscustomobject]@{ Authorization = "Bearer $Token" })
   }
   if ($null -eq $root.mcpServers) {
     $root | Add-Member -NotePropertyName mcpServers -NotePropertyValue ([pscustomobject]@{}) -Force

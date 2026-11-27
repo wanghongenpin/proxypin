@@ -18,9 +18,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:proxypin/mcp/mcp_listen_options.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/utils/platform.dart';
-import 'package:path_provider/path_provider.dart';
 
 /// @author wanghongen
 /// 2024/1/1
@@ -50,20 +51,22 @@ class ColorMapping {
 class ThemeModel {
   ThemeMode mode;
   bool useMaterial3;
+  bool useAmoled;
   String color = "Blue";
 
-  ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true});
+  ThemeModel({this.mode = ThemeMode.system, this.useMaterial3 = true, this.useAmoled = false});
 
-  ThemeModel copy({ThemeMode? mode, bool? useMaterial3}) => ThemeModel(
+  ThemeModel copy({ThemeMode? mode, bool? useMaterial3, bool? useAmoled}) => ThemeModel(
         mode: mode ?? this.mode,
         useMaterial3: useMaterial3 ?? this.useMaterial3,
+        useAmoled: useAmoled ?? this.useAmoled,
       );
 
   Color get themeColor => ColorMapping.colors[color] ?? Colors.blue;
 }
 
 class AppConfiguration {
-  static const String version = "1.4.0";
+  static const String version = "1.4.1";
 
   ValueNotifier<bool> globalChange = ValueNotifier(false);
 
@@ -71,7 +74,7 @@ class AppConfiguration {
   Locale? _language;
 
   //是否显示更新内容公告
-  bool upgradeNoticeV40 = true;
+  bool upgradeNoticeV41 = true;
 
   /// 是否启用画中画
   ValueNotifier<bool> pipEnabled = ValueNotifier(Platform.isAndroid);
@@ -115,8 +118,14 @@ class AppConfiguration {
   /// 导出给 AI 时是否脱敏 Authorization/Cookie
   bool mcpRedactEnabled = true;
 
-  /// 移动端 LAN 模式的访问 token（桌面 loopback 不用，留空即可）
+  /// 移动端是否要求客户端使用访问令牌鉴权，默认开启。
+  bool mcpAuthEnabled = true;
+
+  /// 移动端访问 token；关闭鉴权时保留，重新开启后可复用。
   String? mcpToken;
+
+  /// 移动端监听地址，仅支持 127.0.0.1 和 0.0.0.0；桌面端忽略此配置。
+  String mcpBindAddress = McpListenOptions.anyAddress;
 
   /// MCP 服务监听端口。为 null/非法时使用默认端口 9127，
   /// 被占用时由服务回退到系统随机端口。
@@ -163,6 +172,16 @@ class AppConfiguration {
   set useMaterial3(bool value) {
     if (value == useMaterial3) return;
     _theme.useMaterial3 = value;
+    globalChange.value = !globalChange.value;
+    flushConfig();
+  }
+
+  /// 深色模式下使用 AMOLED 纯黑背景
+  bool get useAmoled => _theme.useAmoled;
+
+  set useAmoled(bool value) {
+    if (value == useAmoled) return;
+    _theme.useAmoled = value;
     globalChange.value = !globalChange.value;
     flushConfig();
   }
@@ -220,10 +239,11 @@ class AppConfiguration {
       Map<String, dynamic> config = jsonDecode(json);
       var mode =
           ThemeMode.values.firstWhere((element) => element.name == config['mode'], orElse: () => ThemeMode.system);
-      _theme = ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true);
+      _theme =
+          ThemeModel(mode: mode, useMaterial3: config['useMaterial3'] ?? true, useAmoled: config['useAmoled'] ?? false);
       _theme.color = config['themeColor'] ?? "Blue";
 
-      upgradeNoticeV40 = config['upgradeNoticeV40'] ?? true;
+      upgradeNoticeV41 = config['upgradeNoticeV41'] ?? true;
       _language = config['language'] == null
           ? null
           : Locale.fromSubtags(languageCode: config['language'], scriptCode: config['languageScript']);
@@ -249,7 +269,9 @@ class AppConfiguration {
 
       mcpEnabled = config['mcpEnabled'] ?? false;
       mcpRedactEnabled = config['mcpRedactEnabled'] ?? true;
+      mcpAuthEnabled = config['mcpAuthEnabled'] ?? true;
       mcpToken = config['mcpToken'] as String?;
+      mcpBindAddress = McpListenOptions.normalizeAddress(config['mcpBindAddress']);
       var port = config['mcpPort'];
       mcpPort = port is int && port > 0 && port <= 65535 ? port : null;
       var pins = config['toolbarPins'];
@@ -285,7 +307,8 @@ class AppConfiguration {
       'mode': _theme.mode.name,
       'themeColor': _theme.color,
       'useMaterial3': _theme.useMaterial3,
-      'upgradeNoticeV40': upgradeNoticeV40,
+      'useAmoled': _theme.useAmoled,
+      'upgradeNoticeV41': upgradeNoticeV41,
       "language": _language?.languageCode,
       "languageScript": _language?.scriptCode,
       "headerViewMode": headerViewMode,
@@ -306,7 +329,9 @@ class AppConfiguration {
       // MCP 配置所有平台都写入
       'mcpEnabled': mcpEnabled,
       'mcpRedactEnabled': mcpRedactEnabled,
+      'mcpAuthEnabled': mcpAuthEnabled,
       if (mcpToken != null) 'mcpToken': mcpToken,
+      'mcpBindAddress': mcpBindAddress,
       if (mcpPort != null) 'mcpPort': mcpPort,
     };
   }

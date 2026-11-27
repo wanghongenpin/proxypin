@@ -69,11 +69,7 @@ class SearchState extends State<Search> {
                 Future.delayed(const Duration(milliseconds: 500), () {
                   changing = false;
                   if (!searched) {
-                    searchModel.searchOptions = {
-                      Option.url,
-                      Option.method,
-                      Option.responseContentType
-                    };
+                    searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
                   }
                   widget.onSearch?.call(searchModel);
                 });
@@ -85,28 +81,19 @@ class SearchState extends State<Search> {
                   borderSide: BorderSide(color: theme.dividerColor, width: 1.5),
                   borderRadius: BorderRadius.circular(15)),
               focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                      width: 1.8),
+                  borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.5), width: 1.8),
                   borderRadius: BorderRadius.circular(15)),
               prefixIcon: IconButton(
-                  icon: Icon(Icons.search,
-                      size: 20,
-                      color: searched
-                          ? okColor(theme)
-                          : theme.colorScheme.primary),
+                  icon: Icon(Icons.search, size: 20, color: searched ? okColor(theme) : theme.colorScheme.primary),
                   splashRadius: 16,
                   padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 38, minHeight: 32),
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 32),
                   onPressed: () => searchDialog()),
               hintText: 'Search',
-              hintStyle: TextStyle(
-                  fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
+              hintStyle: TextStyle(fontSize: 14, color: theme.colorScheme.onSurfaceVariant),
               suffixIcon: ContentTypeSelect(onSelected: (contentType) {
                 setState(() {
-                  searchModel.responseContentTypes =
-                      contentType == null ? {} : {contentType};
+                  searchModel.responseContentTypes = contentType == null ? {} : {contentType};
                   searchModel.protocols = {};
                   searched = searchModel.isNotEmpty;
                 });
@@ -121,32 +108,26 @@ class SearchState extends State<Search> {
     if (!searched) {
       searchModel.searchOptions = {Option.url};
     }
-    // 搜索框在列表底部，条件面板需向上弹出。showMenu 只按 position.top 向下排（SDK 无自动上翻），
-    // 故用 OverlayEntry 按底边锚定：面板底贴搜索框顶，与面板实际高度无关；窗口过矮时内部滚动。
+    // 搜索框在列表底部，条件面板需按底边锚定向上展开；与内部菜单使用同一 Navigator，避免菜单被面板遮挡。
     var theme = Theme.of(context);
     var box = context.findRenderObject() as RenderBox;
-    var offset = box.localToGlobal(Offset.zero);
-    var screen = MediaQuery.of(context).size;
+    var overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+    var offset = box.localToGlobal(Offset.zero, ancestor: overlay);
     var width = (box.size.width - 24).clamp(260.0, 330.0);
 
-    late OverlayEntry entry;
-    entry = OverlayEntry(builder: (overlayContext) {
-      return Stack(children: [
-        // 点击空白处关闭
-        Positioned.fill(
-            child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => entry.remove(),
-                child: const SizedBox.shrink())),
-        Positioned(
-            left: offset.dx + 12,
-            bottom: screen.height - offset.dy + 4,
-            width: width,
-            child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 120),
-                builder: (context, value, child) =>
-                    Opacity(opacity: value, child: child),
+    showGeneralDialog<void>(
+        context: context,
+        useRootNavigator: false,
+        barrierDismissible: true,
+        barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        barrierColor: Colors.transparent,
+        transitionDuration: const Duration(milliseconds: 120),
+        pageBuilder: (dialogContext, animation, secondaryAnimation) {
+          return Stack(children: [
+            Positioned(
+                left: offset.dx + 12,
+                bottom: overlay.size.height - offset.dy + 4,
+                width: width,
                 child: Material(
                     elevation: 8,
                     borderRadius: BorderRadius.circular(8),
@@ -157,25 +138,22 @@ class SearchState extends State<Search> {
                         constraints: BoxConstraints(maxHeight: offset.dy - 16),
                         child: SingleChildScrollView(
                             child: Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 15, right: 15, top: 10, bottom: 5),
+                                padding: const EdgeInsets.only(left: 15, right: 15, top: 10, bottom: 5),
                                 child: DefaultTextStyle.merge(
-                                    style: theme.textTheme.bodyMedium
-                                        ?.copyWith(fontSize: 14),
+                                    style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
                                     child: SearchConditions(
                                         searchModel: searchModel,
+                                        onClose: () => Navigator.of(dialogContext).pop(),
                                         onSearch: (val) {
                                           setState(() {
                                             searchModel = val;
                                             searched = searchModel.isNotEmpty;
-                                            keywordController.text =
-                                                searchModel.keyword ?? '';
+                                            keywordController.text = searchModel.keyword ?? '';
                                             widget.onSearch?.call(searchModel);
                                           });
-                                        })))))))),
-      ]);
-    });
-    Overlay.of(context).insert(entry);
+                                        }))))))),
+          ]);
+        });
   }
 }
 
@@ -200,26 +178,15 @@ class ContentTypeState extends State<ContentTypeSelect> {
   @override
   Widget build(BuildContext context) {
     value ??= localizations.all;
-    types ??= [
-      "JSON",
-      "IMAGE",
-      "HTML",
-      "XML",
-      "JS",
-      "CSS",
-      "TEXT",
-      localizations.all
-    ];
+    types ??= ["JSON", "IMAGE", "HTML", "XML", "JS", "CSS", "TEXT", localizations.all];
 
     return PopupMenuButton(
       initialValue: value,
-      offset:
-          Offset(-10, (types!.length - types!.indexOf(value!)) * -30.0 - 10),
+      offset: Offset(-10, (types!.length - types!.indexOf(value!)) * -30.0 - 10),
       tooltip: localizations.responseType,
       constraints: const BoxConstraints(maxWidth: 75),
       child: Wrap(runAlignment: WrapAlignment.center, children: [
-        Text(value!,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(value!, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
         const Icon(Icons.arrow_drop_up, size: 20)
       ]),
       onSelected: (String value) {
@@ -229,8 +196,7 @@ class ContentTypeState extends State<ContentTypeSelect> {
         setState(() {
           this.value = value;
         });
-        widget.onSelected(
-            value == localizations.all ? null : ContentType.valueOf(value));
+        widget.onSelected(value == localizations.all ? null : ContentType.valueOf(value));
       },
       itemBuilder: (BuildContext context) {
         return types!.map(item).toList();

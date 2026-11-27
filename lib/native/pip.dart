@@ -29,9 +29,14 @@ class PictureInPicture {
 
   ///进入画中画模式
   static Future<bool> enterPictureInPictureMode(String host, int port,
-      {List<String>? appList, List<String>? disallowApps}) async {
-    final bool enterPictureInPictureMode = await _channel.invokeMethod('enterPictureInPictureMode',
-        {"proxyHost": host, "proxyPort": port, "allowApps": appList, "disallowApps": disallowApps});
+      {List<String>? appList, List<String>? disallowApps, required bool setSystemProxy}) async {
+    final bool enterPictureInPictureMode = await _channel.invokeMethod('enterPictureInPictureMode', {
+      "proxyHost": host,
+      "proxyPort": port,
+      "allowApps": appList,
+      "disallowApps": disallowApps,
+      "setSystemProxy": setSystemProxy,
+    });
     inPip = true;
 
     return enterPictureInPictureMode;

@@ -150,7 +150,7 @@ class _PictureInPictureState extends State<PictureInPictureIcon> {
 
                 PictureInPicture.enterPictureInPictureMode(
                     Platform.isAndroid ? await localIp() : "127.0.0.1", widget.proxyServer.port,
-                    appList: appList, disallowApps: disallowApps);
+                    appList: appList, disallowApps: disallowApps, setSystemProxy: configuration.enableSystemProxy);
               },
               icon: const Icon(Icons.picture_in_picture_alt))),
     );

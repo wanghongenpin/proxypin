@@ -59,7 +59,7 @@ class McpActions {
 
   McpActions({required this.store, this.onClearSession, this.certStatusProvider, this.redactEnabled});
 
-  /// 生效脱敏状态：用户设置是硬门槛，开启时工具参数无法关闭，与 McpServer 保持一致。
+  /// 生效脱敏状态：开启时工具参数无法关闭；关闭后遵循参数，与 McpServer 保持一致。
   bool _effectiveRedact(dynamic arg) => (redactEnabled ?? () => true)() || arg == true;
 
   List<McpTool> tools() => [
@@ -1095,13 +1095,14 @@ class McpActions {
     return {
       'status': response.status.code,
       'statusText': response.status.reasonPhrase,
-      'headers': _redactHeaders(response.headers.toMap()),
+      'headers': _responseHeaders(response.headers.toMap()),
       'body': body,
     };
   }
 
-  /// 与 FlowView / CurlBuilder 共用同一份敏感头清单，打码后再交给 AI
-  static Map<String, dynamic> _redactHeaders(Map<String, dynamic> headers) {
+  /// 与 FlowView / CurlBuilder 共用同一份敏感头清单和设置开关
+  Map<String, dynamic> _responseHeaders(Map<String, dynamic> headers) {
+    if (!_effectiveRedact(null)) return headers;
     var out = <String, dynamic>{};
     headers.forEach((k, v) {
       out[k] = SensitiveData.isRedactedHeader(k) ? SensitiveData.placeholder : v;
@@ -1211,7 +1212,11 @@ class McpActions {
               'description': 'Saved history session id from list_histories; omit for live capture'
             },
             'language': {'type': 'string', 'enum': ['curl', 'fetch', 'python']},
-            'redact': {'type': 'boolean'},
+            'redact': {
+              'type': 'boolean',
+              'description':
+                  'Redact Authorization/Cookie. Defaults to the app setting; pass false to return original values when redaction is disabled.'
+            },
           },
           'required': ['id'],
         },

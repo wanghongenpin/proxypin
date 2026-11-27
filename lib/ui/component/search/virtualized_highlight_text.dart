@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
 import 'package:proxypin/ui/component/search/highlight_text_document.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 import 'package:proxypin/ui/component/utils.dart';
@@ -29,8 +30,7 @@ class VirtualizedHighlightText extends StatefulWidget {
   });
 
   @override
-  State<VirtualizedHighlightText> createState() =>
-      _VirtualizedHighlightTextState();
+  State<VirtualizedHighlightText> createState() => _VirtualizedHighlightTextState();
 }
 
 class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
@@ -43,6 +43,8 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
   bool _searchUpdateScheduled = false;
   int _scrollRequestId = 0;
   String _selectedText = '';
+  // 懒保活下只有活动查看器能回写共享搜索控制器；build 中随 ActiveViewerScope 更新。
+  bool _isActive = true;
 
   // 缓存机制，避免重复计算
   HighlightTextDocument? _cachedDocument;
@@ -69,8 +71,8 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
   @override
   Widget build(BuildContext context) {
-    final viewHeight =
-        widget.height ?? max(240, MediaQuery.sizeOf(context).height - 210);
+    final viewHeight = widget.height ?? max(240, MediaQuery.sizeOf(context).height - 210);
+    _isActive = ActiveViewerScope.isActive(context);
 
     return AnimatedBuilder(
       animation: widget.searchController,
@@ -84,14 +86,11 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
           currentMatchIndex: 0, // 忽略currentMatchIndex用于比较
         );
 
-        final shouldRebuildDocument = _cachedText != widget.text ||
-            _cachedSearchSettings != newSearchSettings;
+        final shouldRebuildDocument = _cachedText != widget.text || _cachedSearchSettings != newSearchSettings;
         // 搜索激活时切换为逐行虚拟化，保证自动滚动能精确定位到匹配行。
-        final effectiveChunkLines =
-            widget.searchController.shouldSearch() ? 1 : widget.chunkLines;
+        final effectiveChunkLines = widget.searchController.shouldSearch() ? 1 : widget.chunkLines;
 
-        if (shouldRebuildDocument ||
-            _cachedEffectiveChunkLines != effectiveChunkLines) {
+        if (shouldRebuildDocument || _cachedEffectiveChunkLines != effectiveChunkLines) {
           _cachedDocument = HighlightTextDocument.create(
             context,
             text: widget.text,
@@ -128,8 +127,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
               context,
               _cachedDocument!,
               chunk,
-              currentMatchIndex:
-                  widget.searchController.currentMatchIndex.value,
+              currentMatchIndex: widget.searchController.currentMatchIndex.value,
             ),
           );
           return Text.rich(TextSpan(children: chunkSpans));
@@ -138,8 +136,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
     );
   }
 
-  Widget _buildList<T>(
-      double viewHeight, List<T> items, Widget Function(int) itemBuilder) {
+  Widget _buildList<T>(double viewHeight, List<T> items, Widget Function(int) itemBuilder) {
     // 根据文本块大小动态调整缓存范围，避免过度缓存导致的内存和CPU消耗
     // 缓存范围应该是视口高度的2-3倍
     final estimatedItemHeight = 24.0; // 粗略估计单行高度（monospace）
@@ -150,10 +147,8 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       width: double.infinity,
       height: viewHeight,
       child: SelectionArea(
-        onSelectionChanged: (content) =>
-            _selectedText = content?.plainText ?? '',
-        contextMenuBuilder: (context, state) =>
-            selectableRegionContextMenu(context, state, _selectedText),
+        onSelectionChanged: (content) => _selectedText = content?.plainText ?? '',
+        contextMenuBuilder: (context, state) => selectableRegionContextMenu(context, state, _selectedText),
         child: ScrollablePositionedList.builder(
           key: const ValueKey('virtualized-highlight-text'),
           physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
@@ -181,16 +176,14 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchUpdateScheduled = false;
-      if (!mounted) return;
+      if (!mounted || !_isActive) return;
       // 使用缓存的文档，确保使用最新的数据
       final cachedDoc = _cachedDocument;
       if (cachedDoc == null) return;
 
       final settings = widget.searchController.value;
-      final searchSignature =
-          '${settings.pattern}|${settings.isCaseSensitive}|${settings.isRegExp}';
-      if (searchSignature != _lastSearchSignature ||
-          cachedDoc.totalMatchCount != _lastKnownMatchCount) {
+      final searchSignature = '${settings.pattern}|${settings.isCaseSensitive}|${settings.isRegExp}';
+      if (searchSignature != _lastSearchSignature || cachedDoc.totalMatchCount != _lastKnownMatchCount) {
         _lastSearchSignature = searchSignature;
         _lastKnownMatchCount = cachedDoc.totalMatchCount;
         _lastScrolledMatchIndex = -1;
@@ -198,8 +191,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
       widget.searchController.updateMatchCount(cachedDoc.totalMatchCount);
       final currentMatch = widget.searchController.currentMatchIndex.value;
-      if (!widget.searchController.shouldSearch() ||
-          cachedDoc.totalMatchCount == 0) {
+      if (!widget.searchController.shouldSearch() || cachedDoc.totalMatchCount == 0) {
         return;
       }
 
@@ -219,9 +211,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
     });
   }
 
-  Future<void> _scrollToCurrentMatch(
-      HighlightTextDocument document, int requestId,
-      [int attempt = 0]) async {
+  Future<void> _scrollToCurrentMatch(HighlightTextDocument document, int requestId, [int attempt = 0]) async {
     if (!mounted || requestId != _scrollRequestId) {
       return;
     }
@@ -242,16 +232,14 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
 
     // 直接通过行号计算块索引（更简单可靠）
     final chunkLines = _cachedEffectiveChunkLines ?? widget.chunkLines;
-    final chunkIndex =
-        (lineIndex ~/ max(1, chunkLines)).clamp(0, chunks.length - 1);
+    final chunkIndex = (lineIndex ~/ max(1, chunkLines)).clamp(0, chunks.length - 1);
 
     // 计算匹配行在块内的位置（用于计算 alignment）
     final chunk = chunks[chunkIndex];
     if (chunk.lineCount <= 0) {
       return;
     }
-    final lineOffsetInChunk =
-        (lineIndex - chunk.startLineIndex).clamp(0, chunk.lineCount - 1);
+    final lineOffsetInChunk = (lineIndex - chunk.startLineIndex).clamp(0, chunk.lineCount - 1);
     final chunkLineCount = max(1, chunk.lineCount);
 
     // alignment: 把匹配行放在块的相对位置上，限制在 [0.1, 0.9] 避免太靠边
@@ -261,8 +249,7 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
     // 如果 itemScrollController 尚未 attach，则延迟一帧重试一次
     if (!itemScrollController.isAttached) {
       if (attempt >= 7) {
-        logger.w(
-            'VirtualizedHighlightText scroll aborted: itemScrollController not attached');
+        logger.w('VirtualizedHighlightText scroll aborted: itemScrollController not attached');
         return;
       }
       await Future<void>.delayed(Duration(milliseconds: 16 * (attempt + 1)));
@@ -295,14 +282,12 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       return trackingScrollController!;
     }
 
-    trackingScrollController =
-        trackingScroll(widget.scrollController) ?? TrackingScrollController();
+    trackingScrollController = trackingScroll(widget.scrollController) ?? TrackingScrollController();
     return trackingScrollController!;
   }
 
   /// 将行分组为块，每块包含指定数量的行
-  List<HighlightDocumentChunk> _buildChunks(
-      HighlightTextDocument document, int chunkLines) {
+  List<HighlightDocumentChunk> _buildChunks(HighlightTextDocument document, int chunkLines) {
     final chunks = <HighlightDocumentChunk>[];
     final allLines = document.lines;
 
@@ -314,22 +299,19 @@ class _VirtualizedHighlightTextState extends State<VirtualizedHighlightText> {
       ));
     }
 
-    return chunks.isEmpty
-        ? [HighlightDocumentChunk(startLineIndex: 0, endLineIndex: 0)]
-        : chunks;
+    return chunks.isEmpty ? [HighlightDocumentChunk(startLineIndex: 0, endLineIndex: 0)] : chunks;
   }
 
   /// 为指定块构建 InlineSpan 列表
-  List<InlineSpan> _buildSpansForChunk(BuildContext context,
-      HighlightTextDocument document, HighlightDocumentChunk chunk,
+  List<InlineSpan> _buildSpansForChunk(
+      BuildContext context, HighlightTextDocument document, HighlightDocumentChunk chunk,
       {required int currentMatchIndex}) {
     final spans = <InlineSpan>[];
 
     for (var i = chunk.startLineIndex; i < chunk.endLineIndex; i++) {
       if (i >= document.lines.length) break;
 
-      spans.addAll(document.buildSpansForLine(context, i,
-          currentMatchIndexOverride: currentMatchIndex));
+      spans.addAll(document.buildSpansForLine(context, i, currentMatchIndexOverride: currentMatchIndex));
 
       // 在行之间添加换行符
       if (i < chunk.endLineIndex - 1) {

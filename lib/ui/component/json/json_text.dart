@@ -19,6 +19,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/ui/component/json/theme.dart';
+import 'package:proxypin/ui/component/search/active_viewer_scope.dart';
 import 'package:proxypin/ui/component/search/search_controller.dart';
 import 'package:proxypin/ui/component/utils.dart';
 import 'package:proxypin/utils/font.dart';
@@ -85,11 +86,14 @@ class _JsonTextState extends State<JsonText> {
     var textList = jsonParser.getJsonTree();
     List<List<TextSpan>>? chunks;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      searchController?.updateMatchCount(jsonParser.searchMatchTotal);
-      // 自动滚动到当前高亮项
-      scrollToMatch(jsonParser, chunks);
-    });
+    // 懒保活下隐藏查看器不回写共享搜索计数，也不做匹配项自动滚动。
+    if (ActiveViewerScope.isActive(context)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        searchController?.updateMatchCount(jsonParser.searchMatchTotal);
+        // 自动滚动到当前高亮项
+        scrollToMatch(jsonParser, chunks);
+      });
+    }
 
     if (textList.length < 1000) {
       return SelectableText.rich(TextSpan(children: textList),
@@ -101,24 +105,23 @@ class _JsonTextState extends State<JsonText> {
           height: MediaQuery.of(context).size.height - 200,
           child: SelectionArea(
               onSelectionChanged: (content) => _selectedText = content?.plainText ?? '',
-              contextMenuBuilder: (context, state) =>
-                  selectableRegionContextMenu(context, state, _selectedText),
+              contextMenuBuilder: (context, state) => selectableRegionContextMenu(context, state, _selectedText),
               child: ScrollablePositionedList.builder(
-            physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
-            scrollController: Platforms.isDesktop() ? null : trackingScroll(),
-            itemCount: chunks.length,
-            minCacheExtent: 1500,
-            itemScrollController: itemScrollController,
-            itemBuilder: (BuildContext context, int index) {
-              return Text.rich(
-                TextSpan(children: chunks![index]),
-                textHeightBehavior:
-                    const TextHeightBehavior(applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
-                strutStyle: const StrutStyle(forceStrutHeight: true, height: 1.393),
-                style: TextStyle(fontFamily: fonts.regular),
-              );
-            },
-          )));
+                physics: Platforms.isDesktop() ? null : const BouncingScrollPhysics(),
+                scrollController: Platforms.isDesktop() ? null : trackingScroll(),
+                itemCount: chunks.length,
+                minCacheExtent: 1500,
+                itemScrollController: itemScrollController,
+                itemBuilder: (BuildContext context, int index) {
+                  return Text.rich(
+                    TextSpan(children: chunks![index]),
+                    textHeightBehavior:
+                        const TextHeightBehavior(applyHeightToFirstAscent: false, applyHeightToLastDescent: false),
+                    strutStyle: const StrutStyle(forceStrutHeight: true, height: 1.393),
+                    style: TextStyle(fontFamily: fonts.regular),
+                  );
+                },
+              )));
     }
   }
 
