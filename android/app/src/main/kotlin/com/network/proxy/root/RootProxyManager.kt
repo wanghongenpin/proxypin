@@ -33,6 +33,13 @@ class RootProxyManager private constructor() {
         /** 重置规则生效前已建立、未经代理的旧连接（filter OUTPUT） */
         const val RESET_CHAIN = "PROXYPIN_RST"
 
+        /**
+         * netd 给 VpnService.protect() 过的 socket 打的 fwmark 位（protectedFromVpn，bit 17）。
+         * 其它 VPN 客户端连节点的流量都带这个标记：必须放行，否则会被重定向进 ProxyPin，
+         * 而 ProxyPin 的出站又经 tun 回到该 VPN 客户端，形成环路导致断网。
+         */
+        const val VPN_PROTECTED_MARK = "0x20000/0x20000"
+
         private const val PREFS = "proxypin_root"
         private const val PREF_RULES_INSTALLED = "rulesInstalled"
 
@@ -202,6 +209,7 @@ class RootProxyManager private constructor() {
         rules += "$ipt -N $c"
         // 1. 排除 ProxyPin 自身，否则代理的出站连接会被重定向回自己形成环路
         rules += "$ipt -A $c -m owner --uid-owner ${Process.myUid()} -j RETURN"
+        rules += "$ipt -A $c -m mark --mark $VPN_PROTECTED_MARK -j RETURN"
         // 2. 排除本地/回环
         rules += "$ipt -A $c -d 127.0.0.0/8 -j RETURN"
         rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
@@ -306,6 +314,7 @@ class RootProxyManager private constructor() {
         val rules = ArrayList<String>()
         rules += "$ipt -N $c"
         rules += "$ipt -A $c -m owner --uid-owner ${Process.myUid()} -j RETURN"
+        rules += "$ipt -A $c -m mark --mark $VPN_PROTECTED_MARK -j RETURN"
         rules += "$ipt -A $c -d 127.0.0.0/8 -j RETURN"
         rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
         for (dst in resolveBypass(o.proxyPassDomains)) rules += "$ipt -A $c -d $dst -j RETURN"
@@ -329,6 +338,7 @@ class RootProxyManager private constructor() {
         val rules = ArrayList<String>()
         rules += "$ipt -N $c"
         rules += "$ipt -A $c -m owner --uid-owner ${Process.myUid()} -j RETURN"
+        rules += "$ipt -A $c -m mark --mark $VPN_PROTECTED_MARK -j RETURN"
         rules += "$ipt -A $c -d ::1/128 -j RETURN"
         rules += "$ipt -A $c -d fe80::/10 -j RETURN"
         rules += "$ipt -A $c -p tcp --dport 53 -j RETURN"
@@ -358,6 +368,7 @@ class RootProxyManager private constructor() {
         val rules = ArrayList<String>()
         rules += "$ipt -N $c"
         rules += "$ipt -A $c -m owner --uid-owner ${Process.myUid()} -j RETURN"
+        rules += "$ipt -A $c -m mark --mark $VPN_PROTECTED_MARK -j RETURN"
         if (o.allowApps.isNotEmpty()) {
             for (uid in uidsOf(context, o.allowApps)) for (om in o.outMatches) {
                 rules += "$ipt -A $c$om -p udp --dport 443 -m owner --uid-owner $uid -j $reject"

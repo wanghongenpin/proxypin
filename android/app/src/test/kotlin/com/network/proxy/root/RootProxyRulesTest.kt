@@ -58,6 +58,21 @@ class RootProxyRulesTest {
     }
 
     @Test
+    fun vpnProtectedSocketsAreExcluded() {
+        // 其它 VPN 客户端 protect() 过的 socket 必须在重定向/重置之前放行，否则开着 VPN 抓包会形成环路断网
+        val ctx = ContextWrapper(null)
+        val nat = manager.buildRules(ctx, options())
+        val ret = nat.indexOf("iptables -w -t nat -A PROXYPIN_OUT -m mark --mark 0x20000/0x20000 -j RETURN")
+        assertTrue(ret >= 0)
+        assertTrue(ret < nat.indexOfFirst { it.contains("REDIRECT") })
+
+        val rst = manager.buildResetRules(ctx, options())
+        val rstRet = rst.indexOf("iptables -w -t filter -A PROXYPIN_RST -m mark --mark 0x20000/0x20000 -j RETURN")
+        assertTrue(rstRet >= 0)
+        assertTrue(rstRet < rst.indexOfFirst { it.contains("tcp-reset") })
+    }
+
+    @Test
     fun conntrackParse() {
         val lines = listOf(
             "ipv4     2 udp      17 20 src=192.168.43.5 dst=8.8.8.8 sport=51234 dport=53 src=8.8.8.8 dst=192.168.43.5 sport=53 dport=51234 mark=0 zone=0 use=2",

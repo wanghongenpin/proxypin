@@ -16,6 +16,10 @@
 
 1. `RootProxyManager` 在 nat 表新建 `PROXYPIN_OUT` 链并挂到 `OUTPUT` 首位：
    - 排除 ProxyPin 自身 uid（避免代理出站连接被重定向成环）、`127.0.0.0/8`、TCP 53；
+   - 排除带 `fwmark 0x20000/0x20000` 的流量：这是 netd 给 `VpnService.protect()` 过的 socket 打的标记，
+     即其它 VPN 客户端（Clash / v2rayNG 等）连节点的连接。不排除的话，节点连接会被重定向进 ProxyPin，
+     而 ProxyPin 的出站又经 tun 回到该 VPN 客户端，形成环路，开着 VPN 抓包会直接断网。
+     `PROXYPIN_RST` / IPv6 / QUIC 链同样放行。非 VpnService 实现的代理（如 Clash 自身的 TProxy 模式）不带该标记，需加入黑名单；
    - 「代理忽略域名」中的 IP / CIDR / 可解析域名 → `RETURN`；
    - 应用白名单：仅对白名单 uid 执行 `REDIRECT`；黑名单：黑名单 uid `RETURN`，其余 `REDIRECT`；
    - 仅匹配「重定向端口」（默认 `80,443,8080,8443`，留空为全部 TCP）；
