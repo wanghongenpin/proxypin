@@ -17,6 +17,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:proxypin/ui/component/image_preview.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -904,8 +905,7 @@ class _ResponsePreviewCardState extends State<ResponsePreviewCard> {
   Widget bodyView() {
     var view = views[viewIndex];
     if (view == 'Preview' && _isImage()) {
-      return Center(
-          child: Image.memory(Uint8List.fromList(widget.response.body ?? []), fit: BoxFit.scaleDown));
+      return ImageBodyPreview(widget.response.body ?? const [], contentType: widget.response.headers.contentType);
     }
     return futureWidget(widget.response.decodeBodyString(), (body) {
       if (view == 'JSON') {

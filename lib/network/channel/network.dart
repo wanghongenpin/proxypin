@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:proxypin/network/util/tls_keylog.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -89,7 +90,11 @@ class Server extends Network {
       var channel = Channel(socket);
       _connections.add(channel);
 
-      socket.done.whenComplete(() => _connections.remove(channel)).onError((_, __) {});
+      // HTTPS 解密时 channel 的底层 socket 会被替换为 SecureSocket，原始 socket 随即 done；
+      // 此时不能移出列表，否则 closeConnections / stop 找不到这些连接（由定时 cleanupConnections 清理已关闭的）。
+      socket.done.whenComplete(() {
+        if (!channel.tlsUpgrading) _connections.remove(channel);
+      }).onError((_, __) {});
 
       ChannelContext channelContext = ChannelContext();
       channelContext.clientChannel = channel;
@@ -108,6 +113,23 @@ class Server extends Network {
       cleanupConnections();
     });
     return serverSocket;
+  }
+
+  /// 断开当前所有客户端连接（监听保持）。
+  /// Root 模式删除 / 变更 iptables 规则只影响新连接，已被重定向的长连接需主动断开，客户端才会按新规则重连。
+  int closeConnections() {
+    var count = 0;
+    for (var channel in List.of(_connections)) {
+      if (channel.isClosed) continue;
+      try {
+        channel.close();
+        count++;
+      } catch (e) {
+        logger.e('Error closing socket: $e');
+      }
+    }
+    _connections.clear();
+    return count;
   }
 
   Future<ServerSocket> stop() async {
@@ -274,6 +296,7 @@ class Server extends Network {
           ProtocolSniffer(hostAndPort, serviceName, httpDecoder, httpEncoder, httpHandler));
 
       //处理客户端ssl握手
+      channel.tlsUpgrading = true;
       var secureSocket = await SecureSocket.secureServer(channel.socket, certificate,
           bufferedData: data, supportedProtocols: supportedProtocols);
 
@@ -340,7 +363,10 @@ class Client extends Network {
   Future<Channel> secureConnect(HostAndPort hostAndPort, ChannelContext channelContext) async {
     SecurityContext? context = await ClientCertManager.securityContextForHost(hostAndPort.host);
     return SecureSocket.connect(_stripIPv6Brackets(hostAndPort.host), hostAndPort.port,
-        context: context, timeout: const Duration(seconds: 3), onBadCertificate: (certificate) => true).then((socket) {
+        context: context,
+        timeout: const Duration(seconds: 3),
+        onBadCertificate: (certificate) => true,
+        keyLog: TlsKeyLog.instance.callback).then((socket) {
       var channel = Channel(socket);
       channelContext.serverChannel = channel;
       return listen(channel, channelContext);

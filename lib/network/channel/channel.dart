@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'package:proxypin/network/util/tls_keylog.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -69,6 +70,9 @@ class Channel {
   //是否使用代理
   bool useProxy = false;
 
+  /// 正在把底层 socket 升级为 TLS（原始 socket 会随之 done，但连接仍在使用）
+  bool tlsUpgrading = false;
+
   Channel(this._socket)
       : _id = DateTime.now().millisecondsSinceEpoch + Random().nextInt(999999),
         remoteSocketAddress = InetSocketAddress(_socket.remoteAddress, _socket.remotePort);
@@ -89,7 +93,11 @@ class Channel {
       {String? host, List<String>? supportedProtocols}) async {
     SecurityContext? context = await ClientCertManager.securityContextForHost(host);
     SecureSocket secureSocket = await SecureSocket.secure(socket,
-        host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+        host: host,
+        context: context,
+        supportedProtocols: supportedProtocols,
+        onBadCertificate: (certificate) => true,
+        keyLog: TlsKeyLog.instance.callback);
 
     _socket = secureSocket;
     //done 以错误完成时（如 Broken pipe）也要置位关闭；不挂 onError 这条派生 Future 会冒到 VM 顶层
@@ -103,7 +111,11 @@ class Channel {
       {String? host, List<String>? supportedProtocols}) async {
     SecurityContext? context = await ClientCertManager.securityContextForHost(host);
     SecureSocket secureSocket = await SecureSocket.secure(socket,
-        host: host, context: context, supportedProtocols: supportedProtocols, onBadCertificate: (certificate) => true);
+        host: host,
+        context: context,
+        supportedProtocols: supportedProtocols,
+        onBadCertificate: (certificate) => true,
+        keyLog: TlsKeyLog.instance.callback);
 
     _socket = secureSocket;
     //done 以错误完成时（如 Broken pipe）也要置位关闭；不挂 onError 这条派生 Future 会冒到 VM 顶层

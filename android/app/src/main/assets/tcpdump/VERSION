@@ -1,0 +1,3 @@
+tcpdump 4.99.5
+libpcap 1.10.5
+built with android-ndk-r27c, android api 24

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import 'package:flutter/material.dart';
+import 'package:proxypin/ui/component/model/request_query.dart';
+import 'package:proxypin/ui/component/query_syntax_help.dart';
 import 'package:proxypin/ui/component/search_condition.dart';
 
 import '../../component/model/search_model.dart';
@@ -63,25 +65,32 @@ class MobileSearchState extends State<MobileSearch> {
             cursorHeight: 20,
             keyboardType: TextInputType.url,
             onTapOutside: (event) => FocusManager.instance.primaryFocus?.unfocus(),
-            onChanged: (val) {
-              searchModel.keyword = val;
-              if (!_changing) {
-                _changing = true;
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  _changing = false;
-                  if (!_searched) {
-                    searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
-                  }
-                  widget.onSearch?.call(searchModel);
-                });
-              }
-            },
+            onChanged: _onKeywordChanged,
             decoration: InputDecoration(
                 border: InputBorder.none,
                 prefixIcon: InkWell(
                     onTap: showSearch,
                     child: Icon(Icons.search, color: _searched ? Colors.green : Theme.of(context).colorScheme.primary)),
-                hintText: 'Search')));
+                suffixIcon: QueryFilterButton(
+                    schema: RequestQuery.schema,
+                    controller: _keywordController,
+                    onChanged: _onKeywordChanged,
+                    quickFilters: quickRequestFilters),
+                hintText: 'Search  method:POST status:4xx')));
+  }
+
+  void _onKeywordChanged(String val) {
+    searchModel.keyword = val;
+    if (!_changing) {
+      _changing = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _changing = false;
+        if (!_searched) {
+          searchModel.searchOptions = {Option.url, Option.method, Option.responseContentType};
+        }
+        widget.onSearch?.call(searchModel);
+      });
+    }
   }
 
   void showSearch() {

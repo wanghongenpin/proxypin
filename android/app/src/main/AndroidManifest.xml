@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
@@ -58,6 +59,16 @@
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+        </service>
+
+        <!-- Root 模式：iptables 透明代理保活服务，不占用 VPN -->
+        <service
+            android:name=".root.RootProxyService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps the local capture proxy alive while root iptables redirection is active" />
         </service>
 
         <activity

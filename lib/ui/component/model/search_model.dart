@@ -16,6 +16,8 @@
 import 'package:get/get.dart';
 import 'package:proxypin/network/http/content_type.dart';
 import 'package:proxypin/network/http/http.dart';
+import 'package:proxypin/ui/component/model/request_query.dart';
+import 'package:proxypin/utils/query/query.dart';
 
 /// @author wanghongen
 /// 2023/8/4
@@ -52,6 +54,23 @@ class SearchModel {
   Set<Protocol> protocols = {};
 
   SearchModel([this.keyword]);
+
+  Query<RequestQueryItem>? _query;
+  String? _queryKeyword;
+
+  /// 关键字按查询语法解析（如 `method:POST status:4xx -host:ads`）；
+  /// 仅包含普通文本时返回 null，保持原有的整串文本匹配行为。
+  Query<RequestQueryItem>? get query {
+    final k = keyword;
+    if (k == null || k.trim().isEmpty || isRegExp.value) return null;
+    if (_queryKeyword != k) {
+      _queryKeyword = k;
+      final q = RequestQuery.parse(k);
+      final advanced = q.hasFieldTerms || q.hasOr || q.terms.any((t) => t.negate);
+      _query = advanced ? q : null;
+    }
+    return _query;
+  }
 
   bool get isNotEmpty {
     return keyword?.trim().isNotEmpty == true ||
@@ -169,7 +188,16 @@ class SearchModel {
       }
     }
 
-    if (keyword == null || keyword?.isEmpty == true || searchOptions.isEmpty) {
+    if (keyword == null || keyword?.isEmpty == true) {
+      return true;
+    }
+
+    final q = query;
+    if (q != null) {
+      return q.matches(RequestQueryItem(request, response, textMatcher: _textTermMatcher));
+    }
+
+    if (searchOptions.isEmpty) {
       return true;
     }
 
@@ -180,6 +208,18 @@ class SearchModel {
       }
     }
 
+    return false;
+  }
+
+  /// 查询语法中的普通文本条件：按当前搜索范围匹配
+  bool _textTermMatcher(RequestQueryItem item, QueryTerm term) {
+    final options = searchOptions.isEmpty ? {Option.url} : searchOptions;
+    bool matches(String text) => term.matchText(text);
+    for (var option in options) {
+      if (keywordFilter(matches, option, item.request, item.response)) {
+        return true;
+      }
+    }
     return false;
   }
 

@@ -63,6 +63,31 @@ class Configuration {
   //默认是否启动
   bool startup = false;
 
+  /// Android Root 模式：使用 iptables 透明代理代替 VPN，不占用 VPN 通道
+  bool rootModeEnabled = false;
+
+  /// Root 模式重定向的目的端口，逗号分隔，支持范围 8000-8100；为空表示全部 TCP（排除 53）
+  String rootRedirectPorts = defaultRootRedirectPorts;
+
+  /// Root 模式下拒绝被捕获应用的 IPv6 TCP 连接，使其回落到 IPv4 以便抓包
+  bool rootBlockIpv6 = true;
+
+  /// Root 模式下拒绝被捕获应用的 QUIC(UDP 443)，迫使其回落到 TCP 以便抓包
+  bool rootBlockQuic = true;
+
+  /// Root 模式只捕获经由这些网卡发出的流量，空 = 全部网卡
+  List<String> rootInterfaces = [];
+
+  /// Root 模式同时捕获连接本机热点 / USB / 蓝牙共享的其它设备的流量
+  bool rootCaptureTether = false;
+
+  /// 原始抓包参数（网卡 / BPF / 截取长度），记住上次选择
+  String rawCaptureIface = 'any';
+  String rawCaptureBpf = '';
+  int rawCaptureSnapLen = 0;
+
+  static const String defaultRootRedirectPorts = '80,443,8080,8443';
+
   Configuration._();
 
   /// 单例
@@ -92,6 +117,15 @@ class Configuration {
 
     proxyPassDomains = config['proxyPassDomains'] ?? SystemProxy.proxyPassDomains;
     historyCacheTime = config['historyCacheTime'] ?? 0;
+    rootModeEnabled = config['rootModeEnabled'] ?? false;
+    rootRedirectPorts = config['rootRedirectPorts'] ?? defaultRootRedirectPorts;
+    rootBlockIpv6 = config['rootBlockIpv6'] ?? true;
+    rootBlockQuic = config['rootBlockQuic'] ?? true;
+    rootInterfaces = List<String>.from(config['rootInterfaces'] ?? []);
+    rootCaptureTether = config['rootCaptureTether'] ?? false;
+    rawCaptureIface = config['rawCaptureIface'] ?? 'any';
+    rawCaptureBpf = config['rawCaptureBpf'] ?? '';
+    rawCaptureSnapLen = config['rawCaptureSnapLen'] ?? 0;
     if (config['externalProxy'] != null) {
       externalProxy = ProxyInfo.fromJson(config['externalProxy']);
     }
@@ -150,6 +184,15 @@ class Configuration {
       'appBlacklist': appBlacklist,
       'historyCacheTime': historyCacheTime,
       'enabledHttp2': enabledHttp2,
+      'rootModeEnabled': rootModeEnabled,
+      'rootRedirectPorts': rootRedirectPorts,
+      'rootBlockIpv6': rootBlockIpv6,
+      'rootBlockQuic': rootBlockQuic,
+      'rootInterfaces': rootInterfaces,
+      'rootCaptureTether': rootCaptureTether,
+      'rawCaptureIface': rawCaptureIface,
+      'rawCaptureBpf': rawCaptureBpf,
+      'rawCaptureSnapLen': rawCaptureSnapLen,
       'whitelist': HostFilter.whitelist.toJson(),
       'blacklist': HostFilter.blacklist.toJson(),
     };

@@ -33,6 +33,10 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
+    // 单元测试中 android.* 存根方法返回默认值（规则生成逻辑可在 JVM 上测试）
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
     namespace "com.network.proxy"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
@@ -118,4 +122,5 @@ android.applicationVariants.all { variant ->
 }
 
 dependencies {
+    testImplementation "junit:junit:4.13.2"
 }

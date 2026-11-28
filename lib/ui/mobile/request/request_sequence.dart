@@ -123,11 +123,15 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
     }
 
     //搜索视图
-    if (searchModel?.filter(response.request!, response) == true && callback == null) {
+    final matched = searchModel!.filter(response.request!, response);
+    if (matched && callback == null) {
       if (!view.contains(response.request)) {
         view.addFirst(response.request!);
         changeState();
       }
+    } else if (!matched && view.remove(response.request)) {
+      // 请求到达时还没有响应，依赖响应的条件（如 -type:image、status:200）当时无法判断而被放行，响应到达后再剔除
+      changeState();
     }
   }
 

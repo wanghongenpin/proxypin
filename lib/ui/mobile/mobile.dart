@@ -24,6 +24,7 @@ import 'package:flutter_toastr/flutter_toastr.dart';
 import 'package:proxypin/native/app_lifecycle.dart';
 import 'package:proxypin/native/pip.dart';
 import 'package:proxypin/native/vpn.dart';
+import 'package:proxypin/network/util/logger.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/bin/listener.dart';
 import 'package:proxypin/network/bin/server.dart';
@@ -131,6 +132,10 @@ class MobileHomeState extends State<MobileHomePage> implements EventListener, Li
     proxyServer = ProxyServer(widget.configuration);
     proxyServer.addListener(this);
     proxyServer.start();
+    Vpn.onRootRulesChanged = () {
+      final closed = proxyServer.server?.closeConnections() ?? 0;
+      logger.d('root rules changed, closed $closed proxied connections');
+    };
     // 启动历史记录任务（单例；原由 ConfigPage 触发，配置页移除后在这里保证初始化）
     HistoryTask.ensureInstance(widget.configuration, MobileApp.container);
     _remoteHistorySubscription = HistoryStorage.onRemoteImported.listen((item) => _openHistoryPage(item));
@@ -513,7 +518,15 @@ class RequestPageState extends State<RequestPage> {
                   port = remoteDevice.value.port!;
                 }
 
-                Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
+                final started =
+                    await Vpn.startVpn(host, port, proxyServer.configuration, ipProxy: remoteDevice.value.ipProxy);
+                if (!started && context.mounted) {
+                  bool isCN = Localizations.localeOf(context).languageCode == 'zh';
+                  FlutterToastr.show(
+                      "${isCN ? 'Root 模式启动失败' : 'Root mode failed to start'}: ${Vpn.lastRootError ?? ''}", context,
+                      duration: 4);
+                }
+                return started;
               },
               onStop: () => Vpn.stopVpn()),
             ),

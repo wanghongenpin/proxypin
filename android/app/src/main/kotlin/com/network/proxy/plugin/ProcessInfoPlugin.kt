@@ -47,7 +47,15 @@ class ProcessInfoPlugin : AndroidFlutterPlugin() {
 
                 "getRemoteAddressByPort" -> {
                     val port = call.argument<Int>("port")
-                    result.success(processInfoManager.getRemoteAddressByPort(port!!))
+                    if (port == null) {
+                        result.error("INVALID_ARGUMENT", "Port is null", null)
+                    } else {
+                        // Root 模式下需读取内核连接表（可能经由 su），不能阻塞主线程
+                        CoroutineScope(Dispatchers.IO).launch {
+                            val address = processInfoManager.getRemoteAddressByPort(port)
+                            withContext(Dispatchers.Main) { result.success(address) }
+                        }
+                    }
                 }
 
                 else -> {

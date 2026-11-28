@@ -1,6 +1,7 @@
 package com.network.proxy.plugin
 
 import com.network.proxy.ProxyVpnService
+import com.network.proxy.root.RootProxyManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
 
@@ -19,6 +20,7 @@ class VpnServicePlugin : AndroidFlutterPlugin() {
                 }
 
                 "startVpn" -> {
+                    RootProxyManager.instance.preferRoot = false
                     val host = call.argument<String>("proxyHost")
                     val port = call.argument<Int>("proxyPort")
                     val allowApps = call.argument<ArrayList<String>>("allowApps")

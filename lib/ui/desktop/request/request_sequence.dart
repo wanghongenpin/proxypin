@@ -209,6 +209,10 @@ class RequestSequenceState extends State<RequestSequence> with AutomaticKeepAliv
         view.add(response.request!);
         changeState();
       }
+    } else if (view.remove(response.request)) {
+      // 请求到达时还没有响应，依赖响应的条件（如 -type:image、status:200）当时无法判断而被放行，响应到达后再剔除
+      rowRefreshers.remove(response.request!.requestId);
+      changeState();
     }
   }
 
