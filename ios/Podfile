@@ -27,6 +27,37 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+# zstandard 1.5.x 把 zstd C 源码拆到独立的 zstandard_native 包，其 pod prepare 脚本
+# (sync_zstd.sh) 在 CocoaPods 物理解析插件 symlink 的工作目录下，无法向上遍历到项目的
+# package_config，会报 "zstd source not found"。这里在 pod 解析前于插件包兄弟目录建好
+# zstandard_native 链接，命中脚本的第一查找分支（$PLUGIN_ROOT/../zstandard_native）。
+def link_zstandard_native
+  require 'json'
+  require 'uri'
+  package_config = File.expand_path(File.join('..', '.dart_tool', 'package_config.json'), File.dirname(__FILE__))
+  return unless File.exist?(package_config)
+
+  native = JSON.parse(File.read(package_config))['packages']&.find { |pkg| pkg['name'] == 'zstandard_native' }
+  return if native.nil?
+
+  root_uri = native['rootUri'].to_s
+  native_path = root_uri.start_with?('file:') ? URI(root_uri).path : root_uri
+  return unless File.exist?(File.join(native_path, 'src', 'zstd', 'zstd.h'))
+
+  link_path = File.join(File.dirname(native_path), 'zstandard_native')
+  if File.symlink?(link_path)
+    File.delete(link_path)
+  elsif File.exist?(link_path)
+    return # 同名的非符号链接实体，保留不动
+  end
+  File.symlink(native_path, link_path)
+  puts "✅ 已预链接 zstandard_native -> #{native_path}"
+rescue => e
+  puts "⚠️ zstandard_native 预链接失败（不影响其他 pod）: #{e.message}"
+end
+
+link_zstandard_native
+
 target 'Runner' do
   use_frameworks!
   use_modular_headers!

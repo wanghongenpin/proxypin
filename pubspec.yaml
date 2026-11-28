@@ -14,18 +14,24 @@ dependencies:
     sdk: flutter
   intl: any
   cupertino_icons: ^2.0.0
-  flutter_svg: ^2.5.0
+  flutter_svg: ^2.5.1
   pointycastle: ^4.0.0
   logger: ^2.8.0
   date_format: ^2.0.9
-  window_manager: ^0.5.2
+  # 锁定 0.5.x：0.6 起底层换成 nativeapi 进程级单例，GetCurrent() 用全局 mainWindow 选窗口，
+  # 与 desktop_multi_window 的多 engine 隐藏子窗口（hiddenAtLaunch）冲突——子窗口的 show/resize
+  # 会错配到主窗口导致新窗口打不开。0.5.x 每个 engine 经 registrar.view.window 各自绑定窗口才正常。
+  window_manager: 0.5.2
+  # tray_manager 0.8 起托盘改用 nativeapi 原生 API，desktop_tray 直接引用其类型
+  nativeapi: ^0.5.9
+  nativeapi_flutter: ^0.5.9
   screen_retriever: ^0.2.2
   desktop_multi_window: ^0.3.1
   path_provider: ^2.1.5
   file_picker: ^13.4.1
   mime: ^2.1.0
   proxy_manager: ^0.0.3
-  permission_handler: ^12.0.1
+  permission_handler: ^13.0.2
   flutter_toastr: ^1.0.3
   share_plus: ^13.3.1
   flutter_js: ^0.8.7
@@ -35,9 +41,7 @@ dependencies:
   url_launcher: ^6.3.3
   toastification: ^3.2.2
   get: ^4.7.3
-  # 1.5.6 的 CocoaPods 同步脚本无法在 Pub 缓存中定位 zstandard_native 源码（macOS/iOS 均受影响），
-  # 联邦插件通过下方 dependency_overrides 锁回 1.5.0（其脚本保留了 pub 缓存通配符扫描）。
-  zstandard: 1.5.0
+  zstandard: ^1.5.6
   qr_flutter: ^4.1.0
   flutter_qr_reader_plus: ^1.0.6
   brotli: ^0.6.0
@@ -46,18 +50,12 @@ dependencies:
   ffi: ^2.1.0
   win32audio: ^1.5.0
   scrollable_positioned_list_nic: ^0.0.2
-  tray_manager: ^0.5.3
-  code_forge: ^10.11.0
+  tray_manager: ^0.8.3
+  code_forge: ^11.7.1
   # 语法高亮模式与 atom-one 配色：code_forge 渲染器与旧 SelectableText 高亮都基于它，
   # 共享查看器直接引用其 Mode/主题，显式声明依赖版本与 code_forge 对齐。
   re_highlight: ^0.0.3
-  # 必须与 code_forge 的 codegen 版本精确一致（flutter_rust_bridge 要求 codegen==runtime），
-  flutter_rust_bridge: 2.12.0
   archive: ^4.7.1
-
-dependency_overrides:
-  zstandard_macos: 1.5.0
-  zstandard_ios: 1.5.0
 
 dev_dependencies:
   flutter_test:

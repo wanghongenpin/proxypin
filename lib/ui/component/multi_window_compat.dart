@@ -5,6 +5,7 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:proxypin/network/util/logger.dart';
+import 'package:proxypin/utils/window_gateway.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -73,7 +74,7 @@ class DesktopMultiWindow {
       try {
         final title = _windowTitle;
         if (title != null) {
-          await windowManager.setTitle(title);
+          await windowGateway.setTitle(title);
         }
         final size = _windowSize;
         final screen = _mainWindowScreen;
@@ -82,20 +83,20 @@ class DesktopMultiWindow {
           await _resizeAndCenterOnMainScreen(screen, screenScale, size);
         } else {
           if (size != null) {
-            await windowManager.setSize(size);
+            await windowGateway.setSize(size);
           }
-          await windowManager.center();
+          await windowGateway.center();
         }
         await WidgetsBinding.instance.endOfFrame;
       } catch (error, stackTrace) {
         logger.e('Prepare child window failed, showing fallback window', error: error, stackTrace: stackTrace);
       } finally {
         try {
-          await windowManager.show();
+          await windowGateway.show();
         } catch (error, stackTrace) {
           logger.e('Show child window failed, closing hidden window', error: error, stackTrace: stackTrace);
           try {
-            await windowManager.close();
+            await windowGateway.close();
           } catch (closeError, closeStackTrace) {
             logger.e('Close hidden child window failed', error: closeError, stackTrace: closeStackTrace);
           }
@@ -108,20 +109,20 @@ class DesktopMultiWindow {
   static Future<void> _resizeAndCenterOnMainScreen(Rect screen, double screenScale, Size? size) async {
     var scale = _windowPixelRatio();
     if (scale != screenScale) {
-      final initialSize = await windowManager.getSize();
+      final initialSize = await windowGateway.getSize();
       final initialPosition = centeredWindowPosition(screen, initialSize * scale);
-      await windowManager.setPosition(initialPosition / scale);
+      await windowGateway.setPosition(initialPosition / scale);
       await WidgetsBinding.instance.endOfFrame;
       scale = _windowPixelRatio();
     }
 
     if (size != null) {
       // setSize 内部会乘以当前窗口 DPI；跨 DPI 时换算成目标屏幕的物理尺寸。
-      await windowManager.setSize(scale == screenScale ? size : size * screenScale / scale);
+      await windowGateway.setSize(scale == screenScale ? size : size * screenScale / scale);
     }
-    final windowSize = await windowManager.getSize();
+    final windowSize = await windowGateway.getSize();
     final position = centeredWindowPosition(screen, windowSize * scale);
-    await windowManager.setPosition(position / scale);
+    await windowGateway.setPosition(position / scale);
   }
 
   static Future<T?> invokeMainWindowMethod<T>(String method, [dynamic arguments]) async {
@@ -206,7 +207,7 @@ class DesktopMultiWindow {
       // window_manager 和 screen_retriever 在 Windows 上使用不同 DPI 换算，
       // 统一还原成物理坐标后再判断父窗口属于哪个显示器。
       final scale = _windowPixelRatio();
-      final bounds = await windowManager.getBounds();
+      final bounds = await windowGateway.getBounds();
       final windowBounds = Rect.fromLTWH(
         bounds.left * scale,
         bounds.top * scale,
@@ -277,7 +278,7 @@ class DesktopMultiWindow {
 
   static double _windowPixelRatio() {
     if (!Platform.isWindows) return 1;
-    final scale = windowManager.getDevicePixelRatio();
+    final scale = windowGateway.getDevicePixelRatio();
     return _validScale(scale) ? scale : 1;
   }
 
@@ -324,13 +325,13 @@ class DesktopMultiWindow {
     return controller.setWindowMethodHandler((call) async {
       switch (call.method) {
         case 'window_close':
-          return windowManager.close();
+          return windowGateway.close();
         case 'window_focus':
           // 最小化（含 macOS 缩到 Dock）先还原，再置顶聚焦
-          if (await windowManager.isMinimized()) {
-            await windowManager.restore();
+          if (await windowGateway.isMinimized()) {
+            await windowGateway.restore();
           }
-          return windowManager.focus();
+          return windowGateway.focus();
       }
 
       return _handleMethodCall(call);

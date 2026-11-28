@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:io';
-
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:proxypin/network/http/http.dart';
 import 'package:proxypin/ui/component/code_forge/read_only_viewer.dart';
@@ -56,20 +53,6 @@ void main() async {
     });
   });
 
-  // CodeForge 走 FFI，需要 code_forge 原生库，初始化方式与 hex_viewer_test 一致。
-  bool nativeReady;
-  try {
-    final override = Platform.environment['CODE_FORGE_NATIVE_LIB'];
-    if (override != null && override.isNotEmpty) {
-      await RustLib.init(externalLibrary: ExternalLibrary.open(override));
-    } else {
-      await RustLib.init();
-    }
-    nativeReady = true;
-  } catch (_) {
-    nativeReady = false;
-  }
-
   group('FormattedCodeViewer (CSS)', () {
     late SearchTextController searchController;
 
@@ -104,7 +87,7 @@ void main() async {
       await tester.pump();
     }
 
-    testWidgets('formats and renders CSS through CodeForge', skip: !nativeReady, (tester) async {
+    testWidgets('formats and renders CSS through CodeForge', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -119,7 +102,7 @@ void main() async {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('synchronizes search matches', skip: !nativeReady, (tester) async {
+    testWidgets('synchronizes search matches', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -136,7 +119,7 @@ void main() async {
       expect(searchController.currentMatchIndex.value, 1);
     });
 
-    testWidgets('reloads when switching to another message', skip: !nativeReady, (tester) async {
+    testWidgets('reloads when switching to another message', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -192,7 +175,7 @@ void main() async {
     String? currentText(WidgetTester tester) =>
         tester.state<CodeForgeReadOnlyViewerState>(find.byType(CodeForgeReadOnlyViewer)).controller?.text;
 
-    testWidgets('plain text tab renders the raw body unchanged', skip: !nativeReady, (tester) async {
+    testWidgets('plain text tab renders the raw body unchanged', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -210,7 +193,7 @@ void main() async {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('formUrl tab decodes percent-encoding', skip: !nativeReady, (tester) async {
+    testWidgets('formUrl tab decodes percent-encoding', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -228,7 +211,7 @@ void main() async {
     });
 
     testWidgets('text and formUrl soft-wrap (no horizontal scroll), CSS does not',
-        skip: !nativeReady, (tester) async {
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -259,7 +242,7 @@ void main() async {
       expect(tester.widget<CodeForge>(find.byType(CodeForge)).lineWrap, isFalse);
     });
 
-    testWidgets('keeps the send-to-decoder / AES context menu items', skip: !nativeReady,
+    testWidgets('keeps the send-to-decoder / AES context menu items',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -279,7 +262,7 @@ void main() async {
     });
 
     testWidgets('large body with an overlong line forces code_forge no-wrap',
-        skip: !nativeReady, (tester) async {
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -320,7 +303,7 @@ void main() async {
     });
 
     testWidgets('caps rendered highlights for a dense no-wrap search while keeping the total count',
-        skip: !nativeReady, (tester) async {
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -343,10 +326,11 @@ void main() async {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
-      // 全量匹配数仍上报给搜索 UI（1/N），渲染层只拿到封顶后的子集，避免每帧数百万次 FFI。
+      // 全量匹配数仍上报给搜索 UI（1/N），渲染层只拿到封顶后的子集，避免每帧数百万次 rope 查找。
       expect(searchController.totalMatchCount.value, body.length);
       final rendered = viewerState.controller!.searchHighlights;
-      expect(rendered.length, lessThanOrEqualTo(200));
+      // 与 read_only_viewer.dart 的 _maxRenderedHighlights 保持一致（私有常量，测试侧硬编码跟踪）。
+      expect(rendered.length, lessThanOrEqualTo(800));
       expect(rendered, isNotEmpty);
 
       // 导航后当前匹配必须始终保留在抽稀结果里，否则活动高亮会消失。
@@ -355,7 +339,7 @@ void main() async {
       expect(viewerState.controller!.searchHighlights.any((h) => h.isCurrentMatch), isTrue);
     });
 
-    testWidgets('caps rendered highlights in line-wrap mode too', skip: !nativeReady, (tester) async {
+    testWidgets('caps rendered highlights in line-wrap mode too', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -379,10 +363,10 @@ void main() async {
       }
 
       expect(searchController.totalMatchCount.value, body.length);
-      expect(viewerState.controller!.searchHighlights.length, lessThanOrEqualTo(200));
+      expect(viewerState.controller!.searchHighlights.length, lessThanOrEqualTo(800));
     });
 
-    testWidgets('does not cap a normal sparse search', skip: !nativeReady, (tester) async {
+    testWidgets('does not cap a normal sparse search', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -406,7 +390,7 @@ void main() async {
     });
 
     testWidgets('large CSS body stays on code_forge (fallback disabled)',
-        skip: !nativeReady, (tester) async {
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -426,7 +410,7 @@ void main() async {
     });
 
     testWidgets('formUrl falls back to raw body on malformed percent-encoding',
-        skip: !nativeReady, (tester) async {
+        (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);

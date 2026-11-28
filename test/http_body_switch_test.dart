@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:proxypin/l10n/app_localizations.dart';
 import 'package:proxypin/network/http/http.dart';
@@ -13,21 +10,6 @@ import 'package:proxypin/ui/content/body.dart';
 import 'package:proxypin/utils/html_formatter.dart';
 
 void main() async {
-  // Text/formUrl 等纯文本 tab 已迁到 code_forge（FFI），与 hex_viewer_test 一样需要原生库；
-  // 初始化失败时这些用例整体跳过，保证无原生库的环境测试仍为绿色。
-  bool nativeReady;
-  try {
-    final override = Platform.environment['CODE_FORGE_NATIVE_LIB'];
-    if (override != null && override.isNotEmpty) {
-      await RustLib.init(externalLibrary: ExternalLibrary.open(override));
-    } else {
-      await RustLib.init();
-    }
-    nativeReady = true;
-  } catch (_) {
-    nativeReady = false;
-  }
-
   // CodeForge 编辑器有持续 ticker，不能用 pumpAndSettle；带 AppLocalizations 的 HttpBodyWidget
   // 还依赖 deferred 库加载，需用定时 pump 推进 fake-async 时间（runAsync 推不动这种 Timer）。
   Future<void> waitForCodeForge(WidgetTester tester, {int count = 1}) async {
@@ -57,7 +39,7 @@ void main() async {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('switching to a small body does not render the previous large body', skip: !nativeReady,
+  testWidgets('switching to a small body does not render the previous large body',
       (tester) async {
     final large = HttpRequest(HttpMethod.get, 'https://example.com/large')
       ..headers.contentType = 'text/plain'
@@ -85,7 +67,7 @@ void main() async {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('switching views does not render the previous formatted text', skip: !nativeReady,
+  testWidgets('switching views does not render the previous formatted text',
       (tester) async {
     final html = List.filled(1000, '<section><div><p>Hello</p></div></section>').join();
     final rawBody = '<html><body>$html</body></html>';

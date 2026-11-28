@@ -226,8 +226,7 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
     // 移动端嵌在 FAB 里：图标恒白，状态色由 FAB 底色表达（运行绿 / 停止灰）
     return IconButton(
         tooltip: started ? localizations.stop : localizations.start,
-        icon: Icon(started ? Icons.stop : Icons.play_arrow_sharp,
-            color: Colors.white, size: widget.size.toDouble()),
+        icon: Icon(started ? Icons.stop : Icons.play_arrow_sharp, color: Colors.white, size: widget.size.toDouble()),
         onPressed: onToggle);
   }
 
@@ -280,8 +279,8 @@ class _SocketLaunchState extends State<SocketLaunch> with WindowListener, Widget
                     ? const Color(0xFFF0F8F2)
                     : DarkPalette.ok.withValues(alpha: 0.13))
                 : theme.colorScheme.surface,
-            border: Border.all(
-                color: started ? green.withValues(alpha: 0.4) : theme.dividerColor.withValues(alpha: 0.8))),
+            border:
+                Border.all(color: started ? green.withValues(alpha: 0.4) : theme.dividerColor.withValues(alpha: 0.8))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           SvgIcon('power', size: 14, color: color),
           const SizedBox(width: 6),

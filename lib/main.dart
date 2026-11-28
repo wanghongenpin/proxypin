@@ -18,7 +18,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:proxypin/network/bin/configuration.dart';
 import 'package:proxypin/network/components/manager/environment_manager.dart';
@@ -40,14 +39,6 @@ import 'l10n/app_localizations.dart';
 ///@author wanghongen
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await RustLib.init();
-  } catch (e) {
-    // code_forge Rust FFI initialization may fail on iOS 14.x due to
-    // deployment-target / cargokit-build incompatibilities. Degrade
-    // gracefully instead of crashing the whole app at startup.
-    print('RustLib.init failed: $e');
-  }
 
   final windowController = Platforms.isDesktop() ? await DesktopMultiWindow.ensureInitialized() : null;
 
@@ -211,8 +202,7 @@ class FluentApp extends StatelessWidget {
         bottomSheetTheme:
             themeData.bottomSheetTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
         drawerTheme: themeData.drawerTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
-        popupMenuTheme:
-            themeData.popupMenuTheme.copyWith(color: Colors.black, surfaceTintColor: Colors.black),
+        popupMenuTheme: themeData.popupMenuTheme.copyWith(color: Colors.black, surfaceTintColor: Colors.black),
         navigationBarTheme:
             themeData.navigationBarTheme.copyWith(backgroundColor: Colors.black, surfaceTintColor: Colors.black),
         navigationRailTheme: themeData.navigationRailTheme.copyWith(backgroundColor: Colors.black),

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import 'dart:io';
 import 'dart:math';
 
 import 'package:code_forge/code_forge.dart';
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,22 +54,6 @@ void main() async {
     expect(formatHex([], 16), isEmpty);
   });
 
-  // CodeForge 走 FFI，需要 code_forge 原生库。默认按打包后的 framework 路径初始化
-  //（与真实 App、CI 一致）；本机可用环境变量 CODE_FORGE_NATIVE_LIB 指向单独编译的动态库。
-  // 初始化失败时原生相关用例整体跳过，保证无原生库的环境测试仍为绿色。
-  bool nativeReady;
-  try {
-    final override = Platform.environment['CODE_FORGE_NATIVE_LIB'];
-    if (override != null && override.isNotEmpty) {
-      await RustLib.init(externalLibrary: ExternalLibrary.open(override));
-    } else {
-      await RustLib.init();
-    }
-    nativeReady = true;
-  } catch (_) {
-    nativeReady = false;
-  }
-
   group('HexViewer', () {
     late SearchTextController searchController;
     late GlobalKey<HexViewerState> viewerKey;
@@ -93,7 +75,7 @@ void main() async {
       ));
     }
 
-    testWidgets('loads current message and copies a multiline selection', skip: !nativeReady, (tester) async {
+    testWidgets('loads current message and copies a multiline selection', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -138,7 +120,7 @@ void main() async {
       expect(viewerKey.currentState!.controller!.text, formatHex([0x61, 0x62], 16));
     });
 
-    testWidgets('small data mounts synchronously without a loading frame', skip: !nativeReady, (tester) async {
+    testWidgets('small data mounts synchronously without a loading frame', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -163,7 +145,7 @@ void main() async {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('large data still formats in the background and shows loading', skip: !nativeReady, (tester) async {
+    testWidgets('large data still formats in the background and shows loading', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -183,7 +165,7 @@ void main() async {
       expect(viewerKey.currentState!.controller, isNotNull);
     });
 
-    testWidgets('body toolbar copies the full formatted Hex text', skip: !nativeReady, (tester) async {
+    testWidgets('body toolbar copies the full formatted Hex text', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -218,7 +200,7 @@ void main() async {
       await tester.pump(const Duration(seconds: 2));
     });
 
-    testWidgets('scrolls to a line through the external scroll controller without line flash', skip: !nativeReady,
+    testWidgets('scrolls to a line through the external scroll controller without line flash',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -248,7 +230,7 @@ void main() async {
       expect(state.scrollController.offset, closeTo(1393.4, 1.0));
     });
 
-    testWidgets('synchronizes search count and navigation', skip: !nativeReady, (tester) async {
+    testWidgets('synchronizes search count and navigation', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -277,7 +259,7 @@ void main() async {
       expect(searchController.totalMatchCount.value, 0);
     });
 
-    testWidgets('re-triggers search after the overlay is closed and reopened', skip: !nativeReady, (tester) async {
+    testWidgets('re-triggers search after the overlay is closed and reopened', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -312,7 +294,7 @@ void main() async {
       expect(findController.matchCount, 32);
     });
 
-    testWidgets('previous match navigates one step instead of wrapping through all matches', skip: !nativeReady,
+    testWidgets('previous match navigates one step instead of wrapping through all matches',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -363,7 +345,7 @@ void main() async {
       findController.removeListener(countNotifications);
     });
 
-    testWidgets('re-attaches the IME connection so text selection works while search is active', skip: !nativeReady,
+    testWidgets('re-attaches the IME connection so text selection works while search is active',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -410,7 +392,7 @@ void main() async {
       expect(controller.selection.isCollapsed, isFalse);
     });
 
-    testWidgets('does not write GetX Rx during build when switching data', skip: !nativeReady, (tester) async {
+    testWidgets('does not write GetX Rx during build when switching data', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -463,7 +445,7 @@ void main() async {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('switching data during scroll does not notify a disposed renderer', skip: !nativeReady, (tester) async {
+    testWidgets('switching data during scroll does not notify a disposed renderer', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -515,7 +497,7 @@ void main() async {
 
     // 滚轮/触控板级联由 Flutter 框架的 pointerSignalResolver 提供：内层到边后不注册，
     // 外层 Scrollable 自然接管。此用例锁定该行为在 HexViewer 嵌套结构下确实成立。
-    testWidgets('cascades wheel scrolling to the outer view at inner edges', skip: !nativeReady, (tester) async {
+    testWidgets('cascades wheel scrolling to the outer view at inner edges', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -598,7 +580,7 @@ void main() async {
       expect(outer.position.pixels, lessThan(outerBefore));
     });
 
-    testWidgets('cascades touch overscroll at the inner top to the outer view', skip: !nativeReady, (tester) async {
+    testWidgets('cascades touch overscroll at the inner top to the outer view', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -648,7 +630,7 @@ void main() async {
       await tester.pump(const Duration(milliseconds: 400));
     });
 
-    testWidgets('does not allow horizontal scrolling when the line fits the viewport', skip: !nativeReady,
+    testWidgets('does not allow horizontal scrolling when the line fits the viewport',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -698,7 +680,7 @@ void main() async {
       expect(overflow, lessThan(160));
     });
 
-    testWidgets('renders byte offsets in the gutter instead of line numbers', skip: !nativeReady, (tester) async {
+    testWidgets('renders byte offsets in the gutter instead of line numbers', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -730,7 +712,7 @@ void main() async {
       expect(gutterBuilder.builder(4, ''), '00000030');
     });
 
-    testWidgets('shrinks to content height for small bodies but keeps a usable minimum', skip: !nativeReady,
+    testWidgets('shrinks to content height for small bodies but keeps a usable minimum',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -759,7 +741,7 @@ void main() async {
       expect(editorHeight(), 590);
     });
 
-    testWidgets('windows large search highlights to the visible lines', skip: !nativeReady, (tester) async {
+    testWidgets('windows large search highlights to the visible lines', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -818,7 +800,7 @@ void main() async {
         ..body = body.codeUnits;
     }
 
-    testWidgets('keeps a visited tab alive with its scroll offset and lazily builds others', skip: !nativeReady,
+    testWidgets('keeps a visited tab alive with its scroll offset and lazily builds others',
         (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -869,7 +851,7 @@ void main() async {
       expect(restoredState.scrollController.offset, savedOffset);
     });
 
-    testWidgets('drops kept viewers when switching to another message', skip: !nativeReady, (tester) async {
+    testWidgets('drops kept viewers when switching to another message', (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);

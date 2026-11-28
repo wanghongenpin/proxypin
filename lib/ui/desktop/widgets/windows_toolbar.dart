@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:proxypin/utils/window_gateway.dart';
 import 'package:window_manager/window_manager.dart';
 
 class WindowsToolbar extends StatefulWidget {
@@ -45,35 +46,35 @@ class _WindowsToolbarState extends State<WindowsToolbar> with WindowListener {
         WindowCaptionButton.minimize(
             brightness: Theme.brightnessOf(context),
             onPressed: () async {
-              bool isMinimized = await windowManager.isMinimized();
+              bool isMinimized = await windowGateway.isMinimized();
               if (isMinimized) {
-                windowManager.restore();
+                windowGateway.restore();
               } else {
-                windowManager.minimize();
+                windowGateway.minimize();
               }
             }),
         FutureBuilder<bool>(
-            future: windowManager.isMaximized(),
+            future: windowGateway.isMaximized(),
             builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
               if (snapshot.data == true) {
                 return WindowCaptionButton.unmaximize(
                   brightness: Theme.brightnessOf(context),
                   onPressed: () {
-                    windowManager.unmaximize();
+                    windowGateway.unmaximize();
                   },
                 );
               }
               return WindowCaptionButton.maximize(
                 brightness: Theme.brightnessOf(context),
                 onPressed: () {
-                  windowManager.maximize();
+                  windowGateway.maximize();
                 },
               );
             }),
         WindowCaptionButton.close(
             brightness: Theme.brightnessOf(context),
             onPressed: () {
-              windowManager.close();
+              windowGateway.close();
             }),
       ],
     );
@@ -142,10 +143,10 @@ class _ToolbarDragAreaState extends State<_ToolbarDragArea> {
   }
 
   Future<void> _toggleMaximize() async {
-    if (await windowManager.isMaximized()) {
-      windowManager.unmaximize();
+    if (await windowGateway.isMaximized()) {
+      windowGateway.unmaximize();
     } else {
-      windowManager.maximize();
+      windowGateway.maximize();
     }
   }
 
@@ -158,7 +159,7 @@ class _ToolbarDragAreaState extends State<_ToolbarDragArea> {
       onPointerDown: _onPointerDown,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onPanStart: (_) => windowManager.startDragging(),
+        onPanStart: (_) => windowGateway.startDragging(),
         child: KeyedSubtree(key: _childKey, child: widget.child),
       ),
     );

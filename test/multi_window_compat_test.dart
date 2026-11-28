@@ -1,19 +1,94 @@
+import 'dart:ui';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:proxypin/ui/component/multi_window_compat.dart';
+import 'package:proxypin/utils/window_gateway.dart';
 import 'package:screen_retriever/screen_retriever.dart';
+
+/// 窗口插件依赖原生平台通道，widget test 没有原生侧，
+/// 经 WindowGateway 注入 fake 模拟 show/close 的成功与失败。
+class _FakeWindowGateway implements WindowGateway {
+  int showCalls = 0;
+  int closeCalls = 0;
+  bool showShouldThrow = false;
+  bool getBoundsShouldThrow = false;
+
+  @override
+  Future<void> show() async {
+    showCalls++;
+    if (showShouldThrow) {
+      throw PlatformException(code: 'TEST_ERROR', message: 'show failed');
+    }
+  }
+
+  @override
+  Future<void> close() async => closeCalls++;
+
+  @override
+  Future<void> hide() async {}
+
+  @override
+  Future<Rect> getBounds() async {
+    if (getBoundsShouldThrow) {
+      throw PlatformException(code: 'TEST_ERROR', message: 'positioning failed');
+    }
+    return Rect.zero;
+  }
+
+  @override
+  Future<bool> isMinimized() async => false;
+
+  @override
+  Future<void> center() async {}
+
+  @override
+  Future<void> focus() async {}
+
+  @override
+  Future<Size> getSize() async => Size.zero;
+
+  @override
+  double getDevicePixelRatio() => 1;
+
+  @override
+  Future<bool> isMaximized() async => false;
+
+  @override
+  Future<void> maximize() async {}
+
+  @override
+  Future<void> unmaximize() async {}
+
+  @override
+  Future<void> minimize() async {}
+
+  @override
+  Future<void> restore() async {}
+
+  @override
+  Future<void> setTitle(String title) async {}
+
+  @override
+  Future<void> setSize(Size size) async {}
+
+  @override
+  Future<void> setPosition(Offset position) async {}
+
+  @override
+  Future<void> startDragging() async {}
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-  const windowManagerChannel = MethodChannel('window_manager');
   const windowRouterChannel = MethodChannel('mixin.one/desktop_multi_window/channels');
 
   tearDown(() {
-    messenger.setMockMethodCallHandler(windowManagerChannel, null);
     messenger.setMockMethodCallHandler(windowRouterChannel, null);
+    debugWindowGatewayOverride = null;
   });
 
   Display display(Offset physicalOrigin, Size physicalSize, double scale) {
@@ -142,41 +217,29 @@ void main() {
     });
 
     testWidgets('shows the window when positioning fails', (tester) async {
-      var showCalls = 0;
-      messenger.setMockMethodCallHandler(windowManagerChannel, (call) async {
-        if (call.method == 'getBounds') {
-          throw PlatformException(code: 'TEST_ERROR', message: 'positioning failed');
-        }
-        if (call.method == 'isMinimized') return false;
-        if (call.method == 'show') showCalls++;
-        return null;
-      });
+      final gateway = _FakeWindowGateway()..getBoundsShouldThrow = true;
+      debugWindowGatewayOverride = gateway;
 
       DesktopMultiWindow.prepareWindow();
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
       await tester.pump();
 
-      expect(showCalls, 1);
+      expect(gateway.showCalls, 1);
     });
 
     testWidgets('closes the hidden window when showing it also fails', (tester) async {
-      var closeCalls = 0;
-      messenger.setMockMethodCallHandler(windowManagerChannel, (call) async {
-        if (call.method == 'getBounds' || call.method == 'show') {
-          throw PlatformException(code: 'TEST_ERROR', message: '${call.method} failed');
-        }
-        if (call.method == 'isMinimized') return false;
-        if (call.method == 'close') closeCalls++;
-        return null;
-      });
+      final gateway = _FakeWindowGateway()
+        ..getBoundsShouldThrow = true
+        ..showShouldThrow = true;
+      debugWindowGatewayOverride = gateway;
 
       DesktopMultiWindow.prepareWindow();
       await tester.pumpWidget(const SizedBox());
       await tester.pump();
       await tester.pump();
 
-      expect(closeCalls, 1);
+      expect(gateway.closeCalls, 1);
     });
   });
 }

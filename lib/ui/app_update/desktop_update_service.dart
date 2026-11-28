@@ -171,7 +171,8 @@ class DesktopUpdateService {
       }
       logger.e('DesktopUpdateService download failed', error: e, stackTrace: stackTrace);
       await _deleteFile(tempFile?.path);
-      state.value = state.value.copyWith(phase: DesktopUpdatePhase.failed, errorMessage: _t('下载失败: $e', 'Download failed: $e'));
+      state.value =
+          state.value.copyWith(phase: DesktopUpdatePhase.failed, errorMessage: _t('下载失败: $e', 'Download failed: $e'));
     } finally {
       try {
         _httpClient?.close(force: true);
@@ -194,7 +195,8 @@ class DesktopUpdateService {
     final request = await client.getUrl(uri);
     final response = await request.close();
     if (response.statusCode != 200) {
-      throw DesktopUpdateException(_t('下载失败 (HTTP ${response.statusCode})', 'Download failed (HTTP ${response.statusCode})'));
+      throw DesktopUpdateException(
+          _t('下载失败 (HTTP ${response.statusCode})', 'Download failed (HTTP ${response.statusCode})'));
     }
 
     final totalBytes = response.contentLength > 0 ? response.contentLength : expectedSize;
@@ -245,7 +247,8 @@ class DesktopUpdateService {
     final asset = current.asset;
     final filePath = current.filePath;
     if (version == null || asset == null || filePath == null || filePath.isEmpty) {
-      state.value = current.copyWith(phase: DesktopUpdatePhase.failed, errorMessage: _t('安装文件缺失', 'Installer file missing'));
+      state.value =
+          current.copyWith(phase: DesktopUpdatePhase.failed, errorMessage: _t('安装文件缺失', 'Installer file missing'));
       return;
     }
 
@@ -270,7 +273,8 @@ class DesktopUpdateService {
       await _quitApp();
     } catch (e, stackTrace) {
       logger.e('DesktopUpdateService install failed', error: e, stackTrace: stackTrace);
-      state.value = state.value.copyWith(phase: DesktopUpdatePhase.failed, errorMessage: _t('安装启动失败: $e', 'Failed to launch installer: $e'));
+      state.value = state.value
+          .copyWith(phase: DesktopUpdatePhase.failed, errorMessage: _t('安装启动失败: $e', 'Failed to launch installer: $e'));
     }
   }
 

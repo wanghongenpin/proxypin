@@ -19,6 +19,7 @@ import 'dart:math';
 import 'package:code_forge/code_forge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:proxypin/utils/platform.dart';
 import 'package:re_highlight/re_highlight.dart';
 import 'package:re_highlight/styles/atom-one-dark.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
@@ -29,18 +30,20 @@ import '../search/search_controller.dart';
 // 可视行窗口外预留的行数，滚动到窗口边缘前就提前纳入高亮。
 const int _highlightWindowMargin = 20;
 
-// 匹配数不超过该值时原生路径足够便宜，直接把全量高亮交给渲染层。
+// 匹配数不超过该值时直接把全量高亮交给渲染层，跳过按行窗口化的二分切片。
 const int _highlightWindowThreshold = 80;
 
-// 交给渲染层的高亮硬上限。code_forge 绘制时每帧对每条高亮做两次 getLineAtOffset FFI
-// 判可见性（见 code_area.dart _drawSearchHighlights），单次 FFI 实测约 4.6 微秒，
-// 绘制帧耗时随高亮数线性增长：2000 条约 125ms、500 条约 33ms、200 条约 14ms。
-// 大文档高密度匹配（如 1.5MB 文本搜单字符产生约 150 万匹配）不封顶时每帧数百万次 FFI，
-// 实测搜索稳定 321 秒、滚动 29 秒/帧；按行窗口化也救不回来——单个可见长行本身就有上万匹配。
-// 这里在窗口化之后再均匀抽稀到 200 条（约 14ms 帧，贴近单帧预算）：正常搜索匹配数低于该值
-// 时全量显示，只有病态高密度才抽稀，而高密度匹配在屏幕上本就是连成一片的色带，亚像素重叠项
-// 裁掉无视觉差异，当前匹配单独保留。
-const int _maxRenderedHighlights = 200;
+// 交给渲染层的高亮硬上限。code_forge 11.x 已去 Rust，绘制时每帧仍对每条高亮做两次
+// getLineAtOffset（纯 Dart rope 树遍历，见 code_area.dart _drawSearchHighlights），且视口裁剪
+// 发生在两次查找之后、没有二分跳过，匹配数极大时每帧仍是数百万次树遍历。
+// 纯 Dart 实测每条高亮每帧成本：单行巨型文本（最坏，无换行）约 1.15 微秒、普通多行约 0.47 微秒
+// （旧 Rust/FFI 时代单次 FFI 就约 4.6 微秒，现已便宜约 8 倍）。本上限取 800：Mac 上最坏单行长
+// 约 0.95ms/帧，按慢速设备 3 倍估算约 2.8ms，仍在单帧预算内；相对旧值 200 放宽 4 倍，常态搜索
+// 更少触发抽稀。大文档高密度匹配（如 1.5MB 文本搜单字符产生约 150 万匹配）不封顶时仍会卡死，
+// 按行窗口化也救不回来——单个可见长行本身就有上万匹配。这里在窗口化之后再均匀抽稀到该上限：
+// 正常搜索匹配数低于该值时全量显示，只有病态高密度才抽稀，而高密度匹配在屏幕上本就是连成一片
+// 的色带，亚像素重叠项裁掉无视觉差异，当前匹配单独保留。
+const int _maxRenderedHighlights = 800;
 
 // 内容很少时查看器仍保留的最小高度：留出可点击、可滚动的基本视口，避免缩成一两行难以交互。
 const double _defaultMinViewerHeight = 240.0;
@@ -57,8 +60,8 @@ const double _scrollbarThickness = 8.0;
 // 调大下限让它更长、更容易点按；minOverscrollLength 不传时会自动取这个值，无需单独设置。
 const double _scrollbarMinThumbLength = 48.0;
 
-/// 字符偏移到行号的索引。code_forge 渲染对象每帧会对全部搜索高亮各做两次 charToLine FFI
-/// 来判断可见性，匹配数很大时每帧上万次 FFI，导致查找导航明显卡顿。
+/// 字符偏移到行号的索引。code_forge 渲染对象每帧会对全部搜索高亮各做两次 getLineAtOffset
+/// （纯 Dart rope 树遍历）来判断可见性，匹配数很大时每帧上万次遍历，导致查找导航明显卡顿。
 /// 查看器只把可视窗口内的高亮交给渲染层，行号判断在 Dart 侧完成：
 /// 定长文本（如 Hex）整除即可，普通文本按换行符位置二分。
 class LineIndexer {
@@ -443,10 +446,10 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
     return true;
   }
 
-  // code_forge 渲染对象每帧会对全部搜索高亮各做两次 charToLine FFI 来判断可见性，
-  // 匹配数很大时（长文档常见上千个匹配）每帧上万次 FFI，导致查找导航明显卡顿。
+  // code_forge 渲染对象每帧会对全部搜索高亮各做两次 getLineAtOffset（纯 Dart rope 树遍历）
+  // 来判断可见性，匹配数很大时（长文档常见上千个匹配）每帧上万次遍历，导致查找导航明显卡顿。
   // 这里只把可视窗口内的高亮交给渲染层，字符偏移到行号在 Dart 侧完成（见 [LineIndexer]），
-  // 并在最后做全局封顶（见 [_capHighlights]），防止单个可见长行携带上万匹配时 FFI 风暴。
+  // 并在最后做全局封顶（见 [_capRange]），防止单个可见长行携带上万匹配时遍历风暴。
   void _applyHighlightWindow({bool force = false}) {
     final controller = _controller;
     final indexer = _lineIndexer;
@@ -471,7 +474,7 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
 
     // 换行模式不做按行窗口化：可视行按像素/固定行高换算，单个被折成大量视觉行的超长逻辑行
     // 一旦滚出估算窗口，它上面的匹配会被整行剔除（搜索看不到高亮、导航失效）。
-    // 但仍要做全局封顶：换行只影响绘制几何，_drawSearchHighlights 的全量 FFI 遍历依旧存在。
+    // 但仍要做全局封顶：换行只影响绘制几何，_drawSearchHighlights 的全量 rope 查找遍历依旧存在。
     // 封顶与滚动位置无关，force 重算一次后滚动直接复用。
     if (widget.lineWrap) {
       if (!force || all.length <= _maxRenderedHighlights) return;
@@ -649,6 +652,11 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
     final height = max(widget.minHeight, min(viewportHeight, contentHeight));
 
     final theme = Theme.of(context);
+    // 桌面端开启 minimap、手机端关闭。minimap 负责文档概览与视口块拖动，但它只支持拖视口块、
+    // 点背景是“跳转居中”而非滚动条式点轨道翻页；点击滚动仍由 code_forge 的独立细滚动条承担
+    // （桌面端 interactive 默认开，支持点轨道/拖 thumb/悬停显示行号）。两者按 VSCode 模式共存：
+    // 不设 thumbVisibility，滚动条空闲自动淡出、悬停/滚动时淡入，静止时只剩 minimap 不显重复。
+    final bool minimapEnabled = !Platforms.isMobile();
     return SizedBox(
       width: double.infinity,
       height: height,
@@ -676,14 +684,26 @@ class CodeForgeReadOnlyViewerState extends State<CodeForgeReadOnlyViewer> {
                 verticalScrollController: _vScrollController,
                 language: widget.language,
                 lineWrap: widget.lineWrap,
-                // 覆盖 code_forge 默认的 thickness 15；thumbColor 沿用其默认 decoration 的取色
-                // （编辑器文字色 withAlpha(150)），只改宽度不改观感。
+                // 覆盖 code_forge 默认的 thickness 15，统一用细滚动条（8px），桌面端与 minimap
+                // 共存并保留点击轨道跳转能力；thumbColor 沿用文字色 withAlpha(150)，只改宽度不改观感。
+                // 不传 thumbVisibility：RawScrollbar 空闲淡出、悬停/滚动淡入，避免静止时与 minimap 视觉重复。
                 scrollbarDecoration: ScrollbarDecoration(
                   thickness: _scrollbarThickness,
                   minThumbLength: _scrollbarMinThumbLength,
                   thumbColor: theme.colorScheme.onSurface.withValues(alpha: 150 / 255),
                 ),
                 readOnly: true,
+                // code_forge 11.6 起 minimap 默认开启。桌面端宽屏保留这个 VSCode 风格缩略图；
+                // 手机端视口窄，浮层会压住正文且无横向空间，显式关闭。
+                enableMinimap: minimapEnabled,
+                // 视口位置指示块默认取前景色 withAlpha(30)（约 12% 不透明），偏淡看不清滚动位置；
+                // 提高到约 20%/33%，仍保留半透明以免遮住 minimap 镜像文字。手机端 minimap 关闭时不传。
+                minimapStyle: minimapEnabled
+                    ? MinimapStyle(
+                        overlayColor: theme.colorScheme.onSurface.withValues(alpha: 50 / 255),
+                        overlayHoverColor: theme.colorScheme.onSurface.withValues(alpha: 85 / 255),
+                      )
+                    : null,
                 // 仅在调用方提供 gutterBuilder 时启用行号槽；默认关闭，纯文本视图保持原样。
                 enableGutter: widget.gutterBuilder != null,
                 gutterBuilder: widget.gutterBuilder,
