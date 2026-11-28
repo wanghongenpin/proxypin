@@ -15,6 +15,8 @@
  */
 
 import 'dart:convert';
+import 'dart:io' show zlib;
+import 'dart:isolate';
 
 import 'package:proxypin/network/channel/host_port.dart';
 import 'package:proxypin/network/http/content_type.dart';
@@ -174,6 +176,33 @@ abstract class HttpMessage {
     }
 
     return getBodyString();
+  }
+
+  Future<List<int>?> decodeBodyBytes() async {
+    final bytes = body;
+    if (bytes == null || bytes.isEmpty) return bytes;
+    final encoding = headers.contentEncoding;
+    if (encoding == null || encoding.isEmpty || encoding == 'identity') return bytes;
+
+    final decoded = encoding == 'zstd' ? await zstdDecode(bytes) : await _decodeBodyInIsolate(bytes, encoding);
+    return identical(decoded, bytes) ? null : decoded;
+  }
+
+  static Future<List<int>?> _decodeBodyInIsolate(List<int> bytes, String encoding) => Isolate.run(() {
+        return switch (encoding) {
+          'gzip' => gzipDecode(bytes),
+          'br' => brDecode(bytes),
+          'deflate' => _decodeDeflate(bytes),
+          _ => null,
+        };
+      });
+
+  static List<int> _decodeDeflate(List<int> bytes) {
+    try {
+      return zlib.decode(bytes);
+    } on FormatException {
+      return zlibDecode(bytes);
+    }
   }
 
   List<String> get cookies => headers.cookies;

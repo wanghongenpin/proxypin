@@ -90,6 +90,26 @@ class HttpBodyState extends State<HttpBodyWidget> {
   AppLocalizations get localizations => AppLocalizations.of(context)!;
   bool showDecoded = false;
   CryptoDecodedResult? decoded;
+  (List<int>?, String?)? _imageInput;
+  Future<List<int>?>? _imageBytes;
+
+  Future<List<int>?> _decodeImage(HttpMessage message) {
+    final input = (message.body, message.headers.contentEncoding);
+    if (input != _imageInput) {
+      _imageInput = input;
+      _imageBytes = _loadImage(message);
+    }
+    return _imageBytes!;
+  }
+
+  Future<List<int>?> _loadImage(HttpMessage message) async {
+    try {
+      return await message.decodeBodyBytes();
+    } catch (error, stackTrace) {
+      logger.d('Unable to decode captured image', error: error, stackTrace: stackTrace);
+      return null;
+    }
+  }
 
   ViewType _currentViewType(Tabs tabs) => tabs.list.contains(selectedViewType) ? selectedViewType! : tabs.list.first;
 
@@ -116,6 +136,10 @@ class HttpBodyState extends State<HttpBodyWidget> {
       rewriteEnabled.value = false;
       _loadDecoded();
       _loadRewriteEnabled();
+    }
+    if (widget.httpMessage?.contentType != ContentType.image) {
+      _imageInput = null;
+      _imageBytes = null;
     }
   }
 
@@ -175,7 +199,8 @@ class HttpBodyState extends State<HttpBodyWidget> {
       return const SizedBox();
     }
 
-    var tabs = Tabs.of(widget.httpMessage?.contentType, isJsonText());
+    final contentType = widget.httpMessage?.contentType;
+    var tabs = Tabs.of(contentType, contentType != ContentType.image && isJsonText());
     final viewType = _currentViewType(tabs);
 
     List<Widget> list = [
@@ -474,12 +499,19 @@ class HttpBodyState extends State<HttpBodyWidget> {
         icon: SvgIcon('download', size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         tooltip: localizations.saveImage,
         onPressed: () async {
-          var body = bodyKey.currentState?.widget.message?.body;
-          if (body == null) {
+          final message = widget.httpMessage;
+          if (message == null) return;
+          final source = (message.body, message.headers.contentEncoding);
+          final body = await _decodeImage(message);
+          if (!mounted ||
+              !identical(widget.httpMessage, message) ||
+              source != (message.body, message.headers.contentEncoding) ||
+              body == null ||
+              body.isEmpty) {
             return;
           }
-          var bytes = Uint8List.fromList(body);
-          var extension = _imageExtension(bytes, bodyKey.currentState?.widget.message?.headers.contentType);
+          var bytes = body is Uint8List ? body : Uint8List.fromList(body);
+          var extension = _imageExtension(bytes, message.headers.contentType);
           var fileName = "image_${DateTime.now().millisecondsSinceEpoch}.$extension";
           if (Platform.isIOS) {
             String? path = await ImagePickers.saveByteDataImageToGallery(bytes);
@@ -489,7 +521,11 @@ class HttpBodyState extends State<HttpBodyWidget> {
             return;
           }
 
-          final saved = await FilePicker.saveFile(fileName: fileName, bytes: bytes, type: FileType.image);
+          final saved = await FilePicker.saveFile(
+            fileName: fileName,
+            bytes: bytes,
+            mimeType: message.headers.contentType.split(';').first.trim(),
+          );
           if (saved != null && mounted) {
             FlutterToastr.show(localizations.saveSuccess, context, duration: 2, rootNavigator: true);
           }
@@ -826,7 +862,28 @@ class _BodyState extends State<_Body> {
     }
 
     if (type == ViewType.image) {
-      return Center(child: Image.memory(Uint8List.fromList(message.body ?? []), fit: BoxFit.scaleDown));
+      Widget image(List<int>? bytes) {
+        const unavailable = Center(child: Icon(Icons.broken_image_outlined, size: 24));
+        if (bytes == null || bytes.isEmpty) return unavailable;
+        return Center(
+          child: Image.memory(
+            bytes is Uint8List ? bytes : Uint8List.fromList(bytes),
+            fit: BoxFit.scaleDown,
+            errorBuilder: (context, error, stackTrace) => unavailable,
+          ),
+        );
+      }
+
+      final encoding = message.headers.contentEncoding;
+      if (encoding == null || encoding.isEmpty || encoding == 'identity') return image(message.body);
+      final decoded = parent!._decodeImage(message);
+      return FutureBuilder(
+        key: ObjectKey(decoded),
+        future: decoded,
+        builder: (context, snapshot) => snapshot.connectionState == ConnectionState.done
+            ? image(snapshot.data)
+            : const Center(child: CircularProgressIndicator()),
+      );
     }
     if (type == ViewType.video) {
       return const Center(child: Text("video not support preview"));
